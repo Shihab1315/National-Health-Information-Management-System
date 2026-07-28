@@ -1,0 +1,456 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Profile Completion — NHIMS{% endblock %}
+
+{% block extra_css %}
+<style>
+    .top-navbar { display: none !important; }
+
+    .circular-progress {
+        width: 140px;
+        height: 140px;
+        position: relative;
+    }
+    .circular-progress svg {
+        transform: rotate(-90deg);
+        width: 140px;
+        height: 140px;
+    }
+    .circular-progress .bg-circle {
+        fill: none;
+        stroke: rgba(255,255,255,0.06);
+        stroke-width: 8;
+    }
+    .circular-progress .progress-circle {
+        fill: none;
+        stroke: #3b82f6;
+        stroke-width: 8;
+        stroke-linecap: round;
+        transition: stroke-dashoffset 0.8s ease;
+    }
+    .circular-progress .center-text {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        text-align: center;
+        color: white;
+    }
+    .circular-progress .center-text .percent {
+        font-size: 2rem;
+        font-weight: 700;
+        line-height: 1;
+    }
+    .circular-progress .center-text .label {
+        font-size: 0.7rem;
+        color: #94a3b8;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .profile-card {
+        transition: transform 0.2s ease, border-color 0.2s ease;
+        border: 1px solid rgba(255,255,255,0.06);
+        border-radius: 16px;
+        background: rgba(255,255,255,0.02);
+        padding: 1.25rem;
+    }
+    .profile-card:hover {
+        border-color: rgba(59,130,246,0.3);
+        transform: translateY(-2px);
+    }
+
+    .achievement-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.4rem 0.8rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 500;
+        background: rgba(255,255,255,0.05);
+        border: 1px solid rgba(255,255,255,0.08);
+        color: #cbd5e1;
+    }
+    .achievement-badge .icon {
+        font-size: 1rem;
+    }
+    .achievement-badge.emerald { border-color: rgba(52,211,153,0.3); color: #34d399; }
+    .achievement-badge.blue { border-color: rgba(59,130,246,0.3); color: #60a5fa; }
+    .achievement-badge.green { border-color: rgba(52,211,153,0.3); color: #34d399; }
+    .achievement-badge.purple { border-color: rgba(139,92,246,0.3); color: #a78bfa; }
+    .achievement-badge.amber { border-color: rgba(251,191,36,0.3); color: #fbbf24; }
+    .achievement-badge.rose { border-color: rgba(244,63,94,0.3); color: #f43f5e; }
+
+    .stat-card {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+        backdrop-filter: blur(8px);
+    }
+    .stat-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 30px rgba(0,0,0,0.3);
+    }
+    .stat-card .stat-icon {
+        position: absolute;
+        right: 0;
+        bottom: 0;
+        font-size: 4rem;
+        opacity: 0.08;
+        transform: rotate(-10deg);
+        transition: all 0.3s ease;
+    }
+    .stat-card:hover .stat-icon {
+        transform: rotate(-5deg) scale(1.05);
+        opacity: 0.12;
+    }
+    .stat-card .stat-number {
+        font-size: 2rem;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+    }
+    .stat-card .stat-label {
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #94a3b8;
+    }
+
+    .activity-item {
+        padding: 0.75rem;
+        border-radius: 12px;
+        border: 1px solid rgba(255,255,255,0.04);
+        transition: all 0.2s ease;
+    }
+    .activity-item:hover {
+        background: rgba(255,255,255,0.03);
+        border-color: rgba(255,255,255,0.08);
+    }
+
+    @media (max-width: 768px) {
+        .circular-progress { width: 100px; height: 100px; }
+        .circular-progress svg { width: 100px; height: 100px; }
+        .circular-progress .center-text .percent { font-size: 1.5rem; }
+        .stat-card .stat-number { font-size: 1.5rem; }
+        .stat-card .stat-icon { font-size: 3rem; }
+    }
+</style>
+{% endblock %}
+
+{% block navbar %}
+<nav class="fixed top-0 left-0 right-0 z-40 bg-[#0a1628]/80 backdrop-blur-sm border-b border-white/10 px-4 py-3 md:hidden">
+    <div class="flex items-center justify-between">
+        <button id="sidebarToggle" class="text-white text-2xl">
+            <i class="fas fa-bars"></i>
+        </button>
+        <span class="text-white font-semibold">NHIMS Patient</span>
+        <div class="w-8"></div>
+    </div>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="flex min-h-screen bg-[#0a1628]">
+    <!-- ===== SIDEBAR (reuse patient sidebar) ===== -->
+    <aside id="sidebar" class="fixed top-0 left-0 z-50 h-full w-72 bg-[#0d1f3c] border-r border-white/10 transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out overflow-y-auto">
+        <div class="p-4 border-b border-white/10">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 text-xl font-bold">
+                    {{ patient.full_name|slice:":1"|upper|default:"U" }}
+                </div>
+                <div>
+                    <p class="text-white font-semibold text-sm">{{ patient.full_name|default:"Patient" }}</p>
+                    <p class="text-gray-400 text-xs">Patient</p>
+                </div>
+            </div>
+        </div>
+        <nav class="p-3 space-y-1">
+            <a href="{% url 'dashboard:patient_dashboard' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
+                <i class="fas fa-th-large w-5 text-center"></i> Dashboard
+            </a>
+            <a href="{% url 'appointments:patient_appointment_list' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
+                <i class="fas fa-calendar-check w-5 text-center"></i> Appointments
+            </a>
+            <a href="{% url 'prescriptions:patient_my_prescriptions' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
+                <i class="fas fa-prescription-bottle w-5 text-center"></i> Prescriptions
+            </a>
+            <a href="{% url 'laboratory:patient_lab_history' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
+                <i class="fas fa-flask w-5 text-center"></i> Laboratory
+            </a>
+            <a href="{% url 'medical_records:patient_medical_record_list' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
+                <i class="fas fa-file-medical w-5 text-center"></i> Medical Records
+            </a>
+            <a href="{% url 'patients:profile' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
+                <i class="fas fa-user-circle w-5 text-center"></i> Profile
+            </a>
+            <hr class="border-white/10 my-3">
+            <a href="{% url 'patients:profile_completion' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition bg-blue-600/30 text-blue-300">
+    <i class="fas fa-tasks w-5 text-center"></i> Profile Completion
+</a>
+            <a href="{% url 'patients:emergency_contact' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
+                <i class="fas fa-phone-alt w-5 text-center"></i> Emergency Contact
+            </a>
+            <a href="{% url 'patients:medical_information' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
+                <i class="fas fa-heartbeat w-5 text-center"></i> Medical Info
+            </a>
+            <a href="{% url 'patients:insurance_information' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
+                <i class="fas fa-shield-alt w-5 text-center"></i> Insurance
+            </a>
+            <a href="{% url 'notifications:center' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
+                <i class="fas fa-bell w-5 text-center"></i> Notifications
+            </a>
+            <hr class="border-white/10 my-3">
+            <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
+                <i class="fas fa-cog w-5 text-center"></i> Settings
+            </a>
+            {% url 'logout' as logout_url %}
+            {% if logout_url %}
+                <a href="{{ logout_url }}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-red-400 hover:bg-red-500/10 hover:text-red-300">
+                    <i class="fas fa-sign-out-alt w-5 text-center"></i> Logout
+                </a>
+            {% else %}
+                <a href="{% url 'accounts:logout' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-red-400 hover:bg-red-500/10 hover:text-red-300">
+                    <i class="fas fa-sign-out-alt w-5 text-center"></i> Logout
+                </a>
+            {% endif %}
+        </nav>
+        <div class="absolute bottom-4 left-4 right-4 text-center text-gray-500 text-xs">
+            NHIMS v2.0
+        </div>
+    </aside>
+
+    <!-- ===== MAIN CONTENT ===== -->
+    <main class="flex-1 md:ml-72 p-4 md:p-8 space-y-6 mt-14 md:mt-0">
+
+        <!-- ===== HEADER ===== -->
+        <div class="flex flex-wrap items-center justify-between gap-4">
+            <div>
+                <h1 class="text-2xl font-bold text-white flex items-center gap-3">
+                    <span class="bg-blue-600/20 p-2.5 rounded-xl">
+                        <i class="fas fa-tasks text-blue-400 text-xl"></i>
+                    </span>
+                    Profile Completion
+                </h1>
+                <p class="text-sm text-gray-400 mt-1">Complete your profile to receive better healthcare services</p>
+            </div>
+            <div class="flex gap-2">
+                <a href="{% url 'patients:edit_profile' %}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-sm font-medium transition shadow-lg shadow-blue-500/30 flex items-center gap-2">
+                    <i class="fas fa-edit"></i> Edit Profile
+                </a>
+                <a href="{% url 'dashboard:patient_dashboard' %}" class="bg-white/5 hover:bg-white/10 px-4 py-2 rounded-xl text-gray-300 transition text-sm flex items-center gap-2">
+                    <i class="fas fa-arrow-left"></i> Back
+                </a>
+            </div>
+        </div>
+
+        <!-- ===== MAIN CARD: OVERALL COMPLETION ===== -->
+        <div class="glass-card rounded-2xl border border-white/10 p-6 profile-card">
+            <div class="flex flex-col md:flex-row items-center gap-8">
+                <!-- Circular Progress -->
+                <div class="circular-progress">
+                    <svg viewBox="0 0 140 140">
+                        <circle class="bg-circle" cx="70" cy="70" r="58" />
+                        <circle class="progress-circle" cx="70" cy="70" r="58"
+                            stroke-dasharray="{{ overall_percent|floatformat:0 }} 100"
+                            stroke-dashoffset="0"
+                            style="stroke: {% if overall_percent >= 90 %}#34d399{% elif overall_percent >= 70 %}#60a5fa{% elif overall_percent >= 50 %}#fbbf24{% else %}#f87171{% endif %};"
+                        />
+                    </svg>
+                    <div class="center-text">
+                        <div class="percent">{{ overall_percent }}%</div>
+                        <div class="label">Complete</div>
+                    </div>
+                </div>
+                <div class="flex-1 text-center md:text-left">
+                    <div class="flex flex-wrap items-center gap-3 justify-center md:justify-start">
+                        <span class="text-2xl font-bold text-white">Profile Strength</span>
+                        <span class="inline-block px-4 py-1.5 rounded-full text-sm font-medium {{ strength_color }} {{ strength_bg }}">
+                            {{ strength }}
+                        </span>
+                    </div>
+                    <p class="text-gray-400 text-sm mt-2">
+                        {% if overall_percent == 100 %}
+                            🎉 Congratulations! Your profile is fully complete.
+                        {% elif overall_percent >= 70 %}
+                            You're almost there! Complete the remaining sections to get the most out of NHIMS.
+                        {% elif overall_percent >= 50 %}
+                            Your profile is halfway complete. Update your information for better healthcare.
+                        {% else %}
+                            Please complete your profile to help doctors serve you better.
+                        {% endif %}
+                    </p>
+                    <div class="flex flex-wrap gap-2 mt-3 justify-center md:justify-start">
+                        <span class="text-xs px-2 py-1 bg-white/5 rounded-full text-gray-400">
+                            <i class="fas fa-check-circle text-emerald-400 mr-1"></i> {{ total_completed }}/{{ total_sections }} sections complete
+                        </span>
+                        <span class="text-xs px-2 py-1 bg-white/5 rounded-full text-gray-400">
+                            <i class="fas fa-flag text-amber-400 mr-1"></i> {{ recommendations|length }} recommendations
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+<!-- ===== CHECKLIST SECTIONS ===== -->
+<div class="glass-card rounded-2xl border border-white/10 p-6 profile-card">
+    <h2 class="text-white font-semibold text-md flex items-center gap-2 mb-4">
+        <i class="fas fa-list-ul text-blue-400"></i> Profile Checklist
+    </h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        {% for key, section in sections.items %}
+        <div class="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/5 hover:border-blue-400/30 transition">
+            <div class="flex items-center gap-3">
+                <i class="fas {{ section.icon }} text-{{ section.completed|yesno:"emerald-400,gray-400" }}"></i>
+                <span class="text-white text-sm">{{ section.label }}</span>
+                {% if section.completed %}
+                    <span class="text-emerald-400 text-xs"><i class="fas fa-check-circle"></i></span>
+                {% elif section.completed_count is not None %}
+                    <span class="text-gray-400 text-xs">{{ section.completed_count }}/{{ section.total }}</span>
+                {% else %}
+                    <span class="text-amber-400 text-xs"><i class="fas fa-exclamation-circle"></i></span>
+                {% endif %}
+            </div>
+            <div>
+                {% if section.completed %}
+                    <span class="text-xs text-emerald-400 font-medium">Complete</span>
+                {% elif section.completed_count is not None %}
+                    <span class="text-xs text-gray-400">{{ section.completed_count }}/{{ section.total }}</span>
+                    {% if section.completed_count < section.total %}
+                        <a href="{% url section.url %}" class="text-xs text-blue-400 hover:text-blue-300 font-medium transition ml-2">
+                            Update <i class="fas fa-arrow-right ml-1"></i>
+                        </a>
+                    {% endif %}
+                {% else %}
+                    <a href="{% url section.url %}" class="text-xs text-blue-400 hover:text-blue-300 font-medium transition">
+                        Complete Now <i class="fas fa-arrow-right ml-1"></i>
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+        <!-- ===== RECOMMENDATIONS ===== -->
+        {% if recommendations %}
+        <div class="glass-card rounded-2xl border border-white/10 p-6 profile-card">
+            <h2 class="text-white font-semibold text-md flex items-center gap-2 mb-3">
+                <i class="fas fa-lightbulb text-amber-400"></i> Recommendations
+            </h2>
+            <div class="flex flex-wrap gap-2">
+                {% for rec in recommendations %}
+                <a href="{% url rec.url %}" class="inline-flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 rounded-xl text-gray-300 text-sm transition border border-white/5 hover:border-blue-400/30">
+                    <i class="fas fa-arrow-right text-blue-400"></i> {{ rec.label }}
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- ===== ACHIEVEMENTS ===== -->
+        <div class="glass-card rounded-2xl border border-white/10 p-6 profile-card">
+            <h2 class="text-white font-semibold text-md flex items-center gap-2 mb-3">
+                <i class="fas fa-trophy text-amber-400"></i> Achievements
+            </h2>
+            {% if achievements %}
+            <div class="flex flex-wrap gap-2">
+                {% for ach in achievements %}
+                <span class="achievement-badge {{ ach.color }}">
+                    <i class="fas {{ ach.icon }} icon"></i> {{ ach.label }}
+                </span>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="text-gray-400 text-sm">Complete your profile to unlock achievements.</p>
+            {% endif %}
+        </div>
+
+        <!-- ===== SUMMARY CARDS ===== -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div class="stat-card glass-card rounded-2xl border border-white/10 p-4">
+                <div class="relative z-10">
+                    <p class="stat-label">Appointments</p>
+                    <p class="stat-number text-white mt-1">{{ total_appointments }}</p>
+                </div>
+                <div class="stat-icon text-blue-400/20"><i class="fas fa-calendar-check"></i></div>
+            </div>
+            <div class="stat-card glass-card rounded-2xl border border-white/10 p-4">
+                <div class="relative z-10">
+                    <p class="stat-label">Prescriptions</p>
+                    <p class="stat-number text-emerald-400 mt-1">{{ total_prescriptions }}</p>
+                </div>
+                <div class="stat-icon text-emerald-400/20"><i class="fas fa-prescription-bottle"></i></div>
+            </div>
+            <div class="stat-card glass-card rounded-2xl border border-white/10 p-4">
+                <div class="relative z-10">
+                    <p class="stat-label">Lab Reports</p>
+                    <p class="stat-number text-amber-400 mt-1">{{ total_lab_reports }}</p>
+                </div>
+                <div class="stat-icon text-amber-400/20"><i class="fas fa-flask"></i></div>
+            </div>
+            <div class="stat-card glass-card rounded-2xl border border-white/10 p-4">
+                <div class="relative z-10">
+                    <p class="stat-label">Medical Records</p>
+                    <p class="stat-number text-blue-400 mt-1">{{ total_medical_records }}</p>
+                </div>
+                <div class="stat-icon text-blue-400/20"><i class="fas fa-file-medical"></i></div>
+            </div>
+        </div>
+
+        <!-- ===== RECENT ACTIVITY ===== -->
+        <div class="glass-card rounded-2xl border border-white/10 p-6 profile-card">
+            <h2 class="text-white font-semibold text-md flex items-center gap-2 mb-3">
+                <i class="fas fa-clock text-purple-400"></i> Recent Activity
+            </h2>
+            {% if recent_activities %}
+            <div class="space-y-2">
+                {% for act in recent_activities %}
+                <div class="activity-item flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-full bg-{{ act.color }}-500/20 flex items-center justify-center text-{{ act.color }}-400">
+                        <i class="fas {{ act.icon }}"></i>
+                    </div>
+                    <div class="flex-1">
+                        <p class="text-white text-sm">{{ act.title }}</p>
+                        <p class="text-gray-500 text-xs">{{ act.date|date:"M d, Y" }}</p>
+                    </div>
+                    <span class="text-xs text-gray-500">{{ act.type }}</span>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="text-gray-400 text-sm">No recent activity.</p>
+            {% endif %}
+        </div>
+
+        <!-- ===== ACCOUNT STATUS ===== -->
+        <div class="glass-card rounded-2xl border border-white/10 p-4 profile-card">
+            <div class="flex items-center justify-between">
+                <span class="text-gray-400 text-sm">Account Status</span>
+                <span class="text-sm font-medium {{ status_color }}">{{ account_status }}</span>
+            </div>
+        </div>
+
+    </main>
+</div>
+
+<!-- ===== SIDEBAR TOGGLE ===== -->
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const sidebar = document.getElementById('sidebar');
+        const toggleBtn = document.getElementById('sidebarToggle');
+        if (toggleBtn && sidebar) {
+            toggleBtn.addEventListener('click', function () {
+                sidebar.classList.toggle('-translate-x-full');
+            });
+            document.addEventListener('click', function (event) {
+                const isClickInside = sidebar.contains(event.target) || toggleBtn.contains(event.target);
+                if (!isClickInside && window.innerWidth < 768) {
+                    sidebar.classList.add('-translate-x-full');
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

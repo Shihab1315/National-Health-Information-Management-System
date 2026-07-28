@@ -562,3 +562,241 @@ def print_patient_card(request):
         'auto_print': True,   # flag to auto‑trigger print
     }
     return render(request, 'patients/patient_card_print.html', context)
+
+@login_required
+@role_required(['patient'])
+def profile_completion_dashboard(request):
+    """
+    Profile Completion Dashboard – helps patients understand which profile
+    sections are complete and which require attention.
+    """
+    patient = request.user.patient_profile
+
+    # ---------- SECTION COMPLETION ----------
+    sections = {}
+
+    # 1. Profile Photo
+    sections['profile_photo'] = {
+        'label': 'Profile Photo',
+        'completed': bool(patient.profile_photo),
+        'url': 'patients:edit_profile',
+        'icon': 'fa-user-circle'
+    }
+
+    # 2. Personal Information
+    personal_fields = [
+        bool(patient.full_name and patient.full_name != 'Unknown'),
+        bool(patient.date_of_birth and patient.date_of_birth != '2000-01-01'),
+        bool(patient.gender),
+        bool(patient.phone and patient.phone != '0000000000'),
+        bool(patient.email),
+        bool(patient.address and patient.address != 'Unknown'),
+        bool(patient.national_id and patient.national_id != '0000000000'),
+        bool(patient.blood_group),
+    ]
+    personal_completed = sum(personal_fields)
+    personal_total = len(personal_fields)
+    sections['personal'] = {
+        'label': 'Personal Information',
+        'completed': personal_completed == personal_total,
+        'completed_count': personal_completed,
+        'total': personal_total,
+        'url': 'patients:edit_profile',
+        'icon': 'fa-user'
+    }
+
+    # 3. Emergency Contact
+    emergency_completed = bool(
+        patient.emergency_contact_name and patient.emergency_contact_phone
+    )
+    sections['emergency'] = {
+        'label': 'Emergency Contact',
+        'completed': emergency_completed,
+        'url': 'patients:emergency_contact',
+        'icon': 'fa-phone-alt'
+    }
+
+    # 4. Medical Information
+    medical_fields = [
+        bool(patient.allergies and patient.allergies.strip()),
+        bool(patient.chronic_diseases and patient.chronic_diseases.strip()),
+        patient.height is not None,
+        patient.weight is not None,
+        bool(patient.smoking_status),
+        bool(patient.alcohol_consumption),
+        bool(patient.exercise_frequency),
+        bool(patient.diet_preference),
+    ]
+    medical_completed = sum(medical_fields)
+    medical_total = len(medical_fields)
+    sections['medical'] = {
+        'label': 'Medical Information',
+        'completed': medical_completed == medical_total,
+        'completed_count': medical_completed,
+        'total': medical_total,
+        'url': 'patients:medical_information',
+        'icon': 'fa-heartbeat'
+    }
+
+    # 5. Insurance
+    insurance_completed = patient.has_insurance and bool(
+        patient.insurance_provider and patient.policy_number
+    )
+    sections['insurance'] = {
+        'label': 'Insurance Information',
+        'completed': insurance_completed,
+        'url': 'patients:insurance_information',
+        'icon': 'fa-shield-alt'
+    }
+
+    # ---------- OVERALL COMPLETION ----------
+    total_completed = sum(1 for s in sections.values() if s['completed'] is True)
+    total_sections = len(sections)
+    overall_percent = int((total_completed / total_sections) * 100) if total_sections > 0 else 0
+
+    # Profile strength
+    if overall_percent >= 90:
+        strength = 'Excellent'
+        strength_color = 'text-emerald-400'
+        strength_bg = 'bg-emerald-500/20'
+    elif overall_percent >= 70:
+        strength = 'Good'
+        strength_color = 'text-blue-400'
+        strength_bg = 'bg-blue-500/20'
+    elif overall_percent >= 50:
+        strength = 'Average'
+        strength_color = 'text-amber-400'
+        strength_bg = 'bg-amber-500/20'
+    else:
+        strength = 'Poor'
+        strength_color = 'text-red-400'
+        strength_bg = 'bg-red-500/20'
+
+    # ---------- ACHIEVEMENTS ----------
+    achievements = []
+    if overall_percent == 100:
+        achievements.append({'label': 'Profile Completed', 'icon': 'fa-check-circle', 'color': 'emerald'})
+    if patient.email:
+        achievements.append({'label': 'Email Added', 'icon': 'fa-envelope', 'color': 'blue'})
+    if patient.phone and patient.phone != '0000000000':
+        achievements.append({'label': 'Phone Verified', 'icon': 'fa-phone', 'color': 'green'})
+    if insurance_completed:
+        achievements.append({'label': 'Insurance Added', 'icon': 'fa-shield-alt', 'color': 'purple'})
+    if emergency_completed:
+        achievements.append({'label': 'Emergency Contact Added', 'icon': 'fa-phone-alt', 'color': 'amber'})
+    if medical_completed >= 4:
+        achievements.append({'label': 'Medical Information Complete', 'icon': 'fa-heartbeat', 'color': 'rose'})
+
+    # ---------- RECOMMENDATIONS ----------
+    recommendations = []
+    if not patient.profile_photo:
+        recommendations.append({'label': 'Upload Profile Photo', 'url': 'patients:edit_profile'})
+    if not emergency_completed:
+        recommendations.append({'label': 'Complete Emergency Contact', 'url': 'patients:emergency_contact'})
+    if not insurance_completed:
+        recommendations.append({'label': 'Add Insurance Information', 'url': 'patients:insurance_information'})
+    if medical_completed < 4:
+        recommendations.append({'label': 'Update Medical Information', 'url': 'patients:medical_information'})
+    if personal_completed < 5:
+        recommendations.append({'label': 'Complete Personal Information', 'url': 'patients:edit_profile'})
+
+    # ---------- SUMMARY CARDS ----------
+    from appointments.models import Appointment
+    from prescriptions.models import Prescription
+    from laboratory.models import LabResult
+    from medical_records.models import MedicalRecord
+
+    total_appointments = Appointment.objects.filter(patient=patient, deleted_at__isnull=True).count()
+    total_prescriptions = Prescription.objects.filter(patient=patient, deleted_at__isnull=True).count()
+    total_lab_reports = LabResult.objects.filter(
+        order_item__lab_order__patient=patient,
+        deleted_at__isnull=True
+    ).count()
+    total_medical_records = MedicalRecord.objects.filter(patient=patient, is_deleted=False).count()
+
+    # ---------- RECENT ACTIVITY (fixed sorting) ----------
+    recent_activities = []
+
+    def to_date(value):
+        """Convert to date object safely."""
+        if hasattr(value, 'date'):
+            return value.date()
+        return value
+
+    last_appointment = Appointment.objects.filter(patient=patient, deleted_at__isnull=True).order_by('-appointment_date').first()
+    if last_appointment:
+        recent_activities.append({
+            'type': 'Appointment',
+            'date': to_date(last_appointment.appointment_date),
+            'title': f'Appointment with Dr. {last_appointment.doctor.full_name}',
+            'icon': 'fa-calendar-check',
+            'color': 'blue'
+        })
+
+    last_prescription = Prescription.objects.filter(patient=patient, deleted_at__isnull=True).order_by('-created_at').first()
+    if last_prescription:
+        recent_activities.append({
+            'type': 'Prescription',
+            'date': to_date(last_prescription.created_at),
+            'title': f'Prescription #{last_prescription.prescription_number}',
+            'icon': 'fa-prescription-bottle',
+            'color': 'emerald'
+        })
+
+    last_lab = LabResult.objects.filter(
+        order_item__lab_order__patient=patient,
+        deleted_at__isnull=True
+    ).order_by('-created_at').first()
+    if last_lab:
+        recent_activities.append({
+            'type': 'Lab Report',
+            'date': to_date(last_lab.created_at),
+            'title': f'Lab Report for {last_lab.order_item.test.name}',
+            'icon': 'fa-flask',
+            'color': 'amber'
+        })
+
+    last_record = MedicalRecord.objects.filter(patient=patient, is_deleted=False).order_by('-visit_date').first()
+    if last_record:
+        recent_activities.append({
+            'type': 'Medical Record',
+            'date': to_date(last_record.visit_date),
+            'title': f'Medical Record #{last_record.id}',
+            'icon': 'fa-file-medical',
+            'color': 'purple'
+        })
+
+    # Sort by date (newest first)
+    recent_activities.sort(key=lambda x: x['date'], reverse=True)
+
+    # ---------- ACCOUNT STATUS ----------
+    if overall_percent == 100:
+        account_status = 'Verified'
+        status_color = 'text-emerald-400'
+    elif overall_percent >= 60:
+        account_status = 'Incomplete'
+        status_color = 'text-amber-400'
+    else:
+        account_status = 'Pending'
+        status_color = 'text-red-400'
+
+    context = {
+        'patient': patient,
+        'sections': sections,
+        'overall_percent': overall_percent,
+        'strength': strength,
+        'strength_color': strength_color,
+        'strength_bg': strength_bg,
+        'achievements': achievements,
+        'recommendations': recommendations,
+        'total_appointments': total_appointments,
+        'total_prescriptions': total_prescriptions,
+        'total_lab_reports': total_lab_reports,
+        'total_medical_records': total_medical_records,
+        'recent_activities': recent_activities,
+        'account_status': account_status,
+        'status_color': status_color,
+        'current_date': timezone.now(),
+    }
+
+    return render(request, 'patients/profile_completion_dashboard.html', context)

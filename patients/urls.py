@@ -17,4 +17,5 @@ urlpatterns = [
     path('profile/insurance/', views.insurance_information, name='insurance_information'),
     path('profile/patient-card/', views.download_patient_card, name='patient_card'),
     path('profile/patient-card/print/', views.print_patient_card, name='patient_card_print'),
+    path('profile/completion/', views.profile_completion_dashboard, name='profile_completion'),
 ]
