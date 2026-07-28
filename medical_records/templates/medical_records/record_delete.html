@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Delete Medical Record — NHIMS{% endblock %}
+
+{% block content %}
+<div class="min-h-[calc(100vh-8rem)] flex items-center justify-center px-4 py-8">
+    <div class="w-full max-w-md animate-[fadeIn_0.4s_ease]">
+        <!-- Confirmation Card -->
+        <div class="glass-card rounded-2xl border border-white/10 bg-white/5 backdrop-blur-sm p-8 shadow-2xl text-center">
+            <!-- Warning Icon -->
+            <div class="flex justify-center mb-4">
+                <div class="w-20 h-20 rounded-full bg-red-500/20 flex items-center justify-center animate-pulse">
+                    <i class="fas fa-triangle-exclamation text-5xl text-red-500"></i>
+                </div>
+            </div>
+
+            <!-- Heading -->
+            <h2 class="text-2xl font-bold text-white mb-2">Delete Medical Record?</h2>
+            <p class="text-gray-400 text-sm mb-6">You are about to permanently delete this medical record.</p>
+
+            <!-- Record Details Summary -->
+            <div class="bg-white/5 rounded-xl border border-white/10 p-4 mb-6 text-left space-y-2 text-sm">
+                <div class="flex justify-between">
+                    <span class="text-gray-400">Patient</span>
+                    <span class="text-white font-medium">{{ object.patient.full_name|default:"N/A" }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-400">Visit Date</span>
+                    <span class="text-white">{{ object.visit_date|date:"M d, Y"|default:"N/A" }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-400">Doctor</span>
+                    <span class="text-white">{{ object.doctor|default:"N/A" }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-400">Hospital</span>
+                    <span class="text-white">{{ object.hospital|default:"N/A" }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-400">Record ID</span>
+                    <span class="text-white font-mono">{{ object.id }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-400">Created</span>
+                    <span class="text-white">{{ object.created_at|date:"M d, Y"|default:"N/A" }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-400">Last Updated</span>
+                    <span class="text-white">{{ object.updated_at|date:"M d, Y"|default:"N/A" }}</span>
+                </div>
+            </div>
+
+            <!-- Warning Notice -->
+            <div class="bg-red-500/10 border border-red-500/30 rounded-xl px-4 py-3 mb-6 flex items-start gap-3 text-sm">
+                <i class="fas fa-exclamation-circle text-red-400 mt-0.5"></i>
+                <span class="text-red-300">⚠ This action cannot be undone. All medical information related to this record will be permanently removed.</span>
+            </div>
+
+            <!-- Delete Form -->
+            <form method="post">
+                {% csrf_token %}
+                <div class="flex flex-col sm:flex-row gap-3 justify-center">
+                    <!-- Delete Button -->
+                    <button type="submit" class="flex items-center justify-center gap-2 px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-medium transition-all duration-200 shadow-lg shadow-red-500/30">
+                        <i class="fas fa-trash-alt"></i> Yes, Delete Record
+                    </button>
+                    <!-- Cancel Button -->
+                    <a href="{% url 'medical_records:record_detail' object.pk %}" class="flex items-center justify-center gap-2 px-6 py-3 border border-white/10 hover:bg-white/5 text-gray-300 hover:text-white rounded-xl font-medium transition-all duration-200">
+                        <i class="fas fa-times"></i> Cancel
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+</style>
+{% endblock %}

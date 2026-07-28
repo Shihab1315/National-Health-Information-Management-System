@@ -1,0 +1,67 @@
+{% load static %}
+
+<!--
+  Reusable Statistics Card Component
+  Usage:
+  {% include 'analytics/partials/stats_card.html' with title="Patients" value=1234 icon="fas fa-users" icon_color="#2563EB" icon_bg="rgba(37,99,235,0.2)" change="12.5" change_type="up" subtitle="Total registered" url="#" %}
+-->
+
+{% if is_loading %}
+    <!-- Loading Skeleton -->
+    <div class="bg-[#111827] rounded-2xl border border-white/10 shadow-xl p-4 animate-pulse">
+        <div class="flex justify-between items-start">
+            <div class="h-4 w-20 bg-gray-700 rounded"></div>
+            <div class="w-12 h-12 rounded-full bg-gray-700"></div>
+        </div>
+        <div class="mt-3 h-8 w-24 bg-gray-700 rounded"></div>
+        <div class="mt-2 flex justify-between items-center">
+            <div class="h-4 w-16 bg-gray-700 rounded"></div>
+            <div class="h-6 w-16 bg-gray-700 rounded-full"></div>
+        </div>
+    </div>
+{% else %}
+    <!-- Actual Card -->
+    {% if url %}
+        <a href="{{ url }}" class="block bg-[#111827] rounded-2xl border border-white/10 shadow-xl p-4 transition-all duration-200 hover:-translate-y-1 hover:shadow-2xl hover:border-blue-500/30 group">
+    {% else %}
+        <div class="bg-[#111827] rounded-2xl border border-white/10 shadow-xl p-4 transition-all duration-200 hover:-translate-y-1 hover:shadow-2xl hover:border-blue-500/30 group">
+    {% endif %}
+        <!-- Top Row: Title + Icon -->
+        <div class="flex justify-between items-start">
+            <span class="text-sm font-medium text-gray-400">{{ title|default:"Title" }}</span>
+            <div class="w-12 h-12 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform duration-200"
+                 style="background: {{ icon_bg|default:'rgba(37,99,235,0.2)' }}; color: {{ icon_color|default:'#2563EB' }};">
+                <i class="{{ icon|default:'fas fa-circle' }} text-xl"></i>
+            </div>
+        </div>
+
+        <!-- Value -->
+        <div class="mt-2 text-3xl font-bold text-white tracking-tight">
+            {{ value|default:"0" }}
+        </div>
+
+        <!-- Bottom Row: Subtitle + Change Badge -->
+        <div class="mt-2 flex justify-between items-center">
+            <span class="text-sm text-gray-500">{{ subtitle|default:"" }}</span>
+            {% if change %}
+                <span class="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full 
+                    {% if change_type == 'up' %}bg-emerald-500/20 text-emerald-400
+                    {% elif change_type == 'down' %}bg-red-500/20 text-red-400
+                    {% else %}bg-gray-500/20 text-gray-400{% endif %}">
+                    {% if change_type == 'up' %}
+                        <i class="fas fa-arrow-up text-[10px]"></i>
+                    {% elif change_type == 'down' %}
+                        <i class="fas fa-arrow-down text-[10px]"></i>
+                    {% else %}
+                        <i class="fas fa-minus text-[10px]"></i>
+                    {% endif %}
+                    {{ change }}%
+                </span>
+            {% endif %}
+        </div>
+    {% if url %}
+        </a>
+    {% else %}
+        </div>
+    {% endif %}
+{% endif %}

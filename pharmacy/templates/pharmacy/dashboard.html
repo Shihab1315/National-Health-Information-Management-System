@@ -1,0 +1,183 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Pharmacy Dashboard — NHIMS{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 py-8">
+    <!-- Breadcrumb -->
+    <nav class="flex items-center gap-2 text-sm text-gray-400 mb-6" aria-label="Breadcrumb">
+        <a href="{% url 'pharmacy:dashboard' %}" class="hover:text-white transition">Dashboard</a>
+        <span class="text-gray-600">/</span>
+        <span class="text-white">Pharmacy</span>
+    </nav>
+
+    <!-- Header -->
+    <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+        <div>
+            <h1 class="text-3xl font-bold text-white">Pharmacy Dashboard</h1>
+            <p class="text-sm text-gray-400 mt-1">Overview of your pharmacy operations</p>
+        </div>
+        <div class="flex items-center gap-3">
+            <a href="{% url 'pharmacy:medicine_create' %}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-sm font-medium transition flex items-center gap-2 shadow-lg shadow-blue-500/30">
+                <i class="fas fa-plus"></i> Add Medicine
+            </a>
+            <a href="{% url 'pharmacy:sale_create' %}" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-sm font-medium transition flex items-center gap-2 shadow-lg shadow-emerald-500/30">
+                <i class="fas fa-cash-register"></i> New Sale
+            </a>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4 mb-8">
+        <div class="glass-card rounded-2xl border border-white/10 p-5 text-center hover:scale-[1.02] transition-transform duration-200">
+            <div class="flex items-center justify-center w-12 h-12 rounded-full bg-blue-500/20 mx-auto mb-2">
+                <i class="fas fa-capsules text-blue-400 text-xl"></i>
+            </div>
+            <p class="text-2xl font-bold text-white">{{ stats.total_medicines|default:0 }}</p>
+            <p class="text-xs text-gray-400">Total Medicines</p>
+        </div>
+        <div class="glass-card rounded-2xl border border-white/10 p-5 text-center hover:scale-[1.02] transition-transform duration-200">
+            <div class="flex items-center justify-center w-12 h-12 rounded-full bg-amber-500/20 mx-auto mb-2">
+                <i class="fas fa-exclamation-triangle text-amber-400 text-xl"></i>
+            </div>
+            <p class="text-2xl font-bold text-white">{{ stats.low_stock|default:0 }}</p>
+            <p class="text-xs text-gray-400">Low Stock</p>
+        </div>
+        <div class="glass-card rounded-2xl border border-white/10 p-5 text-center hover:scale-[1.02] transition-transform duration-200">
+            <div class="flex items-center justify-center w-12 h-12 rounded-full bg-red-500/20 mx-auto mb-2">
+                <i class="fas fa-times-circle text-red-400 text-xl"></i>
+            </div>
+            <p class="text-2xl font-bold text-white">{{ stats.out_of_stock|default:0 }}</p>
+            <p class="text-xs text-gray-400">Out of Stock</p>
+        </div>
+        <div class="glass-card rounded-2xl border border-white/10 p-5 text-center hover:scale-[1.02] transition-transform duration-200">
+            <div class="flex items-center justify-center w-12 h-12 rounded-full bg-rose-500/20 mx-auto mb-2">
+                <i class="fas fa-clock text-rose-400 text-xl"></i>
+            </div>
+            <p class="text-2xl font-bold text-white">{{ stats.expired|default:0 }}</p>
+            <p class="text-xs text-gray-400">Expired</p>
+        </div>
+        <div class="glass-card rounded-2xl border border-white/10 p-5 text-center hover:scale-[1.02] transition-transform duration-200">
+            <div class="flex items-center justify-center w-12 h-12 rounded-full bg-emerald-500/20 mx-auto mb-2">
+                <i class="fas fa-truck text-emerald-400 text-xl"></i>
+            </div>
+            <p class="text-2xl font-bold text-white">{{ stats.suppliers|default:0 }}</p>
+            <p class="text-xs text-gray-400">Suppliers</p>
+        </div>
+        <div class="glass-card rounded-2xl border border-white/10 p-5 text-center hover:scale-[1.02] transition-transform duration-200">
+            <div class="flex items-center justify-center w-12 h-12 rounded-full bg-purple-500/20 mx-auto mb-2">
+                <i class="fas fa-dollar-sign text-purple-400 text-xl"></i>
+            </div>
+            <p class="text-2xl font-bold text-white">${{ stats.today_sales|floatformat:2|default:"0.00" }}</p>
+            <p class="text-xs text-gray-400">Today's Sales</p>
+        </div>
+    </div>
+
+    <!-- Second Row of Stats (Monthly, Revenue, Purchases) -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        <div class="glass-card rounded-2xl border border-white/10 p-5 flex items-center gap-4">
+            <div class="w-14 h-14 rounded-full bg-blue-500/20 flex items-center justify-center shrink-0">
+                <i class="fas fa-calendar-alt text-blue-400 text-2xl"></i>
+            </div>
+            <div>
+                <p class="text-sm text-gray-400">Monthly Sales</p>
+                <p class="text-2xl font-bold text-white">${{ stats.monthly_sales|floatformat:2|default:"0.00" }}</p>
+            </div>
+        </div>
+        <div class="glass-card rounded-2xl border border-white/10 p-5 flex items-center gap-4">
+            <div class="w-14 h-14 rounded-full bg-emerald-500/20 flex items-center justify-center shrink-0">
+                <i class="fas fa-chart-line text-emerald-400 text-2xl"></i>
+            </div>
+            <div>
+                <p class="text-sm text-gray-400">Total Revenue</p>
+                <p class="text-2xl font-bold text-white">${{ stats.total_revenue|floatformat:2|default:"0.00" }}</p>
+            </div>
+        </div>
+        <div class="glass-card rounded-2xl border border-white/10 p-5 flex items-center gap-4">
+            <div class="w-14 h-14 rounded-full bg-amber-500/20 flex items-center justify-center shrink-0">
+                <i class="fas fa-shopping-cart text-amber-400 text-2xl"></i>
+            </div>
+            <div>
+                <p class="text-sm text-gray-400">Monthly Purchases</p>
+                <p class="text-2xl font-bold text-white">${{ stats.total_purchases|floatformat:2|default:"0.00" }}</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Recent Sales -->
+        <div class="glass-card rounded-2xl border border-white/10 p-5">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-white font-semibold text-lg flex items-center gap-2">
+                    <i class="fas fa-receipt text-blue-400"></i> Recent Sales
+                </h3>
+                <a href="{% url 'pharmacy:sale_list' %}" class="text-sm text-blue-400 hover:text-blue-300 transition">View All</a>
+            </div>
+            {% if recent_sales %}
+                <div class="space-y-3">
+                    {% for sale in recent_sales %}
+                        <div class="flex items-center justify-between p-3 rounded-xl bg-white/5 hover:bg-white/10 transition border border-white/5">
+                            <div>
+                                <p class="text-white font-medium">{{ sale.invoice_number }}</p>
+                                <p class="text-xs text-gray-400">{{ sale.patient.full_name|default:"Walk-in" }} · {{ sale.sale_date|date:"M d, Y H:i" }}</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-white font-semibold">${{ sale.total_amount|floatformat:2 }}</p>
+                                <span class="text-xs px-2 py-0.5 rounded-full 
+                                    {% if sale.payment_status == 'paid' %}bg-green-500/20 text-green-300
+                                    {% elif sale.payment_status == 'partial' %}bg-amber-500/20 text-amber-300
+                                    {% else %}bg-red-500/20 text-red-300{% endif %}">
+                                    {{ sale.get_payment_status_display }}
+                                </span>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="text-center py-8 text-gray-400">
+                    <i class="fas fa-receipt text-3xl mb-2 opacity-50"></i>
+                    <p>No recent sales</p>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Recent Purchases -->
+        <div class="glass-card rounded-2xl border border-white/10 p-5">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-white font-semibold text-lg flex items-center gap-2">
+                    <i class="fas fa-truck-loading text-emerald-400"></i> Recent Purchases
+                </h3>
+                <a href="{% url 'pharmacy:purchase_list' %}" class="text-sm text-emerald-400 hover:text-emerald-300 transition">View All</a>
+            </div>
+            {% if recent_purchases %}
+                <div class="space-y-3">
+                    {% for purchase in recent_purchases %}
+                        <div class="flex items-center justify-between p-3 rounded-xl bg-white/5 hover:bg-white/10 transition border border-white/5">
+                            <div>
+                                <p class="text-white font-medium">{{ purchase.purchase_number }}</p>
+                                <p class="text-xs text-gray-400">{{ purchase.supplier.name }} · {{ purchase.purchase_date|date:"M d, Y" }}</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-white font-semibold">${{ purchase.total_amount|floatformat:2 }}</p>
+                                <span class="text-xs px-2 py-0.5 rounded-full 
+                                    {% if purchase.payment_status == 'paid' %}bg-green-500/20 text-green-300
+                                    {% elif purchase.payment_status == 'partial' %}bg-amber-500/20 text-amber-300
+                                    {% else %}bg-red-500/20 text-red-300{% endif %}">
+                                    {{ purchase.get_payment_status_display }}
+                                </span>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="text-center py-8 text-gray-400">
+                    <i class="fas fa-truck-loading text-3xl mb-2 opacity-50"></i>
+                    <p>No recent purchases</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

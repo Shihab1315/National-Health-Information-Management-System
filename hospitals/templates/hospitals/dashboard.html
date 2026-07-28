@@ -1,0 +1,167 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Hospital Dashboard — NHIMS{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+    <div class="flex justify-between items-center mb-8">
+        <div>
+            <h1 class="text-3xl font-bold text-white flex items-center gap-3">
+                <i class="fas fa-hospital text-emerald-400 text-2xl"></i>
+                Hospitals
+            </h1>
+            <p class="text-gray-400 text-sm">Overview of healthcare facilities</p>
+        </div>
+        <a href="{% url 'hospitals:create' %}" class="inline-flex items-center gap-2 bg-linear-to-r from-emerald-500 to-cyan-500 text-white px-6 py-3 rounded-xl font-medium shadow-lg shadow-emerald-500/30 hover:scale-105 transition">
+            <i class="fas fa-plus-circle"></i> Add Hospital
+        </a>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-8">
+        <div class="glass-card p-4 rounded-2xl border border-white/10 hover:border-emerald-400/50 transition">
+            <div class="flex items-center justify-between">
+                <span class="text-gray-400 text-sm">Total</span>
+                <i class="fas fa-hospital text-emerald-400 text-xl"></i>
+            </div>
+            <div class="text-2xl font-bold text-white mt-2">{{ stats.total|default:0 }}</div>
+            <div class="text-xs text-gray-500 mt-1">All facilities</div>
+        </div>
+        <div class="glass-card p-4 rounded-2xl border border-white/10 hover:border-blue-400/50 transition">
+            <div class="flex items-center justify-between">
+                <span class="text-gray-400 text-sm">Government</span>
+                <i class="fas fa-building-columns text-blue-400 text-xl"></i>
+            </div>
+            <div class="text-2xl font-bold text-white mt-2">{{ stats.government|default:0 }}</div>
+            <div class="text-xs text-gray-500 mt-1">Public hospitals</div>
+        </div>
+        <div class="glass-card p-4 rounded-2xl border border-white/10 hover:border-amber-400/50 transition">
+            <div class="flex items-center justify-between">
+                <span class="text-gray-400 text-sm">Private</span>
+                <i class="fas fa-building text-amber-400 text-xl"></i>
+            </div>
+            <div class="text-2xl font-bold text-white mt-2">{{ stats.private|default:0 }}</div>
+            <div class="text-xs text-gray-500 mt-1">Private facilities</div>
+        </div>
+        <div class="glass-card p-4 rounded-2xl border border-white/10 hover:border-cyan-400/50 transition">
+            <div class="flex items-center justify-between">
+                <span class="text-gray-400 text-sm">Verified</span>
+                <i class="fas fa-check-circle text-cyan-400 text-xl"></i>
+            </div>
+            <div class="text-2xl font-bold text-white mt-2">{{ stats.verified|default:0 }}</div>
+            <div class="text-xs text-gray-500 mt-1">Verified facilities</div>
+        </div>
+        <div class="glass-card p-4 rounded-2xl border border-white/10 hover:border-red-400/50 transition">
+            <div class="flex items-center justify-between">
+                <span class="text-gray-400 text-sm">Emergency</span>
+                <i class="fas fa-ambulance text-red-400 text-xl"></i>
+            </div>
+            <div class="text-2xl font-bold text-white mt-2">{{ stats.emergency|default:0 }}</div>
+            <div class="text-xs text-gray-500 mt-1">24/7 emergency</div>
+        </div>
+        <div class="glass-card p-4 rounded-2xl border border-white/10 hover:border-purple-400/50 transition">
+            <div class="flex items-center justify-between">
+                <span class="text-gray-400 text-sm">Featured</span>
+                <i class="fas fa-star text-purple-400 text-xl"></i>
+            </div>
+            <div class="text-2xl font-bold text-white mt-2">{{ stats.featured|default:0 }}</div>
+            <div class="text-xs text-gray-500 mt-1">Featured hospitals</div>
+        </div>
+        <div class="glass-card p-4 rounded-2xl border border-white/10 hover:border-indigo-400/50 transition">
+            <div class="flex items-center justify-between">
+                <span class="text-gray-400 text-sm">Total Beds</span>
+                <i class="fas fa-bed text-indigo-400 text-xl"></i>
+            </div>
+            <div class="text-2xl font-bold text-white mt-2">{{ stats.total_beds|default:0 }}</div>
+            <div class="text-xs text-gray-500 mt-1">Across all hospitals</div>
+        </div>
+        <div class="glass-card p-4 rounded-2xl border border-white/10 hover:border-rose-400/50 transition">
+            <div class="flex items-center justify-between">
+                <span class="text-gray-400 text-sm">Avg Rating</span>
+                <i class="fas fa-star-half-alt text-rose-400 text-xl"></i>
+            </div>
+            <div class="text-2xl font-bold text-white mt-2">{{ stats.avg_rating|default:0 }}</div>
+            <div class="text-xs text-gray-500 mt-1">Overall average</div>
+        </div>
+    </div>
+
+    <!-- Recent & Featured -->
+    <div class="grid lg:grid-cols-2 gap-6 mb-8">
+        <!-- Latest Hospitals -->
+        <div class="glass-card rounded-2xl border border-white/10 p-6">
+            <h3 class="text-white font-semibold text-lg flex items-center gap-2">
+                <i class="fas fa-clock text-emerald-400"></i> Latest Hospitals
+            </h3>
+            <ul class="divide-y divide-white/5 mt-4">
+                {% for hospital in latest %}
+                <li class="py-3 flex items-center gap-3 hover:bg-white/5 transition px-2 rounded-lg">
+                    <div class="w-10 h-10 rounded-xl bg-emerald-500/20 flex items-center justify-center text-emerald-300 font-bold">
+                        {{ hospital.name|slice:":1"|upper }}
+                    </div>
+                    <div class="flex-1">
+                        <a href="{% url 'hospitals:detail' hospital.slug %}" class="text-white hover:text-emerald-400 transition">
+                            {{ hospital.name }}
+                        </a>
+                        <div class="text-xs text-gray-500">{{ hospital.district }}</div>
+                    </div>
+                    <span class="text-xs text-gray-500">{{ hospital.created_at|timesince }} ago</span>
+                </li>
+                {% empty %}
+                <li class="py-6 text-center text-gray-400">No hospitals added yet.</li>
+                {% endfor %}
+            </ul>
+        </div>
+        <!-- Top Rated -->
+        <div class="glass-card rounded-2xl border border-white/10 p-6">
+            <h3 class="text-white font-semibold text-lg flex items-center gap-2">
+                <i class="fas fa-star text-amber-400"></i> Top Rated
+            </h3>
+            <ul class="divide-y divide-white/5 mt-4">
+                {% for hospital in top_rated %}
+                <li class="py-3 flex items-center gap-3 hover:bg-white/5 transition px-2 rounded-lg">
+                    <div class="w-10 h-10 rounded-xl bg-amber-500/20 flex items-center justify-center text-amber-300 font-bold">
+                        {{ hospital.name|slice:":1"|upper }}
+                    </div>
+                    <div class="flex-1">
+                        <a href="{% url 'hospitals:detail' hospital.slug %}" class="text-white hover:text-amber-400 transition">
+                            {{ hospital.name }}
+                        </a>
+                        <div class="text-xs text-gray-500">{{ hospital.average_rating }} ★ ({{ hospital.total_reviews }} reviews)</div>
+                    </div>
+                    <span class="text-sm text-amber-400">{{ hospital.average_rating|floatformat:1 }}</span>
+                </li>
+                {% empty %}
+                <li class="py-6 text-center text-gray-400">No ratings yet.</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+
+    <!-- Featured Hospitals Carousel (simple grid) -->
+    {% if featured %}
+    <div class="glass-card rounded-2xl border border-white/10 p-6">
+        <h3 class="text-white font-semibold text-lg flex items-center gap-2 mb-4">
+            <i class="fas fa-star text-emerald-400"></i> Featured Hospitals
+        </h3>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {% for hospital in featured %}
+            <div class="glass-card p-4 rounded-xl border border-white/10 hover:border-emerald-400/50 transition group">
+                <a href="{% url 'hospitals:detail' hospital.slug %}" class="block">
+                    {% if hospital.logo %}
+                    <img src="{{ hospital.logo.url }}" alt="{{ hospital.name }}" class="h-12 w-12 rounded-full mx-auto mb-2 object-cover">
+                    {% else %}
+                    <div class="h-12 w-12 rounded-full bg-emerald-500/20 mx-auto mb-2 flex items-center justify-center text-emerald-300 font-bold text-xl">
+                        {{ hospital.name|slice:":1"|upper }}
+                    </div>
+                    {% endif %}
+                    <h4 class="text-white text-sm font-medium text-center group-hover:text-emerald-400 transition">{{ hospital.name }}</h4>
+                    <p class="text-xs text-gray-500 text-center">{{ hospital.district }}</p>
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

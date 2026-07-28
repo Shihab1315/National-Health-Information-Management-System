@@ -1,0 +1,12 @@
+<div class="text-center py-16">
+    <div class="text-6xl text-gray-600 mb-4">
+        <i class="fas fa-{{ icon|default:'file-medical' }} opacity-40"></i>
+    </div>
+    <h3 class="text-xl font-medium text-white">{{ title|default:"No records found" }}</h3>
+    <p class="text-gray-400 mt-2">{{ message|default:"Start by creating a new record." }}</p>
+    {% if action_url and action_text %}
+        <a href="{{ action_url }}" class="inline-block mt-4 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-medium transition">
+            <i class="fas fa-plus mr-2"></i> {{ action_text }}
+        </a>
+    {% endif %}
+</div>

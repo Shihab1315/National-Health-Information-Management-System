@@ -1,0 +1,90 @@
+<!-- laboratory/templates/laboratory/report_details.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Report for {{ order.order_number }} — NHIMS{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 py-8">
+    <div class="flex items-center gap-4 mb-6">
+        <a href="{% url 'laboratory:order_detail' order.pk %}" class="text-gray-400 hover:text-white transition">
+            <i class="fas fa-arrow-left text-xl"></i>
+        </a>
+        <h1 class="text-3xl font-bold text-white flex-1">Lab Report</h1>
+        <div class="flex gap-2">
+            <a href="{% url 'laboratory:report_print' order.pk %}" target="_blank" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl transition flex items-center gap-2">
+                <i class="fas fa-print"></i> Print
+            </a>
+            <a href="#" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl transition flex items-center gap-2">
+                <i class="fas fa-file-pdf"></i> PDF
+            </a>
+        </div>
+    </div>
+
+    <div class="glass-card rounded-2xl border border-white/10 p-8">
+        <!-- Header -->
+        <div class="flex justify-between items-start border-b border-white/10 pb-4 mb-6">
+            <div>
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-400 to-cyan-400 flex items-center justify-center text-white font-bold text-2xl shadow-lg shadow-emerald-500/20">
+                        N
+                    </div>
+                    <div>
+                        <h1 class="text-2xl font-bold text-white">NHIMS <span class="text-emerald-400">Lab Report</span></h1>
+                        <p class="text-gray-400 text-sm">National Health Information Management System</p>
+                    </div>
+                </div>
+            </div>
+            <div class="text-right">
+                <div class="text-gray-400 text-sm">Order #</div>
+                <div class="text-white font-mono">{{ order.order_number }}</div>
+                <div class="text-gray-500 text-xs">{{ order.created_at|date:"M d, Y" }}</div>
+            </div>
+        </div>
+
+        <!-- Patient & Doctor -->
+        <div class="grid md:grid-cols-2 gap-6 mb-6">
+            <div>
+                <h4 class="text-gray-400 text-xs uppercase tracking-wider mb-1">Patient</h4>
+                <p class="text-white text-lg font-medium">
+                    {{ order.patient.user.get_full_name|default:order.patient.user.username }}
+                </p>
+                <p class="text-gray-400 text-sm">{{ order.patient.health_id }} | {{ order.patient.user.phone|default:"N/A" }}</p>
+            </div>
+            <div>
+                <h4 class="text-gray-400 text-xs uppercase tracking-wider mb-1">Doctor</h4>
+                <p class="text-white text-lg font-medium">
+                    Dr. {{ order.doctor.user.get_full_name|default:order.doctor.user.username }}
+                </p>
+                <p class="text-gray-400 text-sm">{{ order.doctor.specialization|default:"General" }}</p>
+            </div>
+        </div>
+
+        <!-- Results Table using the partial -->
+        <h4 class="text-gray-400 text-xs uppercase tracking-wider mb-3">Results</h4>
+        {% include 'laboratory/partials/result_table.html' with results=results show_flag=True %}
+
+        <!-- Remarks & Footer -->
+        <div class="border-t border-white/10 pt-4 flex justify-between items-center text-sm text-gray-400">
+            <div>
+                <p>Remarks: {{ order.notes|default:"N/A" }}</p>
+                {% if order.report and order.report.digital_signature %}
+                <p>Digital Signature: {{ order.report.digital_signature }}</p>
+                {% endif %}
+            </div>
+            <div>
+                {% if order.report and order.report.qr_code %}
+                <img src="{{ order.report.qr_code.url }}" alt="QR" class="w-16 h-16">
+                {% else %}
+                <span class="text-gray-500">No QR</span>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="mt-6 text-center text-xs text-gray-500 border-t border-white/10 pt-4">
+            <p>This report is computer-generated. Verify authenticity via QR code.</p>
+            <p>© {{ current_year|default:2026 }} NHIMS — Ministry of Health, Bangladesh</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

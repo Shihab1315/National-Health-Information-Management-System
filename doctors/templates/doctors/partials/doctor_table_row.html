@@ -1,0 +1,52 @@
+{% load static %}
+<tr class="hover:bg-white/5 transition group">
+    <td class="px-6 py-4">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-300 font-bold text-lg shadow-inner">
+                {{ doctor.full_name|slice:":1"|upper }}
+            </div>
+            <div>
+                <div class="text-white font-medium">Dr. {{ doctor.full_name }}</div>
+                <div class="text-gray-400 text-xs flex items-center gap-2">
+                    <i class="far fa-clock mr-1"></i> {{ doctor.experience }} yrs exp
+                    {% if doctor.is_verified %}
+                        <span class="bg-emerald-500/20 text-emerald-300 text-xs px-2 py-0.5 rounded-full">Verified</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </td>
+    <td class="px-6 py-4 hidden md:table-cell">
+        <span class="font-mono text-sm text-cyan-400 bg-cyan-400/10 px-3 py-1 rounded-full border border-cyan-400/20">
+            {{ doctor.doctor_id }}
+        </span>
+    </td>
+    <td class="px-6 py-4 hidden lg:table-cell">
+        <div class="flex flex-wrap gap-1">
+            {% for spec in doctor.specialties.all|slice:":2" %}
+                <span class="text-xs bg-white/5 px-2 py-0.5 rounded-full text-gray-300">{{ spec.name }}</span>
+            {% endfor %}
+            {% if doctor.specialties.count > 2 %}
+                <span class="text-xs text-gray-500">+{{ doctor.specialties.count|add:"-2" }}</span>
+            {% endif %}
+        </div>
+    </td>
+    <td class="px-6 py-4 hidden sm:table-cell">
+        <span class="text-sm text-gray-300 bg-white/5 px-3 py-1 rounded-full">
+            {{ doctor.district|default:"N/A" }}
+        </span>
+    </td>
+    <td class="px-6 py-4 text-right">
+        <div class="flex items-center justify-end gap-3">
+            <a href="{% url 'doctors:detail' doctor.pk %}" class="text-blue-400 hover:text-blue-300 transition" title="View">
+                <i class="fas fa-eye"></i>
+            </a>
+            <a href="{% url 'doctors:update' doctor.pk %}" class="text-emerald-400 hover:text-emerald-300 transition" title="Edit">
+                <i class="fas fa-pen"></i>
+            </a>
+            <a href="{% url 'doctors:delete' doctor.pk %}" class="text-red-400 hover:text-red-300 transition" title="Delete">
+                <i class="fas fa-trash-alt"></i>
+            </a>
+        </div>
+    </td>
+</tr>

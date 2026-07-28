@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patient Card — NHIMS</title>
+    <style>
+        /* Reset and base styles */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Helvetica', 'Arial', sans-serif;
+            background: #0a1628;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        /* Card container */
+        .card-container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 40px rgba(0,0,0,0.4);
+            padding: 20px;
+            max-width: 400px;
+            width: 100%;
+        }
+
+        /* Actual card design */
+        .patient-card {
+            background: white;
+            border: 2px solid #1e293b;
+            border-radius: 12px;
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+        .patient-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 6px;
+            background: linear-gradient(90deg, #1e3a5f, #2b6cb0, #1e3a5f);
+        }
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 8px;
+            margin-bottom: 10px;
+        }
+        .card-header .logo-text {
+            font-size: 14px;
+            font-weight: 700;
+            color: #1e3a5f;
+            line-height: 1.2;
+        }
+        .card-header .logo-text small {
+            font-weight: 400;
+            font-size: 10px;
+            color: #4a5568;
+            display: block;
+        }
+        .card-header .govt-text {
+            font-size: 9px;
+            color: #4a5568;
+            text-align: right;
+        }
+        .card-body {
+            display: flex;
+            gap: 12px;
+        }
+        .card-photo {
+            flex-shrink: 0;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 2px solid #2b6cb0;
+            background: #edf2f7;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            font-weight: 700;
+            color: #2b6cb0;
+        }
+        .card-photo img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .card-info {
+            flex: 1;
+            font-size: 11px;
+        }
+        .card-info .row {
+            display: flex;
+            padding: 2px 0;
+            border-bottom: 1px solid #f7fafc;
+        }
+        .card-info .label {
+            width: 35%;
+            font-weight: 600;
+            color: #4a5568;
+        }
+        .card-info .value {
+            width: 65%;
+            color: #1a202c;
+        }
+        .card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 10px;
+            padding-top: 8px;
+            border-top: 1px solid #e2e8f0;
+        }
+        .card-footer .qr {
+            max-width: 50px;
+            height: auto;
+        }
+        .card-footer .qr img {
+            width: 100%;
+            height: auto;
+        }
+        .card-footer .meta {
+            font-size: 7px;
+            color: #718096;
+            text-align: right;
+            line-height: 1.4;
+        }
+        .card-footer .meta strong {
+            color: #1a202c;
+        }
+
+        /* Wallet size (CR80) – 85.60mm × 53.98mm */
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+                margin: 0;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                min-height: 100vh;
+            }
+            .card-container {
+                box-shadow: none;
+                padding: 0;
+                max-width: 85.6mm;
+                width: 85.6mm;
+                border-radius: 0;
+            }
+            .patient-card {
+                border-radius: 0;
+                border: 1px solid #cbd5e0;
+                padding: 6mm 4mm;
+                page-break-after: avoid;
+                /* Ensure card fits on one page */
+                max-height: 53.98mm;
+                overflow: hidden;
+            }
+            .patient-card::before {
+                height: 3px;
+            }
+            .card-header .logo-text {
+                font-size: 10px;
+            }
+            .card-header .logo-text small {
+                font-size: 7px;
+            }
+            .card-header .govt-text {
+                font-size: 6px;
+            }
+            .card-photo {
+                width: 50px;
+                height: 50px;
+                font-size: 18px;
+            }
+            .card-info {
+                font-size: 7px;
+            }
+            .card-info .row {
+                padding: 1px 0;
+            }
+            .card-footer .qr {
+                max-width: 30px;
+            }
+            .card-footer .meta {
+                font-size: 5px;
+            }
+            /* Hide any extra UI */
+            .no-print { display: none !important; }
+        }
+
+        /* Auto‑print button (visible on screen only) */
+        .print-btn-container {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .print-btn {
+            background: #2b6cb0;
+            color: white;
+            border: none;
+            padding: 10px 30px;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .print-btn:hover {
+            background: #1a4f7a;
+        }
+        .back-btn {
+            background: #e2e8f0;
+            color: #1a202c;
+            border: none;
+            padding: 10px 30px;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            margin-left: 10px;
+            transition: background 0.2s;
+        }
+        .back-btn:hover {
+            background: #cbd5e0;
+        }
+
+        /* Hide UI elements on print */
+        @media print {
+            .no-print { display: none !important; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="card-container" id="card-container">
+        <!-- PATIENT CARD -->
+        <div class="patient-card">
+            <!-- Header -->
+            <div class="card-header">
+                <div class="logo-text">
+                    NHIMS
+                    <small>National Health Information<br>Management System</small>
+                </div>
+                <div class="govt-text">
+                    <strong>Government of Bangladesh</strong><br>
+                    {{ hospital_name }}
+                </div>
+            </div>
+
+            <!-- Body -->
+            <div class="card-body">
+                <div class="card-photo">
+                    {% if patient.profile_photo %}
+                        <img src="{{ patient.profile_photo.url }}" alt="Photo">
+                    {% else %}
+                        {{ patient.full_name|slice:":1"|upper }}
+                    {% endif %}
+                </div>
+                <div class="card-info">
+                    <div class="row"><span class="label">ID</span><span class="value">{{ patient.health_id|default:"N/A" }}</span></div>
+                    <div class="row"><span class="label">Name</span><span class="value">{{ patient.full_name }}</span></div>
+                    <div class="row"><span class="label">Gender</span><span class="value">{{ patient.get_gender_display|default:"N/A" }}</span></div>
+                    <div class="row"><span class="label">DOB</span><span class="value">{{ patient.date_of_birth|date:"d M Y"|default:"N/A" }}</span></div>
+                    <div class="row"><span class="label">Blood</span><span class="value">{{ patient.blood_group|default:"N/A" }}</span></div>
+                    <div class="row"><span class="label">Phone</span><span class="value">{{ patient.phone|default:"N/A" }}</span></div>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="card-footer">
+                <div class="qr">
+                    <img src="{{ qr_image_data }}" alt="QR Code">
+                </div>
+                <div class="meta">
+                    <strong>Emergency:</strong> {{ patient.emergency_contact_name|default:"N/A" }}<br>
+                    {{ patient.emergency_contact_phone|default:"N/A" }}<br>
+                    <span style="font-size:6px;">Issued: {{ current_date|date:"d M Y" }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action buttons (visible on screen only) -->
+        <div class="print-btn-container no-print">
+            <button class="print-btn" onclick="window.print()"><i class="fas fa-print"></i> Print</button>
+            <a href="{% url 'patients:profile' %}" class="back-btn"><i class="fas fa-arrow-left"></i> Back</a>
+        </div>
+    </div>
+
+    <!-- Auto-print script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Auto-trigger print if auto_print flag is True
+            {% if auto_print %}
+                setTimeout(function() {
+                    window.print();
+                }, 500);
+            {% endif %}
+        });
+    </script>
+
+</body>
+</html>

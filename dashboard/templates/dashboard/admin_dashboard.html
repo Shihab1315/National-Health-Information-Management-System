@@ -1,0 +1,624 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Admin Dashboard — NHIMS{% endblock %}
+
+{% block extra_css %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="p-4 md:p-6 space-y-6">
+
+    <!-- ====================== WELCOME HEADER ====================== -->
+    <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-blue-600/30 to-cyan-600/30 border border-white/10 p-6 backdrop-blur-sm">
+        <div class="relative z-10 flex flex-wrap items-center justify-between">
+            <div>
+                <h1 class="text-2xl md:text-3xl font-bold text-white">
+                    Welcome back, <span class="text-blue-300">{{ user.get_full_name|default:user.username }}</span> 👋
+                </h1>
+                <p class="text-gray-300 mt-1 flex flex-wrap gap-4 text-sm md:text-base">
+                    <span><i class="far fa-calendar-alt mr-2"></i>{{ current_date|date:"l, F j, Y" }}</span>
+                    <span><i class="far fa-clock mr-2"></i>{{ current_date|time:"h:i A" }}</span>
+                </p>
+            </div>
+            <div class="mt-2 md:mt-0">
+                <span class="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-medium bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    System Online
+                </span>
+            </div>
+        </div>
+        <div class="absolute -right-10 -top-10 w-48 h-48 bg-blue-500/20 rounded-full blur-2xl"></div>
+        <div class="absolute -left-10 -bottom-10 w-48 h-48 bg-cyan-500/20 rounded-full blur-2xl"></div>
+    </div>
+
+    <!-- ====================== STATISTICS CARDS ====================== -->
+    <!-- Row 1 -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+        <div class="glass-card rounded-2xl border border-white/10 p-4 hover:scale-105 transition-transform duration-200">
+            <div class="flex items-start justify-between">
+                <div>
+                    <p class="text-gray-400 text-xs uppercase tracking-wider">Total Users</p>
+                    <p class="text-2xl font-bold text-white mt-1">{{ total_users }}</p>
+                </div>
+                <div class="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400">
+                    <i class="fas fa-users text-xl"></i>
+                </div>
+            </div>
+        </div>
+        <div class="glass-card rounded-2xl border border-white/10 p-4 hover:scale-105 transition-transform duration-200">
+            <div class="flex items-start justify-between">
+                <div>
+                    <p class="text-gray-400 text-xs uppercase tracking-wider">Hospitals</p>
+                    <p class="text-2xl font-bold text-white mt-1">{{ total_hospitals }}</p>
+                </div>
+                <div class="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400">
+                    <i class="fas fa-hospital text-xl"></i>
+                </div>
+            </div>
+        </div>
+        <div class="glass-card rounded-2xl border border-white/10 p-4 hover:scale-105 transition-transform duration-200">
+            <div class="flex items-start justify-between">
+                <div>
+                    <p class="text-gray-400 text-xs uppercase tracking-wider">Doctors</p>
+                    <p class="text-2xl font-bold text-white mt-1">{{ total_doctors }}</p>
+                </div>
+                <div class="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400">
+                    <i class="fas fa-user-md text-xl"></i>
+                </div>
+            </div>
+        </div>
+        <div class="glass-card rounded-2xl border border-white/10 p-4 hover:scale-105 transition-transform duration-200">
+            <div class="flex items-start justify-between">
+                <div>
+                    <p class="text-gray-400 text-xs uppercase tracking-wider">Patients</p>
+                    <p class="text-2xl font-bold text-white mt-1">{{ total_patients }}</p>
+                </div>
+                <div class="w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center text-amber-400">
+                    <i class="fas fa-user-injured text-xl"></i>
+                </div>
+            </div>
+        </div>
+        <div class="glass-card rounded-2xl border border-white/10 p-4 hover:scale-105 transition-transform duration-200">
+            <div class="flex items-start justify-between">
+                <div>
+                    <p class="text-gray-400 text-xs uppercase tracking-wider">Appointments</p>
+                    <p class="text-2xl font-bold text-white mt-1">{{ total_appointments }}</p>
+                </div>
+                <div class="w-10 h-10 rounded-full bg-rose-500/20 flex items-center justify-center text-rose-400">
+                    <i class="fas fa-calendar-check text-xl"></i>
+                </div>
+            </div>
+        </div>
+        <div class="glass-card rounded-2xl border border-white/10 p-4 hover:scale-105 transition-transform duration-200">
+            <div class="flex items-start justify-between">
+                <div>
+                    <p class="text-gray-400 text-xs uppercase tracking-wider">Today's Appointments</p>
+                    <p class="text-2xl font-bold text-white mt-1">{{ today_appointments }}</p>
+                </div>
+                <div class="w-10 h-10 rounded-full bg-cyan-500/20 flex items-center justify-center text-cyan-400">
+                    <i class="fas fa-calendar-day text-xl"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Row 2 -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+        <div class="glass-card rounded-2xl border border-white/10 p-4">
+            <div class="flex items-start justify-between">
+                <div>
+                    <p class="text-gray-400 text-xs uppercase tracking-wider">Pending Appointments</p>
+                    <p class="text-2xl font-bold text-white mt-1">{{ pending_appointments }}</p>
+                </div>
+                <div class="w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center text-amber-400">
+                    <i class="fas fa-hourglass-half text-xl"></i>
+                </div>
+            </div>
+        </div>
+        <div class="glass-card rounded-2xl border border-white/10 p-4">
+            <div class="flex items-start justify-between">
+                <div>
+                    <p class="text-gray-400 text-xs uppercase tracking-wider">Completed Appointments</p>
+                    <p class="text-2xl font-bold text-white mt-1">{{ completed_appointments }}</p>
+                </div>
+                <div class="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400">
+                    <i class="fas fa-check-circle text-xl"></i>
+                </div>
+            </div>
+        </div>
+        <div class="glass-card rounded-2xl border border-white/10 p-4">
+            <div class="flex items-start justify-between">
+                <div>
+                    <p class="text-gray-400 text-xs uppercase tracking-wider">Medical Records</p>
+                    <p class="text-2xl font-bold text-white mt-1">{{ total_medical_records }}</p>
+                </div>
+                <div class="w-10 h-10 rounded-full bg-indigo-500/20 flex items-center justify-center text-indigo-400">
+                    <i class="fas fa-file-medical text-xl"></i>
+                </div>
+            </div>
+        </div>
+        <div class="glass-card rounded-2xl border border-white/10 p-4">
+            <div class="flex items-start justify-between">
+                <div>
+                    <p class="text-gray-400 text-xs uppercase tracking-wider">Prescriptions</p>
+                    <p class="text-2xl font-bold text-white mt-1">{{ total_prescriptions }}</p>
+                </div>
+                <div class="w-10 h-10 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-400">
+                    <i class="fas fa-prescription text-xl"></i>
+                </div>
+            </div>
+        </div>
+        <div class="glass-card rounded-2xl border border-white/10 p-4">
+            <div class="flex items-start justify-between">
+                <div>
+                    <p class="text-gray-400 text-xs uppercase tracking-wider">Lab Tests</p>
+                    <p class="text-2xl font-bold text-white mt-1">{{ total_lab_tests }}</p>
+                </div>
+                <div class="w-10 h-10 rounded-full bg-pink-500/20 flex items-center justify-center text-pink-400">
+                    <i class="fas fa-flask text-xl"></i>
+                </div>
+            </div>
+        </div>
+        <div class="glass-card rounded-2xl border border-white/10 p-4">
+            <div class="flex items-start justify-between">
+                <div>
+                    <p class="text-gray-400 text-xs uppercase tracking-wider">Pending Lab Reports</p>
+                    <p class="text-2xl font-bold text-white mt-1">{{ pending_lab_reports }}</p>
+                </div>
+                <div class="w-10 h-10 rounded-full bg-rose-500/20 flex items-center justify-center text-rose-400">
+                    <i class="fas fa-hourglass-start text-xl"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Row 3 -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+        <div class="glass-card rounded-2xl border border-white/10 p-4">
+            <div class="flex items-start justify-between">
+                <div>
+                    <p class="text-gray-400 text-xs uppercase tracking-wider">Total Medicines</p>
+                    <p class="text-2xl font-bold text-white mt-1">{{ total_medicines }}</p>
+                </div>
+                <div class="w-10 h-10 rounded-full bg-teal-500/20 flex items-center justify-center text-teal-400">
+                    <i class="fas fa-capsules text-xl"></i>
+                </div>
+            </div>
+        </div>
+        <div class="glass-card rounded-2xl border border-white/10 p-4">
+            <div class="flex items-start justify-between">
+                <div>
+                    <p class="text-gray-400 text-xs uppercase tracking-wider">Low Stock</p>
+                    <p class="text-2xl font-bold text-white mt-1">{{ low_stock_medicines }}</p>
+                </div>
+                <div class="w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center text-amber-400">
+                    <i class="fas fa-exclamation-triangle text-xl"></i>
+                </div>
+            </div>
+        </div>
+        <div class="glass-card rounded-2xl border border-white/10 p-4">
+            <div class="flex items-start justify-between">
+                <div>
+                    <p class="text-gray-400 text-xs uppercase tracking-wider">Out of Stock</p>
+                    <p class="text-2xl font-bold text-white mt-1">{{ out_of_stock_medicines }}</p>
+                </div>
+                <div class="w-10 h-10 rounded-full bg-red-500/20 flex items-center justify-center text-red-400">
+                    <i class="fas fa-times-circle text-xl"></i>
+                </div>
+            </div>
+        </div>
+        <div class="glass-card rounded-2xl border border-white/10 p-4">
+            <div class="flex items-start justify-between">
+                <div>
+                    <p class="text-gray-400 text-xs uppercase tracking-wider">Pharmacy Sales</p>
+                    <p class="text-2xl font-bold text-white mt-1">{{ total_sales }}</p>
+                </div>
+                <div class="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400">
+                    <i class="fas fa-shopping-cart text-xl"></i>
+                </div>
+            </div>
+        </div>
+        <div class="glass-card rounded-2xl border border-white/10 p-4">
+            <div class="flex items-start justify-between">
+                <div>
+                    <p class="text-gray-400 text-xs uppercase tracking-wider">Monthly Revenue</p>
+                    <p class="text-2xl font-bold text-white mt-1">${{ monthly_revenue|floatformat:0 }}</p>
+                </div>
+                <div class="w-10 h-10 rounded-full bg-cyan-500/20 flex items-center justify-center text-cyan-400">
+                    <i class="fas fa-dollar-sign text-xl"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ====================== QUICK ACTIONS ====================== -->
+    <div class="glass-card rounded-2xl border border-white/10 p-6">
+        <h2 class="text-white text-lg font-semibold mb-4 flex items-center gap-2">
+            <i class="fas fa-bolt text-blue-400"></i> Quick Actions
+        </h2>
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-3">
+            <a href="{% url 'hospitals:create' %}" class="bg-white/5 hover:bg-white/10 rounded-xl p-4 text-center transition group">
+                <i class="fas fa-hospital text-blue-400 text-2xl block mb-2 group-hover:scale-110 transition"></i>
+                <span class="text-gray-300 text-xs">Add Hospital</span>
+            </a>
+            <a href="{% url 'doctors:create' %}" class="bg-white/5 hover:bg-white/10 rounded-xl p-4 text-center transition group">
+                <i class="fas fa-user-md text-emerald-400 text-2xl block mb-2 group-hover:scale-110 transition"></i>
+                <span class="text-gray-300 text-xs">Add Doctor</span>
+            </a>
+            <a href="{% url 'patients:create' %}" class="bg-white/5 hover:bg-white/10 rounded-xl p-4 text-center transition group">
+                <i class="fas fa-user-injured text-amber-400 text-2xl block mb-2 group-hover:scale-110 transition"></i>
+                <span class="text-gray-300 text-xs">Add Patient</span>
+            </a>
+            <a href="{% url 'appointments:create' %}" class="bg-white/5 hover:bg-white/10 rounded-xl p-4 text-center transition group">
+                <i class="fas fa-calendar-plus text-rose-400 text-2xl block mb-2 group-hover:scale-110 transition"></i>
+                <span class="text-gray-300 text-xs">Create Appointment</span>
+            </a>
+            <a href="{% url 'prescriptions:create' %}" class="bg-white/5 hover:bg-white/10 rounded-xl p-4 text-center transition group">
+                <i class="fas fa-prescription-bottle text-purple-400 text-2xl block mb-2 group-hover:scale-110 transition"></i>
+                <span class="text-gray-300 text-xs">Create Prescription</span>
+            </a>
+            <a href="{% url 'laboratory:order_create' %}" class="bg-white/5 hover:bg-white/10 rounded-xl p-4 text-center transition group">
+                <i class="fas fa-flask text-pink-400 text-2xl block mb-2 group-hover:scale-110 transition"></i>
+                <span class="text-gray-300 text-xs">Upload Lab Report</span>
+            </a>
+            <a href="{% url 'pharmacy:medicine_create' %}" class="bg-white/5 hover:bg-white/10 rounded-xl p-4 text-center transition group">
+                <i class="fas fa-capsules text-indigo-400 text-2xl block mb-2 group-hover:scale-110 transition"></i>
+                <span class="text-gray-300 text-xs">Add Medicine</span>
+            </a>
+            <a href="{% url 'pharmacy:sale_create' %}" class="bg-white/5 hover:bg-white/10 rounded-xl p-4 text-center transition group">
+                <i class="fas fa-shopping-cart text-emerald-400 text-2xl block mb-2 group-hover:scale-110 transition"></i>
+                <span class="text-gray-300 text-xs">Create Sale</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- ====================== ANALYTICS CHARTS (COMPACT) ====================== -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="glass-card rounded-2xl border border-white/10 p-4">
+            <h3 class="text-white font-medium text-sm mb-2">Appointments per Month</h3>
+            <div class="h-28">
+                <canvas id="appointmentsChart"></canvas>
+            </div>
+        </div>
+        <div class="glass-card rounded-2xl border border-white/10 p-4">
+            <h3 class="text-white font-medium text-sm mb-2">Patient Registration Trend</h3>
+            <div class="h-28">
+                <canvas id="patientsChart"></canvas>
+            </div>
+        </div>
+        <div class="glass-card rounded-2xl border border-white/10 p-4">
+            <h3 class="text-white font-medium text-sm mb-2">Revenue Trend (BDT)</h3>
+            <div class="h-28">
+                <canvas id="revenueChart"></canvas>
+            </div>
+        </div>
+        <div class="glass-card rounded-2xl border border-white/10 p-4">
+            <h3 class="text-white font-medium text-sm mb-2">Medicine Sales (Units)</h3>
+            <div class="h-28">
+                <canvas id="medicineSalesChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- ====================== RECENT ACTIVITY ====================== -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+        <!-- Recent Patients -->
+        <div class="glass-card rounded-2xl border border-white/10 p-5">
+            <h3 class="text-white font-medium mb-3 flex items-center justify-between">
+                Recent Patients
+                <a href="{% url 'patients:list' %}" class="text-xs text-blue-400 hover:text-blue-300">View All</a>
+            </h3>
+            <div class="space-y-2">
+                {% for patient in recent_patients %}
+                <div class="flex items-center justify-between text-sm border-b border-white/5 pb-2">
+                    <span class="text-white">{{ patient.full_name }}</span>
+                    <span class="text-gray-400 text-xs">{{ patient.created_at|date:"M d" }}</span>
+                </div>
+                {% empty %}
+                <p class="text-gray-400 text-sm">No recent patients.</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Recent Doctors -->
+        <div class="glass-card rounded-2xl border border-white/10 p-5">
+            <h3 class="text-white font-medium mb-3 flex items-center justify-between">
+                Recent Doctors
+                <a href="{% url 'doctors:list' %}" class="text-xs text-blue-400 hover:text-blue-300">View All</a>
+            </h3>
+            <div class="space-y-2">
+                {% for doctor in recent_doctors %}
+                <div class="flex items-center justify-between text-sm border-b border-white/5 pb-2">
+                    <span class="text-white">{{ doctor.full_name }}</span>
+                    <span class="text-gray-400 text-xs">{{ doctor.hospital.name|default:"N/A" }}</span>
+                </div>
+                {% empty %}
+                <p class="text-gray-400 text-sm">No recent doctors.</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Recent Appointments -->
+        <div class="glass-card rounded-2xl border border-white/10 p-5">
+            <h3 class="text-white font-medium mb-3 flex items-center justify-between">
+                Recent Appointments
+                <a href="{% url 'appointments:list' %}" class="text-xs text-blue-400 hover:text-blue-300">View All</a>
+            </h3>
+            <div class="space-y-2">
+                {% for apt in recent_appointments %}
+                <div class="flex items-center justify-between text-sm border-b border-white/5 pb-2">
+                    <div>
+                        <span class="text-white">{{ apt.patient.full_name|default:"N/A" }}</span>
+                        <span class="text-gray-400 text-xs ml-1">→ {{ apt.doctor.full_name|default:"N/A" }}</span>
+                    </div>
+                    <span class="text-xs px-2 py-0.5 rounded-full 
+                        {% if apt.status == 'completed' %}bg-green-500/20 text-green-300
+                        {% elif apt.status == 'pending' %}bg-amber-500/20 text-amber-300
+                        {% else %}bg-gray-500/20 text-gray-300{% endif %}">
+                        {{ apt.get_status_display|default:apt.status }}
+                    </span>
+                </div>
+                {% empty %}
+                <p class="text-gray-400 text-sm">No recent appointments.</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Recent Prescriptions -->
+        <div class="glass-card rounded-2xl border border-white/10 p-5">
+            <h3 class="text-white font-medium mb-3 flex items-center justify-between">
+                Recent Prescriptions
+                <a href="{% url 'prescriptions:list' %}" class="text-xs text-blue-400 hover:text-blue-300">View All</a>
+            </h3>
+            <div class="space-y-2">
+                {% for rx in recent_prescriptions %}
+                <div class="flex items-center justify-between text-sm border-b border-white/5 pb-2">
+                    <span class="text-white">{{ rx.patient.full_name|default:"N/A" }}</span>
+                    <span class="text-gray-400 text-xs">{{ rx.created_at|date:"M d" }}</span>
+                </div>
+                {% empty %}
+                <p class="text-gray-400 text-sm">No recent prescriptions.</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Recent Lab Reports (FIXED) -->
+        <div class="glass-card rounded-2xl border border-white/10 p-5">
+            <h3 class="text-white font-medium mb-3 flex items-center justify-between">
+                Recent Lab Reports
+                <a href="{% url 'laboratory:order_list' %}" class="text-xs text-blue-400 hover:text-blue-300">View All</a>
+            </h3>
+            <div class="space-y-2">
+                {% for report in recent_lab_reports %}
+                <div class="flex items-center justify-between text-sm border-b border-white/5 pb-2">
+                    <span class="text-white">{{ report.lab_order.patient.full_name|default:"N/A" }}</span>
+                    <span class="text-gray-400 text-xs">{{ report.created_at|date:"M d" }}</span>
+                </div>
+                {% empty %}
+                <p class="text-gray-400 text-sm">No recent lab reports.</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Recent Pharmacy Sales -->
+        <div class="glass-card rounded-2xl border border-white/10 p-5">
+            <h3 class="text-white font-medium mb-3 flex items-center justify-between">
+                Recent Sales
+                <a href="{% url 'pharmacy:sale_list' %}" class="text-xs text-blue-400 hover:text-blue-300">View All</a>
+            </h3>
+            <div class="space-y-2">
+                {% for sale in recent_pharmacy_sales %}
+                <div class="flex items-center justify-between text-sm border-b border-white/5 pb-2">
+                    <span class="text-white">Invoice #{{ sale.invoice_number }}</span>
+                    <span class="text-gray-400 text-xs">${{ sale.total_amount|floatformat:2 }}</span>
+                </div>
+                {% empty %}
+                <p class="text-gray-400 text-sm">No recent sales.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- ====================== ALERTS PANEL ====================== -->
+    <div class="glass-card rounded-2xl border border-white/10 p-5">
+        <h3 class="text-white font-medium mb-3 flex items-center gap-2">
+            <i class="fas fa-bell text-amber-400"></i> Alerts
+        </h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+            <div class="bg-red-500/10 border border-red-500/20 rounded-xl p-3 flex items-center justify-between">
+                <span class="text-gray-300 text-sm">Low Stock Medicines</span>
+                <span class="text-red-300 font-bold">{{ alerts.low_stock }}</span>
+            </div>
+            <div class="bg-rose-500/10 border border-rose-500/20 rounded-xl p-3 flex items-center justify-between">
+                <span class="text-gray-300 text-sm">Expired Medicines</span>
+                <span class="text-rose-300 font-bold">{{ alerts.expired_medicines }}</span>
+            </div>
+            <div class="bg-blue-500/10 border border-blue-500/20 rounded-xl p-3 flex items-center justify-between">
+                <span class="text-gray-300 text-sm">Appointments Today</span>
+                <span class="text-blue-300 font-bold">{{ alerts.appointments_today }}</span>
+            </div>
+            <div class="bg-amber-500/10 border border-amber-500/20 rounded-xl p-3 flex items-center justify-between">
+                <span class="text-gray-300 text-sm">Pending Lab Reports</span>
+                <span class="text-amber-300 font-bold">{{ alerts.pending_lab_reports }}</span>
+            </div>
+            <div class="bg-purple-500/10 border border-purple-500/20 rounded-xl p-3 flex items-center justify-between">
+                <span class="text-gray-300 text-sm">Doctors Without Hospital</span>
+                <span class="text-purple-300 font-bold">{{ alerts.doctors_without_hospital }}</span>
+            </div>
+            <div class="bg-gray-500/10 border border-gray-500/20 rounded-xl p-3 flex items-center justify-between">
+                <span class="text-gray-300 text-sm">Inactive Users</span>
+                <span class="text-gray-300 font-bold">{{ alerts.inactive_users }}</span>
+            </div>
+            <div class="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3 flex items-center justify-between">
+                <span class="text-gray-300 text-sm">New Registrations Today</span>
+                <span class="text-emerald-300 font-bold">{{ alerts.new_registrations_today }}</span>
+            </div>
+            <div class="bg-cyan-500/10 border border-cyan-500/20 rounded-xl p-3 flex items-center justify-between">
+                <span class="text-gray-300 text-sm">Upcoming Expiry (7 days)</span>
+                <span class="text-cyan-300 font-bold">{{ alerts.upcoming_expiry }}</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ====================== SYSTEM HEALTH ====================== -->
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+        {% for key, value in system_health.items %}
+        <div class="glass-card rounded-2xl border border-white/10 p-4 text-center">
+            <p class="text-gray-400 text-xs uppercase tracking-wider">{{ key|title }}</p>
+            <p class="text-lg font-semibold text-white mt-1">
+                {% if value == 'Online' %}
+                    <span class="text-emerald-400"><i class="fas fa-circle text-xs mr-1"></i> {{ value }}</span>
+                {% elif value == '0' %}
+                    <span class="text-gray-400">{{ value }}</span>
+                {% else %}
+                    {{ value }}
+                {% endif %}
+            </p>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- ====================== NOTIFICATIONS ====================== -->
+    <div class="glass-card rounded-2xl border border-white/10 p-5">
+        <h3 class="text-white font-medium mb-3 flex items-center gap-2">
+            <i class="fas fa-bell text-amber-400"></i> Recent Notifications
+        </h3>
+        <div class="space-y-2 max-h-64 overflow-y-auto scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
+            {% for notif in recent_notifications %}
+            <div class="flex items-center gap-3 text-sm border-b border-white/5 pb-2 hover:bg-white/5 p-2 rounded-lg transition">
+                <i class="fas fa-circle text-{{ notif.verb|default:'blue' }}-400 text-xs"></i>
+                <span class="text-gray-300 flex-1">{{ notif.message|default:"New notification" }}</span>
+                <span class="text-gray-500 text-xs">{{ notif.created_at|timesince }} ago</span>
+                {% if notif.is_read %}
+                    <span class="text-gray-500 text-xs"><i class="fas fa-check-circle"></i></span>
+                {% else %}
+                    <a href="{% url 'notifications:mark_read' notif.pk %}" class="text-blue-400 hover:text-blue-300 text-xs">Mark read</a>
+                {% endif %}
+            </div>
+            {% empty %}
+            <p class="text-gray-400 text-sm">No recent notifications.</p>
+            {% endfor %}
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // ====================== CHART.JS (COMPACT) ======================
+    document.addEventListener('DOMContentLoaded', function () {
+        // Appointments per Month
+        const ctx1 = document.getElementById('appointmentsChart').getContext('2d');
+        new Chart(ctx1, {
+            type: 'bar',
+            data: {
+                labels: {{ appointment_months|safe }},
+                datasets: [{
+                    label: 'Appointments',
+                    data: {{ appointment_counts|safe }},
+                    backgroundColor: 'rgba(59, 130, 246, 0.5)',
+                    borderColor: 'rgba(59, 130, 246, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { labels: { color: '#cbd5e1', boxWidth: 8 } }
+                },
+                scales: {
+                    y: { beginAtZero: true, ticks: { color: '#94a3b8', stepSize: 1 } },
+                    x: { ticks: { color: '#94a3b8', font: { size: 9 } } }
+                }
+            }
+        });
+
+        // Patient Registration Trend
+        const ctx2 = document.getElementById('patientsChart').getContext('2d');
+        new Chart(ctx2, {
+            type: 'line',
+            data: {
+                labels: {{ patient_months|safe }},
+                datasets: [{
+                    label: 'Patients',
+                    data: {{ patient_counts|safe }},
+                    backgroundColor: 'rgba(16, 185, 129, 0.2)',
+                    borderColor: 'rgba(16, 185, 129, 1)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { labels: { color: '#cbd5e1', boxWidth: 8 } }
+                },
+                scales: {
+                    y: { beginAtZero: true, ticks: { color: '#94a3b8', stepSize: 1 } },
+                    x: { ticks: { color: '#94a3b8', font: { size: 9 } } }
+                }
+            }
+        });
+
+        // Revenue Trend
+        const ctx3 = document.getElementById('revenueChart').getContext('2d');
+        new Chart(ctx3, {
+            type: 'bar',
+            data: {
+                labels: {{ revenue_months|safe }},
+                datasets: [{
+                    label: 'Revenue (BDT)',
+                    data: {{ revenue_amounts|safe }},
+                    backgroundColor: 'rgba(251, 191, 36, 0.5)',
+                    borderColor: 'rgba(251, 191, 36, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { labels: { color: '#cbd5e1', boxWidth: 8 } }
+                },
+                scales: {
+                    y: { beginAtZero: true, ticks: { color: '#94a3b8', stepSize: 1 } },
+                    x: { ticks: { color: '#94a3b8', font: { size: 9 } } }
+                }
+            }
+        });
+
+        // Medicine Sales
+        const ctx4 = document.getElementById('medicineSalesChart').getContext('2d');
+        new Chart(ctx4, {
+            type: 'line',
+            data: {
+                labels: {{ medicine_sales_months|safe }},
+                datasets: [{
+                    label: 'Units Sold',
+                    data: {{ medicine_sales_counts|safe }},
+                    backgroundColor: 'rgba(236, 72, 153, 0.2)',
+                    borderColor: 'rgba(236, 72, 153, 1)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { labels: { color: '#cbd5e1', boxWidth: 8 } }
+                },
+                scales: {
+                    y: { beginAtZero: true, ticks: { color: '#94a3b8', stepSize: 1 } },
+                    x: { ticks: { color: '#94a3b8', font: { size: 9 } } }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

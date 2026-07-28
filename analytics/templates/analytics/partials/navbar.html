@@ -1,0 +1,254 @@
+{% load static %}
+{% load role_tags %}
+
+<nav class="sticky top-0 z-50 bg-[#111827]/80 backdrop-blur-xl border-b border-white/10 px-4 py-2.5 flex items-center justify-between flex-wrap gap-3">
+    <!-- Left section: Toggler + Brand (for mobile) -->
+    <div class="flex items-center gap-3">
+        <button class="lg:hidden text-gray-400 hover:text-white transition-colors" id="navbarSidebarToggle" aria-label="Toggle sidebar">
+            <i class="fas fa-bars text-xl"></i>
+        </button>
+        <a class="lg:hidden text-white font-bold text-lg" href="{% url 'analytics:dashboard' %}">
+            NHIMS
+        </a>
+    </div>
+
+    <!-- Center: Search + Hospital Selector (hidden on mobile) -->
+    <div class="hidden lg:flex items-center gap-3 flex-1 max-w-xl mx-4">
+        <!-- Global Search -->
+        <div class="relative flex-1">
+            <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm"></i>
+            <input type="text" class="w-full bg-white/5 border border-white/10 rounded-full py-1.5 pl-9 pr-3 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 outline-none transition text-sm" id="globalSearchInput" placeholder="Search patients, doctors, appointments...">
+            <div id="globalSearchResults" class="absolute top-full left-0 right-0 mt-1 bg-[#111827] border border-white/10 rounded-xl shadow-2xl hidden overflow-y-auto max-h-64 z-50"></div>
+        </div>
+
+        <!-- Hospital Selector (Fixed) -->
+        <div class="relative">
+            <button class="flex items-center gap-1.5 text-gray-400 hover:text-white transition-colors text-sm border border-white/10 rounded-full px-3 py-1.5 bg-white/5" id="hospitalDropdown">
+                <i class="fas fa-hospital text-xs"></i>
+                <span id="hospitalSelected">Select Hospital</span>
+                <i class="fas fa-chevron-down text-xs"></i>
+            </button>
+            <div class="absolute right-0 mt-1 w-48 bg-[#111827] border border-white/10 rounded-xl shadow-2xl hidden z-50" id="hospitalMenu">
+                <a href="#" class="block px-4 py-2 text-sm text-gray-300 hover:bg-white/5 hover:text-white" data-hospital="All Hospitals">All Hospitals</a>
+                <a href="#" class="block px-4 py-2 text-sm text-gray-300 hover:bg-white/5 hover:text-white" data-hospital="Dhaka Medical">Dhaka Medical</a>
+                <a href="#" class="block px-4 py-2 text-sm text-gray-300 hover:bg-white/5 hover:text-white" data-hospital="Square Hospital">Square Hospital</a>
+                <a href="#" class="block px-4 py-2 text-sm text-gray-300 hover:bg-white/5 hover:text-white" data-hospital="Apollo Hospitals">Apollo Hospitals</a>
+                <a href="#" class="block px-4 py-2 text-sm text-gray-300 hover:bg-white/5 hover:text-white" data-hospital="United Hospital">United Hospital</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right section: Notifications, Messages, Quick Add, Profile -->
+    <div class="flex items-center gap-2 sm:gap-3">
+        <!-- Dark Mode Toggle (UI only) -->
+        <button class="text-gray-400 hover:text-white transition-colors hidden sm:inline-block" id="darkModeToggle" aria-label="Toggle dark mode">
+            <i class="fas fa-moon text-lg"></i>
+        </button>
+
+        <!-- Notification Bell -->
+        {% include 'notifications/partials/notification_dropdown.html' %}
+
+        <!-- Messages -->
+        <button class="relative text-gray-400 hover:text-white transition-colors hidden sm:inline-block">
+            <i class="fas fa-envelope text-lg"></i>
+            <span class="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[10px] rounded-full w-4 h-4 flex items-center justify-center font-bold">2</span>
+        </button>
+
+        <!-- Quick Add Dropdown (role-based) -->
+        <div class="relative">
+            {% if is_super_admin or is_hospital_admin or is_receptionist or is_doctor %}
+                <button class="hidden sm:inline-flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-1.5 rounded-full shadow-lg shadow-blue-500/25 transition-all hover:scale-105" id="quickAddBtn">
+                    <i class="fas fa-plus"></i>
+                    <span>Quick Add</span>
+                </button>
+                <div class="absolute right-0 mt-1 w-56 bg-[#111827] border border-white/10 rounded-xl shadow-2xl hidden z-50" id="quickAddMenu">
+                    {% if is_super_admin or is_hospital_admin or is_receptionist %}
+                        <a href="{% url 'patients:create' %}" class="block px-4 py-2 text-sm text-gray-300 hover:bg-white/5 hover:text-white"><i class="fas fa-user-plus mr-2 w-5"></i>Add Patient</a>
+                        <a href="{% url 'appointments:create' %}" class="block px-4 py-2 text-sm text-gray-300 hover:bg-white/5 hover:text-white"><i class="fas fa-calendar-plus mr-2 w-5"></i>Book Appointment</a>
+                    {% endif %}
+                    {% if is_doctor or is_super_admin or is_hospital_admin %}
+                        <a href="{% url 'prescriptions:create' %}" class="block px-4 py-2 text-sm text-gray-300 hover:bg-white/5 hover:text-white"><i class="fas fa-prescription-bottle mr-2 w-5"></i>Create Prescription</a>
+                    {% endif %}
+                    <hr class="border-white/10 my-1">
+                    <a href="{% url 'doctors:create' %}" class="block px-4 py-2 text-sm text-gray-300 hover:bg-white/5 hover:text-white"><i class="fas fa-user-md mr-2 w-5"></i>Register Doctor</a>
+                    <a href="{% url 'hospitals:create' %}" class="block px-4 py-2 text-sm text-gray-300 hover:bg-white/5 hover:text-white"><i class="fas fa-hospital mr-2 w-5"></i>Add Hospital</a>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Profile Dropdown -->
+        <div class="relative">
+            <button class="flex items-center gap-2 text-gray-300 hover:text-white transition-colors" id="profileBtn">
+                <div class="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center text-white font-semibold text-sm shadow-md">
+                    {{ user.get_full_name|slice:":1"|upper|default:"U" }}
+                </div>
+                <span class="hidden md:inline text-sm font-medium">{{ user.get_full_name|default:user.username }}</span>
+                <span class="hidden sm:inline text-xs text-gray-400 bg-white/5 px-2 py-0.5 rounded-full">{{ user.get_role_display }}</span>
+                <i class="fas fa-chevron-down text-xs text-gray-500"></i>
+            </button>
+            <div class="absolute right-0 mt-1 w-56 bg-[#111827] border border-white/10 rounded-xl shadow-2xl hidden z-50" id="profileMenu">
+                <div class="px-4 py-3 border-b border-white/10">
+                    <p class="text-sm font-medium text-white">{{ user.get_full_name|default:user.username }}</p>
+                    <p class="text-xs text-gray-400">{{ user.email|default:"No email" }}</p>
+                    <p class="text-xs text-gray-500">{{ user.get_role_display }}</p>
+                </div>
+                <a href="#" class="block px-4 py-2 text-sm text-gray-300 hover:bg-white/5 hover:text-white"><i class="fas fa-user mr-2 w-5"></i>Profile</a>
+                <a href="#" class="block px-4 py-2 text-sm text-gray-300 hover:bg-white/5 hover:text-white"><i class="fas fa-cog mr-2 w-5"></i>Settings</a>
+                <hr class="border-white/10 my-1">
+<form method="post" action="{% url 'accounts:logout' %}" style="display:inline;">
+    {% csrf_token %}
+    <button type="submit" class="logout-btn" title="Logout"
+            style="background:none;border:none;padding:0;cursor:pointer;">
+        <i class="fas fa-sign-out-alt"></i>
+    </button>
+</form>            </div>
+        </div>
+    </div>
+</nav>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // ---- Sidebar Toggle ----
+        const toggleBtn = document.getElementById('navbarSidebarToggle');
+        if (toggleBtn) {
+            toggleBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const sidebar = document.getElementById('sidebar');
+                const overlay = document.getElementById('sidebarOverlay');
+                if (sidebar) {
+                    sidebar.classList.toggle('open');
+                    if (overlay) overlay.classList.toggle('active');
+                }
+            });
+        }
+
+        // ---- Hospital Selector (Fixed) ----
+        const hospitalBtn = document.getElementById('hospitalDropdown');
+        const hospitalMenu = document.getElementById('hospitalMenu');
+        const hospitalSelected = document.getElementById('hospitalSelected');
+
+        if (hospitalBtn && hospitalMenu) {
+            hospitalBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                hospitalMenu.classList.toggle('hidden');
+            });
+            document.addEventListener('click', function(e) {
+                if (!hospitalBtn.contains(e.target) && !hospitalMenu.contains(e.target)) {
+                    hospitalMenu.classList.add('hidden');
+                }
+            });
+            hospitalMenu.querySelectorAll('a').forEach(function(item) {
+                item.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const hospitalName = this.getAttribute('data-hospital');
+                    if (hospitalSelected) {
+                        hospitalSelected.textContent = hospitalName;
+                    }
+                    hospitalMenu.classList.add('hidden');
+                });
+            });
+        }
+
+        // ---- Quick Add ----
+        const quickBtn = document.getElementById('quickAddBtn');
+        const quickMenu = document.getElementById('quickAddMenu');
+        if (quickBtn && quickMenu) {
+            quickBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                quickMenu.classList.toggle('hidden');
+            });
+            document.addEventListener('click', function(e) {
+                if (!quickBtn.contains(e.target) && !quickMenu.contains(e.target)) {
+                    quickMenu.classList.add('hidden');
+                }
+            });
+        }
+
+        // ---- Profile Dropdown ----
+        const profileBtn = document.getElementById('profileBtn');
+        const profileMenu = document.getElementById('profileMenu');
+        if (profileBtn && profileMenu) {
+            profileBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                profileMenu.classList.toggle('hidden');
+            });
+            document.addEventListener('click', function(e) {
+                if (!profileBtn.contains(e.target) && !profileMenu.contains(e.target)) {
+                    profileMenu.classList.add('hidden');
+                }
+            });
+        }
+
+        // ---- Dark Mode Toggle ----
+        const darkToggle = document.getElementById('darkModeToggle');
+        if (darkToggle) {
+            darkToggle.addEventListener('click', function() {
+                const icon = this.querySelector('i');
+                if (icon.classList.contains('fa-moon')) {
+                    icon.classList.remove('fa-moon');
+                    icon.classList.add('fa-sun');
+                } else {
+                    icon.classList.remove('fa-sun');
+                    icon.classList.add('fa-moon');
+                }
+            });
+        }
+
+        // ---- Global Search ----
+        const searchInput = document.getElementById('globalSearchInput');
+        const resultsContainer = document.getElementById('globalSearchResults');
+        if (searchInput && resultsContainer) {
+            let debounceTimer;
+            searchInput.addEventListener('input', function() {
+                clearTimeout(debounceTimer);
+                const query = this.value.trim();
+                if (query.length < 2) {
+                    resultsContainer.classList.add('hidden');
+                    return;
+                }
+                debounceTimer = setTimeout(() => {
+                    fetch(`/analytics/search/?q=${encodeURIComponent(query)}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.results) {
+                                let html = '';
+                                const sections = ['patients', 'doctors', 'appointments', 'prescriptions', 'medical_records', 'medicines'];
+                                const labels = {
+                                    'patients': 'Patients',
+                                    'doctors': 'Doctors',
+                                    'appointments': 'Appointments',
+                                    'prescriptions': 'Prescriptions',
+                                    'medical_records': 'Medical Records',
+                                    'medicines': 'Medicines'
+                                };
+                                let hasResults = false;
+                                sections.forEach(key => {
+                                    if (data.results[key] && data.results[key].length > 0) {
+                                        hasResults = true;
+                                        html += `<div class="px-4 py-1 text-xs font-semibold text-gray-500 uppercase">${labels[key]}</div>`;
+                                        data.results[key].forEach(item => {
+                                            html += `<a href="${item.url}" class="block px-4 py-2 text-sm text-gray-300 hover:bg-white/5 hover:text-white">${item.name}</a>`;
+                                        });
+                                    }
+                                });
+                                if (!hasResults) {
+                                    html = `<div class="px-4 py-3 text-sm text-gray-400">No results found</div>`;
+                                }
+                                resultsContainer.innerHTML = html;
+                                resultsContainer.classList.remove('hidden');
+                            }
+                        })
+                        .catch(() => {
+                            resultsContainer.classList.add('hidden');
+                        });
+                }, 350);
+            });
+
+            document.addEventListener('click', function(e) {
+                if (!searchInput.contains(e.target) && !resultsContainer.contains(e.target)) {
+                    resultsContainer.classList.add('hidden');
+                }
+            });
+        }
+    });
+</script>

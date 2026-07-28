@@ -1,0 +1,135 @@
+{% load static %}
+<div class="glass-card p-4">
+    <div class="flex items-center justify-between mb-3">
+        <h5 class="text-white font-semibold text-base flex items-center gap-2">
+            <i class="fas fa-clock text-blue-400"></i>
+            Recent Activity
+        </h5>
+        <span class="text-xs text-gray-400">Live</span>
+    </div>
+    <div class="space-y-2 max-h-80 overflow-y-auto pr-1">
+        {% if recent.patients or recent.appointments or recent.prescriptions or recent.lab_orders %}
+            <!-- Real data from backend -->
+            {% for patient in recent.patients|slice:":2" %}
+                <div class="timeline-item">
+                    <div class="icon" style="background: #2563EB;">
+                        <i class="fas fa-user-plus"></i>
+                    </div>
+                    <div class="content">
+                        <div class="head">
+                            <span class="text">Patient Registered</span>
+                            <span class="time">{{ patient.created_at|timesince }} ago</span>
+                        </div>
+                        <div class="details">{{ patient.full_name }} · {{ patient.district|default:"N/A" }}</div>
+                        <span class="badge">New</span>
+                    </div>
+                </div>
+            {% endfor %}
+            {% for appt in recent.appointments|slice:":2" %}
+                <div class="timeline-item">
+                    <div class="icon" style="background: #8B5CF6;">
+                        <i class="fas fa-calendar-plus"></i>
+                    </div>
+                    <div class="content">
+                        <div class="head">
+                            <span class="text">Appointment Booked</span>
+                            <span class="time">{{ appt.created_at|timesince }} ago</span>
+                        </div>
+                        <div class="details">{{ appt.patient.full_name }} with Dr. {{ appt.doctor.full_name }}</div>
+                        <span class="badge">Scheduled</span>
+                    </div>
+                </div>
+            {% endfor %}
+            {% for rx in recent.prescriptions|slice:":2" %}
+                <div class="timeline-item">
+                    <div class="icon" style="background: #EC4899;">
+                        <i class="fas fa-prescription-bottle"></i>
+                    </div>
+                    <div class="content">
+                        <div class="head">
+                            <span class="text">Prescription Created</span>
+                            <span class="time">{{ rx.created_at|timesince }} ago</span>
+                        </div>
+                        <div class="details">For {{ rx.patient.full_name }}</div>
+                        <span class="badge" style="background:#F59E0B;">Active</span>
+                    </div>
+                </div>
+            {% endfor %}
+            {% for order in recent.lab_orders|slice:":2" %}
+                <div class="timeline-item">
+                    <div class="icon" style="background: #06B6D4;">
+                        <i class="fas fa-flask"></i>
+                    </div>
+                    <div class="content">
+                        <div class="head">
+                            <span class="text">Lab Report Generated</span>
+                            <span class="time">{{ order.created_at|timesince }} ago</span>
+                        </div>
+                        <div class="details">{{ order.patient.full_name }}</div>
+                        <span class="badge" style="background:#22C55E;">Completed</span>
+                    </div>
+                </div>
+            {% endfor %}
+            <div class="mt-2 text-center">
+                <a href="#" class="text-xs text-blue-400 hover:text-blue-300 transition">View all activity →</a>
+            </div>
+        {% else %}
+            <!-- Fallback: Static sample data when no real data exists -->
+            <div class="timeline-item">
+                <div class="icon" style="background: #2563EB;">
+                    <i class="fas fa-user-plus"></i>
+                </div>
+                <div class="content">
+                    <div class="head">
+                        <span class="text">Patient Registered</span>
+                        <span class="time">2 hours ago</span>
+                    </div>
+                    <div class="details">Rahim Test · Dhaka</div>
+                    <span class="badge">New</span>
+                </div>
+            </div>
+            <div class="timeline-item">
+                <div class="icon" style="background: #8B5CF6;">
+                    <i class="fas fa-calendar-plus"></i>
+                </div>
+                <div class="content">
+                    <div class="head">
+                        <span class="text">Appointment Booked</span>
+                        <span class="time">4 hours ago</span>
+                    </div>
+                    <div class="details">Karim Ahmed with Dr. Rahman</div>
+                    <span class="badge">Scheduled</span>
+                </div>
+            </div>
+            <div class="timeline-item">
+                <div class="icon" style="background: #EC4899;">
+                    <i class="fas fa-prescription-bottle"></i>
+                </div>
+                <div class="content">
+                    <div class="head">
+                        <span class="text">Prescription Created</span>
+                        <span class="time">5 hours ago</span>
+                    </div>
+                    <div class="details">For Fatima Begum</div>
+                    <span class="badge" style="background:#F59E0B;">Active</span>
+                </div>
+            </div>
+            <div class="timeline-item">
+                <div class="icon" style="background: #06B6D4;">
+                    <i class="fas fa-flask"></i>
+                </div>
+                <div class="content">
+                    <div class="head">
+                        <span class="text">Lab Report Generated</span>
+                        <span class="time">6 hours ago</span>
+                    </div>
+                    <div class="details">Sample Test – Normal</div>
+                    <span class="badge" style="background:#22C55E;">Completed</span>
+                </div>
+            </div>
+            <div class="mt-2 text-center">
+                <span class="text-xs text-gray-500">No live activity – sample data shown</span>
+            </div>
+        {% endif %}
+    </div>
+</div>

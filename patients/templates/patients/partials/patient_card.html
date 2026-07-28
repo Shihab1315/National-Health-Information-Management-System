@@ -1,0 +1,40 @@
+{% load static %}
+<div class="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 hover:bg-white/10 transition hover:scale-105 duration-200 group">
+    <!-- Avatar -->
+    <div class="flex items-center justify-between mb-4">
+        <div class="w-14 h-14 rounded-full bg-linear-to-br from-blue-500/30 to-cyan-500/30 flex items-center justify-center text-blue-300 font-bold text-2xl shadow-inner">
+            {{ patient.full_name|slice:":1"|upper }}
+        </div>
+        <div class="flex gap-2">
+            <a href="{% url 'patients:detail' patient.pk %}" class="text-blue-400 hover:text-blue-300 transition" title="View">
+                <i class="fas fa-eye"></i>
+            </a>
+            <a href="{% url 'patients:update' patient.pk %}" class="text-emerald-400 hover:text-emerald-300 transition" title="Edit">
+                <i class="fas fa-pen"></i>
+            </a>
+            <a href="{% url 'patients:delete' patient.pk %}" class="text-red-400 hover:text-red-300 transition" title="Delete">
+                <i class="fas fa-trash-alt"></i>
+            </a>
+        </div>
+    </div>
+
+    <!-- Name & ID -->
+    <h3 class="text-white font-semibold text-lg">{{ patient.full_name }}</h3>
+    <p class="text-cyan-400 font-mono text-sm">{{ patient.health_id }}</p>
+
+    <!-- Details -->
+    <div class="mt-3 space-y-1 text-sm text-gray-300">
+        <div><i class="fas fa-phone-alt text-gray-500 w-5"></i> {{ patient.phone }}</div>
+        <div><i class="fas fa-map-marker-alt text-gray-500 w-5"></i> {{ patient.district|default:"N/A" }}</div>
+        <div><i class="far fa-calendar-alt text-gray-500 w-5"></i> {{ patient.date_of_birth|timesince }} old</div>
+    </div>
+
+    <!-- Status badge -->
+    <div class="mt-4">
+        {% if patient.is_active %}
+            <span class="bg-emerald-500/20 text-emerald-300 text-xs px-3 py-1 rounded-full">Active</span>
+        {% else %}
+            <span class="bg-red-500/20 text-red-300 text-xs px-3 py-1 rounded-full">Inactive</span>
+        {% endif %}
+    </div>
+</div>

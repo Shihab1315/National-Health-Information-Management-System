@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Medicines — NHIMS Pharmacy{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+    <!-- Breadcrumb -->
+    <nav class="flex items-center gap-2 text-sm text-gray-400 mb-6" aria-label="Breadcrumb">
+        <a href="{% url 'pharmacy:dashboard' %}" class="hover:text-white transition">Dashboard</a>
+        <span class="text-gray-600">/</span>
+        <span class="text-white">Medicines</span>
+    </nav>
+
+    <!-- Header -->
+    <div class="flex flex-wrap justify-between items-center gap-4 mb-8">
+        <div>
+            <h1 class="text-3xl font-bold text-white flex items-center gap-3">
+                <i class="fas fa-capsules text-blue-400 text-2xl"></i>
+                Medicines
+            </h1>
+            <p class="text-gray-400 text-sm">Manage your medicine inventory</p>
+        </div>
+        <a href="{% url 'pharmacy:medicine_create' %}" class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-medium shadow-lg shadow-blue-500/30 hover:scale-105 transition">
+            <i class="fas fa-plus-circle"></i> Add Medicine
+        </a>
+    </div>
+
+    <!-- Filters & Search -->
+    <div class="glass-card rounded-2xl border border-white/10 p-5 mb-8">
+        <form method="get" class="flex flex-wrap gap-3">
+            <div class="relative flex-1 min-w-50">
+                <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                <input type="text" name="q" placeholder="Search by name, code, barcode..." value="{{ request.GET.q|default:'' }}" class="w-full pl-11 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-400 focus:border-blue-500 outline-none transition">
+            </div>
+            <select name="category" class="w-full md:w-48 px-4 py-3 bg-[#0d2137] border border-white/10 rounded-xl text-white focus:border-blue-500 outline-none">
+                <option value="">All Categories</option>
+                {% for cat in categories %}
+                <option value="{{ cat.id }}" {% if request.GET.category == cat.id|stringformat:"s" %}selected{% endif %}>{{ cat.name }}</option>
+                {% endfor %}
+            </select>
+            <select name="stock" class="w-full md:w-40 px-4 py-3 bg-[#0d2137] border border-white/10 rounded-xl text-white focus:border-blue-500 outline-none">
+                <option value="">All Stock</option>
+                <option value="low" {% if request.GET.stock == 'low' %}selected{% endif %}>Low Stock</option>
+                <option value="out" {% if request.GET.stock == 'out' %}selected{% endif %}>Out of Stock</option>
+            </select>
+            <select name="expiry" class="w-full md:w-40 px-4 py-3 bg-[#0d2137] border border-white/10 rounded-xl text-white focus:border-blue-500 outline-none">
+                <option value="">All Expiry</option>
+                <option value="expired" {% if request.GET.expiry == 'expired' %}selected{% endif %}>Expired</option>
+            </select>
+            <button type="submit" class="bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-xl text-white font-medium transition">Filter</button>
+            <a href="{% url 'pharmacy:medicine_list' %}" class="bg-white/5 hover:bg-white/10 px-6 py-3 rounded-xl text-gray-300 transition">Reset</a>
+        </form>
+    </div>
+
+    <!-- Table -->
+    <div class="glass-card rounded-2xl border border-white/10 overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead class="bg-white/5 border-b border-white/10">
+                    <tr class="text-left text-gray-400 font-medium">
+                        <th class="px-4 py-3">Code</th>
+                        <th class="px-4 py-3">Brand Name</th>
+                        <th class="px-4 py-3">Category</th>
+                        <th class="px-4 py-3">Stock</th>
+                        <th class="px-4 py-3">Price</th>
+                        <th class="px-4 py-3">Expiry</th>
+                        <th class="px-4 py-3">Status</th>
+                        <th class="px-4 py-3 text-center">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-white/5">
+                    {% for medicine in medicines %}
+                    <tr class="hover:bg-white/5 transition">
+                        <td class="px-4 py-3 text-white font-mono text-xs">{{ medicine.medicine_code }}</td>
+                        <td class="px-4 py-3">
+                            <div class="flex items-center gap-2">
+                                <span class="text-white font-medium">{{ medicine.brand_name }}</span>
+                                <span class="text-gray-500 text-xs">{{ medicine.generic_name|default:'' }}</span>
+                            </div>
+                        </td>
+                        <td class="px-4 py-3 text-gray-300">{{ medicine.category.name|default:"—" }}</td>
+                        <td class="px-4 py-3">
+                            <span class="font-medium text-white">{{ medicine.current_stock }}</span>
+                            {% if medicine.is_low_stock %}
+                                <span class="ml-1 text-xs px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300">Low</span>
+                            {% endif %}
+                            {% if medicine.is_out_of_stock %}
+                                <span class="ml-1 text-xs px-2 py-0.5 rounded-full bg-red-500/20 text-red-300">Out</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-3 text-white">${{ medicine.selling_price|floatformat:2 }}</td>
+                        <td class="px-4 py-3">
+                            <span class="text-xs px-2 py-1 rounded-full 
+                                {% if medicine.is_expired %}bg-red-500/20 text-red-300{% else %}bg-green-500/20 text-green-300{% endif %}">
+                                {{ medicine.expiry_date|date:"M d, Y" }}
+                            </span>
+                        </td>
+                        <td class="px-4 py-3">
+                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium
+                                {% if medicine.is_active %}bg-emerald-500/20 text-emerald-300{% else %}bg-gray-500/20 text-gray-300{% endif %}">
+                                <span class="w-1.5 h-1.5 rounded-full inline-block
+                                    {% if medicine.is_active %}bg-emerald-400{% else %}bg-gray-400{% endif %}"></span>
+                                {{ medicine.is_active|yesno:"Active,Inactive" }}
+                            </span>
+                        </td>
+                        <td class="px-4 py-3 text-center">
+                            <div class="flex items-center justify-center gap-1">
+                                <a href="{% url 'pharmacy:medicine_detail' medicine.pk %}" class="text-blue-400 hover:text-blue-300 transition p-1.5" title="View">
+                                    <i class="fas fa-eye text-sm"></i>
+                                </a>
+                                <a href="{% url 'pharmacy:medicine_edit' medicine.pk %}" class="text-amber-400 hover:text-amber-300 transition p-1.5" title="Edit">
+                                    <i class="fas fa-pen text-sm"></i>
+                                </a>
+                                <a href="{% url 'pharmacy:medicine_delete' medicine.pk %}" class="text-red-400 hover:text-red-300 transition p-1.5" title="Delete">
+                                    <i class="fas fa-trash-alt text-sm"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="text-center py-12 text-gray-400">
+                            <i class="fas fa-capsules text-4xl block mb-3 opacity-40"></i>
+                            <p class="text-lg font-medium">No medicines found</p>
+                            <p class="text-sm">Try adjusting your search or filters, or add a new medicine.</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    <div class="mt-6 flex flex-wrap items-center justify-between gap-3">
+        <div class="text-sm text-gray-400">
+            Showing {{ page_obj.start_index }}–{{ page_obj.end_index }} of {{ page_obj.paginator.count }}
+        </div>
+        <div class="flex gap-2">
+            {% if page_obj.has_previous %}
+            <a href="?page=1{% for key, val in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ val }}{% endif %}{% endfor %}" class="px-3 py-1.5 bg-white/5 rounded-lg hover:bg-white/10 transition">&laquo;</a>
+            <a href="?page={{ page_obj.previous_page_number }}{% for key, val in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ val }}{% endif %}{% endfor %}" class="px-3 py-1.5 bg-white/5 rounded-lg hover:bg-white/10 transition">&lsaquo;</a>
+            {% endif %}
+            <span class="px-4 py-1.5 bg-blue-600/30 text-blue-300 font-medium rounded-lg">{{ page_obj.number }}</span>
+            {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}{% for key, val in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ val }}{% endif %}{% endfor %}" class="px-3 py-1.5 bg-white/5 rounded-lg hover:bg-white/10 transition">&rsaquo;</a>
+            <a href="?page={{ page_obj.paginator.num_pages }}{% for key, val in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ val }}{% endif %}{% endfor %}" class="px-3 py-1.5 bg-white/5 rounded-lg hover:bg-white/10 transition">&raquo;</a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

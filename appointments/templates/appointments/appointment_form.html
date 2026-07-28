@@ -1,0 +1,493 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{% if form.instance.pk %}Edit Appointment{% else %}Create Appointment{% endif %} - NHIMS{% endblock %}
+
+{% block extra_head %}
+<!-- Tailwind CDN (if not already in base) -->
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  .form-card {
+    transition: box-shadow 0.3s ease;
+  }
+  .form-card:hover {
+    box-shadow: 0 20px 60px -15px rgba(0, 0, 0, 0.15);
+  }
+  .input-group-icon {
+    position: relative;
+  }
+  .input-group-icon .icon {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #94a3b8;
+    pointer-events: none;
+    z-index: 10;
+  }
+  .input-group-icon input,
+  .input-group-icon select,
+  .input-group-icon textarea {
+    padding-left: 44px;
+  }
+  .custom-select {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+    background-position: right 12px center;
+    background-repeat: no-repeat;
+    background-size: 1.5em 1.5em;
+    padding-right: 40px;
+  }
+  .input-error {
+    border-color: #ef4444 !important;
+  }
+  .input-error:focus {
+    border-color: #ef4444 !important;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2) !important;
+  }
+  .input-valid {
+    border-color: #22c55e !important;
+  }
+  .input-valid:focus {
+    border-color: #22c55e !important;
+    box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.2) !important;
+  }
+  .error-message {
+    font-size: 0.8rem;
+    color: #ef4444;
+    margin-top: 0.25rem;
+  }
+  #toast-container {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .toast-item {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.12);
+    padding: 14px 24px;
+    min-width: 280px;
+    max-width: 420px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transform: translateX(120%);
+    transition: transform 0.4s ease, opacity 0.4s ease;
+    opacity: 0;
+    border-left: 4px solid #3b82f6;
+  }
+  .toast-item.show {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  .toast-item.success {
+    border-left-color: #22c55e;
+  }
+  .toast-item.error {
+    border-left-color: #ef4444;
+  }
+  .toast-item .toast-icon {
+    font-size: 1.5rem;
+  }
+  .toast-item .toast-content {
+    flex: 1;
+    font-size: 0.95rem;
+    color: #1e293b;
+  }
+  .toast-item .toast-close {
+    cursor: pointer;
+    color: #94a3b8;
+    transition: color 0.2s;
+  }
+  .toast-item .toast-close:hover {
+    color: #475569;
+  }
+  .spinner {
+    display: inline-block;
+    width: 1rem;
+    height: 1rem;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-radius: 50%;
+    border-top-color: #fff;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+  .btn-disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  <!-- Breadcrumb -->
+  <nav class="flex items-center text-sm text-gray-500 mb-6" aria-label="Breadcrumb">
+    <a href="{% url 'appointments:list' %}" class="hover:text-blue-600 transition">
+      <i class="fas fa-home mr-1"></i> Dashboard
+    </a>
+    <span class="mx-2">/</span>
+    <a href="{% url 'appointments:list' %}" class="hover:text-blue-600 transition">Appointments</a>
+    <span class="mx-2">/</span>
+    <span class="text-gray-700 font-medium">{% if form.instance.pk %}Edit{% else %}Create{% endif %} Appointment</span>
+  </nav>
+
+  <!-- Header -->
+  <div class="flex flex-wrap items-center justify-between gap-4 mb-8">
+    <div>
+      <h1 class="text-3xl font-bold text-gray-800 flex items-center gap-3">
+        <span class="bg-blue-600 text-white p-3 rounded-xl shadow-lg shadow-blue-200">
+          <i class="fas fa-calendar-plus text-xl"></i>
+        </span>
+        {% if form.instance.pk %}Edit Appointment{% else %}Create Appointment{% endif %}
+      </h1>
+      <p class="text-gray-500 mt-1 ml-1">{% if form.instance.pk %}Update{% else %}Schedule a new{% endif %} appointment with a doctor</p>
+    </div>
+    <a href="{% url 'appointments:list' %}" class="inline-flex items-center gap-2 px-5 py-2.5 border border-gray-300 rounded-xl hover:bg-gray-50 transition shadow-sm text-gray-700 font-medium">
+      <i class="fas fa-arrow-left"></i> Back to List
+    </a>
+  </div>
+
+  <!-- Main Card -->
+  <div class="bg-white rounded-3xl shadow-xl shadow-gray-200/70 form-card overflow-hidden">
+    <!-- Card Header -->
+    <div class="bg-gradient-to-r from-blue-600 to-blue-700 px-8 py-6">
+      <div class="flex items-center gap-4">
+        <div class="bg-white/20 backdrop-blur p-3 rounded-xl">
+          <i class="fas fa-clipboard-list text-white text-2xl"></i>
+        </div>
+        <div>
+          <h2 class="text-xl font-bold text-white">{% if form.instance.pk %}Edit{% else %}New{% endif %} Appointment</h2>
+          <p class="text-blue-100 text-sm">Fill in the details to {% if form.instance.pk %}update{% else %}schedule{% endif %} an appointment</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card Body -->
+    <div class="p-8">
+      <form id="appointmentForm" method="post" novalidate>
+        {% csrf_token %}
+
+        <!-- Global errors -->
+        {% if form.non_field_errors %}
+          <div class="bg-red-50 border-l-4 border-red-500 p-4 rounded-xl mb-6">
+            {% for error in form.non_field_errors %}
+              <p class="text-red-700"><i class="fas fa-exclamation-circle mr-2"></i>{{ error }}</p>
+            {% endfor %}
+          </div>
+        {% endif %}
+
+        <!-- Two-column grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+
+          <!-- LEFT COLUMN -->
+          <div class="space-y-6">
+            <!-- Hospital -->
+            <div>
+              <label for="{{ form.hospital.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-1.5">
+                {{ form.hospital.label }} <span class="text-red-500">*</span>
+              </label>
+              <div class="relative input-group-icon">
+                <i class="fas fa-hospital icon"></i>
+                <select id="{{ form.hospital.id_for_label }}" name="{{ form.hospital.name }}"
+                        class="custom-select w-full rounded-xl border-gray-300 bg-gray-50/80 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition duration-200 py-3 px-4 text-gray-700 shadow-sm">
+                  <option value="">Select Hospital</option>
+                  {% for hospital in form.hospital.field.queryset %}
+                    <option value="{{ hospital.pk }}" {% if form.hospital.value == hospital.pk %}selected{% endif %}>{{ hospital.name }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="error-message hidden" id="hospitalError"></div>
+              <p class="text-xs text-gray-400 mt-1">{{ form.hospital.help_text }}</p>
+            </div>
+
+            <!-- Patient -->
+            <div>
+              <label for="{{ form.patient.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-1.5">
+                {{ form.patient.label }} <span class="text-red-500">*</span>
+              </label>
+              <div class="relative input-group-icon">
+                <i class="fas fa-user-injured icon"></i>
+                <select id="{{ form.patient.id_for_label }}" name="{{ form.patient.name }}"
+                        class="custom-select w-full rounded-xl border-gray-300 bg-gray-50/80 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition duration-200 py-3 px-4 text-gray-700 shadow-sm">
+                  <option value="">Select Patient</option>
+                  {% for patient in form.patient.field.queryset %}
+                    <option value="{{ patient.pk }}" {% if form.patient.value == patient.pk %}selected{% endif %}>{{ patient.user.get_full_name }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="error-message hidden" id="patientError"></div>
+              <p class="text-xs text-gray-400 mt-1">{{ form.patient.help_text }}</p>
+            </div>
+
+            <!-- Reason (from model) -->
+            <div>
+              <label for="{{ form.reason.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-1.5">
+                {{ form.reason.label }}
+              </label>
+              <div class="relative input-group-icon">
+                <i class="fas fa-pencil-alt icon" style="top:18px; transform:none;"></i>
+                <textarea id="{{ form.reason.id_for_label }}" name="{{ form.reason.name }}"
+                          rows="2"
+                          class="w-full rounded-xl border-gray-300 bg-gray-50/80 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition duration-200 py-3 px-4 text-gray-700 shadow-sm resize-none"
+                          placeholder="Brief reason for appointment">{{ form.reason.value|default:'' }}</textarea>
+              </div>
+              <p class="text-xs text-gray-400 mt-1">{{ form.reason.help_text }}</p>
+            </div>
+          </div>
+
+          <!-- RIGHT COLUMN -->
+          <div class="space-y-6">
+            <!-- Doctor -->
+            <div>
+              <label for="{{ form.doctor.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-1.5">
+                {{ form.doctor.label }} <span class="text-red-500">*</span>
+              </label>
+              <div class="relative input-group-icon">
+                <i class="fas fa-user-md icon"></i>
+                <select id="{{ form.doctor.id_for_label }}" name="{{ form.doctor.name }}"
+                        class="custom-select w-full rounded-xl border-gray-300 bg-gray-50/80 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition duration-200 py-3 px-4 text-gray-700 shadow-sm">
+                  <option value="">Select Doctor</option>
+                  {% for doctor in form.doctor.field.queryset %}
+                    <option value="{{ doctor.pk }}" {% if form.doctor.value == doctor.pk %}selected{% endif %}>Dr. {{ doctor.user.get_full_name }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="error-message hidden" id="doctorError"></div>
+              <p class="text-xs text-gray-400 mt-1">{{ form.doctor.help_text }}</p>
+            </div>
+
+            <!-- Appointment Date -->
+            <div>
+              <label for="{{ form.appointment_date.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-1.5">
+                {{ form.appointment_date.label }} <span class="text-red-500">*</span>
+              </label>
+              <div class="relative input-group-icon">
+                <i class="fas fa-calendar-day icon"></i>
+                <input type="date" id="{{ form.appointment_date.id_for_label }}" name="{{ form.appointment_date.name }}"
+                       class="w-full rounded-xl border-gray-300 bg-gray-50/80 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition duration-200 py-3 px-4 text-gray-700 shadow-sm"
+                       min="{% now 'Y-m-d' %}" value="{{ form.appointment_date.value|default:'' }}">
+              </div>
+              <div class="error-message hidden" id="dateError"></div>
+              <p class="text-xs text-gray-400 mt-1">{{ form.appointment_date.help_text }}</p>
+            </div>
+
+            <!-- Appointment Time -->
+            <div>
+              <label for="{{ form.appointment_time.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-1.5">
+                {{ form.appointment_time.label }} <span class="text-red-500">*</span>
+              </label>
+              <div class="relative input-group-icon">
+                <i class="fas fa-clock icon"></i>
+                <input type="time" id="{{ form.appointment_time.id_for_label }}" name="{{ form.appointment_time.name }}"
+                       class="w-full rounded-xl border-gray-300 bg-gray-50/80 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition duration-200 py-3 px-4 text-gray-700 shadow-sm"
+                       step="900" value="{{ form.appointment_time.value|default:'' }}">
+              </div>
+              <div class="error-message hidden" id="timeError"></div>
+              <p class="text-xs text-gray-400 mt-1">{{ form.appointment_time.help_text }}</p>
+            </div>
+
+            <!-- Status -->
+            <div>
+              <label for="{{ form.status.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-1.5">
+                {{ form.status.label }} <span class="text-red-500">*</span>
+              </label>
+              <div class="relative input-group-icon">
+                <i class="fas fa-circle icon" style="color: #3b82f6;"></i>
+                <select id="{{ form.status.id_for_label }}" name="{{ form.status.name }}"
+                        class="custom-select w-full rounded-xl border-gray-300 bg-gray-50/80 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition duration-200 py-3 px-4 text-gray-700 shadow-sm">
+                  {% for value, label in form.status.field.choices %}
+                    <option value="{{ value }}" {% if form.status.value == value %}selected{% endif %}>{{ label }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <p class="text-xs text-gray-400 mt-1">{{ form.status.help_text }}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Form Actions -->
+        <div class="flex flex-wrap items-center justify-end gap-4 mt-8 pt-6 border-t border-gray-200">
+          <a href="{% url 'appointments:list' %}" class="inline-flex items-center gap-2 px-6 py-2.5 border border-gray-300 rounded-xl hover:bg-gray-50 transition shadow-sm text-gray-700 font-medium">
+            <i class="fas fa-times"></i> Cancel
+          </a>
+          <button type="submit" id="submitBtn" class="inline-flex items-center gap-2 px-8 py-3 bg-blue-600 hover:bg-blue-700 active:scale-95 transition duration-200 rounded-xl shadow-lg shadow-blue-200 text-white font-semibold">
+            <i class="fas fa-save"></i> {% if form.instance.pk %}Update{% else %}Create{% endif %} Appointment
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Toast Container -->
+<div id="toast-container"></div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  (function() {
+    'use strict';
+
+    const form = document.getElementById('appointmentForm');
+    const submitBtn = document.getElementById('submitBtn');
+    const hospitalSelect = document.getElementById('{{ form.hospital.id_for_label }}');
+    const doctorSelect = document.getElementById('{{ form.doctor.id_for_label }}');
+    const dateInput = document.getElementById('{{ form.appointment_date.id_for_label }}');
+    const timeInput = document.getElementById('{{ form.appointment_time.id_for_label }}');
+    const patientSelect = document.getElementById('{{ form.patient.id_for_label }}');
+
+    // ---------- Dynamic doctor loading ----------
+    if (hospitalSelect && doctorSelect) {
+      hospitalSelect.addEventListener('change', function() {
+        const hospitalId = this.value;
+        if (!hospitalId) {
+          const originalOptions = doctorSelect.dataset.originalOptions;
+          if (originalOptions) {
+            doctorSelect.innerHTML = originalOptions;
+          } else {
+            doctorSelect.innerHTML = '<option value="">Select Doctor</option>';
+          }
+          doctorSelect.disabled = false;
+          return;
+        }
+
+        doctorSelect.disabled = true;
+        doctorSelect.innerHTML = '<option value="" disabled>Loading doctors...</option>';
+
+        fetch(`{% url 'appointments:doctors_by_hospital' %}?hospital_id=${hospitalId}`)
+          .then(res => {
+            if (!res.ok) throw new Error('Network error');
+            return res.json();
+          })
+          .then(data => {
+            let options = '<option value="">Select Doctor</option>';
+            if (data.doctors && data.doctors.length) {
+              data.doctors.forEach(doc => {
+                options += `<option value="${doc.id}">${doc.name}</option>`;
+              });
+            } else {
+              options += '<option value="" disabled>No doctors available</option>';
+            }
+            doctorSelect.innerHTML = options;
+            doctorSelect.disabled = false;
+          })
+          .catch(err => {
+            console.error(err);
+            doctorSelect.innerHTML = '<option value="" disabled>Error loading doctors</option>';
+            doctorSelect.disabled = false;
+            showToast('Failed to load doctors', 'error');
+          });
+      });
+    }
+
+    // ---------- Validation ----------
+    function validateField(field, errorId) {
+      const errorEl = document.getElementById(errorId);
+      if (!errorEl) return;
+      if (field.validity.valid) {
+        field.classList.remove('input-error');
+        field.classList.add('input-valid');
+        errorEl.classList.add('hidden');
+        errorEl.textContent = '';
+      } else {
+        field.classList.remove('input-valid');
+        field.classList.add('input-error');
+        errorEl.classList.remove('hidden');
+        errorEl.textContent = field.validationMessage || 'Invalid value';
+      }
+    }
+
+    const requiredFields = [
+      { el: hospitalSelect, errorId: 'hospitalError' },
+      { el: patientSelect, errorId: 'patientError' },
+      { el: doctorSelect, errorId: 'doctorError' },
+      { el: dateInput, errorId: 'dateError' },
+      { el: timeInput, errorId: 'timeError' }
+    ];
+
+    requiredFields.forEach(({ el, errorId }) => {
+      if (el) {
+        el.addEventListener('blur', function() { validateField(this, errorId); });
+        el.addEventListener('change', function() { validateField(this, errorId); });
+      }
+    });
+
+    // ---------- Form submit ----------
+    form.addEventListener('submit', function(e) {
+      let isValid = true;
+      requiredFields.forEach(({ el, errorId }) => {
+        if (el) {
+          validateField(el, errorId);
+          if (!el.validity.valid) isValid = false;
+        }
+      });
+
+      if (!isValid) {
+        e.preventDefault();
+        showToast('Please fill all required fields correctly.', 'error');
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = `<span class="spinner mr-2"></span> Saving...`;
+      submitBtn.classList.add('btn-disabled');
+    });
+
+    // ---------- Toast system ----------
+    function showToast(message, type = 'success') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      toast.className = `toast-item ${type}`;
+      const icon = type === 'success' ? 'fa-check-circle text-green-500' : 'fa-exclamation-circle text-red-500';
+      toast.innerHTML = `
+        <i class="fas ${icon} toast-icon"></i>
+        <div class="toast-content">${message}</div>
+        <span class="toast-close"><i class="fas fa-times"></i></span>
+      `;
+      container.appendChild(toast);
+      setTimeout(() => toast.classList.add('show'), 10);
+      setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 400);
+      }, 4000);
+      toast.querySelector('.toast-close').addEventListener('click', function() {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 400);
+      });
+    }
+
+    // ---------- Cancel confirmation ----------
+    document.querySelector('a[href*="appointments:list"]')?.addEventListener('click', function(e) {
+      if (!confirm('Are you sure you want to cancel? Unsaved changes will be lost.')) {
+        e.preventDefault();
+      }
+    });
+
+    // ---------- Auto-resize textareas ----------
+    document.querySelectorAll('textarea').forEach(ta => {
+      ta.addEventListener('input', function() {
+        this.style.height = 'auto';
+        this.style.height = this.scrollHeight + 'px';
+      });
+      setTimeout(() => {
+        ta.style.height = 'auto';
+        ta.style.height = ta.scrollHeight + 'px';
+      }, 100);
+    });
+
+    // ---------- Store original doctor options ----------
+    if (doctorSelect) {
+      doctorSelect.dataset.originalOptions = doctorSelect.innerHTML;
+    }
+
+  })();
+</script>
+{% endblock %}

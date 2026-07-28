@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% load static %}
+
+<!-- নেভবার ও ফুটার সম্পূর্ণ বন্ধ -->
+{% block navbar %}{% endblock %}
+{% block footer %}{% endblock %}
+
+<!-- ড্যাশবোর্ডের জন্য অতিরিক্ত CSS -->
+{% block extra_css %}
+    {{ block.super }}
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+{% endblock %}

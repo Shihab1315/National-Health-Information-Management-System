@@ -1,0 +1,117 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ patient.full_name }} — NHIMS{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 py-8">
+    <div class="flex items-center gap-4 mb-6">
+        <a href="{% url 'patients:list' %}" class="text-gray-400 hover:text-white transition">
+            <i class="fa-regular fa-arrow-left text-xl"></i>
+        </a>
+        <h1 class="text-3xl font-bold text-white">{{ patient.full_name }}</h1>
+        <span class="ml-auto text-sm bg-blue-600/20 text-blue-400 px-3 py-1 rounded-full">{{ patient.health_id }}</span>
+    </div>
+
+    <div class="grid md:grid-cols-3 gap-6">
+        <!-- Left: Profile Card -->
+        <div class="md:col-span-1">
+            <div class="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 text-center">
+                <div class="w-32 h-32 rounded-full bg-linear-to-br from-blue-500/30 to-cyan-500/30 mx-auto flex items-center justify-center text-5xl text-blue-300 mb-4">
+                    {{ patient.full_name|slice:":1"|upper }}
+                </div>
+                <h2 class="text-xl font-semibold text-white">{{ patient.full_name }}</h2>
+                <p class="text-gray-400 text-sm">Patient since {{ patient.created_at|date:"M d, Y" }}</p>
+                <div class="mt-4 flex justify-center gap-3">
+                    <a href="{% url 'patients:update' patient.pk %}" class="bg-emerald-600/20 text-emerald-400 px-4 py-2 rounded-lg hover:bg-emerald-600/30 transition">
+                        <i class="fa-regular fa-pen mr-1"></i> Edit
+                    </a>
+                    <a href="{% url 'patients:delete' patient.pk %}" class="bg-red-600/20 text-red-400 px-4 py-2 rounded-lg hover:bg-red-600/30 transition">
+                        <i class="fa-regular fa-trash mr-1"></i> Delete
+                    </a>
+                </div>
+            </div>
+
+            <!-- Quick Info -->
+            <div class="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-4 mt-4">
+                <div class="space-y-2 text-sm">
+                    <div><span class="text-gray-400">NID:</span> <span class="text-white">{{ patient.national_id }}</span></div>
+                    <div><span class="text-gray-400">DOB:</span> <span class="text-white">{{ patient.date_of_birth }}</span></div>
+                    <div><span class="text-gray-400">Gender:</span> <span class="text-white">{{ patient.get_gender_display }}</span></div>
+                    <div><span class="text-gray-400">Blood Group:</span> <span class="text-white">{{ patient.blood_group|default:"N/A" }}</span></div>
+                    <div><span class="text-gray-400">Marital Status:</span> <span class="text-white">{{ patient.get_marital_status_display|default:"N/A" }}</span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right: Details -->
+        <div class="md:col-span-2 space-y-6">
+            <!-- Contact -->
+            <div class="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6">
+                <h3 class="text-lg font-semibold text-white mb-3"><i class="fa-regular fa-address-card mr-2 text-blue-400"></i> Contact Information</h3>
+                <div class="grid sm:grid-cols-2 gap-3 text-sm">
+                    <div><span class="text-gray-400">Phone:</span> <span class="text-white">{{ patient.phone }}</span></div>
+                    <div><span class="text-gray-400">Email:</span> <span class="text-white">{{ patient.email|default:"N/A" }}</span></div>
+                    <div class="sm:col-span-2"><span class="text-gray-400">Address:</span> <span class="text-white">{{ patient.address }}, {{ patient.city }}, {{ patient.district }} {{ patient.zip_code }}</span></div>
+                </div>
+            </div>
+
+            <!-- Medical -->
+            <div class="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6">
+                <h3 class="text-lg font-semibold text-white mb-3"><i class="fa-regular fa-heart-pulse mr-2 text-cyan-400"></i> Medical Profile</h3>
+                <div class="space-y-2 text-sm">
+                    <div><span class="text-gray-400">Allergies:</span> <span class="text-white">{{ patient.allergies|default:"None" }}</span></div>
+                    <div><span class="text-gray-400">Chronic Diseases:</span> <span class="text-white">{{ patient.chronic_diseases|default:"None" }}</span></div>
+                    <div><span class="text-gray-400">Emergency Contact:</span> <span class="text-white">{{ patient.emergency_contact_name|default:"N/A" }} ({{ patient.emergency_contact_phone|default:"N/A" }})</span></div>
+                </div>
+            </div>
+
+            <!-- Medical Records -->
+<div class="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6">
+    <h3 class="text-lg font-semibold text-white mb-4">
+        <i class="fa-solid fa-notes-medical mr-2 text-amber-400"></i>
+        Medical Records
+    </h3>
+
+    {% if records %}
+        {% for record in records %}
+            <div class="border-b border-white/10 pb-4 mb-4 last:border-0">
+                <p class="text-sm text-gray-400">
+                    Visit Date:
+                    <span class="text-white">{{ record.visit_date|date:"M d, Y" }}</span>
+                </p>
+
+                <p class="text-sm mt-2">
+                    <span class="text-gray-400">Doctor:</span>
+                    <span class="text-white">{{ record.doctor }}</span>
+                </p>
+
+                <p class="text-sm mt-2">
+                    <span class="text-gray-400">Chief Complaint:</span>
+                    <span class="text-white">{{ record.chief_complaint }}</span>
+                </p>
+
+                <p class="text-sm mt-2">
+                    <span class="text-gray-400">Diagnosis:</span>
+                    <span class="text-white">{{ record.diagnosis }}</span>
+                </p>
+
+                <p class="text-sm mt-2">
+                    <span class="text-gray-400">Treatment:</span>
+                    <span class="text-white">{{ record.treatment_notes|default:"N/A" }}</span>
+                </p>
+
+                <p class="text-sm mt-2">
+                    <span class="text-gray-400">Follow Up:</span>
+                    <span class="text-white">{{ record.follow_up_date|default:"N/A" }}</span>
+                </p>
+            </div>
+        {% endfor %}
+    {% else %}
+        <p class="text-gray-400">No medical records available.</p>
+    {% endif %}
+</div>
+        </div>
+    </div>
+</div>
+{% endblock %}

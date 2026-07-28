@@ -1,0 +1,358 @@
+{% load static %}
+
+<!-- Charts Section - Tailwind CSS Version -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+    <!-- Patient Registration Trend -->
+    <div class="chart-card">
+        <div class="chart-header">
+            <h5 class="chart-title">Patient Registration Trend</h5>
+            <div class="chart-actions">
+                <button class="chart-action-btn" title="Export"><i class="fas fa-download"></i></button>
+                <button class="chart-action-btn" title="Filter" onclick="this.nextElementSibling.classList.toggle('hidden')">
+                    <i class="fas fa-sliders-h"></i>
+                </button>
+                <div class="relative inline-block hidden">
+                    <div class="absolute right-0 mt-1 w-40 bg-[#1E293B] border border-white/10 rounded-xl shadow-xl z-10">
+                        <a href="#" class="block px-4 py-2 text-xs text-gray-300 hover:bg-white/5">Last 7 days</a>
+                        <a href="#" class="block px-4 py-2 text-xs text-gray-300 hover:bg-white/5">Last 30 days</a>
+                        <a href="#" class="block px-4 py-2 text-xs text-gray-300 hover:bg-white/5">Last 90 days</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="chart-body">
+            <canvas id="patientsTrend" height="200"></canvas>
+        </div>
+    </div>
+
+    <!-- Appointments Trend -->
+    <div class="chart-card">
+        <div class="chart-header">
+            <h5 class="chart-title">Appointments Trend</h5>
+            <div class="chart-actions">
+                <button class="chart-action-btn" title="Export"><i class="fas fa-download"></i></button>
+                <button class="chart-action-btn" title="Filter" onclick="this.nextElementSibling.classList.toggle('hidden')">
+                    <i class="fas fa-sliders-h"></i>
+                </button>
+                <div class="relative inline-block hidden">
+                    <div class="absolute right-0 mt-1 w-40 bg-[#1E293B] border border-white/10 rounded-xl shadow-xl z-10">
+                        <a href="#" class="block px-4 py-2 text-xs text-gray-300 hover:bg-white/5">Last 7 days</a>
+                        <a href="#" class="block px-4 py-2 text-xs text-gray-300 hover:bg-white/5">Last 30 days</a>
+                        <a href="#" class="block px-4 py-2 text-xs text-gray-300 hover:bg-white/5">Last 90 days</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="chart-body">
+            <canvas id="appointmentsTrend" height="200"></canvas>
+        </div>
+    </div>
+
+    <!-- Medicine Stock Status -->
+    <div class="chart-card">
+        <div class="chart-header">
+            <h5 class="chart-title">Medicine Stock Status</h5>
+            <div class="chart-actions">
+                <button class="chart-action-btn" title="Export"><i class="fas fa-download"></i></button>
+                <button class="chart-action-btn" title="Filter" onclick="this.nextElementSibling.classList.toggle('hidden')">
+                    <i class="fas fa-sliders-h"></i>
+                </button>
+                <div class="relative inline-block hidden">
+                    <div class="absolute right-0 mt-1 w-40 bg-[#1E293B] border border-white/10 rounded-xl shadow-xl z-10">
+                        <a href="#" class="block px-4 py-2 text-xs text-gray-300 hover:bg-white/5">Last 7 days</a>
+                        <a href="#" class="block px-4 py-2 text-xs text-gray-300 hover:bg-white/5">Last 30 days</a>
+                        <a href="#" class="block px-4 py-2 text-xs text-gray-300 hover:bg-white/5">Last 90 days</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="chart-body">
+            <canvas id="medicineStock" height="200"></canvas>
+        </div>
+    </div>
+
+    <!-- Revenue Overview -->
+    <div class="chart-card">
+        <div class="chart-header">
+            <h5 class="chart-title">Revenue Overview</h5>
+            <div class="chart-actions">
+                <button class="chart-action-btn" title="Export"><i class="fas fa-download"></i></button>
+                <button class="chart-action-btn" title="Filter" onclick="this.nextElementSibling.classList.toggle('hidden')">
+                    <i class="fas fa-sliders-h"></i>
+                </button>
+                <div class="relative inline-block hidden">
+                    <div class="absolute right-0 mt-1 w-40 bg-[#1E293B] border border-white/10 rounded-xl shadow-xl z-10">
+                        <a href="#" class="block px-4 py-2 text-xs text-gray-300 hover:bg-white/5">Last 7 days</a>
+                        <a href="#" class="block px-4 py-2 text-xs text-gray-300 hover:bg-white/5">Last 30 days</a>
+                        <a href="#" class="block px-4 py-2 text-xs text-gray-300 hover:bg-white/5">Last 90 days</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="chart-body">
+            <canvas id="revenueChart" height="200"></canvas>
+        </div>
+    </div>
+</div>
+
+<style>
+    .chart-card {
+        background: rgba(17, 24, 39, 0.7);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        border: 1px solid rgba(255,255,255,0.06);
+        border-radius: 18px;
+        padding: 1.2rem 1.2rem 0.8rem;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+        transition: border-color 0.25s ease, box-shadow 0.25s ease;
+    }
+    .chart-card:hover {
+        border-color: rgba(37,99,235,0.25);
+        box-shadow: 0 16px 40px rgba(0,0,0,0.4);
+    }
+    .chart-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.5rem;
+    }
+    .chart-title {
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: #F8FAFC;
+        margin: 0;
+        letter-spacing: -0.01em;
+    }
+    .chart-actions {
+        display: flex;
+        gap: 0.3rem;
+        align-items: center;
+    }
+    .chart-action-btn {
+        background: rgba(255,255,255,0.04);
+        border: none;
+        color: #94A3B8;
+        width: 28px;
+        height: 28px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: background 0.2s, color 0.2s;
+        font-size: 0.8rem;
+    }
+    .chart-action-btn:hover {
+        background: rgba(255,255,255,0.08);
+        color: #F8FAFC;
+    }
+    .chart-body {
+        position: relative;
+        height: 200px;
+    }
+    @media (max-width: 640px) {
+        .chart-card {
+            padding: 1rem 1rem 0.6rem;
+        }
+        .chart-body {
+            height: 160px;
+        }
+        .chart-title {
+            font-size: 0.85rem;
+        }
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        if (typeof Chart === 'undefined') {
+            console.warn('Chart.js not loaded. Charts will not render.');
+            return;
+        }
+
+        const data = window.chartData || {};
+        const gridColor = 'rgba(255,255,255,0.05)';
+
+        function createChart(id, config) {
+            const canvas = document.getElementById(id);
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            return new Chart(ctx, config);
+        }
+
+        // Patient Registration Trend (Line)
+        if (data.patients_per_month?.labels?.length) {
+            createChart('patientsTrend', {
+                type: 'line',
+                data: {
+                    labels: data.patients_per_month.labels,
+                    datasets: [{
+                        label: 'Patients',
+                        data: data.patients_per_month.data,
+                        borderColor: '#22C55E',
+                        backgroundColor: 'rgba(34,197,94,0.1)',
+                        fill: true,
+                        tension: 0.3,
+                        pointBackgroundColor: '#22C55E',
+                        pointBorderColor: '#22C55E',
+                        pointBorderWidth: 2,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { color: '#94A3B8', font: { size: 10, family: 'Inter' } } }
+                    },
+                    scales: {
+                        y: { ticks: { color: '#94A3B8', font: { size: 9 } }, grid: { color: gridColor } },
+                        x: { ticks: { color: '#94A3B8', font: { size: 9 } }, grid: { display: false } }
+                    }
+                }
+            });
+        } else {
+            // Fallback data
+            createChart('patientsTrend', {
+                type: 'line',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                    datasets: [{
+                        label: 'Patients',
+                        data: [120, 135, 150, 170, 190, 210],
+                        borderColor: '#22C55E',
+                        backgroundColor: 'rgba(34,197,94,0.1)',
+                        fill: true,
+                        tension: 0.3,
+                        pointBackgroundColor: '#22C55E',
+                        pointBorderColor: '#22C55E',
+                        pointBorderWidth: 2,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { color: '#94A3B8', font: { size: 10, family: 'Inter' } } }
+                    },
+                    scales: {
+                        y: { ticks: { color: '#94A3B8', font: { size: 9 } }, grid: { color: gridColor } },
+                        x: { ticks: { color: '#94A3B8', font: { size: 9 } }, grid: { display: false } }
+                    }
+                }
+            });
+        }
+
+        // Appointments Trend (Bar)
+        if (data.appointments_per_month?.labels?.length) {
+            createChart('appointmentsTrend', {
+                type: 'bar',
+                data: {
+                    labels: data.appointments_per_month.labels,
+                    datasets: [{
+                        label: 'Appointments',
+                        data: data.appointments_per_month.data,
+                        backgroundColor: 'rgba(37,99,235,0.6)',
+                        borderColor: '#2563EB',
+                        borderWidth: 2,
+                        borderRadius: 4,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { color: '#94A3B8', font: { size: 10, family: 'Inter' } } }
+                    },
+                    scales: {
+                        y: { ticks: { color: '#94A3B8', font: { size: 9 } }, grid: { color: gridColor } },
+                        x: { ticks: { color: '#94A3B8', font: { size: 9 } }, grid: { display: false } }
+                    }
+                }
+            });
+        } else {
+            createChart('appointmentsTrend', {
+                type: 'bar',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                    datasets: [{
+                        label: 'Appointments',
+                        data: [80, 95, 110, 125, 140, 160],
+                        backgroundColor: 'rgba(37,99,235,0.6)',
+                        borderColor: '#2563EB',
+                        borderWidth: 2,
+                        borderRadius: 4,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { color: '#94A3B8', font: { size: 10, family: 'Inter' } } }
+                    },
+                    scales: {
+                        y: { ticks: { color: '#94A3B8', font: { size: 9 } }, grid: { color: gridColor } },
+                        x: { ticks: { color: '#94A3B8', font: { size: 9 } }, grid: { display: false } }
+                    }
+                }
+            });
+        }
+
+        // Medicine Stock (Doughnut)
+        const stockLabels = ['In Stock', 'Low Stock', 'Out of Stock', 'Expired'];
+        const stockData = [65, 20, 10, 5];
+        createChart('medicineStock', {
+            type: 'doughnut',
+            data: {
+                labels: stockLabels,
+                datasets: [{
+                    data: stockData,
+                    backgroundColor: ['#22C55E', '#F59E0B', '#EF4444', '#64748B'],
+                    borderWidth: 0,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { color: '#94A3B8', font: { size: 10, family: 'Inter' }, padding: 12, usePointStyle: true, pointStyle: 'circle' }
+                    }
+                },
+                cutout: '65%',
+            }
+        });
+
+        // Revenue Overview (Line)
+        const revenueLabels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
+        const revenueData = [45000, 52000, 49000, 58000, 62000, 71000];
+        createChart('revenueChart', {
+            type: 'line',
+            data: {
+                labels: revenueLabels,
+                datasets: [{
+                    label: 'Revenue (BDT)',
+                    data: revenueData,
+                    borderColor: '#F59E0B',
+                    backgroundColor: 'rgba(245,158,11,0.1)',
+                    fill: true,
+                    tension: 0.3,
+                    pointBackgroundColor: '#F59E0B',
+                    pointBorderColor: '#F59E0B',
+                    pointBorderWidth: 2,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { labels: { color: '#94A3B8', font: { size: 10, family: 'Inter' } } }
+                },
+                scales: {
+                    y: { ticks: { color: '#94A3B8', font: { size: 9 } }, grid: { color: gridColor } },
+                    x: { ticks: { color: '#94A3B8', font: { size: 9 } }, grid: { display: false } }
+                }
+            }
+        });
+    });
+</script>

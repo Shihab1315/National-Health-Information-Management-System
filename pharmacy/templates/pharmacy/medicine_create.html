@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Add Medicine — NHIMS Pharmacy{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto px-4 sm:px-6 py-8">
+    <!-- Breadcrumb -->
+    <nav class="flex items-center gap-2 text-sm text-gray-400 mb-6" aria-label="Breadcrumb">
+        <a href="{% url 'pharmacy:dashboard' %}" class="hover:text-white transition">Dashboard</a>
+        <span class="text-gray-600">/</span>
+        <a href="{% url 'pharmacy:medicine_list' %}" class="hover:text-white transition">Medicines</a>
+        <span class="text-gray-600">/</span>
+        <span class="text-white">Add Medicine</span>
+    </nav>
+
+    <!-- Header -->
+    <div class="flex items-center gap-4 mb-6">
+        <a href="{% url 'pharmacy:medicine_list' %}" class="text-gray-400 hover:text-white transition">
+            <i class="fas fa-arrow-left text-xl"></i>
+        </a>
+        <div>
+            <h1 class="text-2xl font-bold text-white">Add New Medicine</h1>
+            <p class="text-sm text-gray-400">Enter the details of the new medicine</p>
+        </div>
+    </div>
+
+    <!-- Form -->
+    <form method="post" enctype="multipart/form-data" id="medicine-form" class="glass-card rounded-2xl border border-white/10 p-6 space-y-6">
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+            <div class="bg-red-500/20 border border-red-500/30 text-red-300 px-4 py-3 rounded-xl text-sm">
+                <i class="fas fa-exclamation-triangle mr-2"></i>
+                {% for error in form.non_field_errors %}
+                    <p>{{ error }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <!-- Render fields -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {% for field in form %}
+                {% if field.name == 'description' or field.name == 'image' %}
+                    <!-- Full-width fields -->
+                    <div class="md:col-span-2">
+                        <div class="space-y-1">
+                            <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gray-300">
+                                {{ field.label }}
+                                {% if field.field.required %}<span class="text-red-400">*</span>{% endif %}
+                            </label>
+                            {{ field }}
+                            {% if field.help_text %}
+                                <p class="text-xs text-gray-500">{{ field.help_text }}</p>
+                            {% endif %}
+                            {% if field.errors %}
+                                <ul class="text-sm text-red-400 space-y-1 mt-1">
+                                    {% for error in field.errors %}
+                                        <li><i class="fas fa-exclamation-circle mr-1"></i>{{ error }}</li>
+                                    {% endfor %}
+                                </ul>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% else %}
+                    <!-- Normal fields -->
+                    <div>
+                        <div class="space-y-1">
+                            <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gray-300">
+                                {{ field.label }}
+                                {% if field.field.required %}<span class="text-red-400">*</span>{% endif %}
+                            </label>
+                            {{ field }}
+                            {% if field.help_text %}
+                                <p class="text-xs text-gray-500">{{ field.help_text }}</p>
+                            {% endif %}
+                            {% if field.errors %}
+                                <ul class="text-sm text-red-400 space-y-1 mt-1">
+                                    {% for error in field.errors %}
+                                        <li><i class="fas fa-exclamation-circle mr-1"></i>{{ error }}</li>
+                                    {% endfor %}
+                                </ul>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+
+        <!-- Submit actions -->
+        <div class="flex flex-wrap items-center gap-4 pt-6 border-t border-white/10">
+            <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-xl font-medium transition shadow-lg shadow-blue-500/30 flex items-center gap-2" id="submit-btn">
+                <i class="fas fa-save"></i> Save Medicine
+            </button>
+            <a href="{% url 'pharmacy:medicine_list' %}" class="bg-white/5 hover:bg-white/10 px-6 py-3 rounded-xl text-gray-300 transition">
+                Cancel
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    (function() {
+        // Add loading state to submit button
+        const form = document.getElementById('medicine-form');
+        const submitBtn = document.getElementById('submit-btn');
+
+        form.addEventListener('submit', function() {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+            submitBtn.classList.add('opacity-70', 'cursor-not-allowed');
+        });
+
+        // Auto-focus first input
+        const firstInput = form.querySelector('input:not([type="hidden"]), select, textarea');
+        if (firstInput) firstInput.focus();
+    })();
+</script>
+{% endblock %}

@@ -1,0 +1,228 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}New Sale — NHIMS Pharmacy{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto px-4 sm:px-6 py-8">
+    <!-- Breadcrumb -->
+    <nav class="flex items-center gap-2 text-sm text-gray-400 mb-6" aria-label="Breadcrumb">
+        <a href="{% url 'pharmacy:dashboard' %}" class="hover:text-white transition">Dashboard</a>
+        <span class="text-gray-600">/</span>
+        <a href="{% url 'pharmacy:sale_list' %}" class="hover:text-white transition">Sales</a>
+        <span class="text-gray-600">/</span>
+        <span class="text-white">New Sale</span>
+    </nav>
+
+    <!-- Header -->
+    <div class="flex items-center gap-4 mb-6">
+        <a href="{% url 'pharmacy:sale_list' %}" class="text-gray-400 hover:text-white transition">
+            <i class="fas fa-arrow-left text-xl"></i>
+        </a>
+        <div>
+            <h1 class="text-2xl font-bold text-white">New Sale</h1>
+            <p class="text-sm text-gray-400">Create a new pharmacy sale transaction</p>
+        </div>
+        {% if prescription %}
+            <span class="ml-auto text-xs bg-blue-500/20 text-blue-300 px-3 py-1.5 rounded-full border border-blue-500/30">
+                <i class="fas fa-prescription"></i> Prescription #{{ prescription.pk }}
+            </span>
+        {% endif %}
+    </div>
+
+    <!-- Form -->
+    <form method="post" id="sale-form" class="space-y-6">
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+            <div class="bg-red-500/20 border border-red-500/30 text-red-300 px-4 py-3 rounded-xl text-sm">
+                <i class="fas fa-exclamation-triangle mr-2"></i>
+                {% for error in form.non_field_errors %}
+                    <p>{{ error }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <!-- Sale Details -->
+        <div class="glass-card rounded-2xl border border-white/10 p-6">
+            <h2 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                <i class="fas fa-receipt text-blue-400"></i> Sale Information
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {% for field in form %}
+                    <div class="{% if field.name == 'remarks' %}md:col-span-2{% endif %}">
+                        <div class="space-y-1">
+                            <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gray-300">
+                                {{ field.label }}
+                                {% if field.field.required %}<span class="text-red-400">*</span>{% endif %}
+                            </label>
+                            {{ field }}
+                            {% if field.help_text %}
+                                <p class="text-xs text-gray-500">{{ field.help_text }}</p>
+                            {% endif %}
+                            {% if field.errors %}
+                                <ul class="text-sm text-red-400 space-y-1 mt-1">
+                                    {% for error in field.errors %}
+                                        <li><i class="fas fa-exclamation-circle mr-1"></i>{{ error }}</li>
+                                    {% endfor %}
+                                </ul>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Sale Items -->
+        <div class="glass-card rounded-2xl border border-white/10 p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-semibold text-white flex items-center gap-2">
+                    <i class="fas fa-capsules text-emerald-400"></i> Sale Items
+                </h2>
+                <button type="button" onclick="addItemRow()" class="text-blue-400 hover:text-blue-300 transition text-sm flex items-center gap-1">
+                    <i class="fas fa-plus-circle"></i> Add Item
+                </button>
+            </div>
+
+            <div id="items-container" class="space-y-3">
+                <!-- Initial row will be added by JS -->
+            </div>
+
+            <div class="mt-4 text-right text-gray-400 text-sm">
+                Total: <span id="total-amount" class="text-white font-semibold text-lg">0.00</span>
+            </div>
+        </div>
+
+        <!-- Submit Actions -->
+        <div class="flex flex-wrap items-center gap-4 pt-2">
+            <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-xl font-medium transition shadow-lg shadow-blue-500/30 flex items-center gap-2" id="submit-btn">
+                <i class="fas fa-check-circle"></i> Complete Sale
+            </button>
+            <a href="{% url 'pharmacy:sale_list' %}" class="bg-white/5 hover:bg-white/10 px-6 py-3 rounded-xl text-gray-300 transition">
+                Cancel
+            </a>
+        </div>
+    </form>
+</div>
+
+<!-- Hidden template for new item row -->
+<template id="item-row-template">
+    <div class="item-row grid grid-cols-12 gap-3 bg-white/5 p-3 rounded-xl border border-white/5">
+        <div class="col-span-5">
+            <select name="medicine_id[]" class="w-full px-3 py-2 bg-[#0d2137] border border-white/10 rounded-lg text-white focus:border-blue-500 outline-none text-sm medicine-select">
+                <option value="">Select Medicine</option>
+                {% for med in medicines %}
+                    <option value="{{ med.id }}" data-stock="{{ med.current_stock }}" data-price="{{ med.selling_price|floatformat:2 }}">
+                        {{ med.brand_name }} ({{ med.strength }}) — Stock: {{ med.current_stock }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-span-2">
+            <input type="number" name="quantity[]" placeholder="Qty" min="1" step="1" class="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-400 focus:border-blue-500 outline-none text-sm quantity-input">
+        </div>
+        <div class="col-span-3">
+            <input type="number" name="price[]" placeholder="Unit Price" step="0.01" min="0" class="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-400 focus:border-blue-500 outline-none text-sm price-input">
+        </div>
+        <div class="col-span-2 flex items-center justify-end">
+            <button type="button" onclick="removeItemRow(this)" class="text-red-400 hover:text-red-300 transition text-sm">
+                <i class="fas fa-trash-alt"></i>
+            </button>
+        </div>
+    </div>
+</template>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    (function() {
+        const container = document.getElementById('items-container');
+        const template = document.getElementById('item-row-template');
+        const totalDisplay = document.getElementById('total-amount');
+
+        // Function to add a new row
+        window.addItemRow = function() {
+            const clone = template.content.cloneNode(true);
+            container.appendChild(clone);
+
+            // Attach change listeners for price/quantity to update total
+            const row = container.lastElementChild;
+            const qtyInput = row.querySelector('.quantity-input');
+            const priceInput = row.querySelector('.price-input');
+            const medSelect = row.querySelector('.medicine-select');
+
+            // Set default price based on selected medicine
+            medSelect.addEventListener('change', function() {
+                const selected = this.options[this.selectedIndex];
+                const price = selected.dataset.price || '0.00';
+                priceInput.value = price;
+                updateTotal();
+                // Validate stock
+                const stock = parseInt(selected.dataset.stock || '0');
+                qtyInput.max = stock;
+                qtyInput.placeholder = `Max ${stock}`;
+            });
+
+            qtyInput.addEventListener('input', updateTotal);
+            priceInput.addEventListener('input', updateTotal);
+
+            // Update total initially
+            updateTotal();
+        };
+
+        // Function to remove a row
+        window.removeItemRow = function(btn) {
+            const row = btn.closest('.item-row');
+            if (container.children.length > 1) {
+                row.remove();
+                updateTotal();
+            } else {
+                alert('You must have at least one item.');
+            }
+        };
+
+        // Update total amount
+        function updateTotal() {
+            let total = 0;
+            document.querySelectorAll('.item-row').forEach(row => {
+                const qty = parseFloat(row.querySelector('.quantity-input').value) || 0;
+                const price = parseFloat(row.querySelector('.price-input').value) || 0;
+                total += qty * price;
+            });
+            totalDisplay.textContent = total.toFixed(2);
+        }
+
+        // Add initial row
+        addItemRow();
+
+        // Form submission loading state
+        const form = document.getElementById('sale-form');
+        const submitBtn = document.getElementById('submit-btn');
+
+        form.addEventListener('submit', function(e) {
+            // Validate that all rows have medicine selected and positive quantity
+            let valid = true;
+            document.querySelectorAll('.item-row').forEach(row => {
+                const med = row.querySelector('.medicine-select').value;
+                const qty = parseInt(row.querySelector('.quantity-input').value) || 0;
+                if (!med || qty <= 0) {
+                    valid = false;
+                }
+            });
+            if (!valid) {
+                e.preventDefault();
+                alert('Please fill all item rows with medicine and positive quantity.');
+                return;
+            }
+
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+            submitBtn.classList.add('opacity-70', 'cursor-not-allowed');
+        });
+
+        // Auto-focus first input
+        const firstInput = form.querySelector('input:not([type="hidden"]), select');
+        if (firstInput) firstInput.focus();
+    })();
+</script>
+{% endblock %}

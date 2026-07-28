@@ -1,0 +1,148 @@
+{% load static %}
+<nav class="navbar fixed top-0 left-0 w-full z-50 px-4 md:px-8 py-3 transition-all duration-300" id="navbar">
+    <div class="max-w-7xl mx-auto flex items-center justify-between">
+        <!-- Brand Logo -->
+        <a href="/" class="flex items-center gap-2.5 group">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-breadcrumbs from-blue-500 to-cyan-400 flex items-center justify-center text-white font-extrabold text-lg shadow-lg shadow-blue-500/20 group-hover:scale-105 transition-transform">
+                N
+            </div>
+            <span class="text-white font-bold text-xl tracking-tight hidden sm:block">
+                NHIMS <span class="text-blue-400 font-normal text-sm ml-1">Bangladesh</span>
+            </span>
+        </a>
+
+        <!-- Desktop Navigation Links -->
+        <div class="hidden lg:flex items-center gap-8">
+            <a href="{% url 'dashboard:homepage' %}" class="nav-link active">Home</a>
+            <a href="#services" class="nav-link">Services</a>
+            <a href="#doctors" class="nav-link">Doctors</a>
+            <a href="#hospitals" class="nav-link">Hospitals</a>
+            <a href="#about" class="nav-link">About</a>
+            <a href="#contact" class="nav-link">Contact</a>
+        </div>
+
+        <!-- Desktop Authentication -->
+        <div class="hidden md:flex items-center gap-3">
+            {% if user.is_authenticated %}
+                <!-- User Profile Dropdown -->
+                <div class="relative group">
+                    <button class="flex items-center gap-2 text-gray-300 hover:text-white transition text-sm font-medium px-3 py-2 rounded-full hover:bg-white/5 focus:outline-none" id="userMenuButton">
+                        <i class="fa-regular fa-user-circle text-xl"></i>
+                        <span>{{ user.get_full_name|default:user.username }}</span>
+                        <i class="fa-solid fa-chevron-down text-xs"></i>
+                    </button>
+                    <!-- Dropdown -->
+                    <div class="absolute right-0 mt-2 w-48 bg-[#0d2137] border border-white/10 rounded-xl shadow-xl backdrop-blur-xl py-2 hidden group-hover:block">
+                         <a href="{% url 'dashboard:homepage' %}" class="block px-4 py-2 text-sm text-gray-300 hover:bg-white/5 hover:text-white transition">
+                            <i class="fa-regular fa-gauge-high mr-2"></i> Dashboard
+                        </a> 
+                        <a href="{% url 'accounts:profile' %}" class="block px-4 py-2 text-sm text-gray-300 hover:bg-white/5 hover:text-white transition">
+                            <i class="fa-regular fa-user mr-2"></i> Profile
+                        </a>
+                        <hr class="border-white/5 my-1">
+                       <form method="post" action="{% url 'accounts:logout' %}" style="display:inline;">
+    {% csrf_token %}
+    <button type="submit" class="logout-btn" title="Logout"
+            style="background:none;border:none;padding:0;cursor:pointer;">
+        <i class="fas fa-sign-out-alt"></i>
+    </button>
+</form>
+                    </div>
+                </div>
+            {% else %}
+                <a href="{% url 'accounts:login' %}" class="text-gray-300 hover:text-white transition text-sm font-medium px-4 py-2 rounded-full hover:bg-white/5">
+                    <i class="fa-regular fa-user mr-2"></i>Login
+                </a>
+                <a href="{% url 'accounts:signup' %}" class="bg-gradient-to-ra from-emerald-500 to-teal-400 text-white px-5 py-2 rounded-full text-sm font-semibold shadow-lg shadow-emerald-500/30 hover:scale-105 transition duration-300">
+                    <i class="fa-regular fa-user-plus mr-2"></i>Sign Up
+                </a>
+                <a href="{% url 'accounts:signup' %}" class="btn-primary text-sm">
+                    <i class="fa-regular fa-plus mr-2"></i>Get Started
+                </a>
+            {% endif %}
+        </div>
+
+        <!-- Mobile Menu Toggle -->
+        <button class="lg:hidden text-white text-2xl focus:outline-none" id="mobileToggle" aria-label="Toggle menu">
+            <i class="fa-solid fa-bars"></i>
+        </button>
+    </div>
+
+    <!-- Mobile Menu -->
+    <div class="lg:hidden hidden bg-[#0a1628]/95 backdrop-blur-xl border-t border-white/5 mt-3 rounded-2xl overflow-hidden" id="mobileMenu">
+        <div class="flex flex-col p-4 gap-2">
+            <!-- Navigation Links -->
+            <a href="{% url 'dashboard:homepage' %}" class="nav-link py-2.5 px-4 rounded-xl hover:bg-white/5 active">Home</a>
+            <a href="#services" class="nav-link py-2.5 px-4 rounded-xl hover:bg-white/5">Services</a>
+            <a href="#doctors" class="nav-link py-2.5 px-4 rounded-xl hover:bg-white/5">Doctors</a>
+            <a href="#hospitals" class="nav-link py-2.5 px-4 rounded-xl hover:bg-white/5">Hospitals</a>
+            <a href="#about" class="nav-link py-2.5 px-4 rounded-xl hover:bg-white/5">About</a>
+            <a href="#contact" class="nav-link py-2.5 px-4 rounded-xl hover:bg-white/5">Contact</a>
+            <hr class="border-white/5 my-2" />
+
+            <!-- Authentication Buttons -->
+            {% if user.is_authenticated %}
+                <span class="text-sm text-gray-300 px-4 py-1">{{ user.get_full_name|default:user.username }}</span>
+                <a href="{% url 'dashboard:homepage' %}" class="text-gray-300 py-2.5 px-4 rounded-xl hover:bg-white/5">
+                    <i class="fa-regular fa-gauge-high mr-2"></i>Dashboard
+                </a>
+                <a href="{% url 'accounts:profile' %}" class="text-gray-300 py-2.5 px-4 rounded-xl hover:bg-white/5">
+                    <i class="fa-regular fa-user mr-2"></i>Profile
+                </a>
+               <form method="post" action="{% url 'accounts:logout' %}" style="display:inline;">
+    {% csrf_token %}
+    <button type="submit" class="logout-btn" title="Logout"
+            style="background:none;border:none;padding:0;cursor:pointer;">
+        <i class="fas fa-sign-out-alt"></i>
+    </button>
+</form>
+            {% else %}
+                <a href="{% url 'accounts:login' %}" class="text-gray-300 py-2.5 px-4 rounded-xl hover:bg-white/5 text-center transition">
+                    <i class="fa-regular fa-user mr-2"></i>Login
+                </a>
+                <a href="{% url 'accounts:signup' %}" class="bg-gradient-to-ra from-emerald-500 to-teal-400 text-white py-2.5 px-4 rounded-xl text-center font-semibold transition hover:scale-105">
+                    <i class="fa-regular fa-user-plus mr-2"></i>Sign Up
+                </a>
+            {% endif %}
+        </div>
+    </div>
+</nav>
+
+<!-- JavaScript for mobile toggle and scroll effect (you can also put this in a separate file) -->
+<script>
+    // Toggle mobile menu
+    const toggle = document.getElementById('mobileToggle');
+    const menu = document.getElementById('mobileMenu');
+    if (toggle && menu) {
+        toggle.addEventListener('click', () => {
+            menu.classList.toggle('hidden');
+            const icon = toggle.querySelector('i');
+            if (icon) {
+                icon.className = menu.classList.contains('hidden') ? 'fa-solid fa-bars' : 'fa-solid fa-xmark';
+            }
+        });
+    }
+
+    // Close menu on link click (mobile)
+    document.querySelectorAll('#mobileMenu a').forEach(link => {
+        link.addEventListener('click', () => {
+            if (menu) {
+                menu.classList.add('hidden');
+                const icon = toggle?.querySelector('i');
+                if (icon) icon.className = 'fa-solid fa-bars';
+            }
+        });
+    });
+
+    // Navbar scroll shadow effect
+    const navbar = document.getElementById('navbar');
+    if (navbar) {
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 20) {
+                navbar.classList.add('scrolled');
+            } else {
+                navbar.classList.remove('scrolled');
+            }
+        });
+    }
+</script>

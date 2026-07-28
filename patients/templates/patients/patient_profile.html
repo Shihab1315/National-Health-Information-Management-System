@@ -1,0 +1,563 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}My Profile — NHIMS{% endblock %}
+
+{% block extra_css %}
+<style>
+    .top-navbar { display: none !important; }
+
+    .profile-card {
+        transition: transform 0.2s ease, border-color 0.2s ease;
+        border: 1px solid rgba(255,255,255,0.06);
+        border-radius: 16px;
+        background: rgba(255,255,255,0.02);
+        padding: 1.25rem;
+    }
+    .profile-card:hover {
+        border-color: rgba(59,130,246,0.3);
+        transform: translateY(-2px);
+    }
+
+    .stat-card {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+        backdrop-filter: blur(8px);
+    }
+    .stat-card:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 16px 40px rgba(0,0,0,0.35);
+    }
+    .stat-card .stat-icon {
+        position: absolute;
+        right: 0;
+        bottom: 0;
+        font-size: 4rem;
+        opacity: 0.08;
+        transform: rotate(-10deg);
+        transition: all 0.3s ease;
+    }
+    .stat-card:hover .stat-icon {
+        transform: rotate(-5deg) scale(1.05);
+        opacity: 0.12;
+    }
+    .stat-card .stat-number {
+        font-size: 2rem;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+    }
+    .stat-card .stat-label {
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #94a3b8;
+    }
+    .stat-card-appointments { background: linear-gradient(135deg, rgba(59,130,246,0.12), rgba(59,130,246,0.03)); border-left: 3px solid #3b82f6; }
+    .stat-card-prescriptions { background: linear-gradient(135deg, rgba(52,211,153,0.12), rgba(52,211,153,0.03)); border-left: 3px solid #34d399; }
+    .stat-card-lab { background: linear-gradient(135deg, rgba(251,191,36,0.12), rgba(251,191,36,0.03)); border-left: 3px solid #fbbf24; }
+    .stat-card-records { background: linear-gradient(135deg, rgba(96,165,250,0.12), rgba(96,165,250,0.03)); border-left: 3px solid #60a5fa; }
+
+    .avatar-container {
+        position: relative;
+        display: inline-block;
+    }
+    .avatar-container img {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 3px solid rgba(59,130,246,0.3);
+    }
+    .avatar-container .avatar-initial {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2.5rem;
+        font-weight: 700;
+        background: linear-gradient(135deg, #1e293b, #0f172a);
+        border: 3px solid rgba(59,130,246,0.3);
+        color: #94a3b8;
+    }
+
+    .progress-bar {
+        height: 8px;
+        border-radius: 4px;
+        background: rgba(255,255,255,0.08);
+        overflow: hidden;
+    }
+    .progress-bar .progress-fill {
+        height: 100%;
+        border-radius: 4px;
+        background: linear-gradient(90deg, #3b82f6, #34d399);
+        transition: width 0.6s ease;
+    }
+
+    .action-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.5rem 1.2rem;
+        border-radius: 10px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        border: 1px solid rgba(255,255,255,0.08);
+        background: rgba(255,255,255,0.04);
+        color: #e2e8f0;
+    }
+    .action-btn:hover {
+        background: rgba(255,255,255,0.1);
+        transform: translateY(-2px);
+    }
+    .action-btn-primary {
+        background: #3b82f6;
+        border-color: #3b82f6;
+        color: white;
+    }
+    .action-btn-primary:hover {
+        background: #2563eb;
+        border-color: #2563eb;
+    }
+
+    @media (max-width: 768px) {
+        .avatar-container img, .avatar-container .avatar-initial {
+            width: 70px;
+            height: 70px;
+            font-size: 1.8rem;
+        }
+        .stat-card .stat-number { font-size: 1.5rem; }
+        .stat-card .stat-icon { font-size: 3rem; }
+    }
+</style>
+{% endblock %}
+
+{% block navbar %}
+<nav class="fixed top-0 left-0 right-0 z-40 bg-[#0a1628]/80 backdrop-blur-sm border-b border-white/10 px-4 py-3 md:hidden">
+    <div class="flex items-center justify-between">
+        <button id="sidebarToggle" class="text-white text-2xl">
+            <i class="fas fa-bars"></i>
+        </button>
+        <span class="text-white font-semibold">NHIMS Patient</span>
+        <div class="w-8"></div>
+    </div>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="flex min-h-screen bg-[#0a1628]">
+    <!-- ===== SIDEBAR (reuse patient sidebar) ===== -->
+    <aside id="sidebar" class="fixed top-0 left-0 z-50 h-full w-72 bg-[#0d1f3c] border-r border-white/10 transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out overflow-y-auto">
+        <div class="p-4 border-b border-white/10">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 text-xl font-bold">
+                    {{ patient.full_name|slice:":1"|upper|default:"U" }}
+                </div>
+                <div>
+                    <p class="text-white font-semibold text-sm">{{ patient.full_name|default:"Patient" }}</p>
+                    <p class="text-gray-400 text-xs">Patient</p>
+                </div>
+            </div>
+        </div>
+        <nav class="p-3 space-y-1">
+            <a href="{% url 'dashboard:patient_dashboard' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
+                <i class="fas fa-th-large w-5 text-center"></i> Dashboard
+            </a>
+            <a href="{% url 'appointments:patient_appointment_list' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
+                <i class="fas fa-calendar-check w-5 text-center"></i> Appointments
+            </a>
+            <a href="{% url 'prescriptions:patient_my_prescriptions' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
+                <i class="fas fa-prescription-bottle w-5 text-center"></i> Prescriptions
+            </a>
+            <a href="{% url 'laboratory:patient_lab_history' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
+                <i class="fas fa-flask w-5 text-center"></i> Laboratory
+            </a>
+            <a href="{% url 'medical_records:patient_medical_record_list' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
+                <i class="fas fa-file-medical w-5 text-center"></i> Medical Records
+            </a>
+            <a href="{% url 'patients:profile' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition bg-blue-600/30 text-blue-300">
+                <i class="fas fa-user-circle w-5 text-center"></i> Profile
+            </a>
+            <a href="{% url 'notifications:center' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
+                <i class="fas fa-bell w-5 text-center"></i> Notifications
+            </a>
+            <hr class="border-white/10 my-3">
+            <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
+                <i class="fas fa-cog w-5 text-center"></i> Settings
+            </a>
+            {% url 'logout' as logout_url %}
+            {% if logout_url %}
+                <a href="{{ logout_url }}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-red-400 hover:bg-red-500/10 hover:text-red-300">
+                    <i class="fas fa-sign-out-alt w-5 text-center"></i> Logout
+                </a>
+            {% else %}
+                <a href="{% url 'accounts:logout' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-red-400 hover:bg-red-500/10 hover:text-red-300">
+                    <i class="fas fa-sign-out-alt w-5 text-center"></i> Logout
+                </a>
+            {% endif %}
+        </nav>
+        <div class="absolute bottom-4 left-4 right-4 text-center text-gray-500 text-xs">
+            NHIMS v2.0
+        </div>
+    </aside>
+
+    <!-- ===== MAIN CONTENT ===== -->
+    <main class="flex-1 md:ml-72 p-4 md:p-8 space-y-6 mt-14 md:mt-0">
+
+        <!-- ===== HEADER + AVATAR ===== -->
+        <div class="glass-card rounded-2xl border border-white/10 p-6 profile-card">
+            <div class="flex flex-wrap items-center gap-6">
+                <!-- Avatar -->
+                <div class="avatar-container">
+                    {% if patient.profile_photo %}
+                        <img src="{{ patient.profile_photo.url }}" alt="{{ patient.full_name }}">
+                    {% else %}
+                        <div class="avatar-initial">{{ patient.full_name|slice:":1"|upper|default:"U" }}</div>
+                    {% endif %}
+                </div>
+                <!-- Info -->
+                <div class="flex-1">
+                    <div class="flex flex-wrap items-center gap-3">
+                        <h1 class="text-2xl font-bold text-white">{{ patient.full_name }}</h1>
+                        <span class="inline-block px-3 py-1 rounded-full text-xs font-medium bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                            Active
+                        </span>
+                    </div>
+                    <div class="flex flex-wrap gap-4 mt-1 text-sm text-gray-400">
+                        <span><i class="fas fa-id-card mr-1"></i>ID: {{ patient.health_id|default:"N/A" }}</span>
+                        <span><i class="fas fa-tint mr-1"></i>Blood: {{ patient.blood_group|default:"N/A" }}</span>
+                        <span><i class="fas fa-calendar-alt mr-1"></i>Joined: {{ patient.created_at|date:"M d, Y"|default:"N/A" }}</span>
+                    </div>
+                </div>
+                <!-- Quick Actions -->
+                <div class="flex flex-wrap gap-2 no-print">
+                    <a href="{% url 'patients:edit_profile' %}" class="action-btn action-btn-primary">
+                    <i class="fas fa-edit mr-2"></i> Edit Profile
+                    </a>
+                    <a href="#" class="action-btn">
+                        <i class="fas fa-download mr-2"></i> Patient Card
+                    </a>
+                </div>
+            </div>
+
+            <!-- Profile Completion -->
+            <div class="mt-4 pt-4 border-t border-white/10">
+                <div class="flex items-center justify-between text-sm">
+                    <span class="text-gray-400">Profile Completion</span>
+                    <span class="text-white font-medium">{{ completion_percent }}%</span>
+                </div>
+                <div class="progress-bar mt-1">
+                    <div class="progress-fill" style="width: {{ completion_percent }}%;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== STATISTICS CARDS ===== -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div class="stat-card stat-card-appointments glass-card rounded-2xl border border-white/10 p-4">
+                <div class="relative z-10">
+                    <p class="stat-label">Appointments</p>
+                    <p class="stat-number text-white mt-1">{{ total_appointments }}</p>
+                </div>
+                <div class="stat-icon text-blue-400/20"><i class="fas fa-calendar-check"></i></div>
+            </div>
+            <div class="stat-card stat-card-prescriptions glass-card rounded-2xl border border-white/10 p-4">
+                <div class="relative z-10">
+                    <p class="stat-label">Prescriptions</p>
+                    <p class="stat-number text-emerald-400 mt-1">{{ total_prescriptions }}</p>
+                </div>
+                <div class="stat-icon text-emerald-400/20"><i class="fas fa-prescription-bottle"></i></div>
+            </div>
+            <div class="stat-card stat-card-lab glass-card rounded-2xl border border-white/10 p-4">
+                <div class="relative z-10">
+                    <p class="stat-label">Lab Reports</p>
+                    <p class="stat-number text-amber-400 mt-1">{{ total_lab_reports }}</p>
+                </div>
+                <div class="stat-icon text-amber-400/20"><i class="fas fa-flask"></i></div>
+            </div>
+            <div class="stat-card stat-card-records glass-card rounded-2xl border border-white/10 p-4">
+                <div class="relative z-10">
+                    <p class="stat-label">Medical Records</p>
+                    <p class="stat-number text-blue-400 mt-1">{{ total_medical_records }}</p>
+                </div>
+                <div class="stat-icon text-blue-400/20"><i class="fas fa-file-medical"></i></div>
+            </div>
+        </div>
+
+        <!-- ===== PERSONAL & CONTACT INFORMATION ===== -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Personal Information -->
+            <div class="glass-card rounded-2xl border border-white/10 p-6 profile-card">
+                <h3 class="text-white font-semibold text-sm flex items-center gap-2 mb-4">
+                    <i class="fas fa-user text-blue-400"></i> Personal Information
+                </h3>
+                <div class="space-y-2 text-sm">
+                    <div class="flex justify-between border-b border-white/5 pb-1">
+                        <span class="text-gray-400">Full Name</span>
+                        <span class="text-white">{{ patient.full_name }}</span>
+                    </div>
+                    <div class="flex justify-between border-b border-white/5 pb-1">
+                        <span class="text-gray-400">Date of Birth</span>
+                        <span class="text-white">{{ patient.date_of_birth|date:"M d, Y"|default:"N/A" }}</span>
+                    </div>
+                    <div class="flex justify-between border-b border-white/5 pb-1">
+                        <span class="text-gray-400">Age</span>
+                        <span class="text-white">
+                            {% if patient.date_of_birth %}{{ patient.date_of_birth|timesince }}{% else %}N/A{% endif %}
+                        </span>
+                    </div>
+                    <div class="flex justify-between border-b border-white/5 pb-1">
+                        <span class="text-gray-400">Gender</span>
+                        <span class="text-white">{{ patient.get_gender_display|default:"N/A" }}</span>
+                    </div>
+                    <div class="flex justify-between border-b border-white/5 pb-1">
+                        <span class="text-gray-400">Blood Group</span>
+                        <span class="text-white">{{ patient.blood_group|default:"N/A" }}</span>
+                    </div>
+                    <div class="flex justify-between border-b border-white/5 pb-1">
+                        <span class="text-gray-400">National ID</span>
+                        <span class="text-white">{{ patient.national_id|default:"N/A" }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contact Information -->
+            <div class="glass-card rounded-2xl border border-white/10 p-6 profile-card">
+                <h3 class="text-white font-semibold text-sm flex items-center gap-2 mb-4">
+                    <i class="fas fa-address-card text-emerald-400"></i> Contact Information
+                </h3>
+                <div class="space-y-2 text-sm">
+                    <div class="flex justify-between border-b border-white/5 pb-1">
+                        <span class="text-gray-400">Phone</span>
+                        <span class="text-white">{{ patient.phone|default:"N/A" }}</span>
+                    </div>
+                    <div class="flex justify-between border-b border-white/5 pb-1">
+                        <span class="text-gray-400">Email</span>
+                        <span class="text-white">{{ patient.email|default:"N/A" }}</span>
+                    </div>
+                    <div class="flex justify-between border-b border-white/5 pb-1">
+                        <span class="text-gray-400">Emergency Contact</span>
+                        <span class="text-white">{{ patient.emergency_contact_name|default:"N/A" }}</span>
+                    </div>
+                    <div class="flex justify-between border-b border-white/5 pb-1">
+                        <span class="text-gray-400">Emergency Phone</span>
+                        <span class="text-white">{{ patient.emergency_contact_phone|default:"N/A" }}</span>
+                    </div>
+                    <div class="flex justify-between border-b border-white/5 pb-1">
+                        <span class="text-gray-400">Address</span>
+                        <span class="text-white">{{ patient.address|default:"N/A" }}</span>
+                    </div>
+                    <div class="flex justify-between border-b border-white/5 pb-1">
+                        <span class="text-gray-400">City</span>
+                        <span class="text-white">{{ patient.city|default:"N/A" }}</span>
+                    </div>
+                    <div class="flex justify-between border-b border-white/5 pb-1">
+                        <span class="text-gray-400">District</span>
+                        <span class="text-white">{{ patient.district|default:"N/A" }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== MEDICAL INFORMATION ===== -->
+        <div class="glass-card rounded-2xl border border-white/10 p-6 profile-card">
+            <h3 class="text-white font-semibold text-sm flex items-center gap-2 mb-4">
+                <i class="fas fa-heartbeat text-rose-400"></i> Medical Information
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                <div class="space-y-2">
+                    <div class="flex justify-between border-b border-white/5 pb-1">
+                        <span class="text-gray-400">Height</span>
+                        <span class="text-white">{{ patient.height|default:"N/A" }} cm</span>
+                    </div>
+                    <div class="flex justify-between border-b border-white/5 pb-1">
+                        <span class="text-gray-400">Weight</span>
+                        <span class="text-white">{{ patient.weight|default:"N/A" }} kg</span>
+                    </div>
+                    <div class="flex justify-between border-b border-white/5 pb-1">
+                        <span class="text-gray-400">BMI</span>
+                        <span class="text-white">{{ patient.bmi|default:"N/A" }}</span>
+                    </div>
+                    <div class="flex justify-between border-b border-white/5 pb-1">
+                        <span class="text-gray-400">Smoking Status</span>
+                        <span class="text-white">{{ patient.smoking_status|default:"N/A" }}</span>
+                    </div>
+                </div>
+                <div class="space-y-2">
+                    <div class="flex justify-between border-b border-white/5 pb-1">
+                        <span class="text-gray-400">Allergies</span>
+                        <span class="text-white">{{ patient.allergies|default:"None" }}</span>
+                    </div>
+                    <div class="flex justify-between border-b border-white/5 pb-1">
+                        <span class="text-gray-400">Chronic Diseases</span>
+                        <span class="text-white">{{ patient.chronic_diseases|default:"None" }}</span>
+                    </div>
+                    <div class="flex justify-between border-b border-white/5 pb-1">
+                        <span class="text-gray-400">Alcohol Status</span>
+                        <span class="text-white">{{ patient.alcohol_status|default:"N/A" }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== PRIMARY DOCTOR ===== -->
+        {% if primary_doctor %}
+        <div class="glass-card rounded-2xl border border-white/10 p-6 profile-card">
+            <h3 class="text-white font-semibold text-sm flex items-center gap-2 mb-3">
+                <i class="fas fa-user-md text-emerald-400"></i> Primary Doctor
+            </h3>
+            <div class="flex items-start gap-4">
+                <div class="flex-shrink-0">
+                    <div class="w-14 h-14 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 text-2xl font-bold border-2 border-blue-400/30">
+                        {{ primary_doctor.full_name|slice:":1"|upper|default:"D" }}
+                    </div>
+                </div>
+                <div>
+                    <p class="text-white font-medium">Dr. {{ primary_doctor.full_name }}</p>
+                    <p class="text-gray-400 text-sm">{{ primary_doctor.specialties.all|join:", "|default:"N/A" }}</p>
+                    <p class="text-gray-400 text-sm">{{ primary_doctor.hospital.name|default:"N/A" }}</p>
+                    <p class="text-gray-400 text-sm">Phone: {{ primary_doctor.phone|default:"N/A" }}</p>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- ===== INSURANCE ===== -->
+        <div class="glass-card rounded-2xl border border-white/10 p-6 profile-card">
+            <h3 class="text-white font-semibold text-sm flex items-center gap-2 mb-3">
+                <i class="fas fa-shield-alt text-amber-400"></i> Insurance
+            </h3>
+            {% if insurance %}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                <div class="flex justify-between border-b border-white/5 pb-1">
+                    <span class="text-gray-400">Provider</span>
+                    <span class="text-white">{{ insurance.provider|default:"N/A" }}</span>
+                </div>
+                <div class="flex justify-between border-b border-white/5 pb-1">
+                    <span class="text-gray-400">Number</span>
+                    <span class="text-white">{{ insurance.number|default:"N/A" }}</span>
+                </div>
+                <div class="flex justify-between border-b border-white/5 pb-1">
+                    <span class="text-gray-400">Expiry Date</span>
+                    <span class="text-white">{{ insurance.expiry_date|date:"M d, Y"|default:"N/A" }}</span>
+                </div>
+            </div>
+            {% else %}
+            <p class="text-gray-400 text-sm">No insurance information available.</p>
+            {% endif %}
+        </div>
+
+        <!-- ===== RECENT ACTIVITIES ===== -->
+        <div class="glass-card rounded-2xl border border-white/10 p-6 profile-card">
+            <h3 class="text-white font-semibold text-sm flex items-center gap-2 mb-3">
+                <i class="fas fa-clock text-purple-400"></i> Recent Activities
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                <div class="flex items-center gap-3 p-3 bg-white/5 rounded-xl border border-white/5">
+                    <i class="fas fa-calendar-check text-blue-400"></i>
+                    <div>
+                        <p class="text-gray-400 text-xs">Last Appointment</p>
+                        <p class="text-white">
+                            {% if last_appointment %}
+                                {{ last_appointment.appointment_date|date:"M d, Y" }}
+                            {% else %}
+                                No appointments yet
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3 p-3 bg-white/5 rounded-xl border border-white/5">
+                    <i class="fas fa-prescription-bottle text-emerald-400"></i>
+                    <div>
+                        <p class="text-gray-400 text-xs">Last Prescription</p>
+                        <p class="text-white">
+                            {% if last_prescription %}
+                                {{ last_prescription.created_at|date:"M d, Y" }}
+                            {% else %}
+                                No prescriptions yet
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3 p-3 bg-white/5 rounded-xl border border-white/5">
+                    <i class="fas fa-flask text-amber-400"></i>
+                    <div>
+                        <p class="text-gray-400 text-xs">Last Lab Report</p>
+                        <p class="text-white">
+                            {% if last_lab_report %}
+                                {{ last_lab_report.created_at|date:"M d, Y" }}
+                            {% else %}
+                                No lab reports yet
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3 p-3 bg-white/5 rounded-xl border border-white/5">
+                    <i class="fas fa-sign-in-alt text-rose-400"></i>
+                    <div>
+                        <p class="text-gray-400 text-xs">Last Login</p>
+                        <p class="text-white">
+                            {% if last_login %}
+                                {{ last_login|date:"M d, Y H:i" }}
+                            {% else %}
+                                First login
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== ACTION BUTTONS ===== -->
+        <div class="flex flex-wrap gap-3 no-print">
+            <a href="{% url 'patients:edit_profile' %}" class="action-btn action-btn-primary">
+             <i class="fas fa-edit mr-2"></i> Edit Profile
+            </a>
+            <a href="{% url 'patients:change_password' %}" class="bg-amber-600 hover:bg-amber-700 text-white px-6 py-2.5 rounded-xl text-sm font-medium transition shadow-lg shadow-amber-500/30 flex items-center gap-2">
+            <i class="fas fa-key"></i> Change Password
+            </a>
+           <a href="{% url 'patients:emergency_contact' %}" class="bg-amber-600 hover:bg-amber-700 text-white px-6 py-2.5 rounded-xl text-sm font-medium transition shadow-lg shadow-amber-500/30 flex items-center gap-2">
+             <i class="fas fa-ambulance"></i> Emergency Contact
+            </a>
+            <a href="{% url 'patients:medical_information' %}" class="bg-rose-600 hover:bg-rose-700 text-white px-6 py-2.5 rounded-xl text-sm font-medium transition shadow-lg shadow-rose-500/30 flex items-center gap-2">
+                 <i class="fas fa-heartbeat"></i> Medical Information
+             </a>
+             <a href="{% url 'patients:insurance_information' %}" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2.5 rounded-xl text-sm font-medium transition shadow-lg shadow-indigo-500/30 flex items-center gap-2">
+                <i class="fas fa-shield-alt"></i> Insurance
+             </a>
+            <a href="{% url 'patients:patient_card' %}" class="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2.5 rounded-xl text-sm font-medium transition shadow-lg shadow-emerald-500/30 flex items-center gap-2">
+               <i class="fas fa-download"></i> Download Patient Card
+             </a>
+             <a href="{% url 'patients:patient_card_print' %}" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-xl text-sm font-medium transition shadow-lg shadow-blue-500/30 flex items-center gap-2">
+              <i class="fas fa-print"></i> Print Patient Card
+             </a>
+            <button onclick="window.print()" class="bg-white/5 hover:bg-white/10 px-6 py-2.5 rounded-xl text-gray-300 transition text-sm flex items-center gap-2">
+                <i class="fas fa-print"></i> Print Profile
+            </button>
+        </div>
+
+    </main>
+</div>
+
+<!-- ===== SIDEBAR TOGGLE ===== -->
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const sidebar = document.getElementById('sidebar');
+        const toggleBtn = document.getElementById('sidebarToggle');
+        if (toggleBtn && sidebar) {
+            toggleBtn.addEventListener('click', function () {
+                sidebar.classList.toggle('-translate-x-full');
+            });
+            document.addEventListener('click', function (event) {
+                const isClickInside = sidebar.contains(event.target) || toggleBtn.contains(event.target);
+                if (!isClickInside && window.innerWidth < 768) {
+                    sidebar.classList.add('-translate-x-full');
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,87 @@
+{% extends 'dashboard_base.html' %}
+{% load static %}
+{% load notification_tags %}
+
+{% block title %}Notifications — NHIMS{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'notifications/css/notifications.css' %}">
+<style>
+    .sticky-toolbar {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        background: #0F172A;
+        padding-top: 0.5rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid #1E293B;
+        backdrop-filter: blur(8px);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto px-4 sm:px-6 py-6">
+
+    <!-- Header -->
+    <div class="flex flex-wrap items-start justify-between gap-4 mb-6">
+        <div>
+            <h1 class="text-2xl font-bold text-white flex items-center gap-2">
+                <i class="fas fa-bell text-blue-400"></i> Notifications
+            </h1>
+            <p class="text-sm text-gray-400 mt-0.5">Manage all your system notifications</p>
+        </div>
+        <div class="flex flex-wrap items-center gap-3">
+            <span id="unread-counter" class="text-sm bg-blue-500/20 text-blue-300 px-3 py-1 rounded-full">
+                <i class="fas fa-circle text-[8px] mr-1.5"></i>
+                <span id="unread-count-display">{{ total_unread }}</span> unread
+            </span>
+            <button id="mark-all-read-btn" class="btn-filter text-sm flex items-center gap-1.5">
+                <i class="fas fa-check-double"></i> Mark All Read
+            </button>
+            <button id="delete-all-read-btn" class="btn-reset text-sm flex items-center gap-1.5">
+                <i class="fas fa-trash-alt"></i> Delete Read
+            </button>
+        </div>
+    </div>
+
+    <!-- Toolbar (with form) -->
+    <div class="sticky-toolbar">
+        {% include 'notifications/partials/notification_toolbar.html' %}
+    </div>
+
+    <!-- Notification List -->
+    <div id="notification-list" class="mt-6 space-y-3">
+        {% for notification in notifications %}
+            {% include 'notifications/partials/notification_card.html' with notification=notification %}
+        {% empty %}
+            {% include 'notifications/partials/notification_empty.html' %}
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+        <div class="flex justify-center mt-8">
+            <div class="flex items-center gap-1 text-sm">
+                {% if page_obj.has_previous %}
+                    <a href="?page=1{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="px-3 py-1.5 bg-[#1E293B] rounded-lg hover:bg-[#334155] transition">First</a>
+                    <a href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="px-3 py-1.5 bg-[#1E293B] rounded-lg hover:bg-[#334155] transition">Prev</a>
+                {% endif %}
+                <span class="px-4 py-1.5 bg-blue-600 rounded-lg font-medium">{{ page_obj.number }}</span>
+                {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="px-3 py-1.5 bg-[#1E293B] rounded-lg hover:bg-[#334155] transition">Next</a>
+                    <a href="?page={{ page_obj.paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="px-3 py-1.5 bg-[#1E293B] rounded-lg hover:bg-[#334155] transition">Last</a>
+                {% endif %}
+            </div>
+        </div>
+    {% endif %}
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'notifications/js/notifications.js' %}"></script>
+<script>
+    window.initialUnreadCount = {{ total_unread }};
+</script>
+{% endblock %}

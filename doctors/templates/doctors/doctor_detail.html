@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Dr. {{ doctor.full_name }} — NHIMS{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto px-4 py-8">
+    <div class="flex items-center gap-4 mb-6">
+        <a href="{% url 'doctors:list' %}" class="text-gray-400 hover:text-white transition">
+            <i class="fas fa-arrow-left text-xl"></i>
+        </a>
+        <h1 class="text-3xl font-bold text-white">Dr. {{ doctor.full_name }}</h1>
+        <span class="ml-auto text-sm bg-blue-600/20 text-blue-400 px-3 py-1 rounded-full">{{ doctor.doctor_id }}</span>
+    </div>
+
+    <div class="grid lg:grid-cols-3 gap-6">
+        <!-- Left: Profile Card -->
+        <div class="lg:col-span-1">
+            <div class="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 text-center">
+                <div class="w-32 h-32 rounded-full bg-linear-to-br from-blue-500/30 to-cyan-500/30 mx-auto flex items-center justify-center text-5xl text-blue-300 mb-4 shadow-xl">
+                    {{ doctor.full_name|slice:":1"|upper }}
+                </div>
+                <h2 class="text-xl font-semibold text-white">Dr. {{ doctor.full_name }}</h2>
+                <p class="text-cyan-400 text-sm">{{ doctor.specialties.all|join:", " }}</p>
+                {% if doctor.hospital %}
+                    <p class="text-gray-400 text-sm mt-1"><i class="fas fa-hospital mr-1"></i> {{ doctor.hospital.name }}</p>
+                {% endif %}
+                <div class="mt-4 flex justify-center gap-3">
+                    <a href="{% url 'doctors:update' doctor.pk %}" class="bg-emerald-600/20 text-emerald-400 px-4 py-2 rounded-lg hover:bg-emerald-600/30 transition">
+                        <i class="fas fa-pen mr-1"></i> Edit
+                    </a>
+                    <a href="{% url 'doctors:delete' doctor.pk %}" class="bg-red-600/20 text-red-400 px-4 py-2 rounded-lg hover:bg-red-600/30 transition">
+                        <i class="fas fa-trash mr-1"></i> Delete
+                    </a>
+                </div>
+                <div class="mt-4 flex flex-wrap justify-center gap-2">
+                    {% if doctor.is_verified %}
+                        <span class="bg-emerald-500/20 text-emerald-300 px-3 py-1 rounded-full text-xs">Verified</span>
+                    {% endif %}
+                    <span class="bg-blue-500/20 text-blue-300 px-3 py-1 rounded-full text-xs">{{ doctor.experience }} years experience</span>
+                </div>
+            </div>
+
+            <!-- Quick Info -->
+            <div class="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-4 mt-4">
+                <div class="space-y-2 text-sm">
+                    <div><span class="text-gray-400">Registration:</span> <span class="text-white">{{ doctor.registration_number }}</span></div>
+                    <div><span class="text-gray-400">NID:</span> <span class="text-white">{{ doctor.national_id }}</span></div>
+                    <div><span class="text-gray-400">Gender:</span> <span class="text-white">{{ doctor.get_gender_display }}</span></div>
+                    <div><span class="text-gray-400">DOB:</span> <span class="text-white">{{ doctor.date_of_birth }}</span></div>
+                    <div><span class="text-gray-400">District:</span> <span class="text-white">{{ doctor.district }}</span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right: Details -->
+        <div class="lg:col-span-2 space-y-6">
+            <!-- Contact -->
+            <div class="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6">
+                <h3 class="text-lg font-semibold text-white mb-3"><i class="fas fa-address-card mr-2 text-blue-400"></i> Contact Information</h3>
+                <div class="grid sm:grid-cols-2 gap-3 text-sm">
+                    <div><span class="text-gray-400">Phone:</span> <span class="text-white">{{ doctor.phone }}</span></div>
+                    <div><span class="text-gray-400">Email:</span> <span class="text-white">{{ doctor.email|default:"N/A" }}</span></div>
+                    <div class="sm:col-span-2"><span class="text-gray-400">Address:</span> <span class="text-white">{{ doctor.address }}, {{ doctor.city }}, {{ doctor.district }} {{ doctor.zip_code }}</span></div>
+                </div>
+            </div>
+
+            <!-- Professional -->
+            <div class="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6">
+                <h3 class="text-lg font-semibold text-white mb-3"><i class="fas fa-stethoscope mr-2 text-cyan-400"></i> Professional Details</h3>
+                <div class="space-y-3 text-sm">
+                    <div><span class="text-gray-400">Qualifications:</span> <span class="text-white">{{ doctor.qualification|linebreaksbr }}</span></div>
+                    <div><span class="text-gray-400">Consultation Fee:</span> <span class="text-white">BDT {{ doctor.consultation_fee|floatformat:2 }}</span></div>
+                    <div><span class="text-gray-400">Bio:</span> <span class="text-white">{{ doctor.bio|default:"N/A" }}</span></div>
+                </div>
+            </div>
+
+            <!-- Schedule -->
+            <div class="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6">
+                <h3 class="text-lg font-semibold text-white mb-3"><i class="fas fa-clock mr-2 text-amber-400"></i> Availability</h3>
+                <div class="grid sm:grid-cols-2 gap-3 text-sm">
+                    <div><span class="text-gray-400">Days:</span> <span class="text-white">{{ doctor.available_days|default:"Not set" }}</span></div>
+                    <div><span class="text-gray-400">Time:</span> 
+                        <span class="text-white">
+                            {% if doctor.available_time_start and doctor.available_time_end %}
+                                {{ doctor.available_time_start|time:"g:i A" }} - {{ doctor.available_time_end|time:"g:i A" }}
+                            {% else %}
+                                Not set
+                            {% endif %}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

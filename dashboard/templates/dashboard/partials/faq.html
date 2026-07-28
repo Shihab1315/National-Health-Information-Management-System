@@ -1,0 +1,16 @@
+<section class="py-20 md:py-28 bg-[#0a1628]">
+    <div class="max-w-7xl mx-auto px-4 md:px-8">
+        <div class="text-center max-w-3xl mx-auto mb-16">
+            <span class="section-badge"><i class="fa-regular fa-question-circle mr-2"></i> FAQ</span>
+            <h2 class="section-title">Frequently Asked <span class="text-blue-400">Questions</span></h2>
+        </div>
+        <div class="max-w-3xl mx-auto space-y-4">
+            {% for faq in faqs %}
+                <div class="bg-white/5 border border-white/5 rounded-xl p-4 transition hover:bg-white/10">
+                    <h4 class="text-white font-semibold">{{ faq.question }}</h4>
+                    <p class="text-gray-400 text-sm mt-2">{{ faq.answer }}</p>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>

@@ -1,0 +1,107 @@
+{% load static %}
+
+<!-- Alerts Panel - Tailwind CSS Version -->
+<div class="bg-[#111827]/80 backdrop-blur-sm border border-white/10 rounded-2xl p-4 shadow-xl">
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-4">
+        <h5 class="text-white font-semibold text-base flex items-center gap-2">
+            <i class="fas fa-bell text-amber-400"></i>
+            Alerts & Notifications
+            {% if alerts %}
+                <span class="ml-2 bg-red-500/20 text-red-300 text-xs font-medium px-2.5 py-0.5 rounded-full">{{ alerts|length }}</span>
+            {% endif %}
+        </h5>
+        <span class="text-xs text-gray-400">Live</span>
+    </div>
+
+    <!-- Alert List -->
+    <div class="space-y-3 max-h-80 overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-transparent">
+        {% if alerts %}
+            {% for alert in alerts %}
+                <div class="alert-item group relative rounded-xl p-3.5 bg-white/5 border-l-4 
+                    {% if alert.type == 'danger' %}border-red-500 hover:border-red-400
+                    {% elif alert.type == 'warning' %}border-amber-500 hover:border-amber-400
+                    {% elif alert.type == 'info' %}border-blue-500 hover:border-blue-400
+                    {% elif alert.type == 'success' %}border-emerald-500 hover:border-emerald-400
+                    {% else %}border-gray-500 hover:border-gray-400{% endif %}
+                    transition-all duration-200 hover:bg-white/10">
+                    
+                    <div class="flex items-start gap-3">
+                        <!-- Icon -->
+                        <div class="flex-shrink-0 mt-0.5">
+                            {% if alert.type == 'danger' %}
+                                <i class="fas fa-exclamation-circle text-red-400"></i>
+                            {% elif alert.type == 'warning' %}
+                                <i class="fas fa-triangle-exclamation text-amber-400"></i>
+                            {% elif alert.type == 'info' %}
+                                <i class="fas fa-info-circle text-blue-400"></i>
+                            {% elif alert.type == 'success' %}
+                                <i class="fas fa-check-circle text-emerald-400"></i>
+                            {% else %}
+                                <i class="fas fa-bell text-gray-400"></i>
+                            {% endif %}
+                        </div>
+
+                        <!-- Content -->
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center flex-wrap gap-2">
+                                <h6 class="text-sm font-medium text-white">{{ alert.title }}</h6>
+                                <!-- Priority badge (optional) -->
+                                {% if alert.priority %}
+                                    <span class="text-xs font-medium px-2 py-0.5 rounded-full 
+                                        {% if alert.type == 'danger' %}bg-red-500/20 text-red-300
+                                        {% elif alert.type == 'warning' %}bg-amber-500/20 text-amber-300
+                                        {% elif alert.type == 'info' %}bg-blue-500/20 text-blue-300
+                                        {% elif alert.type == 'success' %}bg-emerald-500/20 text-emerald-300
+                                        {% else %}bg-gray-500/20 text-gray-300{% endif %}">
+                                        {{ alert.priority }}
+                                    </span>
+                                {% endif %}
+                                <!-- Timestamp (optional) -->
+                                {% if alert.created_at %}
+                                    <span class="text-xs text-gray-500 ml-auto">
+                                        <i class="far fa-clock mr-1"></i>
+                                        {{ alert.created_at|timesince }} ago
+                                    </span>
+                                {% endif %}
+                            </div>
+                            <p class="text-sm text-gray-400 mt-0.5">{{ alert.message }}</p>
+                            {% if alert.url %}
+                                <a href="{{ alert.url }}" class="inline-flex items-center text-xs font-medium text-blue-400 hover:text-blue-300 transition-colors mt-1.5">
+                                    View Details
+                                    <i class="fas fa-arrow-right ml-1"></i>
+                                </a>
+                            {% endif %}
+                        </div>
+
+                        <!-- Optional Action Button -->
+                        {% if alert.action_url %}
+                            <a href="{{ alert.action_url }}" class="flex-shrink-0 bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white text-xs font-medium px-3 py-1.5 rounded-lg transition-colors border border-white/10">
+                                {{ alert.action_text|default:"Action" }}
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <!-- Empty State -->
+            <div class="text-center py-8">
+                <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-emerald-500/10 mb-3">
+                    <i class="fas fa-check-circle text-emerald-400 text-3xl"></i>
+                </div>
+                <p class="text-gray-300 font-medium">All Systems Healthy</p>
+                <p class="text-gray-500 text-sm mt-1">No alerts at this time</p>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Footer Link -->
+    {% if alerts %}
+        <div class="mt-4 pt-3 border-t border-white/10">
+            <a href="#" class="text-xs text-gray-400 hover:text-white transition-colors flex items-center gap-1">
+                View all alerts
+                <i class="fas fa-chevron-right text-[10px]"></i>
+            </a>
+        </div>
+    {% endif %}
+</div>

@@ -1,0 +1,424 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Edit Profile — NHIMS{% endblock %}
+
+{% block extra_css %}
+<style>
+    .top-navbar { display: none !important; }
+
+    .form-input {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border-radius: 0.75rem;
+        background: rgba(255,255,255,0.04);
+        border: 1px solid rgba(255,255,255,0.08);
+        color: #e2e8f0;
+        font-size: 0.95rem;
+        transition: all 0.2s ease;
+        outline: none;
+    }
+    .form-input:focus {
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
+    }
+    .form-input.error {
+        border-color: #ef4444;
+        box-shadow: 0 0 0 3px rgba(239,68,68,0.15);
+    }
+    .form-input::placeholder {
+        color: #64748b;
+    }
+    select.form-input {
+        background: rgba(255,255,255,0.04);
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2394a3b8' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 1rem center;
+        padding-right: 2.5rem;
+    }
+    .form-label {
+        display: block;
+        font-size: 0.85rem;
+        font-weight: 500;
+        color: #cbd5e1;
+        margin-bottom: 0.3rem;
+    }
+    .form-label .required {
+        color: #ef4444;
+        margin-left: 0.2rem;
+    }
+    .form-error {
+        color: #ef4444;
+        font-size: 0.8rem;
+        margin-top: 0.25rem;
+        display: flex;
+        align-items: center;
+        gap: 0.3rem;
+    }
+
+    .avatar-preview {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 3px solid rgba(59,130,246,0.3);
+    }
+    .avatar-placeholder {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2.5rem;
+        font-weight: 700;
+        background: linear-gradient(135deg, #1e293b, #0f172a);
+        border: 3px solid rgba(59,130,246,0.3);
+        color: #94a3b8;
+    }
+
+    .profile-card {
+        transition: transform 0.2s ease, border-color 0.2s ease;
+        border: 1px solid rgba(255,255,255,0.06);
+        border-radius: 16px;
+        background: rgba(255,255,255,0.02);
+        padding: 1.5rem;
+    }
+    .profile-card:hover {
+        border-color: rgba(59,130,246,0.3);
+        transform: translateY(-2px);
+    }
+
+    .section-title {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #94a3b8;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 1rem;
+        border-bottom: 1px solid rgba(255,255,255,0.06);
+        padding-bottom: 0.5rem;
+    }
+
+    @media (max-width: 768px) {
+        .avatar-preview, .avatar-placeholder {
+            width: 70px;
+            height: 70px;
+            font-size: 1.8rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block navbar %}
+<nav class="fixed top-0 left-0 right-0 z-40 bg-[#0a1628]/80 backdrop-blur-sm border-b border-white/10 px-4 py-3 md:hidden">
+    <div class="flex items-center justify-between">
+        <button id="sidebarToggle" class="text-white text-2xl">
+            <i class="fas fa-bars"></i>
+        </button>
+        <span class="text-white font-semibold">NHIMS Patient</span>
+        <div class="w-8"></div>
+    </div>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="flex min-h-screen bg-[#0a1628]">
+    <!-- ===== SIDEBAR (reuse patient sidebar) ===== -->
+    <aside id="sidebar" class="fixed top-0 left-0 z-50 h-full w-72 bg-[#0d1f3c] border-r border-white/10 transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out overflow-y-auto">
+        <div class="p-4 border-b border-white/10">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 text-xl font-bold">
+                    {{ patient.full_name|slice:":1"|upper|default:"U" }}
+                </div>
+                <div>
+                    <p class="text-white font-semibold text-sm">{{ patient.full_name|default:"Patient" }}</p>
+                    <p class="text-gray-400 text-xs">Patient</p>
+                </div>
+            </div>
+        </div>
+        <nav class="p-3 space-y-1">
+            <a href="{% url 'dashboard:patient_dashboard' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
+                <i class="fas fa-th-large w-5 text-center"></i> Dashboard
+            </a>
+            <a href="{% url 'appointments:patient_appointment_list' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
+                <i class="fas fa-calendar-check w-5 text-center"></i> Appointments
+            </a>
+            <a href="{% url 'prescriptions:patient_my_prescriptions' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
+                <i class="fas fa-prescription-bottle w-5 text-center"></i> Prescriptions
+            </a>
+            <a href="{% url 'laboratory:patient_lab_history' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
+                <i class="fas fa-flask w-5 text-center"></i> Laboratory
+            </a>
+            <a href="{% url 'medical_records:patient_medical_record_list' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
+                <i class="fas fa-file-medical w-5 text-center"></i> Medical Records
+            </a>
+            <a href="{% url 'patients:profile' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
+                <i class="fas fa-user-circle w-5 text-center"></i> Profile
+            </a>
+            <hr class="border-white/10 my-3">
+            <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition bg-blue-600/30 text-blue-300">
+                <i class="fas fa-edit w-5 text-center"></i> Edit Profile
+            </a>
+            <a href="{% url 'notifications:center' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
+                <i class="fas fa-bell w-5 text-center"></i> Notifications
+            </a>
+            <hr class="border-white/10 my-3">
+            <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
+                <i class="fas fa-cog w-5 text-center"></i> Settings
+            </a>
+            {% url 'logout' as logout_url %}
+            {% if logout_url %}
+                <a href="{{ logout_url }}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-red-400 hover:bg-red-500/10 hover:text-red-300">
+                    <i class="fas fa-sign-out-alt w-5 text-center"></i> Logout
+                </a>
+            {% else %}
+                <a href="{% url 'accounts:logout' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-red-400 hover:bg-red-500/10 hover:text-red-300">
+                    <i class="fas fa-sign-out-alt w-5 text-center"></i> Logout
+                </a>
+            {% endif %}
+        </nav>
+        <div class="absolute bottom-4 left-4 right-4 text-center text-gray-500 text-xs">
+            NHIMS v2.0
+        </div>
+    </aside>
+
+    <!-- ===== MAIN CONTENT ===== -->
+    <main class="flex-1 md:ml-72 p-4 md:p-8 space-y-6 mt-14 md:mt-0">
+
+        <!-- ===== HEADER ===== -->
+        <div class="flex items-center gap-4">
+            <a href="{% url 'patients:profile' %}" class="text-gray-400 hover:text-white transition">
+                <i class="fas fa-arrow-left text-xl"></i>
+            </a>
+            <div>
+                <h1 class="text-2xl font-bold text-white">Edit Profile</h1>
+                <p class="text-sm text-gray-400">Update your personal information</p>
+            </div>
+        </div>
+
+        <!-- ===== FORM ===== -->
+        <form method="post" enctype="multipart/form-data" class="space-y-6" id="profile-form">
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+            <div class="bg-red-500/20 border border-red-500/30 text-red-300 px-4 py-3 rounded-xl text-sm">
+                <i class="fas fa-exclamation-triangle mr-2"></i>
+                {% for error in form.non_field_errors %}
+                    <p>{{ error }}</p>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- ===== PROFILE PHOTO ===== -->
+            <div class="glass-card rounded-2xl border border-white/10 p-6 profile-card">
+                <h2 class="section-title">Profile Photo</h2>
+                <div class="flex items-center gap-6 flex-wrap">
+                    <div>
+                        {% if patient.profile_photo %}
+                            <img src="{{ patient.profile_photo.url }}" alt="Profile" class="avatar-preview" id="avatar-preview">
+                        {% else %}
+                            <div class="avatar-placeholder" id="avatar-placeholder">{{ patient.full_name|slice:":1"|upper|default:"U" }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="flex-1">
+                        <label for="{{ form.profile_photo.id_for_label }}" class="form-label">
+                            {{ form.profile_photo.label }}
+                        </label>
+                        {{ form.profile_photo }}
+                        {% if form.profile_photo.errors %}
+                            <div class="form-error">
+                                <i class="fas fa-exclamation-circle"></i>
+                                {% for error in form.profile_photo.errors %}{{ error }}{% endfor %}
+                            </div>
+                        {% endif %}
+                        <p class="text-xs text-gray-500 mt-1">Supported: JPG, PNG, WEBP (max 5 MB)</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== PERSONAL INFORMATION ===== -->
+            <div class="glass-card rounded-2xl border border-white/10 p-6 profile-card">
+                <h2 class="section-title">Personal Information</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    {% for field in form %}
+                        {% if field.name in 'national_id,full_name,date_of_birth,gender,blood_group,marital_status' %}
+                            <div>
+                                <label for="{{ field.id_for_label }}" class="form-label">
+                                    {{ field.label }}
+                                    {% if field.field.required %}<span class="required">*</span>{% endif %}
+                                </label>
+                                {{ field }}
+                                {% if field.errors %}
+                                    <div class="form-error">
+                                        <i class="fas fa-exclamation-circle"></i>
+                                        {% for error in field.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- ===== CONTACT INFORMATION ===== -->
+            <div class="glass-card rounded-2xl border border-white/10 p-6 profile-card">
+                <h2 class="section-title">Contact Information</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    {% for field in form %}
+                        {% if field.name in 'phone,email,address,city,district,zip_code' %}
+                            <div class="{% if field.name in 'address' %}md:col-span-2{% endif %}">
+                                <label for="{{ field.id_for_label }}" class="form-label">
+                                    {{ field.label }}
+                                    {% if field.field.required %}<span class="required">*</span>{% endif %}
+                                </label>
+                                {{ field }}
+                                {% if field.errors %}
+                                    <div class="form-error">
+                                        <i class="fas fa-exclamation-circle"></i>
+                                        {% for error in field.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- ===== EMERGENCY CONTACT ===== -->
+            <div class="glass-card rounded-2xl border border-white/10 p-6 profile-card">
+                <h2 class="section-title">Emergency Contact</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    {% for field in form %}
+                        {% if field.name in 'emergency_contact_name,emergency_contact_phone' %}
+                            <div>
+                                <label for="{{ field.id_for_label }}" class="form-label">
+                                    {{ field.label }}
+                                    {% if field.field.required %}<span class="required">*</span>{% endif %}
+                                </label>
+                                {{ field }}
+                                {% if field.errors %}
+                                    <div class="form-error">
+                                        <i class="fas fa-exclamation-circle"></i>
+                                        {% for error in field.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- ===== MEDICAL INFORMATION ===== -->
+            <div class="glass-card rounded-2xl border border-white/10 p-6 profile-card">
+                <h2 class="section-title">Medical Information</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    {% for field in form %}
+                        {% if field.name in 'allergies,chronic_diseases' %}
+                            <div class="md:col-span-2">
+                                <label for="{{ field.id_for_label }}" class="form-label">
+                                    {{ field.label }}
+                                    {% if field.field.required %}<span class="required">*</span>{% endif %}
+                                </label>
+                                {{ field }}
+                                {% if field.errors %}
+                                    <div class="form-error">
+                                        <i class="fas fa-exclamation-circle"></i>
+                                        {% for error in field.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- ===== NATIONAL ID ===== -->
+            <div class="glass-card rounded-2xl border border-white/10 p-6 profile-card">
+                <h2 class="section-title">Identification</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    {% for field in form %}
+                        {% if field.name == 'national_id' %}
+                            <div>
+                                <label for="{{ field.id_for_label }}" class="form-label">
+                                    {{ field.label }}
+                                    {% if field.field.required %}<span class="required">*</span>{% endif %}
+                                </label>
+                                {{ field }}
+                                {% if field.errors %}
+                                    <div class="form-error">
+                                        <i class="fas fa-exclamation-circle"></i>
+                                        {% for error in field.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- ===== FORM ACTIONS ===== -->
+            <div class="flex flex-wrap gap-4 pt-4">
+                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-xl font-medium transition shadow-lg shadow-blue-500/30 flex items-center gap-2" id="submit-btn">
+                    <i class="fas fa-save"></i> Save Changes
+                </button>
+                <a href="{% url 'patients:profile' %}" class="bg-white/5 hover:bg-white/10 px-6 py-3 rounded-xl text-gray-300 transition">
+                    Cancel
+                </a>
+                <button type="reset" class="bg-white/5 hover:bg-white/10 px-6 py-3 rounded-xl text-gray-300 transition">
+                    Reset
+                </button>
+            </div>
+
+        </form>
+
+    </main>
+</div>
+
+<!-- ===== SIDEBAR TOGGLE ===== -->
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const sidebar = document.getElementById('sidebar');
+        const toggleBtn = document.getElementById('sidebarToggle');
+        if (toggleBtn && sidebar) {
+            toggleBtn.addEventListener('click', function () {
+                sidebar.classList.toggle('-translate-x-full');
+            });
+            document.addEventListener('click', function (event) {
+                const isClickInside = sidebar.contains(event.target) || toggleBtn.contains(event.target);
+                if (!isClickInside && window.innerWidth < 768) {
+                    sidebar.classList.add('-translate-x-full');
+                }
+            });
+        }
+
+        // Image preview
+        const photoInput = document.getElementById('{{ form.profile_photo.id_for_label }}');
+        const avatarPreview = document.getElementById('avatar-preview');
+        const avatarPlaceholder = document.getElementById('avatar-placeholder');
+
+        if (photoInput) {
+            photoInput.addEventListener('change', function() {
+                const file = this.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        if (avatarPreview) {
+                            avatarPreview.src = e.target.result;
+                        } else if (avatarPlaceholder) {
+                            avatarPlaceholder.style.display = 'none';
+                            const img = document.createElement('img');
+                            img.src = e.target.result;
+                            img.className = 'avatar-preview';
+                            img.id = 'avatar-preview';
+                            avatarPlaceholder.parentNode.appendChild(img);
+                        }
+                    }
+                    reader.readAsDataURL(file);
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

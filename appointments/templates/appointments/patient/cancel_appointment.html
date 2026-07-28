@@ -1,0 +1,207 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Cancel Appointment — NHIMS{% endblock %}
+
+{% block extra_css %}
+<style>
+    .top-navbar { display: none !important; }
+    .reason-option { cursor: pointer; transition: background 0.2s; }
+    .reason-option:hover { background: rgba(255,255,255,0.05); }
+</style>
+{% endblock %}
+
+{% block navbar %}
+<nav class="fixed top-0 left-0 right-0 z-40 bg-[#0a1628]/80 backdrop-blur-sm border-b border-white/10 px-4 py-3 md:hidden">
+    <div class="flex items-center justify-between">
+        <button id="sidebarToggle" class="text-white text-2xl">
+            <i class="fas fa-bars"></i>
+        </button>
+        <span class="text-white font-semibold">NHIMS Patient</span>
+        <div class="w-8"></div>
+    </div>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="flex min-h-screen bg-[#0a1628]">
+    <!-- ===== SIDEBAR (reuse same as patient dashboard) ===== -->
+    <aside id="sidebar" class="fixed top-0 left-0 z-50 h-full w-72 bg-[#0d1f3c] border-r border-white/10 transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out overflow-y-auto">
+        <div class="p-4 border-b border-white/10">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 text-xl font-bold">
+                    {{ appointment.patient.full_name|slice:":1"|upper|default:"U" }}
+                </div>
+                <div>
+                    <p class="text-white font-semibold text-sm">{{ appointment.patient.full_name|default:"Patient" }}</p>
+                    <p class="text-gray-400 text-xs">Patient</p>
+                </div>
+            </div>
+        </div>
+        <nav class="p-3 space-y-1">
+            <a href="{% url 'dashboard:patient_dashboard' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
+                <i class="fas fa-th-large w-5 text-center"></i> Dashboard
+            </a>
+            <a href="{% url 'appointments:patient_appointment_list' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
+                <i class="fas fa-calendar-check w-5 text-center"></i> Appointments
+            </a>
+            <a href="{% url 'appointments:patient_book_appointment' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
+                <i class="fas fa-plus-circle w-5 text-center"></i> Book Appointment
+            </a>
+            <hr class="border-white/10 my-3">
+           <a href="{% url 'patients:profile' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
+            <i class="fas fa-user-circle w-5 text-center"></i> Profile
+            </a>
+            <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
+                <i class="fas fa-cog w-5 text-center"></i> Settings
+            </a>
+            {% url 'logout' as logout_url %}
+            {% if logout_url %}
+                <a href="{{ logout_url }}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-red-400 hover:bg-red-500/10 hover:text-red-300">
+                    <i class="fas fa-sign-out-alt w-5 text-center"></i> Logout
+                </a>
+            {% else %}
+                <a href="{% url 'accounts:logout' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-red-400 hover:bg-red-500/10 hover:text-red-300">
+                    <i class="fas fa-sign-out-alt w-5 text-center"></i> Logout
+                </a>
+            {% endif %}
+        </nav>
+        <div class="absolute bottom-4 left-4 right-4 text-center text-gray-500 text-xs">
+            NHIMS v2.0
+        </div>
+    </aside>
+
+    <!-- ===== MAIN CONTENT ===== -->
+    <main class="flex-1 md:ml-72 p-4 md:p-6 space-y-6 mt-14 md:mt-0">
+        <div class="flex items-center gap-4 mb-6">
+            <a href="{% url 'appointments:patient_appointment_detail' appointment.pk %}" class="text-gray-400 hover:text-white transition">
+                <i class="fas fa-arrow-left text-xl"></i>
+            </a>
+            <div>
+                <h1 class="text-2xl font-bold text-white">Cancel Appointment</h1>
+                <p class="text-sm text-gray-400">Please confirm cancellation</p>
+            </div>
+        </div>
+
+        <!-- Appointment Summary Card -->
+        <div class="glass-card rounded-2xl border border-white/10 p-6 mb-6">
+            <h3 class="text-white font-semibold text-lg mb-4">Appointment Details</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <p class="text-gray-400 text-xs uppercase">Doctor</p>
+                    <p class="text-white font-medium">Dr. {{ appointment.doctor.full_name|default:"N/A" }}</p>
+                </div>
+                <div>
+                    <p class="text-gray-400 text-xs uppercase">Hospital</p>
+                    <p class="text-white font-medium">{{ appointment.hospital.name|default:"N/A" }}</p>
+                </div>
+                <div>
+                    <p class="text-gray-400 text-xs uppercase">Date</p>
+                    <p class="text-white font-medium">{{ appointment.appointment_date|date:"l, F j, Y" }}</p>
+                </div>
+                <div>
+                    <p class="text-gray-400 text-xs uppercase">Time</p>
+                    <p class="text-white font-medium">{{ appointment.appointment_time|time:"h:i A" }}</p>
+                </div>
+                <div>
+                    <p class="text-gray-400 text-xs uppercase">Status</p>
+                    <span class="inline-block px-3 py-1 rounded-full text-sm font-medium
+                        {% if appointment.status == 'pending' %}badge-pending
+                        {% elif appointment.status == 'confirmed' %}badge-confirmed
+                        {% elif appointment.status == 'completed' %}badge-completed
+                        {% elif appointment.status == 'cancelled' %}badge-cancelled
+                        {% else %}badge-missed{% endif %}">
+                        {{ appointment.get_status_display }}
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cancellation Form -->
+        <form method="post" class="glass-card rounded-2xl border border-white/10 p-6 space-y-6">
+            {% csrf_token %}
+
+            <div>
+                <h3 class="text-white font-semibold text-lg mb-2">Reason for Cancellation</h3>
+                <p class="text-gray-400 text-sm mb-4">Please select a reason to help us improve our service.</p>
+
+                <div class="space-y-2">
+                    <label class="flex items-center gap-3 p-3 rounded-xl border border-white/5 hover:bg-white/5 transition reason-option">
+                        <input type="radio" name="reason" value="patient_unavailable" class="w-4 h-4 text-blue-600">
+                        <span class="text-white">Patient is unavailable</span>
+                    </label>
+                    <label class="flex items-center gap-3 p-3 rounded-xl border border-white/5 hover:bg-white/5 transition reason-option">
+                        <input type="radio" name="reason" value="feeling_better" class="w-4 h-4 text-blue-600">
+                        <span class="text-white">Feeling better – no longer need the appointment</span>
+                    </label>
+                    <label class="flex items-center gap-3 p-3 rounded-xl border border-white/5 hover:bg-white/5 transition reason-option">
+                        <input type="radio" name="reason" value="booked_by_mistake" class="w-4 h-4 text-blue-600">
+                        <span class="text-white">Booked by mistake</span>
+                    </label>
+                    <label class="flex items-center gap-3 p-3 rounded-xl border border-white/5 hover:bg-white/5 transition reason-option">
+                        <input type="radio" name="reason" value="need_another_doctor" class="w-4 h-4 text-blue-600">
+                        <span class="text-white">Need to see a different doctor</span>
+                    </label>
+                    <label class="flex items-center gap-3 p-3 rounded-xl border border-white/5 hover:bg-white/5 transition reason-option">
+                        <input type="radio" name="reason" value="personal_reason" class="w-4 h-4 text-blue-600">
+                        <span class="text-white">Personal reason</span>
+                    </label>
+                    <label class="flex items-center gap-3 p-3 rounded-xl border border-white/5 hover:bg-white/5 transition reason-option">
+                        <input type="radio" name="reason" value="other" class="w-4 h-4 text-blue-600">
+                        <span class="text-white">Other</span>
+                    </label>
+                </div>
+
+                <div id="other-textarea-container" class="mt-4 hidden">
+                    <label for="other_text" class="block text-sm font-medium text-gray-300 mb-1">Additional Details</label>
+                    <textarea name="other_text" id="other_text" rows="3" class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-400 focus:border-blue-500 outline-none" placeholder="Please explain your reason in detail..."></textarea>
+                    {% if errors.other_text %}
+                    <p class="text-red-400 text-sm mt-1">{{ errors.other_text }}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="flex flex-wrap gap-4 pt-4 border-t border-white/10">
+                <button type="submit" class="bg-red-600 hover:bg-red-700 text-white px-8 py-3 rounded-xl font-medium transition shadow-lg shadow-red-500/30 flex items-center gap-2">
+                    <i class="fas fa-times-circle"></i> Confirm Cancellation
+                </button>
+                <a href="{% url 'appointments:patient_appointment_detail' appointment.pk %}" class="bg-white/5 hover:bg-white/10 px-6 py-3 rounded-xl text-gray-300 transition">
+                    Keep Appointment
+                </a>
+            </div>
+        </form>
+    </main>
+</div>
+
+<!-- ===== SIDEBAR TOGGLE ===== -->
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const sidebar = document.getElementById('sidebar');
+        const toggleBtn = document.getElementById('sidebarToggle');
+        if (toggleBtn && sidebar) {
+            toggleBtn.addEventListener('click', function () {
+                sidebar.classList.toggle('-translate-x-full');
+            });
+            document.addEventListener('click', function (event) {
+                const isClickInside = sidebar.contains(event.target) || toggleBtn.contains(event.target);
+                if (!isClickInside && window.innerWidth < 768) {
+                    sidebar.classList.add('-translate-x-full');
+                }
+            });
+        }
+
+        // Toggle "Other" textarea
+        const reasonRadios = document.querySelectorAll('input[name="reason"]');
+        const otherContainer = document.getElementById('other-textarea-container');
+        reasonRadios.forEach(radio => {
+            radio.addEventListener('change', function () {
+                if (this.value === 'other') {
+                    otherContainer.classList.remove('hidden');
+                } else {
+                    otherContainer.classList.add('hidden');
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

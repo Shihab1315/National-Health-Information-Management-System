@@ -1,0 +1,88 @@
+<!-- laboratory/templates/laboratory/partials/order_items_table.html -->
+{% load static %}
+
+<div class="overflow-x-auto">
+  <table class="w-full text-sm text-left text-slate-300">
+    <thead class="text-xs uppercase text-slate-400 border-b border-slate-700">
+      <tr>
+        <th class="px-4 py-2">#</th>
+        <th class="px-4 py-2">Test</th>
+        <th class="px-4 py-2">Category</th>
+        <th class="px-4 py-2">Result</th>
+        <th class="px-4 py-2">Interpretation</th>
+        <th class="px-4 py-2">Report</th>
+        <th class="px-4 py-2 text-center">Status</th>
+        {% if can_upload_result %}
+          <th class="px-4 py-2 text-right">Actions</th>
+        {% endif %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in order.items.all %}
+        <tr class="border-b border-slate-700/50 hover:bg-slate-700/20 transition">
+          <td class="px-4 py-2 text-slate-400">{{ forloop.counter }}</td>
+          <td class="px-4 py-2 font-medium text-white">{{ item.test.name }}</td>
+          <td class="px-4 py-2">{{ item.test.category.name }}</td>
+          <td class="px-4 py-2">
+            {% if item.result %}
+              {{ item.result.result|default:"—" }}
+            {% else %}
+              <span class="text-slate-500">Not uploaded</span>
+            {% endif %}
+          </td>
+          <td class="px-4 py-2">
+            {% if item.result and item.result.interpretation %}
+              {{ item.result.interpretation }}
+            {% else %}
+              <span class="text-slate-500">—</span>
+            {% endif %}
+          </td>
+          <td class="px-4 py-2">
+            {% if item.result and item.result.report_file %}
+              <a href="{{ item.result.report_file.url }}" target="_blank" class="text-blue-400 hover:text-blue-300 transition">
+                <i class="fas fa-file-pdf"></i> View
+              </a>
+            {% else %}
+              <span class="text-slate-500">—</span>
+            {% endif %}
+          </td>
+          <td class="px-4 py-2 text-center">
+            {% if item.result %}
+              {% if item.result.verified_by %}
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-500/20 text-green-300 border border-green-500/30">
+                  <i class="fas fa-check-circle mr-1"></i> Verified
+                </span>
+              {% else %}
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-500/20 text-yellow-300 border border-yellow-500/30">
+                  <i class="fas fa-clock mr-1"></i> Pending
+                </span>
+              {% endif %}
+            {% else %}
+              <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-500/20 text-slate-300 border border-slate-500/30">
+                <i class="fas fa-hourglass mr-1"></i> No Result
+              </span>
+            {% endif %}
+          </td>
+          {% if can_upload_result %}
+            <td class="px-4 py-2 text-right">
+              {% if not item.result or not item.result.verified_by %}
+                <a href="{% url 'laboratory:upload_result' order_pk=order.pk item_pk=item.pk %}" class="text-blue-400 hover:text-blue-300 transition text-sm">
+                  <i class="fas fa-upload"></i>
+                  {% if item.result %}Update{% else %}Upload{% endif %}
+                </a>
+              {% else %}
+                <span class="text-slate-500 text-sm">Locked</span>
+              {% endif %}
+            </td>
+          {% endif %}
+        </tr>
+      {% empty %}
+        <tr>
+          <td colspan="{% if can_upload_result %}8{% else %}7{% endif %}" class="px-4 py-4 text-center text-slate-400">
+            No tests added to this order.
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>

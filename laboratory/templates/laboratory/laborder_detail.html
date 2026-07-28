@@ -1,0 +1,247 @@
+<!-- laboratory/templates/laboratory/laborder_detail.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Lab Order Details - NHIMS{% endblock %}
+
+{% block content %}
+<div class="bg-slate-900 min-h-screen py-8 px-4 sm:px-6 lg:px-8">
+  <div class="max-w-7xl mx-auto">
+    <!-- Breadcrumb -->
+    <nav class="flex items-center text-sm text-slate-400 mb-6" aria-label="Breadcrumb">
+      <a href="/" class="hover:text-blue-400 transition">
+        <i class="fas fa-home mr-1"></i> Dashboard
+      </a>
+      <span class="mx-2 text-slate-600">/</span>
+      <a href="{% url 'laboratory:order_list' %}" class="hover:text-blue-400 transition">Lab Orders</a>
+      <span class="mx-2 text-slate-600">/</span>
+      <span class="text-slate-200 font-medium">Order Details</span>
+    </nav>
+
+    <!-- Header -->
+    <div class="flex flex-wrap items-center justify-between gap-4 mb-8">
+      <div>
+        <h1 class="text-2xl font-bold text-white flex items-center gap-3">
+          <span class="bg-blue-600 p-3 rounded-xl shadow-lg shadow-blue-900/30">
+            <i class="fas fa-flask text-white text-xl"></i>
+          </span>
+          Lab Order Details
+        </h1>
+        <p class="text-slate-400 mt-1 ml-1">
+          <span class="text-slate-300">{{ order.order_number }}</span>
+          <span class="mx-2 text-slate-600">·</span>
+          <span class="text-slate-500">{{ order.ordered_date|date:"M d, Y H:i" }}</span>
+        </p>
+      </div>
+      <div class="flex flex-wrap gap-2">
+        {% if can_edit %}
+          <a href="{% url 'laboratory:order_update' order.pk %}" class="inline-flex items-center gap-2 px-4 py-2.5 bg-amber-600 hover:bg-amber-700 border border-amber-700 rounded-xl transition shadow-sm text-white font-medium">
+            <i class="fas fa-edit"></i> Edit
+          </a>
+        {% endif %}
+        {% if can_delete %}
+          <a href="{% url 'laboratory:order_delete' order.pk %}" class="inline-flex items-center gap-2 px-4 py-2.5 bg-red-600 hover:bg-red-700 border border-red-700 rounded-xl transition shadow-sm text-white font-medium">
+            <i class="fas fa-trash-alt"></i> Delete
+          </a>
+        {% endif %}
+        <a href="{% url 'laboratory:order_list' %}" class="inline-flex items-center gap-2 px-4 py-2.5 bg-slate-700 hover:bg-slate-600 border border-slate-600 rounded-xl transition shadow-sm text-slate-300 font-medium">
+          <i class="fas fa-arrow-left"></i> Back
+        </a>
+      </div>
+    </div>
+
+    <!-- Main Card -->
+    <div class="bg-slate-800 rounded-2xl shadow-xl overflow-hidden">
+      <!-- Card Header -->
+      <div class="bg-gradient-to-r from-blue-600 to-blue-700 px-8 py-6">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-4">
+            <div class="bg-white/20 backdrop-blur p-3 rounded-xl">
+              <i class="fas fa-file-medical text-white text-2xl"></i>
+            </div>
+            <div>
+              <h2 class="text-xl font-bold text-white">{{ order.order_number }}</h2>
+              <p class="text-blue-100 text-sm">
+                {% with patient=order.patient %}
+                  {% if patient and patient.user %}
+                    {{ patient.user.get_full_name|default:patient.user.username }}
+                  {% elif patient and patient.full_name %}
+                    {{ patient.full_name }}
+                  {% else %}
+                    N/A
+                  {% endif %}
+                {% endwith %}
+                ·
+                {% with doctor=order.doctor %}
+                  {% if doctor and doctor.user %}
+                    Dr. {{ doctor.user.get_full_name|default:doctor.user.username }}
+                  {% elif doctor and doctor.full_name %}
+                    Dr. {{ doctor.full_name }}
+                  {% else %}
+                    N/A
+                  {% endif %}
+                {% endwith %}
+              </p>
+            </div>
+          </div>
+          <!-- Status Badge -->
+          {% include 'laboratory/components/status_badge.html' with status=order.status %}
+        </div>
+      </div>
+
+      <!-- Card Body -->
+      <div class="p-8">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <!-- Left Column: Patient, Doctor, Hospital -->
+          <div class="space-y-4">
+            <!-- Patient -->
+            <div class="bg-slate-700/30 rounded-xl p-4">
+              <h3 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+                <i class="fas fa-user mr-1"></i> Patient
+              </h3>
+              <p class="text-lg font-medium text-white">
+                {% with patient=order.patient %}
+                  {% if patient and patient.user %}
+                    {{ patient.user.get_full_name|default:patient.user.username }}
+                  {% elif patient and patient.full_name %}
+                    {{ patient.full_name }}
+                  {% else %}
+                    N/A
+                  {% endif %}
+                {% endwith %}
+              </p>
+              <p class="text-sm text-slate-400">
+                {% if order.patient and order.patient.user %}
+                  {{ order.patient.user.email|default:"N/A" }}
+                {% else %}
+                  N/A
+                {% endif %}
+              </p>
+              <p class="text-sm text-slate-400">Phone: 
+                {% if order.patient and order.patient.user %}
+                  {{ order.patient.user.phone|default:"N/A" }}
+                {% else %}
+                  N/A
+                {% endif %}
+              </p>
+            </div>
+
+            <!-- Doctor -->
+            <div class="bg-slate-700/30 rounded-xl p-4">
+              <h3 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+                <i class="fas fa-user-md mr-1"></i> Doctor
+              </h3>
+              <p class="text-lg font-medium text-white">
+                {% with doctor=order.doctor %}
+                  {% if doctor and doctor.user %}
+                    Dr. {{ doctor.user.get_full_name|default:doctor.user.username }}
+                  {% elif doctor and doctor.full_name %}
+                    Dr. {{ doctor.full_name }}
+                  {% else %}
+                    N/A
+                  {% endif %}
+                {% endwith %}
+              </p>
+              <p class="text-sm text-slate-400">Reg. No: {{ order.doctor.registration_number|default:"N/A" }}</p>
+              <p class="text-sm text-slate-400">Specialty: {{ order.doctor.specialization|default:"General" }}</p>
+            </div>
+
+            <!-- Hospital -->
+            <div class="bg-slate-700/30 rounded-xl p-4">
+              <h3 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+                <i class="fas fa-hospital mr-1"></i> Hospital
+              </h3>
+              <p class="text-lg font-medium text-white">{{ order.hospital.name }}</p>
+              <p class="text-sm text-slate-400">{{ order.hospital.full_address|default:"" }}</p>
+            </div>
+
+            <!-- Prescription & Appointment -->
+            <div class="bg-slate-700/30 rounded-xl p-4">
+              <h3 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+                <i class="fas fa-prescription-bottle mr-1"></i> Prescription
+              </h3>
+              <p class="text-lg font-medium text-white">
+                <a href="{% url 'prescriptions:detail' order.prescription.pk %}" class="text-blue-400 hover:text-blue-300 hover:underline">
+                  {{ order.prescription.prescription_number }}
+                </a>
+              </p>
+              <p class="text-sm text-slate-400">Appointment: {{ order.appointment.appointment_number }}</p>
+            </div>
+          </div>
+
+          <!-- Right Column: Order Info & Notes -->
+          <div class="space-y-4">
+            <!-- Order Info -->
+            <div class="bg-slate-700/30 rounded-xl p-4">
+              <h3 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+                <i class="fas fa-calendar-alt mr-1"></i> Order Information
+              </h3>
+              <dl class="space-y-1 text-sm">
+                <div class="flex justify-between">
+                  <dt class="text-slate-400">Order Number</dt>
+                  <dd class="text-white font-mono">{{ order.order_number }}</dd>
+                </div>
+                <div class="flex justify-between">
+                  <dt class="text-slate-400">Ordered Date</dt>
+                  <dd class="text-white">{{ order.ordered_date|date:"M d, Y H:i" }}</dd>
+                </div>
+                <div class="flex justify-between">
+                  <dt class="text-slate-400">Status</dt>
+                  <dd>
+                    {% include 'laboratory/components/status_badge.html' with status=order.status %}
+                  </dd>
+                </div>
+                {% if order.notes %}
+                  <div>
+                    <dt class="text-slate-400">Notes</dt>
+                    <dd class="text-white mt-1">{{ order.notes }}</dd>
+                  </div>
+                {% endif %}
+              </dl>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="flex flex-wrap gap-2 mt-2">
+              {% if can_upload_result %}
+                <!-- We'll show upload result buttons per item in the items table below -->
+              {% endif %}
+            </div>
+
+            <!-- Audit Trail -->
+            <div class="bg-slate-700/30 rounded-xl p-4 text-xs text-slate-400 space-y-1">
+              <details>
+                <summary class="cursor-pointer hover:text-slate-300">Audit Trail</summary>
+                <div class="mt-2 space-y-0.5">
+                  <p>Created: {{ order.created_at|date:"M d, Y H:i" }}</p>
+                  <p>Updated: {{ order.updated_at|date:"M d, Y H:i" }}</p>
+                  {% if order.created_by %}
+                    <p>Created by: {{ order.created_by.get_full_name|default:order.created_by.username }}</p>
+                  {% endif %}
+                  {% if order.updated_by %}
+                    <p>Last updated by: {{ order.updated_by.get_full_name|default:order.updated_by.username }}</p>
+                  {% endif %}
+                </div>
+              </details>
+            </div>
+          </div>
+        </div>
+
+        <!-- Items & Results (using partial) -->
+        <div class="mt-8 pt-6 border-t border-slate-700">
+          <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-semibold text-white flex items-center gap-2">
+              <i class="fas fa-vial text-blue-400"></i> Tests & Results
+            </h3>
+            {% if can_edit %}
+              <a href="{% url 'laboratory:order_update' order.pk %}" class="text-blue-400 hover:text-blue-300 text-sm font-medium">
+                <i class="fas fa-plus"></i> Add Test
+              </a>
+            {% endif %}
+          </div>
+          {% include 'laboratory/partials/order_items_table.html' with order=order can_upload_result=can_upload_result %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

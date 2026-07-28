@@ -1,0 +1,366 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Upload Attachment — NHIMS{% endblock %}
+
+{% block extra_css %}
+<style>
+    .glass-card {
+        background: rgba(255, 255, 255, 0.03);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .drop-zone {
+        border: 2px dashed rgba(255, 255, 255, 0.15);
+        transition: border-color 0.3s ease, background 0.3s ease;
+        cursor: pointer;
+        min-height: 180px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        border-radius: 1rem;
+    }
+    .drop-zone:hover {
+        border-color: rgba(59, 130, 246, 0.5);
+        background: rgba(59, 130, 246, 0.05);
+    }
+    .drop-zone.dragover {
+        border-color: #3b82f6;
+        background: rgba(59, 130, 246, 0.1);
+    }
+    .drop-zone.has-file {
+        border-color: #10b981;
+        background: rgba(16, 185, 129, 0.05);
+    }
+    .field-errors {
+        color: #ef4444;
+        font-size: 0.8rem;
+        margin-top: 0.25rem;
+        list-style: none;
+        padding: 0;
+    }
+    .field-errors li {
+        margin-bottom: 0.125rem;
+    }
+    .glass-input {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border-radius: 0.75rem;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: #ffffff;
+        transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        outline: none;
+        font-size: 0.95rem;
+    }
+    .glass-input:focus {
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+    }
+    .glass-input::placeholder {
+        color: rgba(255, 255, 255, 0.3);
+    }
+    .glass-input.error {
+        border-color: #ef4444;
+        box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2);
+    }
+    textarea.glass-input {
+        resize: vertical;
+        min-height: 80px;
+    }
+    .field-label {
+        display: block;
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: #c8d0dc;
+        margin-bottom: 0.375rem;
+    }
+    .file-preview-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.5rem 0.75rem;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 0.5rem;
+        font-size: 0.875rem;
+        color: #c8d0dc;
+        margin-top: 0.5rem;
+    }
+    .file-preview-item .file-size {
+        color: #94a3b8;
+        font-size: 0.75rem;
+        margin-left: auto;
+    }
+    .file-preview-item .file-remove {
+        color: #ef4444;
+        cursor: pointer;
+        transition: color 0.2s;
+        background: none;
+        border: none;
+        font-size: 1rem;
+    }
+    .file-preview-item .file-remove:hover {
+        color: #dc2626;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto px-4 py-8">
+    <!-- Header -->
+    <div class="flex items-center gap-3 mb-6">
+        <a href="{% url 'medical_records:record_detail' record.pk %}" class="text-gray-400 hover:text-white transition-colors" aria-label="Back to record">
+            <i class="fas fa-arrow-left text-xl"></i>
+        </a>
+        <div>
+            <h1 class="text-2xl font-bold text-white">Upload Medical Attachment</h1>
+            <p class="text-sm text-gray-400 mt-0.5">
+                Patient: <span class="text-white font-medium">{{ record.patient.full_name }}</span> &middot;
+                Record #{{ record.pk }}
+            </p>
+        </div>
+    </div>
+
+    <!-- Summary Card -->
+    <div class="glass-card rounded-2xl border border-white/10 p-5 mb-6 grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+        <div>
+            <span class="text-gray-400 block">Patient</span>
+            <span class="text-white font-medium">{{ record.patient.full_name }}</span>
+        </div>
+        <div>
+            <span class="text-gray-400 block">Visit Date</span>
+            <span class="text-white">{{ record.visit_date|date:"M d, Y" }}</span>
+        </div>
+        <div>
+            <span class="text-gray-400 block">Doctor</span>
+            <span class="text-white">{{ record.doctor|default:"N/A" }}</span>
+        </div>
+        <div>
+            <span class="text-gray-400 block">Record ID</span>
+            <span class="text-white font-mono">{{ record.pk }}</span>
+        </div>
+    </div>
+
+    <!-- Upload Form -->
+    <form method="post" enctype="multipart/form-data" id="upload-form" class="space-y-6">
+        {% csrf_token %}
+
+        <!-- Non-field errors -->
+        {% if form.non_field_errors %}
+            <div class="bg-red-500/20 border border-red-500/30 text-red-300 px-4 py-3 rounded-xl text-sm">
+                <i class="fas fa-exclamation-triangle mr-2"></i>
+                {% for error in form.non_field_errors %}
+                    <p>{{ error }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <!-- File Upload (drag-and-drop) -->
+        <div class="glass-card rounded-2xl border border-white/10 p-6">
+            <label for="{{ form.file.id_for_label }}" class="field-label">
+                {{ form.file.label }} <span class="text-red-400">*</span>
+            </label>
+
+            <!-- Drop zone -->
+            <div class="drop-zone" id="drop-zone">
+                <i class="fas fa-cloud-upload-alt text-4xl text-gray-500 mb-3 block" id="upload-icon"></i>
+                <p class="text-gray-400 text-sm" id="drop-text">Drag &amp; drop your file here, or click to select</p>
+                <p class="text-xs text-gray-500 mt-1">Supports: PDF, JPG, PNG, DOC, DOCX, XLS, XLSX (max 20 MB)</p>
+                <input type="file" name="file" id="{{ form.file.id_for_label }}" class="hidden" accept=".pdf,.png,.jpg,.jpeg,.gif,.doc,.docx,.xls,.xlsx,.txt" />
+                <button type="button" onclick="document.getElementById('{{ form.file.id_for_label }}').click()" class="mt-4 bg-blue-600/20 text-blue-400 px-5 py-2.5 rounded-lg hover:bg-blue-600/30 transition-all duration-200 text-sm font-medium">
+                    <i class="fas fa-plus mr-1.5"></i> Browse Files
+                </button>
+                <!-- Preview area -->
+                <div id="file-preview" class="w-full mt-2 hidden"></div>
+            </div>
+
+            {% if form.file.errors %}
+                <ul class="field-errors">{% for err in form.file.errors %}<li><i class="fas fa-exclamation-circle mr-1"></i> {{ err }}</li>{% endfor %}</ul>
+            {% endif %}
+        </div>
+
+        <!-- Description -->
+        <div class="glass-card rounded-2xl border border-white/10 p-6">
+            <label for="{{ form.description.id_for_label }}" class="field-label">
+                {{ form.description.label }} <span class="text-gray-500 text-xs font-normal">(optional)</span>
+            </label>
+            {{ form.description }}
+            {% if form.description.errors %}
+                <ul class="field-errors">{% for err in form.description.errors %}<li>{{ err }}</li>{% endfor %}</ul>
+            {% endif %}
+            <p class="text-xs text-gray-500 mt-1">Provide a short description to help identify this document.</p>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex flex-wrap items-center justify-end gap-3 pt-2">
+            <a href="{% url 'medical_records:record_detail' record.pk %}" class="px-6 py-2.5 rounded-xl text-gray-300 hover:text-white hover:bg-white/10 transition-all duration-200 text-sm font-medium border border-white/10">
+                <i class="fas fa-times mr-1.5"></i> Cancel
+            </a>
+            <button type="submit" class="bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-600 text-white px-8 py-3 rounded-xl font-medium transition-all duration-200 shadow-lg shadow-blue-500/30 flex items-center gap-2">
+                <i class="fas fa-upload"></i> Upload Attachment
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    (function() {
+        'use strict';
+
+        const fileInput = document.getElementById('{{ form.file.id_for_label }}');
+        const dropZone = document.getElementById('drop-zone');
+        const previewContainer = document.getElementById('file-preview');
+        const dropText = document.getElementById('drop-text');
+        const uploadIcon = document.getElementById('upload-icon');
+
+        let selectedFile = null;
+
+        // Allowed types and max size (20 MB)
+        const allowedExtensions = ['.pdf', '.jpg', '.jpeg', '.png', '.gif', '.doc', '.docx', '.xls', '.xlsx', '.txt'];
+        const maxSize = 20 * 1024 * 1024; // 20 MB
+
+        function formatSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            else if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+            else return (bytes / 1048576).toFixed(1) + ' MB';
+        }
+
+        function getFileIcon(filename) {
+            const ext = filename.split('.').pop().toLowerCase();
+            if (ext === 'pdf') return 'fa-file-pdf text-red-400';
+            if (['jpg','jpeg','png','gif'].includes(ext)) return 'fa-file-image text-emerald-400';
+            if (['doc','docx'].includes(ext)) return 'fa-file-word text-blue-400';
+            if (['xls','xlsx'].includes(ext)) return 'fa-file-excel text-amber-400';
+            return 'fa-file text-gray-400';
+        }
+
+        function displayFile(file) {
+            if (!file) {
+                previewContainer.classList.add('hidden');
+                previewContainer.innerHTML = '';
+                dropZone.classList.remove('has-file');
+                dropText.textContent = 'Drag & drop your file here, or click to select';
+                uploadIcon.className = 'fas fa-cloud-upload-alt text-4xl text-gray-500 mb-3 block';
+                return;
+            }
+
+            const sizeStr = formatSize(file.size);
+            const iconClass = getFileIcon(file.name);
+            previewContainer.innerHTML = `
+                <div class="file-preview-item">
+                    <i class="fas ${iconClass} text-xl"></i>
+                    <span class="truncate">${file.name}</span>
+                    <span class="file-size">${sizeStr}</span>
+                    <button type="button" class="file-remove" aria-label="Remove file">
+                        <i class="fas fa-times-circle"></i>
+                    </button>
+                </div>
+            `;
+            previewContainer.classList.remove('hidden');
+            dropZone.classList.add('has-file');
+            dropText.textContent = 'File selected';
+            uploadIcon.className = 'fas fa-check-circle text-4xl text-emerald-400 mb-3 block';
+
+            // Remove button
+            previewContainer.querySelector('.file-remove').addEventListener('click', function() {
+                fileInput.value = '';
+                selectedFile = null;
+                displayFile(null);
+                // Clear any custom validity
+                fileInput.setCustomValidity('');
+            });
+        }
+
+        // Handle file selection
+        fileInput.addEventListener('change', function() {
+            const file = this.files[0];
+            if (file) {
+                // Validate extension
+                const ext = '.' + file.name.split('.').pop().toLowerCase();
+                if (!allowedExtensions.includes(ext)) {
+                    alert('Unsupported file type. Please select a PDF, image, Word, Excel, or TXT file.');
+                    this.value = '';
+                    return;
+                }
+                if (file.size > maxSize) {
+                    alert('File size exceeds 20 MB limit.');
+                    this.value = '';
+                    return;
+                }
+                selectedFile = file;
+                displayFile(file);
+            } else {
+                selectedFile = null;
+                displayFile(null);
+            }
+        });
+
+        // Drag and drop
+        ['dragenter', 'dragover'].forEach(evt => {
+            dropZone.addEventListener(evt, function(e) {
+                e.preventDefault();
+                this.classList.add('dragover');
+            });
+        });
+        ['dragleave', 'drop'].forEach(evt => {
+            dropZone.addEventListener(evt, function(e) {
+                e.preventDefault();
+                this.classList.remove('dragover');
+            });
+        });
+        dropZone.addEventListener('drop', function(e) {
+            e.preventDefault();
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                const file = files[0];
+                const ext = '.' + file.name.split('.').pop().toLowerCase();
+                if (!allowedExtensions.includes(ext)) {
+                    alert('Unsupported file type. Please select a PDF, image, Word, Excel, or TXT file.');
+                    return;
+                }
+                if (file.size > maxSize) {
+                    alert('File size exceeds 20 MB limit.');
+                    return;
+                }
+                // Update input
+                const dataTransfer = new DataTransfer();
+                dataTransfer.items.add(file);
+                fileInput.files = dataTransfer.files;
+                selectedFile = file;
+                displayFile(file);
+            }
+        });
+
+        // Click on drop zone triggers file input
+        dropZone.addEventListener('click', function(e) {
+            if (e.target === this || e.target.closest('.drop-zone') && !e.target.closest('button')) {
+                fileInput.click();
+            }
+        });
+
+        // Client-side form validation (additional)
+        const form = document.getElementById('upload-form');
+        form.addEventListener('submit', function(e) {
+            // Check if a file is selected
+            if (!selectedFile && !fileInput.files[0]) {
+                e.preventDefault();
+                alert('Please select a file to upload.');
+                return;
+            }
+            // The browser will also enforce the 'required' attribute if we add it.
+        });
+
+        // Add required attribute to file input for better browser validation
+        fileInput.setAttribute('required', '');
+
+        // If there's a form error and file is already set, show it
+        {% if form.file.value %}
+            // We can't easily get the file from Django, but we can leave it.
+        {% endif %}
+    })();
+</script>
+{% endblock %}

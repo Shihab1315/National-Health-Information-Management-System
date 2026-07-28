@@ -1,0 +1,51 @@
+{% load static %}
+<tr class="hover:bg-white/5 transition group">
+    <td class="px-6 py-4">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-linear-to-br from-blue-500/30 to-cyan-500/30 flex items-center justify-center text-blue-300 font-bold text-lg shadow-inner">
+                {{ patient.full_name|slice:":1"|upper }}
+            </div>
+            <div>
+                <div class="text-white font-medium">{{ patient.full_name }}</div>
+                <div class="text-gray-400 text-xs">
+                    <i class="far fa-calendar-alt mr-1"></i> {{ patient.date_of_birth|timesince }} old
+                </div>
+            </div>
+        </div>
+    </td>
+    <td class="px-6 py-4 hidden md:table-cell">
+        <span class="font-mono text-sm text-cyan-400 bg-cyan-400/10 px-3 py-1 rounded-full border border-cyan-400/20">
+            {{ patient.health_id }}
+        </span>
+    </td>
+    <td class="px-6 py-4 hidden lg:table-cell">
+        <div class="text-sm text-gray-300 flex items-center gap-2">
+            <i class="fas fa-phone-alt text-gray-500 text-xs"></i> {{ patient.phone }}
+        </div>
+        <div class="text-xs text-gray-500">
+            {% if patient.email %}
+                <i class="far fa-envelope text-gray-500 text-xs"></i> {{ patient.email }}
+            {% else %}
+                <span class="text-gray-600">No email</span>
+            {% endif %}
+        </div>
+    </td>
+    <td class="px-6 py-4 hidden sm:table-cell">
+        <span class="text-sm text-gray-300 bg-white/5 px-3 py-1 rounded-full">
+            {{ patient.district|default:"N/A" }}
+        </span>
+    </td>
+    <td class="px-6 py-4 text-right">
+        <div class="flex items-center justify-end gap-3">
+            <a href="{% url 'patients:detail' patient.pk %}" class="text-blue-400 hover:text-blue-300 transition" title="View">
+                <i class="fas fa-eye"></i>
+            </a>
+            <a href="{% url 'patients:update' patient.pk %}" class="text-emerald-400 hover:text-emerald-300 transition" title="Edit">
+                <i class="fas fa-pen"></i>
+            </a>
+            <a href="{% url 'patients:delete' patient.pk %}" class="text-red-400 hover:text-red-300 transition" title="Delete">
+                <i class="fas fa-trash-alt"></i>
+            </a>
+        </div>
+    </td>
+</tr>

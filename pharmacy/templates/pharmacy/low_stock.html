@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Low Stock — NHIMS Pharmacy{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+    <h1 class="text-3xl font-bold text-white mb-6 flex items-center gap-3">
+        <i class="fas fa-exclamation-triangle text-amber-400 text-2xl"></i>
+        Low Stock Alert
+    </h1>
+    <div class="glass-card rounded-2xl border border-white/10 overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left">
+                <thead class="bg-white/5">
+                    <tr>
+                        <th class="px-6 py-4 text-xs text-gray-400 uppercase">Medicine</th>
+                        <th class="px-6 py-4 text-xs text-gray-400 uppercase">Stock</th>
+                        <th class="px-6 py-4 text-xs text-gray-400 uppercase">Min</th>
+                        <th class="px-6 py-4 text-xs text-gray-400 uppercase">Status</th>
+                        <th class="px-6 py-4 text-xs text-gray-400 uppercase text-right">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for med in low_stock_medicines %}
+                    <tr>
+                        <td class="px-6 py-4 text-white">{{ med.brand_name }}</td>
+                        <td class="px-6 py-4 text-amber-300 font-medium">{{ med.current_stock }}</td>
+                        <td class="px-6 py-4 text-gray-300">{{ med.minimum_stock }}</td>
+                        <td class="px-6 py-4">{% include 'pharmacy/partials/stock_badge.html' with medicine=med %}</td>
+                        <td class="px-6 py-4 text-right">
+                            <a href="{% url 'pharmacy:medicine_detail' med.pk %}" class="text-blue-400 hover:text-blue-300">View</a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="5" class="px-6 py-12 text-center text-gray-400">All stocks are healthy.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

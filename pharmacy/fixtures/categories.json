@@ -1,0 +1,8 @@
+[
+  {"model": "pharmacy.category", "pk": 1, "fields": {"name": "Antibiotics", "slug": "antibiotics", "is_active": true}},
+  {"model": "pharmacy.category", "pk": 2, "fields": {"name": "Pain Relief", "slug": "pain-relief", "is_active": true}},
+  {"model": "pharmacy.category", "pk": 3, "fields": {"name": "Vitamins", "slug": "vitamins", "is_active": true}},
+  {"model": "pharmacy.category", "pk": 4, "fields": {"name": "Cardiovascular", "slug": "cardiovascular", "is_active": true}},
+  {"model": "pharmacy.category", "pk": 5, "fields": {"name": "Respiratory", "slug": "respiratory", "is_active": true}},
+  {"model": "pharmacy.category", "pk": 6, "fields": {"name": "Antidiabetic", "slug": "antidiabetic", "is_active": true}}
+]

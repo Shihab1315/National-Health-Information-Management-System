@@ -1,0 +1,224 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Appointment Slip — NHIMS{% endblock %}
+
+{% block extra_css %}
+<style>
+    @media print {
+        body * { visibility: hidden; }
+        #slip-content, #slip-content * { visibility: visible; }
+        #slip-content { position: absolute; left: 0; top: 0; width: 100%; padding: 20px; }
+        .no-print { display: none !important; }
+    }
+    .slip-card {
+        background: white;
+        color: #1a202c;
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 30px;
+        border-radius: 12px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+    }
+    .slip-header { border-bottom: 3px solid #2b6cb0; padding-bottom: 15px; margin-bottom: 20px; }
+    .slip-header h1 { color: #2b6cb0; font-size: 24px; font-weight: bold; margin: 0; }
+    .slip-header p { margin: 4px 0; color: #4a5568; }
+    .slip-section-title { font-weight: bold; color: #2b6cb0; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px; margin-top: 20px; }
+    .slip-row { display: flex; padding: 6px 0; border-bottom: 1px solid #f7fafc; }
+    .slip-row .label { width: 35%; font-weight: 600; color: #4a5568; }
+    .slip-row .value { width: 65%; color: #2d3748; }
+    .qr-container { text-align: right; margin-top: 10px; }
+    .qr-container img { max-width: 120px; height: auto; }
+    .footer-note { margin-top: 30px; border-top: 1px solid #e2e8f0; padding-top: 15px; font-size: 12px; color: #718096; text-align: center; }
+    @media (max-width: 640px) {
+        .slip-card { padding: 15px; }
+        .slip-row { flex-direction: column; padding: 4px 0; }
+        .slip-row .label, .slip-row .value { width: 100%; }
+    }
+    /* Hide everything except slip-content when auto_print is active */
+    .auto-print-mode .dashboard-ui {
+        display: none !important;
+    }
+</style>
+{% endblock %}
+
+{% block navbar %}
+<!-- Mobile top bar – hidden in auto_print mode -->
+{% if not auto_print %}
+<nav class="fixed top-0 left-0 right-0 z-40 bg-[#0a1628]/80 backdrop-blur-sm border-b border-white/10 px-4 py-3 md:hidden">
+    <div class="flex items-center justify-between">
+        <button id="sidebarToggle" class="text-white text-2xl">
+            <i class="fas fa-bars"></i>
+        </button>
+        <span class="text-white font-semibold">NHIMS Patient</span>
+        <div class="w-8"></div>
+    </div>
+</nav>
+{% endif %}
+{% endblock %}
+
+{% block content %}
+<!-- Add a class to the outer container when auto_print is true -->
+<div class="flex min-h-screen bg-[#0a1628] {% if auto_print %}auto-print-mode{% endif %}">
+
+    <!-- ===== SIDEBAR – hidden when auto_print ===== -->
+    {% if not auto_print %}
+    <aside id="sidebar" class="fixed top-0 left-0 z-50 h-full w-72 bg-[#0d1f3c] border-r border-white/10 transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out overflow-y-auto">
+        <div class="p-4 border-b border-white/10">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 text-xl font-bold">
+                    {{ appointment.patient.full_name|slice:":1"|upper|default:"U" }}
+                </div>
+                <div>
+                    <p class="text-white font-semibold text-sm">{{ appointment.patient.full_name|default:"Patient" }}</p>
+                    <p class="text-gray-400 text-xs">Patient</p>
+                </div>
+            </div>
+        </div>
+        <nav class="p-3 space-y-1">
+            <a href="{% url 'dashboard:patient_dashboard' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
+                <i class="fas fa-th-large w-5 text-center"></i> Dashboard
+            </a>
+            <a href="{% url 'appointments:patient_appointment_list' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
+                <i class="fas fa-calendar-check w-5 text-center"></i> Appointments
+            </a>
+            <hr class="border-white/10 my-3">
+            <a href="{% url 'appointments:patient_appointment_detail' appointment.pk %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
+                <i class="fas fa-arrow-left w-5 text-center"></i> Back to Detail
+            </a>
+            <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition bg-blue-600/30 text-blue-300">
+                <i class="fas fa-file-pdf w-5 text-center"></i> Appointment Slip
+            </a>
+        </nav>
+        <div class="absolute bottom-4 left-4 right-4 text-center text-gray-500 text-xs">
+            NHIMS v2.0
+        </div>
+    </aside>
+    {% endif %}
+
+    <!-- ===== MAIN CONTENT ===== -->
+    <main class="flex-1 {% if not auto_print %}md:ml-72 p-4 md:p-6 mt-14 md:mt-0{% else %}p-0{% endif %}">
+
+        <!-- ===== HEADER & BUTTONS (hidden in auto_print) ===== -->
+        {% if not auto_print %}
+        <div class="flex items-center gap-4 mb-4 no-print">
+            <a href="{% url 'appointments:patient_appointment_detail' appointment.pk %}" class="text-gray-400 hover:text-white transition">
+                <i class="fas fa-arrow-left text-xl"></i>
+            </a>
+            <div>
+                <h1 class="text-2xl font-bold text-white">Appointment Slip</h1>
+                <p class="text-sm text-gray-400">#{{ appointment.appointment_number }}</p>
+            </div>
+        </div>
+
+        <div class="flex flex-wrap gap-3 no-print">
+            <a href="{% url 'appointments:patient_appointment_slip_pdf' appointment.pk %}" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl text-sm font-medium transition shadow-lg shadow-blue-500/30 flex items-center gap-2">
+                <i class="fas fa-download"></i> Download PDF
+            </a>
+            <button onclick="window.print()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl text-sm font-medium transition shadow-lg shadow-emerald-500/30 flex items-center gap-2">
+                <i class="fas fa-print"></i> Print
+            </button>
+            <a href="{% url 'appointments:patient_appointment_detail' appointment.pk %}" class="bg-white/5 hover:bg-white/10 px-5 py-2.5 rounded-xl text-gray-300 transition text-sm flex items-center gap-2">
+                <i class="fas fa-arrow-left"></i> Back
+            </a>
+        </div>
+        {% endif %}
+
+        <!-- ===== SLIP CONTENT ===== -->
+        <div id="slip-content" class="slip-card" style="{% if auto_print %}margin: 0; border-radius: 0; box-shadow: none;{% endif %}">
+            <!-- Hospital Header -->
+            <div class="slip-header">
+                <h1>{{ appointment.hospital.name|default:"NHIMS Hospital" }}</h1>
+                <p>{{ appointment.hospital.full_address|default:"Dhaka, Bangladesh" }}</p>
+                <p>Phone: {{ appointment.hospital.phone|default:"+880 1234 567890" }} | Email: {{ appointment.hospital.email|default:"info@nhims.gov.bd" }}</p>
+                <p><strong>National Health Information Management System (NHIMS)</strong></p>
+            </div>
+
+            <h2 style="text-align:center; color:#2b6cb0;">APPOINTMENT SLIP</h2>
+
+            <!-- Appointment Info -->
+            <div class="slip-section-title">Appointment Information</div>
+            <div class="slip-row"><span class="label">Appointment Number</span><span class="value">{{ appointment.appointment_number }}</span></div>
+            <div class="slip-row"><span class="label">Token Number</span><span class="value">{{ appointment.token|default:"N/A" }}</span></div>
+            <div class="slip-row"><span class="label">Status</span><span class="value">{{ appointment.get_status_display }}</span></div>
+            <div class="slip-row"><span class="label">Date</span><span class="value">{{ appointment.appointment_date|date:"l, F j, Y" }}</span></div>
+            <div class="slip-row"><span class="label">Time</span><span class="value">{{ appointment.appointment_time|time:"h:i A" }}</span></div>
+            <div class="slip-row"><span class="label">Booking Date</span><span class="value">{{ appointment.created_at|date:"F j, Y H:i" }}</span></div>
+
+            <!-- Patient Info -->
+            <div class="slip-section-title">Patient Information</div>
+            <div class="slip-row"><span class="label">Patient Name</span><span class="value">{{ appointment.patient.full_name }}</span></div>
+            <div class="slip-row"><span class="label">Patient ID</span><span class="value">{{ appointment.patient.health_id|default:"N/A" }}</span></div>
+            <div class="slip-row"><span class="label">Gender</span><span class="value">{{ appointment.patient.get_gender_display|default:"N/A" }}</span></div>
+            <div class="slip-row"><span class="label">Age</span><span class="value">{% if appointment.patient.date_of_birth %}{{ appointment.patient.date_of_birth|timesince }}{% else %}N/A{% endif %}</span></div>
+            <div class="slip-row"><span class="label">Blood Group</span><span class="value">{{ appointment.patient.blood_group|default:"N/A" }}</span></div>
+            <div class="slip-row"><span class="label">Phone</span><span class="value">{{ appointment.patient.phone|default:"N/A" }}</span></div>
+            <div class="slip-row"><span class="label">Email</span><span class="value">{{ appointment.patient.email|default:"N/A" }}</span></div>
+
+            <!-- Doctor Info -->
+            <div class="slip-section-title">Doctor Information</div>
+            <div class="slip-row"><span class="label">Doctor Name</span><span class="value">Dr. {{ appointment.doctor.full_name|default:"N/A" }}</span></div>
+            <div class="slip-row"><span class="label">Specialization</span><span class="value">{{ appointment.doctor.specialties.all|join:", "|default:"N/A" }}</span></div>
+            <div class="slip-row"><span class="label">Qualification</span><span class="value">{{ appointment.doctor.qualification|default:"N/A" }}</span></div>
+            <div class="slip-row"><span class="label">Room</span><span class="value">{{ appointment.doctor.room_number|default:"N/A" }}</span></div>
+            <div class="slip-row"><span class="label">Consultation Fee</span><span class="value">${{ appointment.doctor.consultation_fee|default:"0.00" }}</span></div>
+
+            <!-- Hospital Info -->
+            <div class="slip-section-title">Hospital Information</div>
+            <div class="slip-row"><span class="label">Hospital</span><span class="value">{{ appointment.hospital.name|default:"N/A" }}</span></div>
+            <div class="slip-row"><span class="label">Address</span><span class="value">{{ appointment.hospital.full_address|default:"N/A" }}</span></div>
+
+            <!-- Reason -->
+            {% if appointment.reason %}
+            <div class="slip-section-title">Reason for Visit</div>
+            <div class="slip-row"><span class="label">Reason</span><span class="value">{{ appointment.reason }}</span></div>
+            {% endif %}
+
+            <!-- QR Code -->
+            <div class="qr-container">
+                <img src="{{ qr_image_data }}" alt="QR Code" style="max-width:120px;">
+            </div>
+
+            <!-- Footer -->
+            <div class="footer-note">
+                <p><strong>Emergency:</strong> {{ appointment.hospital.emergency_phone|default:appointment.hospital.phone|default:"999" }} &nbsp;|&nbsp; <strong>Terms:</strong> Please arrive 15 minutes before scheduled time. Bring this slip and your ID.</p>
+                <p><i>Generated by NHIMS • {{ current_date|date:"F d, Y H:i" }}</i></p>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- ===== SIDEBAR TOGGLE SCRIPT (only needed if auto_print is false) ===== -->
+{% if not auto_print %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const sidebar = document.getElementById('sidebar');
+        const toggleBtn = document.getElementById('sidebarToggle');
+        if (toggleBtn && sidebar) {
+            toggleBtn.addEventListener('click', function () {
+                sidebar.classList.toggle('-translate-x-full');
+            });
+            document.addEventListener('click', function (event) {
+                const isClickInside = sidebar.contains(event.target) || toggleBtn.contains(event.target);
+                if (!isClickInside && window.innerWidth < 768) {
+                    sidebar.classList.add('-translate-x-full');
+                }
+            });
+        }
+    });
+</script>
+{% endif %}
+
+<!-- ===== AUTO‑PRINT SCRIPT ===== -->
+{% if auto_print %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Wait for layout to be ready, then trigger print
+        setTimeout(function () {
+            window.print();
+        }, 500);
+    });
+</script>
+{% endif %}
+
+{% endblock %}

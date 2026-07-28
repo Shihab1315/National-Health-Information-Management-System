@@ -1,0 +1,46 @@
+<footer class="footer pt-16 pb-6">
+    <div class="max-w-7xl mx-auto px-4 md:px-8">
+        <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-10 pb-12 border-b border-white/5">
+            <div>
+                <div class="flex items-center gap-2.5 mb-4">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-breadcrumbs from-blue-500 to-cyan-400 flex items-center justify-center text-white font-extrabold text-lg">N</div>
+                    <span class="text-white font-bold text-xl">{{ footer.organization_name|default:"NHIMS" }}</span>
+                </div>
+                <p class="text-gray-400 text-sm leading-relaxed max-w-xs">{{ footer.tagline|default:"National Health Information Management System — connecting healthcare across Bangladesh." }}</p>
+                <div class="flex gap-3 mt-6">
+                    {% if footer.facebook_url %}<a href="{{ footer.facebook_url }}" class="footer-social"><i class="fa-brands fa-facebook-f"></i></a>{% endif %}
+                    {% if footer.twitter_url %}<a href="{{ footer.twitter_url }}" class="footer-social"><i class="fa-brands fa-twitter"></i></a>{% endif %}
+                    {% if footer.linkedin_url %}<a href="{{ footer.linkedin_url }}" class="footer-social"><i class="fa-brands fa-linkedin-in"></i></a>{% endif %}
+                    {% if footer.youtube_url %}<a href="{{ footer.youtube_url }}" class="footer-social"><i class="fa-brands fa-youtube"></i></a>{% endif %}
+                </div>
+            </div>
+            <div>
+                <h5 class="text-white font-semibold text-sm uppercase tracking-wider mb-4">Quick Links</h5>
+                <ul class="space-y-2.5">
+                    {% for link in footer.quick_links %}
+                    <li><a href="{{ link.url }}" class="text-gray-400 hover:text-white transition">{{ link.title }}</a></li>
+                    {% endfor %}
+                </ul>
+            </div>
+            <div>
+                <h5 class="text-white font-semibold text-sm uppercase tracking-wider mb-4">Contact</h5>
+                <ul class="space-y-2.5 text-gray-400 text-sm">
+                    <li class="flex items-start gap-3"><i class="fa-regular fa-location-dot text-blue-400 mt-1"></i>{{ footer.address }}</li>
+                    <li class="flex items-start gap-3"><i class="fa-regular fa-envelope text-blue-400 mt-1"></i>{{ footer.email }}</li>
+                    <li class="flex items-start gap-3"><i class="fa-regular fa-phone text-blue-400 mt-1"></i>{{ footer.phone }}</li>
+                </ul>
+            </div>
+            <div>
+                <h5 class="text-white font-semibold text-sm uppercase tracking-wider mb-4">About</h5>
+                <p class="text-gray-400 text-sm">Ministry of Health and Family Welfare, Government of the People's Republic of Bangladesh.</p>
+            </div>
+        </div>
+        <div class="pt-6 flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-gray-500">
+            <span>{{ footer.copyright_text }}</span>
+            <div class="flex gap-6">
+                <a href="#" class="hover:text-gray-300 transition">Privacy Policy</a>
+                <a href="#" class="hover:text-gray-300 transition">Terms of Service</a>
+            </div>
+        </div>
+    </div>
+</footer>

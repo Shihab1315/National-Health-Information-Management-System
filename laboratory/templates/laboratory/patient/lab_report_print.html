@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laboratory Report #{{ lab_order.order_number }} — NHIMS</title>
+    <style>
+        /* Reset and base styles */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Helvetica', 'Arial', sans-serif;
+            background: white;
+            color: #1a202c;
+            padding: 20px;
+            line-height: 1.5;
+        }
+        .report-container {
+            max-width: 210mm;
+            margin: 0 auto;
+            background: white;
+            padding: 10mm;
+        }
+        /* Header */
+        .report-header {
+            text-align: center;
+            border-bottom: 3px solid #2b6cb0;
+            padding-bottom: 12px;
+            margin-bottom: 20px;
+        }
+        .report-header h1 {
+            font-size: 22px;
+            color: #2b6cb0;
+            margin: 0;
+        }
+        .report-header .subtitle {
+            font-size: 14px;
+            color: #4a5568;
+            margin-top: 4px;
+        }
+        .report-header .hospital-info {
+            font-size: 12px;
+            color: #4a5568;
+            margin-top: 2px;
+        }
+        .report-title {
+            text-align: center;
+            font-size: 20px;
+            font-weight: bold;
+            color: #2b6cb0;
+            margin-bottom: 16px;
+        }
+
+        /* Sections */
+        .section-title {
+            font-weight: bold;
+            font-size: 13px;
+            color: #2b6cb0;
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 4px;
+            margin-top: 16px;
+            margin-bottom: 8px;
+        }
+        .info-row {
+            display: flex;
+            padding: 3px 0;
+            border-bottom: 1px solid #f7fafc;
+            font-size: 11px;
+        }
+        .info-row .label {
+            width: 30%;
+            font-weight: 600;
+            color: #4a5568;
+        }
+        .info-row .value {
+            width: 70%;
+            color: #2d3748;
+        }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 11px;
+            margin-top: 6px;
+        }
+        th {
+            background: #edf2f7;
+            font-weight: 600;
+            padding: 6px 8px;
+            border: 1px solid #cbd5e0;
+            text-align: left;
+        }
+        td {
+            padding: 6px 8px;
+            border: 1px solid #cbd5e0;
+        }
+        .result-abnormal {
+            font-weight: bold;
+            color: #e53e3e;
+        }
+
+        /* QR Code */
+        .qr-container {
+            text-align: right;
+            margin-top: 12px;
+        }
+        .qr-container img {
+            max-width: 100px;
+            height: auto;
+        }
+
+        /* Footer */
+        .report-footer {
+            margin-top: 24px;
+            border-top: 2px dashed #cbd5e0;
+            padding-top: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            font-size: 11px;
+        }
+        .signature-area {
+            text-align: left;
+        }
+        .signature-line {
+            margin-top: 30px;
+            width: 150px;
+            border-top: 1px solid #a0aec0;
+        }
+        .seal-area {
+            text-align: right;
+        }
+        .seal-placeholder {
+            width: 80px;
+            height: 80px;
+            border: 2px dashed #a0aec0;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            color: #a0aec0;
+        }
+        .generated-info {
+            text-align: center;
+            font-size: 10px;
+            color: #718096;
+            margin-top: 12px;
+            border-top: 1px solid #e2e8f0;
+            padding-top: 10px;
+        }
+        .confidential {
+            font-style: italic;
+            color: #718096;
+        }
+
+        /* Print-specific overrides */
+        @media print {
+            body { padding: 0; background: white; }
+            .report-container { padding: 5mm; max-width: 100%; }
+            .no-print { display: none !important; }
+            .page-break { page-break-after: always; }
+        }
+
+        /* Hide buttons and navigation */
+        .no-print { display: none; }
+    </style>
+</head>
+<body>
+    <div class="report-container" id="report-content">
+
+        <!-- ===== HEADER ===== -->
+        <div class="report-header">
+            <h1>{{ lab_order.hospital.name|default:"NHIMS Hospital" }}</h1>
+            <div class="hospital-info">
+                {{ lab_order.hospital.full_address|default:"Dhaka, Bangladesh" }}<br>
+                Phone: {{ lab_order.hospital.phone|default:"+880 1234 567890" }} &nbsp;|&nbsp; Email: {{ lab_order.hospital.email|default:"info@nhims.gov.bd" }}
+            </div>
+            <div class="subtitle">National Health Information Management System (NHIMS)</div>
+        </div>
+
+        <div class="report-title">LABORATORY REPORT</div>
+
+        <!-- ===== REPORT INFORMATION ===== -->
+        <div class="section-title">Report Information</div>
+        <div class="info-row"><span class="label">Report Number</span><span class="value">{{ lab_order.order_number }}</span></div>
+        <div class="info-row"><span class="label">Report Date</span><span class="value">{{ report.created_at|date:"F d, Y" }}</span></div>
+        <div class="info-row"><span class="label">Status</span><span class="value">{{ status_display }}</span></div>
+        <div class="info-row"><span class="label">Verification</span><span class="value">{% if report.verified_at %}Verified{% else %}Not Verified{% endif %}</span></div>
+
+        <!-- ===== PATIENT INFORMATION ===== -->
+        <div class="section-title">Patient Information</div>
+        {% with patient=lab_order.patient %}
+        <div class="info-row"><span class="label">Name</span><span class="value">{{ patient.full_name }}</span></div>
+        <div class="info-row"><span class="label">Patient ID</span><span class="value">{{ patient.health_id|default:"N/A" }}</span></div>
+        <div class="info-row"><span class="label">Age</span><span class="value">
+            {% if patient.date_of_birth %}{{ patient.date_of_birth|timesince }}{% else %}N/A{% endif %}
+        </span></div>
+        <div class="info-row"><span class="label">Gender</span><span class="value">{{ patient.get_gender_display|default:"N/A" }}</span></div>
+        <div class="info-row"><span class="label">Blood Group</span><span class="value">{{ patient.blood_group|default:"N/A" }}</span></div>
+        <div class="info-row"><span class="label">Phone</span><span class="value">{{ patient.phone|default:"N/A" }}</span></div>
+        {% endwith %}
+
+        <!-- ===== DOCTOR INFORMATION ===== -->
+        <div class="section-title">Doctor Information</div>
+        {% with doctor=lab_order.doctor %}
+        <div class="info-row"><span class="label">Name</span><span class="value">Dr. {{ doctor.full_name|default:"N/A" }}</span></div>
+        <div class="info-row"><span class="label">Specialization</span><span class="value">{{ doctor.specialties.all|join:", "|default:"N/A" }}</span></div>
+        <div class="info-row"><span class="label">Qualification</span><span class="value">{{ doctor.qualification|default:"N/A" }}</span></div>
+        <div class="info-row"><span class="label">Registration No.</span><span class="value">{{ doctor.registration_number|default:"N/A" }}</span></div>
+        {% endwith %}
+
+        <!-- ===== HOSPITAL INFORMATION ===== -->
+        <div class="section-title">Hospital Information</div>
+        <div class="info-row"><span class="label">Name</span><span class="value">{{ lab_order.hospital.name|default:"N/A" }}</span></div>
+        <div class="info-row"><span class="label">Address</span><span class="value">{{ lab_order.hospital.full_address|default:"N/A" }}</span></div>
+        <div class="info-row"><span class="label">Phone</span><span class="value">{{ lab_order.hospital.phone|default:"N/A" }}</span></div>
+
+        <!-- ===== TEST INFORMATION ===== -->
+        <div class="section-title">Test Information</div>
+        {% with test=report.order_item.test %}
+        <div class="info-row"><span class="label">Test Name</span><span class="value">{{ test.name }}</span></div>
+        <div class="info-row"><span class="label">Category</span><span class="value">{{ test.category.name|default:"N/A" }}</span></div>
+        <div class="info-row"><span class="label">Sample Type</span><span class="value">{{ test.sample_type|default:"N/A" }}</span></div>
+        <div class="info-row"><span class="label">Report Date</span><span class="value">{{ report.created_at|date:"F d, Y" }}</span></div>
+        {% endwith %}
+
+        <!-- ===== RESULT TABLE ===== -->
+        <div class="section-title">Laboratory Result</div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Test</th>
+                    <th>Result</th>
+                    <th>Reference Range</th>
+                    <th>Unit</th>
+                    <th>Interpretation</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>{{ report.order_item.test.name }}</td>
+                    <td>{{ report.result|default:"N/A" }}</td>
+                    <td>{{ report.order_item.test.normal_range|default:"N/A" }}</td>
+                    <td>{{ report.order_item.test.unit|default:"N/A" }}</td>
+                    <td>
+                        {% if report.interpretation %}
+                            {% if report.interpretation|lower == 'normal' or report.interpretation|lower == 'negative' %}
+                                {{ report.interpretation }}
+                            {% else %}
+                                <span class="result-abnormal">{{ report.interpretation }}</span>
+                            {% endif %}
+                        {% else %}
+                            N/A
+                        {% endif %}
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- ===== REMARKS ===== -->
+        {% if report.remarks or lab_order.notes %}
+        <div class="section-title">Remarks</div>
+        {% if report.remarks %}
+        <div class="info-row"><span class="label">Technician Remarks</span><span class="value">{{ report.remarks }}</span></div>
+        {% endif %}
+        {% if lab_order.notes %}
+        <div class="info-row"><span class="label">Pathologist Remarks</span><span class="value">{{ lab_order.notes }}</span></div>
+        {% endif %}
+        {% endif %}
+
+        <!-- ===== VERIFICATION ===== -->
+        <div class="section-title">Verification</div>
+        <div class="info-row"><span class="label">Verified By</span><span class="value">{{ report.verified_by.get_full_name|default:"N/A" }}</span></div>
+        <div class="info-row"><span class="label">Verification Date</span><span class="value">{{ report.verified_at|date:"F d, Y H:i"|default:"N/A" }}</span></div>
+        <div class="info-row"><span class="label">Verification Status</span><span class="value">{% if report.verified_at %}Verified{% else %}Not Verified{% endif %}</span></div>
+
+        <!-- ===== QR CODE ===== -->
+        <div class="qr-container">
+            <img src="{{ qr_image_data }}" alt="QR Code">
+        </div>
+
+        <!-- ===== FOOTER ===== -->
+        <div class="report-footer">
+            <div class="signature-area">
+                <div><strong>Doctor Signature</strong></div>
+                <div class="signature-line"></div>
+                <div style="font-size:10px; margin-top:4px;">{{ lab_order.doctor.full_name|default:"N/A" }}</div>
+            </div>
+            <div class="seal-area">
+                <div><strong>Laboratory Seal</strong></div>
+                <div class="seal-placeholder">SEAL</div>
+            </div>
+        </div>
+
+        <div class="generated-info">
+            Generated by NHIMS • {{ current_date|date:"F d, Y H:i" }} • Report #{{ lab_order.order_number }}
+            <br>
+            <span class="confidential">This is a confidential medical document.</span>
+        </div>
+
+        <!-- ===== BACK BUTTON (only visible on screen, not print) ===== -->
+        <div class="no-print" style="text-align:center; margin-top:20px;">
+            <a href="{% url 'laboratory:patient_lab_report_detail' report.pk %}" class="no-print" style="display:inline-block; background:#2b6cb0; color:white; padding:8px 20px; border-radius:6px; text-decoration:none; font-size:14px;">
+                ← Back to Report
+            </a>
+        </div>
+
+    </div>
+
+    <!-- ===== AUTO-PRINT SCRIPT ===== -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Automatically trigger the browser print dialog
+            window.print();
+        });
+
+        // Optional: after print or cancel, redirect back to detail page
+        // (using onafterprint may not be fully cross-browser, but we provide a back button anyway)
+    </script>
+</body>
+</html>

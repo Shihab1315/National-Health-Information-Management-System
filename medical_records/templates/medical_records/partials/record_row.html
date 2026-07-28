@@ -1,0 +1,14 @@
+<tr class="hover:bg-white/5 transition group">
+    <td class="px-6 py-4 text-white">{{ record.patient.full_name }}</td>
+    <td class="px-6 py-4 text-gray-300 hidden md:table-cell">Dr. {{ record.doctor.full_name|default:"N/A" }}</td>
+    <td class="px-6 py-4 text-gray-400 hidden sm:table-cell">{{ record.visit_date|date:"M d, Y" }}</td>
+    <td class="px-6 py-4 text-gray-300">{{ record.diagnosis|truncatechars:50 }}</td>
+    <td class="px-6 py-4">{% include 'medical_records/partials/status_badge.html' with status=record.status %}</td>
+    <td class="px-6 py-4 text-right">
+        <div class="flex items-center justify-end gap-2 opacity-70 group-hover:opacity-100 transition">
+            <a href="{% url 'medical_records:record_detail' record.pk %}" class="text-blue-400 hover:text-blue-300"><i class="fas fa-eye"></i></a>
+            <a href="{% url 'medical_records:record_edit' record.pk %}" class="text-amber-400 hover:text-amber-300"><i class="fas fa-edit"></i></a>
+            <a href="{% url 'medical_records:record_delete' record.pk %}" class="text-red-400 hover:text-red-300"><i class="fas fa-trash-alt"></i></a>
+        </div>
+    </td>
+</tr>

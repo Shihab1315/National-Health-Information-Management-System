@@ -1,0 +1,17 @@
+<section id="features" class="py-20 md:py-28 bg-[#060e1a] border-y border-white/5">
+    <div class="max-w-7xl mx-auto px-4 md:px-8">
+        <div class="text-center max-w-3xl mx-auto mb-16">
+            <span class="section-badge"><i class="fa-regular fa-crown mr-2"></i> Key Features</span>
+            <h2 class="section-title">Why NHIMS <span class="text-cyan-400">Stands Out</span></h2>
+        </div>
+        <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {% for feature in features %}
+                <div class="feature-card">
+                    <div class="feature-icon"><i class="{{ feature.icon }}"></i></div>
+                    <h4 class="text-white font-semibold text-lg">{{ feature.title }}</h4>
+                    <p class="text-gray-400 text-sm mt-1">{{ feature.description }}</p>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>

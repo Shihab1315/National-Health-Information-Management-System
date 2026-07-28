@@ -1,0 +1,1180 @@
+[
+{
+"model": "dashboard.hero",
+"pk": 1,
+"fields": {
+"heading": "National Health",
+"subheading": "Information Management System",
+"description": "A unified digital health platform connecting patients, doctors, hospitals, laboratories, pharmacies, and government health authorities across Bangladesh. Secure, interoperable, and designed to improve healthcare outcomes for every citizen.",
+"button_text": "Get Started",
+"button_url": "/accounts/signup/",
+"secondary_button_text": "Explore Services",
+"secondary_button_url": "#services",
+"badge_text": "Ministry of Health & Family Welfare",
+"hero_image": "",
+"background_image": "",
+"is_active": true,
+"created_at": "2026-07-03T00:00:00Z",
+"updated_at": "2026-07-03T00:00:00Z"
+}
+},
+{
+"model": "dashboard.service",
+"pk": 1,
+"fields": {
+"title": "Electronic Health Records",
+"slug": "electronic-health-records",
+"description": "Securely store, manage, and access complete patient medical histories, including diagnoses, treatments, medications, and allergies, from any authorized healthcare facility nationwide.",
+"icon_class": "fa-solid fa-notes-medical",
+"icon_color": "text-blue-400",
+"display_order": 1,
+"is_featured": true,
+"is_active": true,
+"created_at": "2026-07-03T00:00:00Z",
+"updated_at": "2026-07-03T00:00:00Z"
+}
+},
+{
+"model": "dashboard.service",
+"pk": 2,
+"fields": {
+"title": "Electronic Medical Records",
+"slug": "electronic-medical-records",
+"description": "Comprehensive digital records for each patient, capturing clinical encounters, laboratory results, imaging reports, and treatment plans in a structured, searchable format.",
+"icon_class": "fa-solid fa-file-medical",
+"icon_color": "text-indigo-400",
+"display_order": 2,
+"is_featured": true,
+"is_active": true,
+"created_at": "2026-07-03T00:00:00Z",
+"updated_at": "2026-07-03T00:00:00Z"
+}
+},
+{
+"model": "dashboard.service",
+"pk": 3,
+"fields": {
+"title": "Digital Health ID",
+"slug": "digital-health-id",
+"description": "Every citizen receives a unique digital health identifier that links all health records, enabling seamless access to medical history across hospitals, clinics, and pharmacies.",
+"icon_class": "fa-regular fa-id-card",
+"icon_color": "text-cyan-400",
+"display_order": 3,
+"is_featured": true,
+"is_active": true,
+"created_at": "2026-07-03T00:00:00Z",
+"updated_at": "2026-07-03T00:00:00Z"
+}
+},
+{
+"model": "dashboard.service",
+"pk": 4,
+"fields": {
+"title": "Patient Management",
+"slug": "patient-management",
+"description": "Efficiently register, update, and maintain patient demographics, contact details, insurance information, and emergency contacts for comprehensive care coordination.",
+"icon_class": "fa-solid fa-user-injured",
+"icon_color": "text-green-400",
+"display_order": 4,
+"is_featured": false,
+"is_active": true,
+"created_at": "2026-07-03T00:00:00Z",
+"updated_at": "2026-07-03T00:00:00Z"
+}
+},
+{
+"model": "dashboard.service",
+"pk": 5,
+"fields": {
+"title": "Doctor Management",
+"slug": "doctor-management",
+"description": "Manage doctor profiles, specialties, qualifications, schedules, and affiliated hospitals, ensuring patients can find and connect with the right healthcare provider.",
+"icon_class": "fa-solid fa-user-doctor",
+"icon_color": "text-blue-300",
+"display_order": 5,
+"is_featured": false,
+"is_active": true,
+"created_at": "2026-07-03T00:00:00Z",
+"updated_at": "2026-07-03T00:00:00Z"
+}
+},
+{
+"model": "dashboard.service",
+"pk": 6,
+"fields": {
+"title": "Hospital Management",
+"slug": "hospital-management",
+"description": "Centralized management of hospitals, including facility details, departments, bed availability, and contact information, enabling efficient healthcare delivery.",
+"icon_class": "fa-solid fa-hospital",
+"icon_color": "text-red-400",
+"display_order": 6,
+"is_featured": false,
+"is_active": true,
+"created_at": "2026-07-03T00:00:00Z",
+"updated_at": "2026-07-03T00:00:00Z"
+}
+},
+{
+"model": "dashboard.service",
+"pk": 7,
+"fields": {
+"title": "Department Management",
+"slug": "department-management",
+"description": "Organize hospital departments (Cardiology, Neurology, Pediatrics, etc.) with detailed services, staff, and operational hours for improved patient routing.",
+"icon_class": "fa-solid fa-building-columns",
+"icon_color": "text-yellow-400",
+"display_order": 7,
+"is_featured": false,
+"is_active": true,
+"created_at": "2026-07-03T00:00:00Z",
+"updated_at": "2026-07-03T00:00:00Z"
+}
+},
+{
+"model": "dashboard.service",
+"pk": 8,
+"fields": {
+"title": "Appointment Booking",
+"slug": "appointment-booking",
+"description": "Patients can easily schedule appointments with doctors at preferred hospitals, choosing available time slots and receiving instant confirmations.",
+"icon_class": "fa-regular fa-calendar-plus",
+"icon_color": "text-pink-400",
+"display_order": 8,
+"is_featured": true,
+"is_active": true,
+"created_at": "2026-07-03T00:00:00Z",
+"updated_at": "2026-07-03T00:00:00Z"
+}
+},
+{
+"model": "dashboard.service",
+"pk": 9,
+"fields": {
+"title": "Appointment Tracking",
+"slug": "appointment-tracking",
+"description": "Real-time tracking of appointment status—confirmed, visited, cancelled—with reminders and notifications to keep patients informed.",
+"icon_class": "fa-regular fa-clock",
+"icon_color": "text-purple-400",
+"display_order": 9,
+"is_featured": false,
+"is_active": true,
+"created_at": "2026-07-03T00:00:00Z",
+"updated_at": "2026-07-03T00:00:00Z"
+}
+},
+{
+"model": "dashboard.service",
+"pk": 10,
+"fields": {
+"title": "e‑Prescription",
+"slug": "e-prescription",
+"description": "Doctors can generate digital prescriptions with medicine names, dosages, frequency, and duration; patients receive them instantly on their health ID.",
+"icon_class": "fa-solid fa-prescription",
+"icon_color": "text-emerald-400",
+"display_order": 10,
+"is_featured": true,
+"is_active": true,
+"created_at": "2026-07-03T00:00:00Z",
+"updated_at": "2026-07-03T00:00:00Z"
+}
+},
+{
+"model": "dashboard.service",
+"pk": 11,
+"fields": {
+"title": "Prescription QR Code",
+"slug": "prescription-qr",
+"description": "Every e‑prescription comes with a unique QR code that pharmacies can scan to verify authenticity and dispense medicines accurately.",
+"icon_class": "fa-solid fa-qrcode",
+"icon_color": "text-teal-400",
+"display_order": 11,
+"is_featured": false,
+"is_active": true,
+"created_at": "2026-07-03T00:00:00Z",
+"updated_at": "2026-07-03T00:00:00Z"
+}
+},
+{
+"model": "dashboard.service",
+"pk": 12,
+"fields": {
+"title": "Laboratory Management",
+"slug": "laboratory-management",
+"description": "Manage lab test catalogs, sample collection, test results, and integrate with EHRs to provide a complete diagnostic view for clinicians.",
+"icon_class": "fa-solid fa-flask",
+"icon_color": "text-orange-400",
+"display_order": 12,
+"is_featured": false,
+"is_active": true,
+"created_at": "2026-07-03T00:00:00Z",
+"updated_at": "2026-07-03T00:00:00Z"
+}
+},
+{
+"model": "dashboard.service",
+"pk": 13,
+"fields": {
+"title": "Digital Lab Reports",
+"slug": "digital-lab-reports",
+"description": "Laboratory reports are digitized, securely stored, and immediately accessible to patients and doctors, eliminating physical paperwork.",
+"icon_class": "fa-regular fa-file-lines",
+"icon_color": "text-amber-400",
+"display_order": 13,
+"is_featured": true,
+"is_active": true,
+"created_at": "2026-07-03T00:00:00Z",
+"updated_at": "2026-07-03T00:00:00Z"
+}
+},
+{
+"model": "dashboard.service",
+"pk": 14,
+"fields": {
+"title": "Pharmacy Management",
+"slug": "pharmacy-management",
+"description": "Centralized pharmacy inventory, prescription processing, and medicine dispensing, ensuring patients receive the right medication at the right time.",
+"icon_class": "fa-solid fa-prescription-bottle",
+"icon_color": "text-lime-400",
+"display_order": 14,
+"is_featured": false,
+"is_active": true,
+"created_at": "2026-07-03T00:00:00Z",
+"updated_at": "2026-07-03T00:00:00Z"
+}
+},
+{
+"model": "dashboard.service",
+"pk": 15,
+"fields": {
+"title": "Medicine Dispensing",
+"slug": "medicine-dispensing",
+"description": "Pharmacists can verify e‑prescriptions, dispense medicines, and update patient medication history for better continuity of care.",
+"icon_class": "fa-solid fa-capsules",
+"icon_color": "text-rose-400",
+"display_order": 15,
+"is_featured": false,
+"is_active": true,
+"created_at": "2026-07-03T00:00:00Z",
+"updated_at": "2026-07-03T00:00:00Z"
+}
+},
+{
+"model": "dashboard.service",
+"pk": 16,
+"fields": {
+"title": "Vaccination Records",
+"slug": "vaccination-records",
+"description": "Maintain lifetime vaccination history for every citizen, including childhood immunizations, COVID-19 shots, and booster doses.",
+"icon_class": "fa-solid fa-syringe",
+"icon_color": "text-violet-400",
+"display_order": 16,
+"is_featured": false,
+"is_active": true,
+"created_at": "2026-07-03T00:00:00Z",
+"updated_at": "2026-07-03T00:00:00Z"
+}
+},
+{
+"model": "dashboard.service",
+"pk": 17,
+"fields": {
+"title": "Allergy Management",
+"slug": "allergy-management",
+"description": "Record and manage patient allergies to medications, foods, and environmental triggers, alerting clinicians during prescribing to avoid adverse reactions.",
+"icon_class": "fa-solid fa-allergies",
+"icon_color": "text-fuchsia-400",
+"display_order": 17,
+"is_featured": false,
+"is_active": true,
+"created_at": "2026-07-03T00:00:00Z",
+"updated_at": "2026-07-03T00:00:00Z"
+}
+},
+{
+"model": "dashboard.service",
+"pk": 18,
+"fields": {
+"title": "Chronic Disease Tracking",
+"slug": "chronic-disease-tracking",
+"description": "Comprehensive tracking of chronic conditions like diabetes, hypertension, and heart disease, with monitoring of key indicators over time.",
+"icon_class": "fa-solid fa-heart-pulse",
+"icon_color": "text-red-500",
+"display_order": 18,
+"is_featured": true,
+"is_active": true,
+"created_at": "2026-07-03T00:00:00Z",
+"updated_at": "2026-07-03T00:00:00Z"
+}
+},
+{
+"model": "dashboard.service",
+"pk": 19,
+"fields": {
+"title": "Emergency Access",
+"slug": "emergency-access",
+"description": "In critical situations, healthcare providers can instantly access a patient's vital medical history, allergies, and emergency contacts through the system.",
+"icon_class": "fa-solid fa-shield-halved",
+"icon_color": "text-blue-500",
+"display_order": 19,
+"is_featured": true,
+"is_active": true,
+"created_at": "2026-07-03T00:00:00Z",
+"updated_at": "2026-07-03T00:00:00Z"
+}
+},
+{
+"model": "dashboard.service",
+"pk": 20,
+"fields": {
+"title": "Secure Data Sharing",
+"slug": "secure-data-sharing",
+"description": "Authorized healthcare institutions can exchange patient data securely using end‑to‑end encryption, with full audit trails and consent management.",
+"icon_class": "fa-solid fa-share-nodes",
+"icon_color": "text-cyan-400",
+"display_order": 20,
+"is_featured": true,
+"is_active": true,
+"created_at": "2026-07-03T00:00:00Z",
+"updated_at": "2026-07-03T00:00:00Z"
+}
+},
+{
+"model": "dashboard.service",
+"pk": 21,
+"fields": {
+"title": "Medical History Timeline",
+"slug": "medical-history-timeline",
+"description": "Visualize a patient's complete medical journey in chronological order, from childhood vaccinations to recent hospitalizations and surgeries.",
+"icon_class": "fa-solid fa-timeline",
+"icon_color": "text-blue-300",
+"display_order": 21,
+"is_featured": false,
+"is_active": true,
+"created_at": "2026-07-03T00:00:00Z",
+"updated_at": "2026-07-03T00:00:00Z"
+}
+},
+{
+"model": "dashboard.service",
+"pk": 22,
+"fields": {
+"title": "Notification System",
+"slug": "notification-system",
+"description": "Automated alerts for appointment reminders, prescription renewal, lab results, and health campaigns delivered via email, SMS, or in‑app notifications.",
+"icon_class": "fa-solid fa-bell",
+"icon_color": "text-yellow-400",
+"display_order": 22,
+"is_featured": false,
+"is_active": true,
+"created_at": "2026-07-03T00:00:00Z",
+"updated_at": "2026-07-03T00:00:00Z"
+}
+},
+{
+"model": "dashboard.service",
+"pk": 23,
+"fields": {
+"title": "Email Notifications",
+"slug": "email-notifications",
+"description": "Send secure email notifications to patients and healthcare providers for account activity, health reminders, and system updates.",
+"icon_class": "fa-regular fa-envelope",
+"icon_color": "text-slate-400",
+"display_order": 23,
+"is_featured": false,
+"is_active": true,
+"created_at": "2026-07-03T00:00:00Z",
+"updated_at": "2026-07-03T00:00:00Z"
+}
+},
+{
+"model": "dashboard.service",
+"pk": 24,
+"fields": {
+"title": "Medical Document Upload",
+"slug": "medical-document-upload",
+"description": "Patients and doctors can upload medical documents, reports, and images directly to the patient’s record for comprehensive documentation.",
+"icon_class": "fa-solid fa-cloud-upload-alt",
+"icon_color": "text-sky-400",
+"display_order": 24,
+"is_featured": false,
+"is_active": true,
+"created_at": "2026-07-03T00:00:00Z",
+"updated_at": "2026-07-03T00:00:00Z"
+}
+},
+{
+"model": "dashboard.service",
+"pk": 25,
+"fields": {
+"title": "PDF Report Download",
+"slug": "pdf-report-download",
+"description": "Generate and download comprehensive health reports, prescriptions, and lab results in PDF format for printing or offline use.",
+"icon_class": "fa-regular fa-file-pdf",
+"icon_color": "text-rose-400",
+"display_order": 25,
+"is_featured": false,
+"is_active": true,
+"created_at": "2026-07-03T00:00:00Z",
+"updated_at": "2026-07-03T00:00:00Z"
+}
+},
+{
+"model": "dashboard.service",
+"pk": 26,
+"fields": {
+"title": "Dashboard Analytics",
+"slug": "dashboard-analytics",
+"description": "Interactive dashboards with charts and graphs for healthcare administrators to monitor key performance indicators and resource utilization.",
+"icon_class": "fa-solid fa-chart-pie",
+"icon_color": "text-purple-400",
+"display_order": 26,
+"is_featured": false,
+"is_active": true,
+"created_at": "2026-07-03T00:00:00Z",
+"updated_at": "2026-07-03T00:00:00Z"
+}
+},
+{
+"model": "dashboard.service",
+"pk": 27,
+"fields": {
+"title": "Healthcare Statistics",
+"slug": "healthcare-statistics",
+"description": "Aggregate and visualize nationwide healthcare statistics to identify trends, allocate resources, and improve public health strategies.",
+"icon_class": "fa-solid fa-chart-bar",
+"icon_color": "text-blue-500",
+"display_order": 27,
+"is_featured": false,
+"is_active": true,
+"created_at": "2026-07-03T00:00:00Z",
+"updated_at": "2026-07-03T00:00:00Z"
+}
+},
+{
+"model": "dashboard.service",
+"pk": 28,
+"fields": {
+"title": "Government Monitoring",
+"slug": "government-monitoring",
+"description": "Authorized health officials can monitor disease outbreaks, vaccination coverage, hospital capacity, and other critical public health metrics in real time.",
+"icon_class": "fa-solid fa-eye",
+"icon_color": "text-teal-400",
+"display_order": 28,
+"is_featured": false,
+"is_active": true,
+"created_at": "2026-07-03T00:00:00Z",
+"updated_at": "2026-07-03T00:00:00Z"
+}
+},
+{
+"model": "dashboard.service",
+"pk": 29,
+"fields": {
+"title": "Audit Logs",
+"slug": "audit-logs",
+"description": "Maintain a complete audit trail of all system activities, ensuring transparency, accountability, and compliance with data protection regulations.",
+"icon_class": "fa-solid fa-clipboard-list",
+"icon_color": "text-gray-400",
+"display_order": 29,
+"is_featured": false,
+"is_active": true,
+"created_at": "2026-07-03T00:00:00Z",
+"updated_at": "2026-07-03T00:00:00Z"
+}
+},
+{
+"model": "dashboard.service",
+"pk": 30,
+"fields": {
+"title": "Hospital Directory",
+"slug": "hospital-directory",
+"description": "A comprehensive, searchable directory of all hospitals in Bangladesh, including contact information, specialties, and available services.",
+"icon_class": "fa-regular fa-building",
+"icon_color": "text-indigo-400",
+"display_order": 30,
+"is_featured": false,
+"is_active": true,
+"created_at": "2026-07-03T00:00:00Z",
+"updated_at": "2026-07-03T00:00:00Z"
+}
+},
+{
+"model": "dashboard.service",
+"pk": 31,
+"fields": {
+"title": "Search Patients",
+"slug": "search-patients",
+"description": "Quickly find patient records by name, national ID, health ID, or other unique identifiers across the entire national database.",
+"icon_class": "fa-solid fa-magnifying-glass",
+"icon_color": "text-blue-400",
+"display_order": 31,
+"is_featured": false,
+"is_active": true,
+"created_at": "2026-07-03T00:00:00Z",
+"updated_at": "2026-07-03T00:00:00Z"
+}
+},
+{
+"model": "dashboard.service",
+"pk": 32,
+"fields": {
+"title": "Search Doctors",
+"slug": "search-doctors",
+"description": "Find doctors by name, specialty, hospital affiliation, or location, facilitating patient access to the right healthcare provider.",
+"icon_class": "fa-solid fa-user-md",
+"icon_color": "text-emerald-400",
+"display_order": 32,
+"is_featured": false,
+"is_active": true,
+"created_at": "2026-07-03T00:00:00Z",
+"updated_at": "2026-07-03T00:00:00Z"
+}
+},
+{
+"model": "dashboard.service",
+"pk": 33,
+"fields": {
+"title": "Search Hospitals",
+"slug": "search-hospitals",
+"description": "Find hospitals by name, location, or available specialties, assisting patients in choosing the nearest or most appropriate facility.",
+"icon_class": "fa-solid fa-hospital-user",
+"icon_color": "text-red-400",
+"display_order": 33,
+"is_featured": false,
+"is_active": true,
+"created_at": "2026-07-03T00:00:00Z",
+"updated_at": "2026-07-03T00:00:00Z"
+}
+},
+{
+"model": "dashboard.service",
+"pk": 34,
+"fields": {
+"title": "Search Medical Records",
+"slug": "search-medical-records",
+"description": "A powerful search engine that allows clinicians to retrieve specific clinical data, lab results, or imaging reports across the entire patient record.",
+"icon_class": "fa-solid fa-file-search",
+"icon_color": "text-yellow-400",
+"display_order": 34,
+"is_featured": false,
+"is_active": true,
+"created_at": "2026-07-03T00:00:00Z",
+"updated_at": "2026-07-03T00:00:00Z"
+}
+},
+{
+"model": "dashboard.service",
+"pk": 35,
+"fields": {
+"title": "Multi-Hospital Integration",
+"slug": "multi-hospital-integration",
+"description": "Seamless integration across multiple hospitals and healthcare institutions, enabling continuous care and data sharing even when patients move between facilities.",
+"icon_class": "fa-solid fa-network-wired",
+"icon_color": "text-cyan-400",
+"display_order": 35,
+"is_featured": false,
+"is_active": true,
+"created_at": "2026-07-03T00:00:00Z",
+"updated_at": "2026-07-03T00:00:00Z"
+}
+},
+{
+"model": "dashboard.service",
+"pk": 36,
+"fields": {
+"title": "National Health Database",
+"slug": "national-health-database",
+"description": "The central repository that aggregates anonymized health data to support national health policy, epidemiological research, and resource planning.",
+"icon_class": "fa-solid fa-database",
+"icon_color": "text-blue-300",
+"display_order": 36,
+"is_featured": false,
+"is_active": true,
+"created_at": "2026-07-03T00:00:00Z",
+"updated_at": "2026-07-03T00:00:00Z"
+}
+},
+{
+"model": "dashboard.service",
+"pk": 37,
+"fields": {
+"title": "API Ready",
+"slug": "api-ready",
+"description": "Full RESTful API support for third-party integrations, mobile applications, and future expansion, following FHIR and industry best practices.",
+"icon_class": "fa-solid fa-code",
+"icon_color": "text-gray-400",
+"display_order": 37,
+"is_featured": false,
+"is_active": true,
+"created_at": "2026-07-03T00:00:00Z",
+"updated_at": "2026-07-03T00:00:00Z"
+}
+},
+{
+"model": "dashboard.service",
+"pk": 38,
+"fields": {
+"title": "Responsive Dashboard",
+"slug": "responsive-dashboard",
+"description": "A fully responsive, mobile-friendly dashboard that adapts to any screen size, ensuring healthcare professionals can access data from any device.",
+"icon_class": "fa-solid fa-desktop",
+"icon_color": "text-purple-300",
+"display_order": 38,
+"is_featured": false,
+"is_active": true,
+"created_at": "2026-07-03T00:00:00Z",
+"updated_at": "2026-07-03T00:00:00Z"
+}
+},
+{
+"model": "dashboard.service",
+"pk": 39,
+"fields": {
+"title": "Role‑Based Access Control",
+"slug": "role-based-access-control",
+"description": "Granular permission settings for different user roles—admins, doctors, patients, lab staff, pharmacists—ensuring data is accessible only to those with authorization.",
+"icon_class": "fa-solid fa-lock",
+"icon_color": "text-rose-300",
+"display_order": 39,
+"is_featured": false,
+"is_active": true,
+"created_at": "2026-07-03T00:00:00Z",
+"updated_at": "2026-07-03T00:00:00Z"
+}
+},
+{
+"model": "dashboard.service",
+"pk": 40,
+"fields": {
+"title": "Citizen Health Portal",
+"slug": "citizen-health-portal",
+"description": "A dedicated patient portal where citizens can view their health records, book appointments, download prescriptions, and communicate with healthcare providers.",
+"icon_class": "fa-regular fa-user",
+"icon_color": "text-green-300",
+"display_order": 40,
+"is_featured": true,
+"is_active": true,
+"created_at": "2026-07-03T00:00:00Z",
+"updated_at": "2026-07-03T00:00:00Z"
+}
+},
+{
+"model": "dashboard.feature",
+"pk": 1,
+"fields": {
+"title": "Digital Healthcare",
+"description": "Complete digitization of healthcare services from registration to treatment, reducing paperwork and increasing efficiency.",
+"icon": "fa-solid fa-laptop-medical",
+"display_order": 1,
+"is_active": true,
+"created_at": "2026-07-03T00:00:00Z",
+"updated_at": "2026-07-03T00:00:00Z"
+}
+},
+{
+"model": "dashboard.feature",
+"pk": 2,
+"fields": {
+"title": "Secure Authentication",
+"description": "Multi‑factor authentication, encrypted passwords, and session management to protect user accounts and sensitive health data.",
+"icon": "fa-solid fa-shield",
+"display_order": 2,
+"is_active": true,
+"created_at": "2026-07-03T00:00:00Z",
+"updated_at": "2026-07-03T00:00:00Z"
+}
+},
+{
+"model": "dashboard.feature",
+"pk": 3,
+"fields": {
+"title": "Role‑Based Access",
+"description": "Customizable permission sets for administrators, clinicians, patients, and support staff to enforce least‑privilege access.",
+"icon": "fa-solid fa-user-tag",
+"display_order": 3,
+"is_active": true,
+"created_at": "2026-07-03T00:00:00Z",
+"updated_at": "2026-07-03T00:00:00Z"
+}
+},
+{
+"model": "dashboard.feature",
+"pk": 4,
+"fields": {
+"title": "Fast Search",
+"description": "Lightning‑fast, intelligent search across all patient records, appointments, prescriptions, and laboratory data.",
+"icon": "fa-solid fa-search",
+"display_order": 4,
+"is_active": true,
+"created_at": "2026-07-03T00:00:00Z",
+"updated_at": "2026-07-03T00:00:00Z"
+}
+},
+{
+"model": "dashboard.feature",
+"pk": 5,
+"fields": {
+"title": "Analytics Dashboard",
+"description": "Comprehensive visual dashboards with real‑time metrics, trend analysis, and predictive insights for healthcare administrators.",
+"icon": "fa-solid fa-chart-line",
+"display_order": 5,
+"is_active": true,
+"created_at": "2026-07-03T00:00:00Z",
+"updated_at": "2026-07-03T00:00:00Z"
+}
+},
+{
+"model": "dashboard.feature",
+"pk": 6,
+"fields": {
+"title": "National Database",
+"description": "A unified, centralized database that consolidates health records from all regions, enabling holistic patient care and national health planning.",
+"icon": "fa-solid fa-database",
+"display_order": 6,
+"is_active": true,
+"created_at": "2026-07-03T00:00:00Z",
+"updated_at": "2026-07-03T00:00:00Z"
+}
+},
+{
+"model": "dashboard.feature",
+"pk": 7,
+"fields": {
+"title": "QR Verification",
+"description": "Quick Response (QR) codes on prescriptions and patient IDs ensure fast, tamper‑proof verification at pharmacies and clinics.",
+"icon": "fa-solid fa-qrcode",
+"display_order": 7,
+"is_active": true,
+"created_at": "2026-07-03T00:00:00Z",
+"updated_at": "2026-07-03T00:00:00Z"
+}
+},
+{
+"model": "dashboard.feature",
+"pk": 8,
+"fields": {
+"title": "Cloud Ready",
+"description": "Architected for cloud deployment, ensuring high availability, automatic scaling, and disaster recovery for uninterrupted service.",
+"icon": "fa-solid fa-cloud",
+"display_order": 8,
+"is_active": true,
+"created_at": "2026-07-03T00:00:00Z",
+"updated_at": "2026-07-03T00:00:00Z"
+}
+},
+{
+"model": "dashboard.statistic",
+"pk": 1,
+"fields": {
+"title": "Patient Records",
+"value": "5.2M+",
+"icon": "fa-solid fa-user-injured",
+"display_order": 1,
+"created_at": "2026-07-03T00:00:00Z",
+"updated_at": "2026-07-03T00:00:00Z"
+}
+},
+{
+"model": "dashboard.statistic",
+"pk": 2,
+"fields": {
+"title": "Healthcare Centers",
+"value": "1,240+",
+"icon": "fa-solid fa-hospital",
+"display_order": 2,
+"created_at": "2026-07-03T00:00:00Z",
+"updated_at": "2026-07-03T00:00:00Z"
+}
+},
+{
+"model": "dashboard.statistic",
+"pk": 3,
+"fields": {
+"title": "Registered Doctors",
+"value": "12.8K+",
+"icon": "fa-solid fa-user-doctor",
+"display_order": 3,
+"created_at": "2026-07-03T00:00:00Z",
+"updated_at": "2026-07-03T00:00:00Z"
+}
+},
+{
+"model": "dashboard.statistic",
+"pk": 4,
+"fields": {
+"title": "Daily Transactions",
+"value": "3.1M+",
+"icon": "fa-solid fa-arrow-trend-up",
+"display_order": 4,
+"created_at": "2026-07-03T00:00:00Z",
+"updated_at": "2026-07-03T00:00:00Z"
+}
+},
+{
+"model": "dashboard.statistic",
+"pk": 5,
+"fields": {
+"title": "Pharmacies Connected",
+"value": "2,500+",
+"icon": "fa-solid fa-prescription-bottle",
+"display_order": 5,
+"created_at": "2026-07-03T00:00:00Z",
+"updated_at": "2026-07-03T00:00:00Z"
+}
+},
+{
+"model": "dashboard.statistic",
+"pk": 6,
+"fields": {
+"title": "Laboratories",
+"value": "850+",
+"icon": "fa-solid fa-flask",
+"display_order": 6,
+"created_at": "2026-07-03T00:00:00Z",
+"updated_at": "2026-07-03T00:00:00Z"
+}
+},
+{
+"model": "dashboard.whychooseus",
+"pk": 1,
+"fields": {
+"title": "Unified National Health Database",
+"description": "All patient records, prescriptions, lab reports, and medical histories are stored in a single, secure, and centralized system accessible across the country.",
+"icon": "fa-solid fa-database",
+"order": 1,
+"created_at": "2026-07-03T00:00:00Z",
+"updated_at": "2026-07-03T00:00:00Z"
+}
+},
+{
+"model": "dashboard.whychooseus",
+"pk": 2,
+"fields": {
+"title": "Enhanced Patient Care",
+"description": "With complete medical history available instantly, doctors can make better-informed decisions, reduce diagnostic errors, and provide personalized treatments.",
+"icon": "fa-solid fa-heart-pulse",
+"order": 2,
+"created_at": "2026-07-03T00:00:00Z",
+"updated_at": "2026-07-03T00:00:00Z"
+}
+},
+{
+"model": "dashboard.whychooseus",
+"pk": 3,
+"fields": {
+"title": "Secure and Private",
+"description": "Advanced encryption, role-based access controls, and strict authentication ensure that patient data is protected and shared only with authorized personnel.",
+"icon": "fa-solid fa-shield-halved",
+"order": 3,
+"created_at": "2026-07-03T00:00:00Z",
+"updated_at": "2026-07-03T00:00:00Z"
+}
+},
+{
+"model": "dashboard.whychooseus",
+"pk": 4,
+"fields": {
+"title": "Interoperability and Integration",
+"description": "Seamless communication between hospitals, clinics, labs, pharmacies, and government health authorities eliminates data silos and enables coordinated care.",
+"icon": "fa-solid fa-link",
+"order": 4,
+"created_at": "2026-07-03T00:00:00Z",
+"updated_at": "2026-07-03T00:00:00Z"
+}
+},
+{
+"model": "dashboard.whychooseus",
+"pk": 5,
+"fields": {
+"title": "Real‑Time Analytics",
+"description": "Public health officials can monitor disease outbreaks, track vaccination coverage, and generate actionable insights to improve national health policies.",
+"icon": "fa-solid fa-chart-line",
+"order": 5,
+"created_at": "2026-07-03T00:00:00Z",
+"updated_at": "2026-07-03T00:00:00Z"
+}
+},
+{
+"model": "dashboard.whychooseus",
+"pk": 6,
+"fields": {
+"title": "Citizen Empowerment",
+"description": "Patients can access their own health records, schedule appointments, receive digital prescriptions, and take charge of their health journey from anywhere.",
+"icon": "fa-solid fa-user-check",
+"order": 6,
+"created_at": "2026-07-03T00:00:00Z",
+"updated_at": "2026-07-03T00:00:00Z"
+}
+},
+{
+"model": "dashboard.testimonial",
+"pk": 1,
+"fields": {
+"name": "Dr. Md. Ali Hasan",
+"designation": "Chief Medical Officer, Dhaka Medical College Hospital",
+"content": "The NHIMS platform has transformed how we manage patient information. We now have instant access to complete medical histories, which has drastically improved diagnosis accuracy and reduced redundant tests.",
+"image": "",
+"rating": 5,
+"is_active": true,
+"created_at": "2026-07-03T00:00:00Z",
+"updated_at": "2026-07-03T00:00:00Z"
+}
+},
+{
+"model": "dashboard.testimonial",
+"pk": 2,
+"fields": {
+"name": "Mrs. Nasrin Akhter",
+"designation": "Patient, Chittagong",
+"content": "As a patient, I can see all my test results, prescriptions, and appointment history in one place. I no longer have to carry files of paper reports. It's a blessing!",
+"image": "",
+"rating": 5,
+"is_active": true,
+"created_at": "2026-07-03T00:00:00Z",
+"updated_at": "2026-07-03T00:00:00Z"
+}
+},
+{
+"model": "dashboard.testimonial",
+"pk": 3,
+"fields": {
+"name": "Dr. Shahida Khan",
+"designation": "Director, National Institute of Cardiovascular Diseases",
+"content": "The centralized database allows us to track chronic diseases like heart conditions more effectively. It's a powerful tool for research and public health monitoring.",
+"image": "",
+"rating": 4,
+"is_active": true,
+"created_at": "2026-07-03T00:00:00Z",
+"updated_at": "2026-07-03T00:00:00Z"
+}
+},
+{
+"model": "dashboard.testimonial",
+"pk": 4,
+"fields": {
+"name": "Mr. Kamal Hossain",
+"designation": "Pharmacist, Dhaka",
+"content": "e‑prescriptions with QR codes have eliminated prescription forgery and reduced dispensing errors. The system is a game‑changer for pharmacy practice.",
+"image": "",
+"rating": 5,
+"is_active": true,
+"created_at": "2026-07-03T00:00:00Z",
+"updated_at": "2026-07-03T00:00:00Z"
+}
+},
+{
+"model": "dashboard.faq",
+"pk": 1,
+"fields": {
+"question": "What is NHIMS?",
+"answer": "NHIMS (National Health Information Management System) is a digital platform developed by the Government of Bangladesh to unify and manage healthcare data across the country, ensuring secure, efficient, and accessible health services for every citizen.",
+"order": 1,
+"is_active": true,
+"created_at": "2026-07-03T00:00:00Z",
+"updated_at": "2026-07-03T00:00:00Z"
+}
+},
+{
+"model": "dashboard.faq",
+"pk": 2,
+"fields": {
+"question": "Who can use NHIMS?",
+"answer": "NHIMS is designed for all stakeholders in the healthcare ecosystem: patients, doctors, hospital administrators, laboratory staff, pharmacists, and government health authorities. Each role has tailored access and permissions.",
+"order": 2,
+"is_active": true,
+"created_at": "2026-07-03T00:00:00Z",
+"updated_at": "2026-07-03T00:00:00Z"
+}
+},
+{
+"model": "dashboard.faq",
+"pk": 3,
+"fields": {
+"question": "Is my health data secure?",
+"answer": "Absolutely. NHIMS uses enterprise‑grade encryption, role‑based access control, and comprehensive audit trails. Data is stored in compliance with national and international privacy standards.",
+"order": 3,
+"is_active": true,
+"created_at": "2026-07-03T00:00:00Z",
+"updated_at": "2026-07-03T00:00:00Z"
+}
+},
+{
+"model": "dashboard.faq",
+"pk": 4,
+"fields": {
+"question": "How can I access my health records?",
+"answer": "All citizens with a valid Digital Health ID can log in to the citizen portal using their credentials. From there, you can view your medical history, prescriptions, lab reports, and more.",
+"order": 4,
+"is_active": true,
+"created_at": "2026-07-03T00:00:00Z",
+"updated_at": "2026-07-03T00:00:00Z"
+}
+},
+{
+"model": "dashboard.faq",
+"pk": 5,
+"fields": {
+"question": "What if I visit a hospital that is not part of the network?",
+"answer": "NHIMS is a national initiative, and all government and major private hospitals are being onboarded. Even if a hospital is not yet integrated, you can still access your records from any connected facility.",
+"order": 5,
+"is_active": true,
+"created_at": "2026-07-03T00:00:00Z",
+"updated_at": "2026-07-03T00:00:00Z"
+}
+},
+{
+"model": "dashboard.faq",
+"pk": 6,
+"fields": {
+"question": "How does NHIMS help doctors?",
+"answer": "Doctors get a complete view of the patient's history—past diagnoses, medications, allergies, and lab results—enabling faster, more accurate decisions and better treatment outcomes.",
+"order": 6,
+"is_active": true,
+"created_at": "2026-07-03T00:00:00Z",
+"updated_at": "2026-07-03T00:00:00Z"
+}
+},
+{
+"model": "dashboard.partner",
+"pk": 1,
+"fields": {
+"name": "Ministry of Health & Family Welfare",
+"logo": "",
+"website": "https://mohfw.gov.bd",
+"location": "Dhaka, Bangladesh",
+"display_order": 1,
+"is_active": true,
+"created_at": "2026-07-03T00:00:00Z",
+"updated_at": "2026-07-03T00:00:00Z"
+}
+},
+{
+"model": "dashboard.partner",
+"pk": 2,
+"fields": {
+"name": "Directorate General of Health Services",
+"logo": "",
+"website": "https://dghs.gov.bd",
+"location": "Dhaka, Bangladesh",
+"display_order": 2,
+"is_active": true,
+"created_at": "2026-07-03T00:00:00Z",
+"updated_at": "2026-07-03T00:00:00Z"
+}
+},
+{
+"model": "dashboard.partner",
+"pk": 3,
+"fields": {
+"name": "BSMMU",
+"logo": "",
+"website": "https://bsmmu.edu.bd",
+"location": "Dhaka, Bangladesh",
+"display_order": 3,
+"is_active": true,
+"created_at": "2026-07-03T00:00:00Z",
+"updated_at": "2026-07-03T00:00:00Z"
+}
+},
+{
+"model": "dashboard.partner",
+"pk": 4,
+"fields": {
+"name": "Dhaka Medical College Hospital",
+"logo": "",
+"website": "https://dmc.gov.bd",
+"location": "Dhaka, Bangladesh",
+"display_order": 4,
+"is_active": true,
+"created_at": "2026-07-03T00:00:00Z",
+"updated_at": "2026-07-03T00:00:00Z"
+}
+},
+{
+"model": "dashboard.partner",
+"pk": 5,
+"fields": {
+"name": "icddr,b",
+"logo": "",
+"website": "https://icddrb.org",
+"location": "Dhaka, Bangladesh",
+"display_order": 5,
+"is_active": true,
+"created_at": "2026-07-03T00:00:00Z",
+"updated_at": "2026-07-03T00:00:00Z"
+}
+},
+{
+"model": "dashboard.partner",
+"pk": 6,
+"fields": {
+"name": "National Institute of Cardiovascular Diseases",
+"logo": "",
+"website": "https://nicvd.gov.bd",
+"location": "Dhaka, Bangladesh",
+"display_order": 6,
+"is_active": true,
+"created_at": "2026-07-03T00:00:00Z",
+"updated_at": "2026-07-03T00:00:00Z"
+}
+},
+{
+"model": "dashboard.partner",
+"pk": 7,
+"fields": {
+"name": "National Institute of Cancer Research & Hospital",
+"logo": "",
+"website": "https://nicrh.gov.bd",
+"location": "Dhaka, Bangladesh",
+"display_order": 7,
+"is_active": true,
+"created_at": "2026-07-03T00:00:00Z",
+"updated_at": "2026-07-03T00:00:00Z"
+}
+},
+{
+"model": "dashboard.partner",
+"pk": 8,
+"fields": {
+"name": "Directorate General of Drug Administration",
+"logo": "",
+"website": "https://dgda.gov.bd",
+"location": "Dhaka, Bangladesh",
+"display_order": 8,
+"is_active": true,
+"created_at": "2026-07-03T00:00:00Z",
+"updated_at": "2026-07-03T00:00:00Z"
+}
+},
+{
+"model": "dashboard.cta",
+"pk": 1,
+"fields": {
+"title": "Join the Digital Health Revolution",
+"subtitle": "Be a part of Bangladesh's journey towards a smarter, healthier future. Register now to access or provide world-class healthcare services.",
+"button_text": "Get Started Today",
+"button_url": "/accounts/signup/",
+"is_active": true,
+"created_at": "2026-07-03T00:00:00Z",
+"updated_at": "2026-07-03T00:00:00Z"
+}
+},
+{
+"model": "dashboard.footer",
+"pk": 1,
+"fields": {
+"organization_name": "NHIMS Bangladesh",
+"tagline": "National Health Information Management System — connecting healthcare across Bangladesh.",
+"address": "Ministry of Health & Family Welfare, Dhaka, Bangladesh",
+"phone": "+880 2 5555 1234",
+"email": "info@nhims.gov.bd",
+"facebook_url": "https://facebook.com/nhimsbd",
+"twitter_url": "https://twitter.com/nhimsbd",
+"linkedin_url": "https://linkedin.com/company/nhimsbd",
+"youtube_url": "https://youtube.com/nhimsbd",
+"copyright_text": "© 2026 NHIMS Bangladesh. All rights reserved.",
+"created_at": "2026-07-03T00:00:00Z",
+"updated_at": "2026-07-03T00:00:00Z"
+}
+}
+]

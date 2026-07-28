@@ -1,0 +1,369 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}My Appointments — NHIMS{% endblock %}
+
+{% block extra_css %}
+<style>
+    .top-navbar { display: none !important; }
+    .badge-pending {
+        background: rgba(251, 191, 36, 0.15);
+        color: #fbbf24;
+        border: 1px solid rgba(251, 191, 36, 0.25);
+    }
+    .badge-confirmed {
+        background: rgba(52, 211, 153, 0.15);
+        color: #34d399;
+        border: 1px solid rgba(52, 211, 153, 0.25);
+    }
+    .badge-completed {
+        background: rgba(96, 165, 250, 0.15);
+        color: #60a5fa;
+        border: 1px solid rgba(96, 165, 250, 0.25);
+    }
+    .badge-cancelled {
+        background: rgba(248, 113, 113, 0.15);
+        color: #f87171;
+        border: 1px solid rgba(248, 113, 113, 0.25);
+    }
+    .appointment-row:hover {
+        background: rgba(255, 255, 255, 0.03);
+        transition: background 0.2s;
+    }
+    @media (max-width: 768px) {
+        .desktop-table { display: none; }
+        .mobile-cards { display: block; }
+    }
+    @media (min-width: 769px) {
+        .mobile-cards { display: none; }
+        .desktop-table { display: table; }
+    }
+</style>
+{% endblock %}
+
+{% block navbar %}
+<nav class="fixed top-0 left-0 right-0 z-40 bg-[#0a1628]/80 backdrop-blur-sm border-b border-white/10 px-4 py-3 md:hidden">
+    <div class="flex items-center justify-between">
+        <button id="sidebarToggle" class="text-white text-2xl">
+            <i class="fas fa-bars"></i>
+        </button>
+        <span class="text-white font-semibold">NHIMS Patient</span>
+        <div class="w-8"></div>
+    </div>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="flex min-h-screen bg-[#0a1628]">
+    <!-- ====================== SIDEBAR ====================== -->
+    <aside id="sidebar" class="fixed top-0 left-0 z-50 h-full w-72 bg-[#0d1f3c] border-r border-white/10 transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out overflow-y-auto">
+        <div class="p-4 border-b border-white/10">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 text-xl font-bold">
+                    {{ patient.full_name|slice:":1"|upper|default:"U" }}
+                </div>
+                <div>
+                    <p class="text-white font-semibold text-sm">{{ patient.full_name|default:"Patient" }}</p>
+                    <p class="text-gray-400 text-xs">Patient</p>
+                </div>
+            </div>
+        </div>
+        <nav class="p-3 space-y-1">
+            <a href="{% url 'dashboard:patient_dashboard' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
+                <i class="fas fa-th-large w-5 text-center"></i> Dashboard
+            </a>
+            <a href="{% url 'appointments:patient_appointment_list' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition bg-blue-600/30 text-blue-300">
+                <i class="fas fa-calendar-check w-5 text-center"></i> Appointments
+            </a>
+            <a href="{% url 'prescriptions:patient_my_prescriptions' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
+                <i class="fas fa-prescription-bottle w-5 text-center"></i> Prescriptions
+            </a>
+            <a href="{% url 'medical_records:record_list' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
+                <i class="fas fa-file-medical w-5 text-center"></i> Medical Records
+            </a>
+            <a href="{% url 'laboratory:patient_lab_report_list' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
+                <i class="fas fa-flask w-5 text-center"></i> Laboratory
+            </a>
+            <a href="{% url 'notifications:center' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
+                <i class="fas fa-bell w-5 text-center"></i> Notifications
+            </a>
+            <hr class="border-white/10 my-3">
+           <a href="{% url 'patients:profile' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
+            <i class="fas fa-user-circle w-5 text-center"></i> Profile
+            </a>
+            <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
+                <i class="fas fa-cog w-5 text-center"></i> Settings
+            </a>
+            {% url 'logout' as logout_url %}
+            {% if logout_url %}
+                <a href="{{ logout_url }}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-red-400 hover:bg-red-500/10 hover:text-red-300">
+                    <i class="fas fa-sign-out-alt w-5 text-center"></i> Logout
+                </a>
+            {% else %}
+                <a href="{% url 'accounts:logout' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-red-400 hover:bg-red-500/10 hover:text-red-300">
+                    <i class="fas fa-sign-out-alt w-5 text-center"></i> Logout
+                </a>
+            {% endif %}
+        </nav>
+        <div class="absolute bottom-4 left-4 right-4 text-center text-gray-500 text-xs">
+            NHIMS v2.0
+        </div>
+    </aside>
+
+    <!-- ====================== MAIN CONTENT ====================== -->
+    <main class="flex-1 md:ml-72 p-4 md:p-6 space-y-6 mt-14 md:mt-0">
+
+        <!-- HEADER -->
+        <div class="flex flex-wrap items-center justify-between gap-4">
+            <div>
+                <h1 class="text-2xl font-bold text-white flex items-center gap-2">
+                    <i class="fas fa-calendar-check text-blue-400"></i> My Appointments
+                </h1>
+                <p class="text-sm text-gray-400">View and manage all your appointments</p>
+            </div>
+            <div class="flex flex-wrap gap-2">
+                <a href="{% url 'appointments:patient_book_appointment' %}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-sm font-medium transition shadow-lg shadow-blue-500/30 flex items-center gap-2">
+                    <i class="fas fa-plus"></i> Book Appointment
+                </a>
+                <a href="{% url 'appointments:patient_appointment_list' %}" class="bg-white/5 hover:bg-white/10 px-4 py-2 rounded-xl text-gray-300 transition text-sm flex items-center gap-2">
+                    <i class="fas fa-sync-alt"></i> Refresh
+                </a>
+                <a href="{% url 'appointments:patient_appointment_list' %}" class="bg-white/5 hover:bg-white/10 px-4 py-2 rounded-xl text-gray-300 transition text-sm flex items-center gap-2">
+                    <i class="fas fa-undo"></i> Clear Filters
+                </a>
+            </div>
+        </div>
+
+        <!-- STATISTICS CARDS -->
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+            <div class="glass-card rounded-2xl border border-white/10 p-4 text-center hover:scale-105 transition bg-white/5">
+                <p class="text-gray-400 text-xs uppercase">Total</p>
+                <p class="text-2xl font-bold text-white">{{ total_appointments|default:0 }}</p>
+            </div>
+            <div class="glass-card rounded-2xl border border-amber-500/20 p-4 text-center hover:scale-105 transition bg-amber-500/5">
+                <p class="text-gray-400 text-xs uppercase">Upcoming</p>
+                <p class="text-2xl font-bold text-amber-400">{{ upcoming_appointments|default:0 }}</p>
+            </div>
+            <div class="glass-card rounded-2xl border border-emerald-500/20 p-4 text-center hover:scale-105 transition bg-emerald-500/5">
+                <p class="text-gray-400 text-xs uppercase">Completed</p>
+                <p class="text-2xl font-bold text-emerald-400">{{ completed_appointments|default:0 }}</p>
+            </div>
+            <div class="glass-card rounded-2xl border border-red-500/20 p-4 text-center hover:scale-105 transition bg-red-500/5">
+                <p class="text-gray-400 text-xs uppercase">Cancelled</p>
+                <p class="text-2xl font-bold text-red-400">{{ cancelled_appointments|default:0 }}</p>
+            </div>
+            <div class="glass-card rounded-2xl border border-blue-500/20 p-4 text-center hover:scale-105 transition bg-blue-500/5">
+                <p class="text-gray-400 text-xs uppercase">Pending</p>
+                <p class="text-2xl font-bold text-blue-400">{{ pending_appointments|default:0 }}</p>
+            </div>
+        </div>
+
+        <!-- SEARCH, FILTERS, SORT -->
+        <div class="glass-card rounded-2xl border border-white/10 p-5">
+            <form method="get" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3" id="filter-form">
+                <input type="text" name="search" placeholder="Search by doctor, hospital, or ID..." value="{{ search|default:'' }}" class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-400 focus:border-blue-500 outline-none transition">
+                <select name="status" class="w-full px-4 py-3 bg-[#0d2137] border border-white/10 rounded-xl text-white focus:border-blue-500 outline-none">
+                    <option value="">All Status</option>
+                    {% for value, label in status_choices %}
+                    <option value="{{ value }}" {% if value == status_filter %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+                <input type="date" name="date_from" value="{{ date_from|default:'' }}" class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-400 focus:border-blue-500 outline-none">
+                <input type="date" name="date_to" value="{{ date_to|default:'' }}" class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-400 focus:border-blue-500 outline-none">
+                <div class="md:col-span-2 lg:col-span-4 flex flex-wrap gap-3 items-center">
+                    <label class="text-gray-400 text-sm">Sort by:</label>
+                    <select name="sort" class="px-4 py-2 bg-[#0d2137] border border-white/10 rounded-xl text-white focus:border-blue-500 outline-none">
+                        <option value="-appointment_date" {% if request.GET.sort == '-appointment_date' %}selected{% endif %}>Newest First</option>
+                        <option value="appointment_date" {% if request.GET.sort == 'appointment_date' %}selected{% endif %}>Oldest First</option>
+                        <option value="appointment_time" {% if request.GET.sort == 'appointment_time' %}selected{% endif %}>By Time</option>
+                        <option value="doctor__full_name" {% if request.GET.sort == 'doctor__full_name' %}selected{% endif %}>Doctor Name</option>
+                    </select>
+                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 px-6 py-2 rounded-xl text-white font-medium transition">Apply</button>
+                    <a href="{% url 'appointments:patient_appointment_list' %}" class="bg-white/5 hover:bg-white/10 px-6 py-2 rounded-xl text-gray-300 transition">Clear</a>
+                </div>
+            </form>
+        </div>
+
+        <!-- DESKTOP TABLE -->
+        <div class="glass-card rounded-2xl border border-white/10 overflow-hidden desktop-table">
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead class="bg-white/5 border-b border-white/10">
+                        <tr class="text-left text-gray-400 font-medium">
+                            <th class="px-4 py-3">#</th>
+                            <th class="px-4 py-3">Date & Time</th>
+                            <th class="px-4 py-3">Doctor</th>
+                            <th class="px-4 py-3">Hospital</th>
+                            <th class="px-4 py-3">Status</th>
+                            <th class="px-4 py-3 text-center">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-white/5">
+                        {% for apt in appointments %}
+                        <tr class="appointment-row">
+                            <td class="px-4 py-3 text-white font-mono text-xs">{{ apt.appointment_number }}</td>
+                            <td class="px-4 py-3 text-gray-300">
+                                <div>{{ apt.appointment_date|date:"M d, Y" }}</div>
+                                <div class="text-xs text-gray-500">{{ apt.appointment_time|time:"h:i A" }}</div>
+                            </td>
+                            <td class="px-4 py-3">
+                                <div class="text-white">Dr. {{ apt.doctor.full_name|default:"N/A" }}</div>
+                                <div class="text-xs text-gray-400">{{ apt.doctor.specialty|default:"" }}</div>
+                            </td>
+                            <td class="px-4 py-3 text-gray-300">{{ apt.hospital.name|default:"N/A" }}</td>
+                            <td class="px-4 py-3">
+                                <span class="inline-block px-3 py-1 rounded-full text-xs font-medium
+                                    {% if apt.status == 'pending' %}badge-pending
+                                    {% elif apt.status == 'confirmed' %}badge-confirmed
+                                    {% elif apt.status == 'completed' %}badge-completed
+                                    {% elif apt.status == 'cancelled' %}badge-cancelled
+                                    {% else %}bg-gray-500/20 text-gray-300{% endif %}">
+                                    {{ apt.get_status_display }}
+                                </span>
+                            </td>
+                            <td class="px-4 py-3 text-center">
+                                <div class="flex items-center justify-center gap-2 flex-wrap">
+                                    <a href="{% url 'appointments:patient_appointment_detail' apt.pk %}" class="text-blue-400 hover:text-blue-300 transition p-1" title="View Details">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    {% if apt.is_pending or apt.is_confirmed %}
+                                    <button onclick="document.getElementById('cancel-form-{{ apt.pk }}').submit();" class="text-red-400 hover:text-red-300 transition p-1" title="Cancel">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                    <form id="cancel-form-{{ apt.pk }}" method="post" action="{% url 'appointments:cancel' apt.pk %}" style="display:none;">
+                                        {% csrf_token %}
+                                    </form>
+                                    {% endif %}
+                                    {% if apt.is_completed and apt.prescription %}
+                                    <a href="{% url 'prescriptions:detail' apt.prescription.pk %}" class="text-emerald-400 hover:text-emerald-300 transition p-1" title="View Prescription">
+                                        <i class="fas fa-prescription-bottle"></i>
+                                    </a>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center py-12 text-gray-400">
+                                <i class="fas fa-calendar-times text-4xl block mb-3 opacity-40"></i>
+                                <p class="text-lg font-medium">No appointments found</p>
+                                <p class="text-sm">Try adjusting your search or filters.</p>
+                                <a href="{% url 'appointments:patient_book_appointment' %}" class="mt-4 inline-block bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-xl font-medium transition shadow-lg shadow-blue-500/30">
+                                    <i class="fas fa-plus mr-2"></i> Book Appointment
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- MOBILE CARDS -->
+        <div class="mobile-cards space-y-4">
+            {% for apt in appointments %}
+            <div class="glass-card rounded-2xl border border-white/10 p-4 hover:border-blue-400/30 transition">
+                <div class="flex items-start justify-between">
+                    <div class="flex-1">
+                        <div class="flex items-center gap-2">
+                            <span class="text-white font-medium">Dr. {{ apt.doctor.full_name|default:"N/A" }}</span>
+                            <span class="text-xs text-gray-400">{{ apt.doctor.specialty|default:"" }}</span>
+                        </div>
+                        <div class="text-xs text-gray-400 mt-1">
+                            <span class="inline-block mr-2">{{ apt.appointment_date|date:"M d, Y" }}</span>
+                            <span>{{ apt.appointment_time|time:"h:i A" }}</span>
+                        </div>
+                        <div class="text-xs text-gray-400">{{ apt.hospital.name|default:"N/A" }}</div>
+                        <div class="mt-2">
+                            <span class="inline-block px-3 py-1 rounded-full text-xs font-medium
+                                {% if apt.status == 'pending' %}badge-pending
+                                {% elif apt.status == 'confirmed' %}badge-confirmed
+                                {% elif apt.status == 'completed' %}badge-completed
+                                {% elif apt.status == 'cancelled' %}badge-cancelled
+                                {% else %}bg-gray-500/20 text-gray-300{% endif %}">
+                                {{ apt.get_status_display }}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="flex flex-col items-end gap-2">
+                        <a href="{% url 'appointments:patient_appointment_detail' apt.pk %}" class="text-blue-400 hover:text-blue-300 transition text-sm">
+                            <i class="fas fa-eye"></i> View
+                        </a>
+                        {% if apt.is_pending or apt.is_confirmed %}
+                        <button onclick="document.getElementById('cancel-form-mob-{{ apt.pk }}').submit();" class="text-red-400 hover:text-red-300 transition text-sm">
+                            <i class="fas fa-times"></i> Cancel
+                        </button>
+                        <form id="cancel-form-mob-{{ apt.pk }}" method="post" action="{% url 'appointments:cancel' apt.pk %}" style="display:none;">
+                            {% csrf_token %}
+                        </form>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="glass-card rounded-2xl border border-white/10 p-8 text-center">
+                <i class="fas fa-calendar-times text-4xl block mb-3 text-gray-500"></i>
+                <p class="text-gray-400">No appointments found.</p>
+                <a href="{% url 'appointments:patient_book_appointment' %}" class="mt-4 inline-block bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-xl font-medium transition shadow-lg shadow-blue-500/30">
+                    <i class="fas fa-plus mr-2"></i> Book Appointment
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- PAGINATION -->
+        {% if page_obj.paginator.num_pages > 1 %}
+        <div class="glass-card rounded-2xl border border-white/10 p-4 flex flex-wrap items-center justify-between gap-3">
+            <div class="text-sm text-gray-400">
+                Showing {{ page_obj.start_index }}–{{ page_obj.end_index }} of {{ page_obj.paginator.count }} appointments
+            </div>
+            <div class="flex gap-1">
+                {% if page_obj.has_previous %}
+                <a href="?page=1{% for key, val in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ val }}{% endif %}{% endfor %}" class="px-3 py-1.5 bg-white/5 rounded-lg hover:bg-white/10 transition">&laquo;</a>
+                <a href="?page={{ page_obj.previous_page_number }}{% for key, val in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ val }}{% endif %}{% endfor %}" class="px-3 py-1.5 bg-white/5 rounded-lg hover:bg-white/10 transition">&lsaquo;</a>
+                {% endif %}
+                {% for num in page_obj.paginator.page_range %}
+                    {% if num == page_obj.number %}
+                    <span class="px-3 py-1.5 bg-blue-600/30 text-blue-300 font-medium rounded-lg">{{ num }}</span>
+                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                    <a href="?page={{ num }}{% for key, val in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ val }}{% endif %}{% endfor %}" class="px-3 py-1.5 bg-white/5 hover:bg-white/10 rounded-lg transition">{{ num }}</a>
+                    {% endif %}
+                {% endfor %}
+                {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}{% for key, val in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ val }}{% endif %}{% endfor %}" class="px-3 py-1.5 bg-white/5 rounded-lg hover:bg-white/10 transition">&rsaquo;</a>
+                <a href="?page={{ page_obj.paginator.num_pages }}{% for key, val in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ val }}{% endif %}{% endfor %}" class="px-3 py-1.5 bg-white/5 rounded-lg hover:bg-white/10 transition">&raquo;</a>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+    </main>
+</div>
+
+<!-- ===== SIDEBAR TOGGLE SCRIPT ===== -->
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const sidebar = document.getElementById('sidebar');
+        const toggleBtn = document.getElementById('sidebarToggle');
+
+        if (toggleBtn && sidebar) {
+            toggleBtn.addEventListener('click', function () {
+                sidebar.classList.toggle('-translate-x-full');
+            });
+
+            document.addEventListener('click', function (event) {
+                const isClickInside = sidebar.contains(event.target) || toggleBtn.contains(event.target);
+                if (!isClickInside && window.innerWidth < 768) {
+                    sidebar.classList.add('-translate-x-full');
+                }
+            });
+
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape' && window.innerWidth < 768) {
+                    sidebar.classList.add('-translate-x-full');
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

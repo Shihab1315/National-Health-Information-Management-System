@@ -1,0 +1,246 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{% if update %}Update{% else %}Add{% endif %} Hospital — NHIMS{% endblock %}
+
+{% block extra_css %}
+<style>
+    .step-indicator .step {
+        width: 2.5rem;
+        height: 2.5rem;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(255,255,255,0.05);
+        border: 2px solid rgba(255,255,255,0.1);
+        color: #94a3b8;
+        font-weight: 600;
+        transition: all 0.3s;
+    }
+    .step-indicator .step.active {
+        background: rgba(16,185,129,0.2);
+        border-color: #10b981;
+        color: #6ee7b7;
+    }
+    .step-indicator .step.done {
+        background: rgba(16,185,129,0.15);
+        border-color: #10b981;
+        color: #10b981;
+    }
+    .step-line {
+        flex: 1;
+        height: 2px;
+        background: rgba(255,255,255,0.1);
+    }
+    .step-line.done {
+        background: #10b981;
+    }
+    .step-panel { display: none; }
+    .step-panel.active { display: block; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold text-white mb-2">
+        {% if update %}Update{% else %}Add New{% endif %} Hospital
+    </h1>
+    <p class="text-gray-400 mb-6">Complete all sections to register a healthcare facility.</p>
+
+    <!-- Step Indicator -->
+    <div class="flex items-center gap-2 mb-8 step-indicator">
+        <div class="step active" data-step="1">1</div>
+        <div class="step-line"></div>
+        <div class="step" data-step="2">2</div>
+        <div class="step-line"></div>
+        <div class="step" data-step="3">3</div>
+        <div class="step-line"></div>
+        <div class="step" data-step="4">4</div>
+    </div>
+
+    <form method="post" enctype="multipart/form-data" id="hospital-form">
+        {% csrf_token %}
+
+        <!-- Step 1: Basic Info -->
+        <div class="step-panel active" data-step="1">
+            <div class="glass-card rounded-2xl border border-white/10 p-6 space-y-4">
+                <h3 class="text-white font-semibold text-lg">Basic Information</h3>
+                {{ form.name.label_tag }}{{ form.name }}
+                {{ form.registration_number.label_tag }}{{ form.registration_number }}
+                {{ form.license_number.label_tag }}{{ form.license_number }}
+                {{ form.tin.label_tag }}{{ form.tin }}
+                {{ form.bin.label_tag }}{{ form.bin }}
+                {{ form.hospital_type.label_tag }}{{ form.hospital_type }}
+                {{ form.ownership.label_tag }}{{ form.ownership }}
+                {{ form.established_year.label_tag }}{{ form.established_year }}
+                {{ form.description.label_tag }}{{ form.description }}
+                {{ form.short_description.label_tag }}{{ form.short_description }}
+                {{ form.mission.label_tag }}{{ form.mission }}
+                {{ form.vision.label_tag }}{{ form.vision }}
+                {{ form.history.label_tag }}{{ form.history }}
+                {{ form.logo.label_tag }}{{ form.logo }}
+                {{ form.cover_image.label_tag }}{{ form.cover_image }}
+                <div class="flex justify-end">
+                    <button type="button" class="next-step bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2 rounded-xl transition">Next →</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 2: Contact & Location -->
+        <div class="step-panel" data-step="2">
+            <div class="glass-card rounded-2xl border border-white/10 p-6 space-y-4">
+                <h3 class="text-white font-semibold text-lg">Contact & Location</h3>
+                {{ form.country.label_tag }}{{ form.country }}
+                {{ form.division.label_tag }}{{ form.division }}
+                {{ form.district.label_tag }}{{ form.district }}
+                {{ form.upazila.label_tag }}{{ form.upazila }}
+                {{ form.city.label_tag }}{{ form.city }}
+                {{ form.area.label_tag }}{{ form.area }}
+                {{ form.postal_code.label_tag }}{{ form.postal_code }}
+                {{ form.full_address.label_tag }}{{ form.full_address }}
+                {{ form.latitude.label_tag }}{{ form.latitude }}
+                {{ form.longitude.label_tag }}{{ form.longitude }}
+                {{ form.google_map_link.label_tag }}{{ form.google_map_link }}
+                {{ form.email.label_tag }}{{ form.email }}
+                {{ form.phone.label_tag }}{{ form.phone }}
+                {{ form.emergency_phone.label_tag }}{{ form.emergency_phone }}
+                {{ form.ambulance_phone.label_tag }}{{ form.ambulance_phone }}
+                {{ form.website.label_tag }}{{ form.website }}
+                {{ form.facebook.label_tag }}{{ form.facebook }}
+                {{ form.linkedin.label_tag }}{{ form.linkedin }}
+                {{ form.twitter.label_tag }}{{ form.twitter }}
+                {{ form.instagram.label_tag }}{{ form.instagram }}
+                {{ form.youtube.label_tag }}{{ form.youtube }}
+                <div class="flex justify-between">
+                    <button type="button" class="prev-step bg-white/5 hover:bg-white/10 text-gray-300 px-6 py-2 rounded-xl transition">← Back</button>
+                    <button type="button" class="next-step bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2 rounded-xl transition">Next →</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 3: Facilities & Amenities -->
+        <div class="step-panel" data-step="3">
+            <div class="glass-card rounded-2xl border border-white/10 p-6 space-y-4">
+                <h3 class="text-white font-semibold text-lg">Facilities & Amenities</h3>
+                <div class="grid grid-cols-2 gap-3">
+                    {{ form.emergency_available.label_tag }}{{ form.emergency_available }}
+                    {{ form.icu.label_tag }}{{ form.icu }}
+                    {{ form.nicu.label_tag }}{{ form.nicu }}
+                    {{ form.ccu.label_tag }}{{ form.ccu }}
+                    {{ form.emergency_department.label_tag }}{{ form.emergency_department }}
+                    {{ form.operation_theater.label_tag }}{{ form.operation_theater }}
+                    {{ form.laboratory.label_tag }}{{ form.laboratory }}
+                    {{ form.radiology.label_tag }}{{ form.radiology }}
+                    {{ form.mri.label_tag }}{{ form.mri }}
+                    {{ form.ct_scan.label_tag }}{{ form.ct_scan }}
+                    {{ form.x_ray.label_tag }}{{ form.x_ray }}
+                    {{ form.ultrasound.label_tag }}{{ form.ultrasound }}
+                    {{ form.blood_bank.label_tag }}{{ form.blood_bank }}
+                    {{ form.pharmacy.label_tag }}{{ form.pharmacy }}
+                    {{ form.vaccination_center.label_tag }}{{ form.vaccination_center }}
+                    {{ form.dialysis.label_tag }}{{ form.dialysis }}
+                    {{ form.cancer_unit.label_tag }}{{ form.cancer_unit }}
+                    {{ form.burn_unit.label_tag }}{{ form.burn_unit }}
+                    {{ form.heart_center.label_tag }}{{ form.heart_center }}
+                    {{ form.eye_center.label_tag }}{{ form.eye_center }}
+                    {{ form.dental_unit.label_tag }}{{ form.dental_unit }}
+                    {{ form.parking.label_tag }}{{ form.parking }}
+                    {{ form.wheelchair_access.label_tag }}{{ form.wheelchair_access }}
+                    {{ form.prayer_room.label_tag }}{{ form.prayer_room }}
+                    {{ form.cafeteria.label_tag }}{{ form.cafeteria }}
+                    {{ form.atm.label_tag }}{{ form.atm }}
+                    {{ form.wifi.label_tag }}{{ form.wifi }}
+                    {{ form.generator_backup.label_tag }}{{ form.generator_backup }}
+                    {{ form.oxygen_plant.label_tag }}{{ form.oxygen_plant }}
+                    {{ form.open_24_hours.label_tag }}{{ form.open_24_hours }}
+                </div>
+                <div class="flex justify-between">
+                    <button type="button" class="prev-step bg-white/5 hover:bg-white/10 text-gray-300 px-6 py-2 rounded-xl transition">← Back</button>
+                    <button type="button" class="next-step bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2 rounded-xl transition">Next →</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 4: Statistics & Submit -->
+        <div class="step-panel" data-step="4">
+            <div class="glass-card rounded-2xl border border-white/10 p-6 space-y-4">
+                <h3 class="text-white font-semibold text-lg">Statistics & Finalize</h3>
+                {{ form.total_doctors.label_tag }}{{ form.total_doctors }}
+                {{ form.total_nurses.label_tag }}{{ form.total_nurses }}
+                {{ form.total_beds.label_tag }}{{ form.total_beds }}
+                {{ form.available_beds.label_tag }}{{ form.available_beds }}
+                {{ form.icu_beds.label_tag }}{{ form.icu_beds }}
+                {{ form.emergency_beds.label_tag }}{{ form.emergency_beds }}
+                {{ form.verified.label_tag }}{{ form.verified }}
+                {{ form.featured.label_tag }}{{ form.featured }}
+                {{ form.active.label_tag }}{{ form.active }}
+                <div class="flex justify-between">
+                    <button type="button" class="prev-step bg-white/5 hover:bg-white/10 text-gray-300 px-6 py-2 rounded-xl transition">← Back</button>
+                    <button type="submit" class="bg-linear-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 text-white px-6 py-3 rounded-xl font-medium transition flex items-center gap-2">
+                        <i class="fas fa-save"></i> {% if update %}Update{% else %}Add{% endif %} Hospital
+                    </button>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const steps = document.querySelectorAll('.step');
+    const panels = document.querySelectorAll('.step-panel');
+    const nextBtns = document.querySelectorAll('.next-step');
+    const prevBtns = document.querySelectorAll('.prev-step');
+
+    function showStep(stepIndex) {
+        panels.forEach((panel, idx) => {
+            panel.classList.toggle('active', idx === stepIndex);
+        });
+        steps.forEach((step, idx) => {
+            step.classList.remove('active', 'done');
+            if (idx < stepIndex) step.classList.add('done');
+            else if (idx === stepIndex) step.classList.add('active');
+        });
+        // Update line states
+        document.querySelectorAll('.step-line').forEach((line, idx) => {
+            line.classList.toggle('done', idx < stepIndex);
+        });
+    }
+
+    let currentStep = 0;
+
+    nextBtns.forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            if (currentStep < panels.length - 1) {
+                currentStep++;
+                showStep(currentStep);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        });
+    });
+
+    prevBtns.forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            if (currentStep > 0) {
+                currentStep--;
+                showStep(currentStep);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        });
+    });
+
+    // Click on step indicator
+    steps.forEach((step, idx) => {
+        step.addEventListener('click', function() {
+            if (idx <= currentStep || idx === currentStep + 1) {
+                currentStep = idx;
+                showStep(currentStep);
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,14 @@
+<!-- laboratory/templates/laboratory/components/search_bar.html -->
+{% load static %}
+
+<div class="relative">
+  <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"></i>
+  <input type="text" 
+         name="search" 
+         id="searchInput" 
+         value="{{ search_query|default:'' }}"
+         placeholder="{{ placeholder|default:'Search...' }}"
+         class="w-full rounded-xl border border-slate-600 bg-slate-700/50 focus:bg-slate-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition duration-200 py-2 pl-10 pr-4 text-slate-200 placeholder-slate-400 shadow-sm"
+         aria-label="Search"
+         {% if auto_submit %}oninput="this.form.submit()"{% endif %}>
+</div>

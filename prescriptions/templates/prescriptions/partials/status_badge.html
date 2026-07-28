@@ -1,0 +1,18 @@
+<!-- prescriptions/templates/prescriptions/partials/status_badge.html -->
+{% load static %}
+
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+  {% if status == 'draft' %}bg-yellow-500/20 text-yellow-300 border border-yellow-500/30
+  {% elif status == 'issued' %}bg-indigo-500/20 text-indigo-300 border border-indigo-500/30
+  {% elif status == 'completed' %}bg-purple-500/20 text-purple-300 border border-purple-500/30
+  {% elif status == 'cancelled' %}bg-red-500/20 text-red-300 border border-red-500/30
+  {% else %}bg-slate-500/20 text-slate-300 border border-slate-500/30{% endif %}">
+  <i class="fas fa-circle text-[0.5rem] mr-1.5
+    {% if status == 'draft' %}text-yellow-400
+    {% elif status == 'issued' %}text-indigo-400
+    {% elif status == 'completed' %}text-purple-400
+    {% elif status == 'cancelled' %}text-red-400
+    {% else %}text-slate-400{% endif %}">
+  </i>
+  {{ label|default:status|title }}
+</span>

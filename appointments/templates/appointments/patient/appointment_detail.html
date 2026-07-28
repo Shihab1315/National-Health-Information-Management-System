@@ -1,0 +1,434 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Appointment #{{ appointment.appointment_number }} — NHIMS{% endblock %}
+
+{% block extra_css %}
+<style>
+    .top-navbar { display: none !important; }
+    /* Status badge colors */
+    .badge-pending {
+        background: rgba(251, 191, 36, 0.15);
+        color: #fbbf24;
+        border: 1px solid rgba(251, 191, 36, 0.25);
+    }
+    .badge-confirmed {
+        background: rgba(52, 211, 153, 0.15);
+        color: #34d399;
+        border: 1px solid rgba(52, 211, 153, 0.25);
+    }
+    .badge-completed {
+        background: rgba(96, 165, 250, 0.15);
+        color: #60a5fa;
+        border: 1px solid rgba(96, 165, 250, 0.25);
+    }
+    .badge-cancelled {
+        background: rgba(248, 113, 113, 0.15);
+        color: #f87171;
+        border: 1px solid rgba(248, 113, 113, 0.25);
+    }
+    .badge-missed {
+        background: rgba(156, 163, 175, 0.15);
+        color: #9ca3af;
+        border: 1px solid rgba(156, 163, 175, 0.25);
+    }
+    /* Timeline styling */
+    .timeline-item {
+        position: relative;
+        padding-left: 2rem;
+        border-left: 2px solid rgba(255,255,255,0.1);
+    }
+    .timeline-item:last-child {
+        border-left-color: transparent;
+    }
+    .timeline-dot {
+        position: absolute;
+        left: -0.6rem;
+        width: 1rem;
+        height: 1rem;
+        border-radius: 50%;
+        border: 2px solid #0a1628;
+    }
+    .timeline-dot.completed { background: #34d399; }
+    .timeline-dot.active { background: #fbbf24; }
+    .timeline-dot.pending { background: #6b7280; }
+    .timeline-dot.cancelled { background: #f87171; }
+</style>
+{% endblock %}
+
+{% block navbar %}
+<!-- Mobile top bar (same as patient dashboard) -->
+<nav class="fixed top-0 left-0 right-0 z-40 bg-[#0a1628]/80 backdrop-blur-sm border-b border-white/10 px-4 py-3 md:hidden">
+    <div class="flex items-center justify-between">
+        <button id="sidebarToggle" class="text-white text-2xl">
+            <i class="fas fa-bars"></i>
+        </button>
+        <span class="text-white font-semibold">NHIMS Patient</span>
+        <div class="w-8"></div>
+    </div>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="flex min-h-screen bg-[#0a1628]">
+    <!-- ====================== SIDEBAR (same as patient dashboard) ====================== -->
+    <aside id="sidebar" class="fixed top-0 left-0 z-50 h-full w-72 bg-[#0d1f3c] border-r border-white/10 transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out overflow-y-auto">
+        <div class="p-4 border-b border-white/10">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 text-xl font-bold">
+                    {{ appointment.patient.full_name|slice:":1"|upper|default:"U" }}
+                </div>
+                <div>
+                    <p class="text-white font-semibold text-sm">{{ appointment.patient.full_name|default:"Patient" }}</p>
+                    <p class="text-gray-400 text-xs">Patient</p>
+                </div>
+            </div>
+        </div>
+        <nav class="p-3 space-y-1">
+            <a href="{% url 'dashboard:patient_dashboard' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
+                <i class="fas fa-th-large w-5 text-center"></i> Dashboard
+            </a>
+            <a href="{% url 'appointments:patient_appointment_list' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition bg-blue-600/30 text-blue-300">
+                <i class="fas fa-calendar-check w-5 text-center"></i> Appointments
+            </a>
+            <a href="{% url 'prescriptions:patient_my_prescriptions' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
+                <i class="fas fa-prescription-bottle w-5 text-center"></i> Prescriptions
+            </a>
+            <a href="{% url 'medical_records:record_list' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
+                <i class="fas fa-file-medical w-5 text-center"></i> Medical Records
+            </a>
+           <a href="{% url 'laboratory:patient_lab_report_list' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
+    <i class="fas fa-flask w-5 text-center"></i> Laboratory
+</a>
+            <a href="{% url 'notifications:center' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
+                <i class="fas fa-bell w-5 text-center"></i> Notifications
+            </a>
+            <hr class="border-white/10 my-3">
+            <a href="{% url 'patients:profile' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
+            <i class="fas fa-user-circle w-5 text-center"></i> Profile
+            </a>
+            <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
+                <i class="fas fa-cog w-5 text-center"></i> Settings
+            </a>
+            {% url 'logout' as logout_url %}
+            {% if logout_url %}
+                <a href="{{ logout_url }}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-red-400 hover:bg-red-500/10 hover:text-red-300">
+                    <i class="fas fa-sign-out-alt w-5 text-center"></i> Logout
+                </a>
+            {% else %}
+                <a href="{% url 'accounts:logout' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-red-400 hover:bg-red-500/10 hover:text-red-300">
+                    <i class="fas fa-sign-out-alt w-5 text-center"></i> Logout
+                </a>
+            {% endif %}
+        </nav>
+        <div class="absolute bottom-4 left-4 right-4 text-center text-gray-500 text-xs">
+            NHIMS v2.0
+        </div>
+    </aside>
+
+    <!-- ====================== MAIN CONTENT ====================== -->
+    <main class="flex-1 md:ml-72 p-4 md:p-6 space-y-6 mt-14 md:mt-0">
+
+        <!-- ===== HEADER ===== -->
+        <div class="flex flex-wrap items-center justify-between gap-4">
+            <div>
+                <h1 class="text-2xl font-bold text-white flex items-center gap-2">
+                    <i class="fas fa-calendar-alt text-blue-400"></i>
+                    Appointment Details
+                </h1>
+                <p class="text-sm text-gray-400">#{{ appointment.appointment_number }}</p>
+            </div>
+            <div class="flex flex-wrap gap-2">
+                <a href="{% url 'appointments:patient_appointment_list' %}" class="bg-white/5 hover:bg-white/10 px-4 py-2 rounded-xl text-gray-300 transition text-sm flex items-center gap-2">
+                    <i class="fas fa-arrow-left"></i> Back to List
+                </a>
+                <button onclick="window.print()" class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-xl text-white text-sm font-medium transition shadow-lg shadow-blue-500/30 flex items-center gap-2">
+                    <i class="fas fa-print"></i> Print
+                </button>
+                {% if can_download_slip %}
+                <a href="#" class="bg-emerald-600 hover:bg-emerald-700 px-4 py-2 rounded-xl text-white text-sm font-medium transition shadow-lg shadow-emerald-500/30 flex items-center gap-2">
+                    <i class="fas fa-download"></i> Download Slip
+                </a>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- ===== STATUS BADGE ===== -->
+        <div class="flex items-center gap-4">
+            <span class="inline-block px-4 py-2 rounded-full text-sm font-medium
+                {% if appointment.status == 'pending' %}badge-pending
+                {% elif appointment.status == 'confirmed' %}badge-confirmed
+                {% elif appointment.status == 'completed' %}badge-completed
+                {% elif appointment.status == 'cancelled' %}badge-cancelled
+                {% else %}badge-missed{% endif %}">
+                <i class="fas fa-circle mr-1 text-xs"></i>
+                {{ appointment.get_status_display }}
+            </span>
+            {% if appointment.token %}
+            <span class="text-gray-400 text-sm">
+                <i class="fas fa-ticket-alt mr-1"></i> Token: {{ appointment.token }}
+            </span>
+            {% endif %}
+        </div>
+
+        <!-- ===== MAIN GRID: APPOINTMENT INFO + DOCTOR INFO ===== -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Appointment Information Card -->
+            <div class="lg:col-span-2 glass-card rounded-2xl border border-white/10 p-6">
+                <h3 class="text-white font-semibold text-lg mb-4 flex items-center gap-2">
+                    <i class="fas fa-info-circle text-blue-400"></i> Appointment Information
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <p class="text-gray-400 text-xs uppercase">Date</p>
+                        <p class="text-white font-medium">{{ appointment.appointment_date|date:"l, F j, Y" }}</p>
+                    </div>
+                    <div>
+                        <p class="text-gray-400 text-xs uppercase">Time</p>
+                        <p class="text-white font-medium">{{ appointment.appointment_time|time:"h:i A" }}</p>
+                    </div>
+                    <div>
+                        <p class="text-gray-400 text-xs uppercase">Booking Date</p>
+                        <p class="text-white font-medium">{{ appointment.created_at|date:"M d, Y H:i" }}</p>
+                    </div>
+                    <div>
+                        <p class="text-gray-400 text-xs uppercase">Status</p>
+                        <p class="text-white font-medium">{{ appointment.get_status_display }}</p>
+                    </div>
+                    {% if appointment.reason %}
+                    <div class="md:col-span-2">
+                        <p class="text-gray-400 text-xs uppercase">Reason for Visit</p>
+                        <p class="text-white text-sm">{{ appointment.reason }}</p>
+                    </div>
+                    {% endif %}
+                    {% if appointment.notes %}
+                    <div class="md:col-span-2">
+                        <p class="text-gray-400 text-xs uppercase">Notes</p>
+                        <p class="text-white text-sm">{{ appointment.notes }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Doctor Information Card -->
+            <div class="glass-card rounded-2xl border border-white/10 p-6">
+                <h3 class="text-white font-semibold text-lg mb-4 flex items-center gap-2">
+                    <i class="fas fa-user-md text-emerald-400"></i> Doctor
+                </h3>
+                <div class="flex items-start gap-3">
+                    <div class="flex-shrink-0">
+                        <div class="w-14 h-14 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 text-2xl font-bold border-2 border-blue-400/30">
+                            {{ appointment.doctor.full_name|slice:":1"|upper|default:"D" }}
+                        </div>
+                    </div>
+                    <div class="flex-1">
+                        <p class="text-white font-semibold">Dr. {{ appointment.doctor.full_name|default:"N/A" }}</p>
+                        <p class="text-gray-400 text-sm">{{ appointment.doctor.specialty|default:"General Practitioner" }}</p>
+                        <p class="text-gray-400 text-sm">{{ appointment.doctor.department|default:"" }}</p>
+                        <p class="text-gray-400 text-sm">{{ appointment.doctor.hospital.name|default:"N/A" }}</p>
+                        <p class="text-gray-400 text-sm">
+                            <span class="text-gray-500">Room:</span> {{ appointment.doctor.room_number|default:"N/A" }}
+                        </p>
+                        <p class="text-gray-400 text-sm">
+                            <span class="text-gray-500">Consultation Fee:</span> ${{ appointment.doctor.consultation_fee|default:"0.00" }}
+                        </p>
+                    </div>
+                </div>
+                <div class="mt-3 pt-3 border-t border-white/10">
+                    <p class="text-gray-400 text-xs uppercase">Hospital</p>
+                    <p class="text-white font-medium">{{ appointment.hospital.name|default:"N/A" }}</p>
+                    <p class="text-gray-400 text-sm">{{ appointment.hospital.address|default:"" }}</p>
+                    <p class="text-gray-400 text-sm">{{ appointment.hospital.phone|default:"" }}</p>
+                </div>
+                {% if appointment.hospital.location_url %}
+                <div class="mt-2">
+                    <a href="{{ appointment.hospital.location_url }}" target="_blank" class="text-blue-400 hover:text-blue-300 text-sm flex items-center gap-1">
+                        <i class="fas fa-map-marker-alt"></i> View on Map
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- ===== PATIENT INFORMATION CARD ===== -->
+        <div class="glass-card rounded-2xl border border-white/10 p-6">
+            <h3 class="text-white font-semibold text-lg mb-4 flex items-center gap-2">
+                <i class="fas fa-user-injured text-amber-400"></i> Patient Information
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                    <p class="text-gray-400 text-xs uppercase">Full Name</p>
+                    <p class="text-white font-medium">{{ appointment.patient.full_name|default:"N/A" }}</p>
+                </div>
+                <div>
+                    <p class="text-gray-400 text-xs uppercase">Patient ID</p>
+                    <p class="text-white font-medium">{{ appointment.patient.health_id|default:"N/A" }}</p>
+                </div>
+                <div>
+                    <p class="text-gray-400 text-xs uppercase">Age</p>
+                    <p class="text-white font-medium">
+                        {% if appointment.patient.date_of_birth %}
+                        {{ appointment.patient.date_of_birth|timesince }}
+                        {% else %}N/A{% endif %}
+                    </p>
+                </div>
+                <div>
+                    <p class="text-gray-400 text-xs uppercase">Gender</p>
+                    <p class="text-white font-medium">{{ appointment.patient.get_gender_display|default:"N/A" }}</p>
+                </div>
+                <div>
+                    <p class="text-gray-400 text-xs uppercase">Blood Group</p>
+                    <p class="text-white font-medium">{{ appointment.patient.blood_group|default:"N/A" }}</p>
+                </div>
+                <div>
+                    <p class="text-gray-400 text-xs uppercase">Phone</p>
+                    <p class="text-white font-medium">{{ appointment.patient.phone|default:"N/A" }}</p>
+                </div>
+                <div>
+                    <p class="text-gray-400 text-xs uppercase">Email</p>
+                    <p class="text-white font-medium">{{ appointment.patient.email|default:"N/A" }}</p>
+                </div>
+                <div>
+                    <p class="text-gray-400 text-xs uppercase">Emergency Contact</p>
+                    <p class="text-white font-medium">{{ appointment.patient.emergency_contact_name|default:"N/A" }}</p>
+                    <p class="text-gray-400 text-sm">{{ appointment.patient.emergency_contact_phone|default:"" }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== TIMELINE ===== -->
+        <div class="glass-card rounded-2xl border border-white/10 p-6">
+            <h3 class="text-white font-semibold text-lg mb-4 flex items-center gap-2">
+                <i class="fas fa-history text-purple-400"></i> Appointment Timeline
+            </h3>
+            <div class="space-y-4 relative">
+                <!-- Step 1: Booked -->
+                <div class="timeline-item">
+                    <div class="timeline-dot completed"></div>
+                    <div>
+                        <p class="text-white font-medium">Appointment Booked</p>
+                        <p class="text-gray-400 text-sm">{{ appointment.created_at|date:"M d, Y H:i" }}</p>
+                    </div>
+                </div>
+
+                <!-- Step 2: Confirmed -->
+                <div class="timeline-item">
+                    <div class="timeline-dot {% if appointment.confirmed_at %}completed{% elif appointment.status == 'confirmed' %}active{% else %}pending{% endif %}"></div>
+                    <div>
+                        <p class="text-white font-medium">Appointment Confirmed</p>
+                        {% if appointment.confirmed_at %}
+                            <p class="text-gray-400 text-sm">{{ appointment.confirmed_at|date:"M d, Y H:i" }}</p>
+                        {% else %}
+                            <p class="text-gray-500 text-sm">Pending confirmation</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Step 3: Completed -->
+                <div class="timeline-item">
+                    <div class="timeline-dot {% if appointment.completed_at %}completed{% elif appointment.status == 'completed' %}active{% else %}pending{% endif %}"></div>
+                    <div>
+                        <p class="text-white font-medium">Consultation Completed</p>
+                        {% if appointment.completed_at %}
+                            <p class="text-gray-400 text-sm">{{ appointment.completed_at|date:"M d, Y H:i" }}</p>
+                        {% else %}
+                            <p class="text-gray-500 text-sm">Not yet completed</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Step 4: Cancelled (if applicable) -->
+                {% if appointment.cancelled_at %}
+                <div class="timeline-item">
+                    <div class="timeline-dot cancelled"></div>
+                    <div>
+                        <p class="text-white font-medium">Appointment Cancelled</p>
+                        <p class="text-gray-400 text-sm">{{ appointment.cancelled_at|date:"M d, Y H:i" }}</p>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- ===== ACTIONS ===== -->
+        <div class="glass-card rounded-2xl border border-white/10 p-6">
+            <h3 class="text-white font-semibold text-lg mb-4 flex items-center gap-2">
+                <i class="fas fa-bolt text-blue-400"></i> Actions
+            </h3>
+            <div class="flex flex-wrap gap-3">
+                <!-- Cancel: only for pending/confirmed -->
+        {% if appointment.is_pending or appointment.is_confirmed %}
+            <a href="{% url 'appointments:patient_cancel_appointment' appointment.pk %}" class="bg-red-600 hover:bg-red-700 text-white px-6 py-2.5 rounded-xl text-sm font-medium transition shadow-lg shadow-red-500/30 flex items-center gap-2">
+                <i class="fas fa-times"></i> Cancel Appointment
+            </a>
+        {% endif %}
+
+        <!-- Reschedule: only for pending/confirmed AND future -->
+       {% if appointment.is_pending or appointment.is_confirmed %}
+    {% if appointment.appointment_date > current_date.date or appointment.appointment_date == current_date.date and appointment.appointment_time > current_date.time %}
+        <a href="{% url 'appointments:patient_reschedule_appointment' appointment.pk %}" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-xl text-sm font-medium transition shadow-lg shadow-blue-500/30 flex items-center gap-2">
+            <i class="fas fa-sync-alt"></i> Reschedule
+        </a>
+            {% endif %}
+        {% endif %}
+
+                {% if appointment.is_completed %}
+                    {% if appointment.prescription %}
+                    <a href="{% url 'prescriptions:detail' appointment.prescription.pk %}" class="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2.5 rounded-xl text-sm font-medium transition shadow-lg shadow-emerald-500/30 flex items-center gap-2">
+                        <i class="fas fa-prescription-bottle"></i> View Prescription
+                    </a>
+                    {% endif %}
+                    <a href="#" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2.5 rounded-xl text-sm font-medium transition shadow-lg shadow-indigo-500/30 flex items-center gap-2">
+                        <i class="fas fa-file-medical"></i> Medical Record
+                    </a>
+                    <a href="#" class="bg-amber-600 hover:bg-amber-700 text-white px-6 py-2.5 rounded-xl text-sm font-medium transition shadow-lg shadow-amber-500/30 flex items-center gap-2">
+                        <i class="fas fa-calendar-plus"></i> Book Follow‑up
+                    </a>
+                {% endif %}
+
+                {% if appointment.is_cancelled %}
+                    <a href="{% url 'appointments:patient_book_appointment' %}" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-xl text-sm font-medium transition shadow-lg shadow-blue-500/30 flex items-center gap-2">
+                     <i class="fas fa-plus"></i> Book Again
+                    </a>
+                {% endif %}
+
+               <a href="{% url 'appointments:patient_appointment_slip_print' appointment.pk %}" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-xl text-sm font-medium transition shadow-lg shadow-blue-500/30 flex items-center gap-2">
+                  <i class="fas fa-print"></i> Print Slip
+                </a>
+                 <a href="{% url 'appointments:patient_appointment_slip_preview' appointment.pk %}" class="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2.5 rounded-xl text-sm font-medium transition shadow-lg shadow-emerald-500/30 flex items-center gap-2">
+                   <i class="fas fa-download"></i> Download Slip
+                 </a>
+                
+            </div>
+        </div>
+
+    </main>
+</div>
+
+<!-- ===== SIDEBAR TOGGLE SCRIPT ===== -->
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const sidebar = document.getElementById('sidebar');
+        const toggleBtn = document.getElementById('sidebarToggle');
+
+        if (toggleBtn && sidebar) {
+            toggleBtn.addEventListener('click', function () {
+                sidebar.classList.toggle('-translate-x-full');
+            });
+
+            document.addEventListener('click', function (event) {
+                const isClickInside = sidebar.contains(event.target) || toggleBtn.contains(event.target);
+                if (!isClickInside && window.innerWidth < 768) {
+                    sidebar.classList.add('-translate-x-full');
+                }
+            });
+
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape' && window.innerWidth < 768) {
+                    sidebar.classList.add('-translate-x-full');
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

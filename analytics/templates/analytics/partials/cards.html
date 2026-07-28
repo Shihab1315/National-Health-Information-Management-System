@@ -1,0 +1,106 @@
+{% load static %}
+<!-- Statistics Cards -->
+<div class="stat-card">
+    <div class="flex items-start gap-3">
+        <div class="stat-icon" style="background:linear-gradient(135deg,#2563EB,#3B82F6);">
+            <i class="fas fa-users"></i>
+        </div>
+        <div>
+            <div class="stat-label">Total Patients</div>
+            <div class="stat-value" data-count="{{ stats.total_patients|default:0 }}">{{ stats.total_patients|default:0 }}</div>
+            <div class="stat-trend up"><i class="fas fa-arrow-up"></i> 12.5%</div>
+        </div>
+    </div>
+    <div class="stat-sparkline" style="background:linear-gradient(90deg,transparent,#2563EB);"></div>
+</div>
+<div class="stat-card">
+    <div class="flex items-start gap-3">
+        <div class="stat-icon" style="background:linear-gradient(135deg,#22C55E,#16A34A);">
+            <i class="fas fa-user-md"></i>
+        </div>
+        <div>
+            <div class="stat-label">Doctors</div>
+            <div class="stat-value" data-count="{{ stats.total_doctors|default:0 }}">{{ stats.total_doctors|default:0 }}</div>
+            <div class="stat-trend up"><i class="fas fa-arrow-up"></i> 5.2%</div>
+        </div>
+    </div>
+    <div class="stat-sparkline" style="background:linear-gradient(90deg,transparent,#22C55E);"></div>
+</div>
+<div class="stat-card">
+    <div class="flex items-start gap-3">
+        <div class="stat-icon" style="background:linear-gradient(135deg,#F59E0B,#D97706);">
+            <i class="fas fa-hospital"></i>
+        </div>
+        <div>
+            <div class="stat-label">Hospitals</div>
+            <div class="stat-value" data-count="{{ stats.total_hospitals|default:0 }}">{{ stats.total_hospitals|default:0 }}</div>
+            <div class="stat-trend up"><i class="fas fa-arrow-up"></i> 3.8%</div>
+        </div>
+    </div>
+    <div class="stat-sparkline" style="background:linear-gradient(90deg,transparent,#F59E0B);"></div>
+</div>
+<div class="stat-card">
+    <div class="flex items-start gap-3">
+        <div class="stat-icon" style="background:linear-gradient(135deg,#8B5CF6,#7C3AED);">
+            <i class="fas fa-calendar-check"></i>
+        </div>
+        <div>
+            <div class="stat-label">Appointments</div>
+            <div class="stat-value" data-count="{{ stats.total_appointments|default:0 }}">{{ stats.total_appointments|default:0 }}</div>
+            <div class="stat-trend down"><i class="fas fa-arrow-down"></i> 2.1%</div>
+        </div>
+    </div>
+    <div class="stat-sparkline" style="background:linear-gradient(90deg,transparent,#8B5CF6);"></div>
+</div>
+<div class="stat-card">
+    <div class="flex items-start gap-3">
+        <div class="stat-icon" style="background:linear-gradient(135deg,#3B82F6,#2563EB);">
+            <i class="fas fa-notes-medical"></i>
+        </div>
+        <div>
+            <div class="stat-label">Medical Records</div>
+            <div class="stat-value" data-count="{{ stats.total_medical_records|default:0 }}">{{ stats.total_medical_records|default:0 }}</div>
+            <div class="stat-trend up"><i class="fas fa-arrow-up"></i> 8.7%</div>
+        </div>
+    </div>
+    <div class="stat-sparkline" style="background:linear-gradient(90deg,transparent,#3B82F6);"></div>
+</div>
+<div class="stat-card">
+    <div class="flex items-start gap-3">
+        <div class="stat-icon" style="background:linear-gradient(135deg,#06B6D4,#0891B2);">
+            <i class="fas fa-flask"></i>
+        </div>
+        <div>
+            <div class="stat-label">Lab Tests</div>
+            <div class="stat-value" data-count="{{ stats.total_lab_orders|default:0 }}">{{ stats.total_lab_orders|default:0 }}</div>
+            <div class="stat-trend up"><i class="fas fa-arrow-up"></i> 6.3%</div>
+        </div>
+    </div>
+    <div class="stat-sparkline" style="background:linear-gradient(90deg,transparent,#06B6D4);"></div>
+</div>
+<div class="stat-card">
+    <div class="flex items-start gap-3">
+        <div class="stat-icon" style="background:linear-gradient(135deg,#EC4899,#DB2777);">
+            <i class="fas fa-money-bill-wave"></i>
+        </div>
+        <div>
+            <div class="stat-label">Revenue (BDT)</div>
+            <div class="stat-value" data-count="125800">125,800</div>
+            <div class="stat-trend up"><i class="fas fa-arrow-up"></i> 9.4%</div>
+        </div>
+    </div>
+    <div class="stat-sparkline" style="background:linear-gradient(90deg,transparent,#EC4899);"></div>
+</div>
+<div class="stat-card">
+    <div class="flex items-start gap-3">
+        <div class="stat-icon" style="background:linear-gradient(135deg,#EF4444,#DC2626);">
+            <i class="fas fa-capsules"></i>
+        </div>
+        <div>
+            <div class="stat-label">Medicine Stock</div>
+            <div class="stat-value" data-count="{{ stats.total_medicines|default:0 }}">{{ stats.total_medicines|default:0 }}</div>
+            <div class="stat-trend down"><i class="fas fa-arrow-down"></i> 1.2%</div>
+        </div>
+    </div>
+    <div class="stat-sparkline" style="background:linear-gradient(90deg,transparent,#EF4444);"></div>
+</div>

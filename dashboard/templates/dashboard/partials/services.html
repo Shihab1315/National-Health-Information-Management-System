@@ -1,0 +1,22 @@
+<section id="services" class="py-20 md:py-28 bg-[#0a1628]">
+    <div class="max-w-7xl mx-auto px-4 md:px-8">
+        <div class="text-center max-w-3xl mx-auto mb-16">
+            <span class="section-badge"><i class="fa-regular fa-star mr-2"></i> Our Services</span>
+            <h2 class="section-title">Comprehensive Healthcare <span class="text-blue-400">Solutions</span></h2>
+            <p class="text-gray-400 text-lg mt-4 max-w-2xl mx-auto">
+                Empowering patients, doctors, and institutions with a unified digital health ecosystem.
+            </p>
+        </div>
+        <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+            {% for service in services %}
+                <div class="service-card">
+                    <div class="service-icon"><i class="{{ service.icon_class }}" style="color: {{ service.icon_color }};"></i></div>
+                    <h3 class="text-white text-xl font-bold mb-2">{{ service.title }}</h3>
+                    <p class="text-gray-400 text-sm leading-relaxed">{{ service.description }}</p>
+                </div>
+            {% empty %}
+                <p class="text-gray-400 col-span-full text-center">No services available.</p>
+            {% endfor %}
+        </div>
+    </div>
+</section>

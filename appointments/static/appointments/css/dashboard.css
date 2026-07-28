@@ -1,0 +1,139 @@
+/* appointments/static/appointments/css/dashboard.css */
+
+/* ============================================
+   Dashboard Specific Styles
+   ============================================ */
+
+/* --- Root Variables --- */
+:root {
+    --dashboard-card-shadow: 0 4px 20px rgba(0,0,0,0.06);
+    --dashboard-card-hover-shadow: 0 8px 30px rgba(0,0,0,0.10);
+    --dashboard-card-border-radius: 1rem;
+    --transition-speed: 0.25s;
+}
+
+/* --- Dashboard Cards --- */
+.dashboard-stat-card {
+    background: #ffffff;
+    border-radius: var(--dashboard-card-border-radius);
+    box-shadow: var(--dashboard-card-shadow);
+    padding: 1.5rem 1.25rem;
+    transition: all var(--transition-speed) ease;
+    border-left: 4px solid transparent;
+    position: relative;
+    overflow: hidden;
+}
+
+.dashboard-stat-card:hover {
+    box-shadow: var(--dashboard-card-hover-shadow);
+    transform: translateY(-4px);
+}
+
+.dashboard-stat-card .stat-icon {
+    font-size: 2rem;
+    opacity: 0.2;
+    position: absolute;
+    right: 1rem;
+    bottom: 0.5rem;
+    color: inherit;
+}
+
+.dashboard-stat-card .stat-number {
+    font-size: 2.25rem;
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+}
+
+.dashboard-stat-card .stat-label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #6b7280;
+    margin-top: 0.25rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+/* --- Color variants (applied via inline border-left) --- */
+.stat-blue {
+    border-left-color: #3b82f6;
+}
+.stat-yellow {
+    border-left-color: #f59e0b;
+}
+.stat-green {
+    border-left-color: #10b981;
+}
+.stat-red {
+    border-left-color: #ef4444;
+}
+.stat-purple {
+    border-left-color: #8b5cf6;
+}
+
+/* --- Appointment Cards (used in dashboard lists) --- */
+.appointment-card-compact {
+    padding: 1rem 1.25rem;
+    border-radius: 0.75rem;
+    background: #f9fafb;
+    margin-bottom: 0.75rem;
+    transition: all var(--transition-speed) ease;
+    border-left: 4px solid transparent;
+}
+
+.appointment-card-compact:hover {
+    background: #f3f4f6;
+    transform: translateX(4px);
+}
+
+.appointment-card-compact .patient-name {
+    font-weight: 600;
+    color: #111827;
+}
+
+.appointment-card-compact .meta-info {
+    font-size: 0.875rem;
+    color: #6b7280;
+}
+
+.appointment-card-compact .status-badge {
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    text-transform: capitalize;
+}
+
+/* --- Section Headers --- */
+.dashboard-section-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #1f2937;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1.25rem;
+}
+
+.dashboard-section-title i {
+    color: #3b82f6;
+}
+
+/* --- Responsive Tweaks --- */
+@media (max-width: 768px) {
+    .dashboard-stat-card .stat-number {
+        font-size: 1.75rem;
+    }
+    .dashboard-stat-card {
+        padding: 1rem;
+    }
+    .appointment-card-compact {
+        padding: 0.75rem 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .dashboard-stat-card .stat-number {
+        font-size: 1.5rem;
+    }
+}

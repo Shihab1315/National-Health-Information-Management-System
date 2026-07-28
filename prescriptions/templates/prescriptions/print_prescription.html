@@ -1,0 +1,241 @@
+<!-- prescriptions/templates/prescriptions/prescription_print.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Print Prescription - NHIMS{% endblock %}
+
+{% block extra_head %}
+<style>
+  /* Screen styles (same dark theme) */
+  body {
+    background-color: #0f172a;
+  }
+  .print-container {
+    background: white;
+    border-radius: 0.5rem;
+    padding: 2rem;
+    max-width: 900px;
+    margin: 2rem auto;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+  }
+
+  /* Print styles - clean, no backgrounds, black text */
+  @media print {
+    body {
+      background: white !important;
+      margin: 0 !important;
+      padding: 0 !important;
+    }
+    .no-print {
+      display: none !important;
+    }
+    .print-container {
+      box-shadow: none !important;
+      border-radius: 0 !important;
+      padding: 0.5in !important;
+      margin: 0 !important;
+      max-width: 100% !important;
+    }
+    .print-header {
+      border-bottom: 2px solid #000 !important;
+      margin-bottom: 1rem !important;
+    }
+    .print-table {
+      width: 100% !important;
+      border-collapse: collapse !important;
+    }
+    .print-table th {
+      background: #f1f5f9 !important;
+      border: 1px solid #94a3b8 !important;
+      padding: 6px 8px !important;
+      text-align: left !important;
+      font-size: 12px !important;
+    }
+    .print-table td {
+      border: 1px solid #94a3b8 !important;
+      padding: 6px 8px !important;
+      font-size: 12px !important;
+    }
+    .print-footer {
+      margin-top: 1rem !important;
+      border-top: 1px solid #94a3b8 !important;
+      padding-top: 0.5rem !important;
+      font-size: 11px !important;
+      color: #475569 !important;
+    }
+    .signature-line {
+      border-bottom: 1px solid #000 !important;
+      width: 200px !important;
+      display: inline-block !important;
+    }
+    .badge-status {
+      display: inline-block !important;
+      padding: 2px 10px !important;
+      border: 1px solid #000 !important;
+      border-radius: 20px !important;
+      font-size: 12px !important;
+      font-weight: 600 !important;
+    }
+    /* Force black text */
+    .print-container * {
+      color: #000 !important;
+    }
+    .print-container .text-slate-400,
+    .print-container .text-slate-500,
+    .print-container .text-slate-600,
+    .print-container .text-slate-700 {
+      color: #000 !important;
+    }
+    /* Avoid page breaks inside rows */
+    .print-table tbody tr {
+      page-break-inside: avoid;
+    }
+    h1, h2, h3, h4 {
+      page-break-after: avoid;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="no-print bg-slate-900 min-h-screen py-8 px-4">
+  <div class="max-w-4xl mx-auto text-center mb-6">
+    <div class="flex justify-center gap-4">
+      <a href="{% url 'prescriptions:detail' prescription.pk %}" class="inline-flex items-center gap-2 px-5 py-2.5 bg-slate-700 hover:bg-slate-600 border border-slate-600 rounded-xl transition text-slate-300 font-medium">
+        <i class="fas fa-arrow-left"></i> Back to Detail
+      </a>
+      <button onclick="window.print()" class="inline-flex items-center gap-2 px-6 py-2.5 bg-blue-600 hover:bg-blue-700 border border-blue-700 rounded-xl transition text-white font-medium">
+        <i class="fas fa-print"></i> Print / Save PDF
+      </button>
+    </div>
+    <p class="text-slate-400 mt-3 text-sm">Use the print button or press Ctrl+P to print or save as PDF.</p>
+  </div>
+</div>
+
+<!-- Printable content -->
+<div class="print-container">
+  <!-- Header -->
+  <div class="print-header flex justify-between items-start pb-4 mb-4">
+    <div>
+      <h1 class="text-2xl font-bold text-blue-700">{{ prescription.hospital.name }}</h1>
+      <p class="text-sm text-slate-600">{{ prescription.hospital.full_address|default:"National Health Information Management System" }}</p>
+      <p class="text-sm text-slate-600">Phone: {{ prescription.hospital.phone|default:"N/A" }}</p>
+    </div>
+    <div class="text-right">
+      <p class="text-sm font-semibold text-slate-700">Prescription</p>
+      <p class="text-sm text-slate-600">#{{ prescription.prescription_number }}</p>
+      <p class="text-sm text-slate-600">Date: {{ prescription.created_at|date:"d M Y" }}</p>
+      <span class="badge-status
+        {% if prescription.status == 'issued' %}border-indigo-600 text-indigo-700
+        {% elif prescription.status == 'completed' %}border-purple-600 text-purple-700
+        {% elif prescription.status == 'cancelled' %}border-red-600 text-red-700
+        {% else %}border-yellow-600 text-yellow-700{% endif %}">
+        {{ prescription.get_status_display }}
+      </span>
+    </div>
+  </div>
+
+  <!-- Patient & Doctor -->
+  <div class="grid grid-cols-2 gap-6 mb-4">
+    <div>
+      <h4 class="text-sm font-semibold text-slate-600 uppercase tracking-wider">Patient</h4>
+      <p class="text-base font-medium">{{ prescription.patient.user.get_full_name }}</p>
+      <p class="text-sm">{{ prescription.patient.user.email }}</p>
+      <p class="text-sm">Phone: {{ prescription.patient.user.phone|default:"N/A" }}</p>
+      <p class="text-sm">Age: {{ prescription.patient.date_of_birth|timesince }}</p>
+    </div>
+    <div>
+      <h4 class="text-sm font-semibold text-slate-600 uppercase tracking-wider">Doctor</h4>
+      <p class="text-base font-medium">Dr. {{ prescription.doctor.user.get_full_name }}</p>
+      <p class="text-sm">Reg. No: {{ prescription.doctor.registration_number|default:"N/A" }}</p>
+      <p class="text-sm">Specialty: {{ prescription.doctor.specialization|default:"General" }}</p>
+    </div>
+  </div>
+
+  <!-- Clinical Info -->
+  <div class="grid grid-cols-2 gap-4 mb-4">
+    <div>
+      <h4 class="text-sm font-semibold text-slate-600 uppercase tracking-wider">Diagnosis</h4>
+      <p class="text-sm">{{ prescription.diagnosis }}</p>
+    </div>
+    <div>
+      <h4 class="text-sm font-semibold text-slate-600 uppercase tracking-wider">Symptoms</h4>
+      <p class="text-sm">{{ prescription.symptoms|default:"—" }}</p>
+    </div>
+  </div>
+
+  <!-- Clinical Notes & Advice -->
+  <div class="grid grid-cols-2 gap-4 mb-4">
+    <div>
+      <h4 class="text-sm font-semibold text-slate-600 uppercase tracking-wider">Clinical Notes</h4>
+      <p class="text-sm">{{ prescription.clinical_notes|default:"—" }}</p>
+    </div>
+    <div>
+      <h4 class="text-sm font-semibold text-slate-600 uppercase tracking-wider">Advice</h4>
+      <p class="text-sm">{{ prescription.advice|default:"—" }}</p>
+    </div>
+  </div>
+
+  <!-- Medicines -->
+  <div class="mb-4">
+    <h4 class="text-sm font-semibold text-slate-600 uppercase tracking-wider mb-2">Medicines</h4>
+    <table class="print-table w-full text-sm">
+      <thead>
+        <tr>
+          <th>Medicine</th>
+          <th>Dosage</th>
+          <th>Frequency</th>
+          <th>Duration</th>
+          <th>Route</th>
+          <th>Timing</th>
+          <th>Instruction</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for med in prescription.medicines.all %}
+          <tr>
+            <td>{{ med.medicine_name }}</td>
+            <td>{{ med.dosage }}</td>
+            <td>{{ med.get_frequency_display }}</td>
+            <td>{{ med.duration|default:"—" }}</td>
+            <td>{{ med.get_route_display }}</td>
+            <td>
+              {% if med.before_food %}BF{% endif %}
+              {% if med.after_food %}AF{% endif %}
+              {% if med.morning %}Morn{% endif %}
+              {% if med.afternoon %}Aft{% endif %}
+              {% if med.night %}Night{% endif %}
+              {% if not med.before_food and not med.after_food and not med.morning and not med.afternoon and not med.night %}—{% endif %}
+            </td>
+            <td>{{ med.instruction|default:"—" }}</td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="7" class="text-center">No medicines prescribed.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Follow-up & Signature -->
+  <div class="grid grid-cols-2 gap-4 mt-4 pt-4 border-t">
+    <div>
+      <h4 class="text-sm font-semibold text-slate-600 uppercase tracking-wider">Follow-up Date</h4>
+      <p class="text-sm">{{ prescription.follow_up_date|date:"d M Y"|default:"Not scheduled" }}</p>
+    </div>
+    <div class="text-right">
+      <h4 class="text-sm font-semibold text-slate-600 uppercase tracking-wider">Doctor's Signature</h4>
+      <div class="mt-1">
+        <span class="signature-line"></span>
+        <p class="text-sm mt-1">Dr. {{ prescription.doctor.user.get_full_name }}</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="print-footer text-center text-xs text-slate-500 mt-6 pt-4 border-t">
+    <p>This is a computer-generated prescription. Valid without signature.</p>
+    <p>NHIMS — National Health Information Management System, Bangladesh</p>
+    <p>Generated on: {{ prescription.created_at|date:"d M Y H:i" }}</p>
+  </div>
+</div>
+{% endblock %}

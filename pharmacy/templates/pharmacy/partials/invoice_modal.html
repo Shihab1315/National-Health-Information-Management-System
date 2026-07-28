@@ -1,0 +1,36 @@
+<!-- Invoice Modal -->
+<div id="invoiceModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm hidden">
+    <div class="glass-card rounded-2xl border border-white/10 p-6 max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-2xl font-bold text-white">Invoice #<span id="modal-invoice-number"></span></h2>
+            <button onclick="closeInvoiceModal()" class="text-gray-400 hover:text-white text-2xl">&times;</button>
+        </div>
+        <div id="modal-invoice-content" class="space-y-4">
+            <!-- Invoice content will be loaded via AJAX or JavaScript -->
+            <p class="text-gray-400">Loading invoice details...</p>
+        </div>
+        <div class="mt-4 flex gap-3">
+            <button onclick="window.print()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl transition">Print</button>
+            <button onclick="closeInvoiceModal()" class="bg-white/5 hover:bg-white/10 px-4 py-2 rounded-xl text-gray-300 transition">Close</button>
+        </div>
+    </div>
+</div>
+
+<script>
+function openInvoiceModal(invoiceId) {
+    document.getElementById('invoiceModal').classList.remove('hidden');
+    // Fetch invoice data via AJAX (or pre-populate)
+    fetch(`/pharmacy/sales/invoice/${invoiceId}/json/`)
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('modal-invoice-number').textContent = data.invoice_number;
+            // Build HTML and inject into #modal-invoice-content
+            let html = `<div class="grid grid-cols-2 gap-4">...`; // build from data
+            document.getElementById('modal-invoice-content').innerHTML = html;
+        });
+}
+
+function closeInvoiceModal() {
+    document.getElementById('invoiceModal').classList.add('hidden');
+}
+</script>

@@ -1,0 +1,266 @@
+<!-- laboratory/templates/laboratory/labresult_form.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Upload Result - NHIMS{% endblock %}
+
+{% block extra_head %}
+<style>
+  select option {
+    color: #e2e8f0 !important;
+    background-color: #1e293b !important;
+  }
+  .custom-select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%2394a3b8' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+    background-position: right 0.75rem center;
+    background-repeat: no-repeat;
+    background-size: 1.25rem 1.25rem;
+    padding-right: 2.5rem;
+    appearance: none;
+  }
+  .form-check-input {
+    background-color: #1e293b;
+    border-color: #475569;
+  }
+  .form-check-input:checked {
+    background-color: #3b82f6;
+    border-color: #3b82f6;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="bg-slate-900 min-h-screen py-8 px-4 sm:px-6 lg:px-8">
+  <div class="max-w-4xl mx-auto">
+    <!-- Breadcrumb -->
+    <nav class="flex items-center text-sm text-slate-400 mb-6" aria-label="Breadcrumb">
+      <a href="/" class="hover:text-blue-400 transition">
+        <i class="fas fa-home mr-1"></i> Dashboard
+      </a>
+      <span class="mx-2 text-slate-600">/</span>
+      <a href="{% url 'laboratory:order_list' %}" class="hover:text-blue-400 transition">Lab Orders</a>
+      <span class="mx-2 text-slate-600">/</span>
+      <a href="{% url 'laboratory:order_detail' order.pk %}" class="hover:text-blue-400 transition">{{ order.order_number }}</a>
+      <span class="mx-2 text-slate-600">/</span>
+      <span class="text-slate-200 font-medium">Upload Result</span>
+    </nav>
+
+    <!-- Header -->
+    <div class="flex flex-wrap items-center justify-between gap-4 mb-8">
+      <div>
+        <h1 class="text-3xl font-bold text-white flex items-center gap-3">
+          <span class="bg-blue-600 p-3 rounded-xl shadow-lg shadow-blue-900/30">
+            <i class="fas fa-upload text-white text-xl"></i>
+          </span>
+          Upload Result
+        </h1>
+        <p class="text-slate-400 mt-1 ml-1">
+          {{ order.order_number }} – {{ item.test.name }}
+        </p>
+      </div>
+      <a href="{% url 'laboratory:order_detail' order.pk %}" class="inline-flex items-center gap-2 px-5 py-2.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl transition shadow-sm text-slate-300 font-medium">
+        <i class="fas fa-arrow-left"></i> Back to Order
+      </a>
+    </div>
+
+    <!-- Main Card -->
+    <div class="bg-slate-800 rounded-2xl shadow-xl overflow-hidden">
+      <!-- Card Header -->
+      <div class="bg-linear-to-r from-blue-600 to-blue-700 px-8 py-6">
+        <div class="flex items-center gap-4">
+          <div class="bg-white/20 backdrop-blur p-3 rounded-xl">
+            <i class="fas fa-vial text-white text-2xl"></i>
+          </div>
+          <div>
+            <h2 class="text-xl font-bold text-white">{{ item.test.name }}</h2>
+            <p class="text-blue-100 text-sm">
+              {{ order.patient.user.get_full_name|default:order.patient.user.username }}
+              · {{ order.order_number }}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card Body -->
+      <div class="p-8">
+        <form id="resultForm" method="post" enctype="multipart/form-data" novalidate>
+          {% csrf_token %}
+
+          <!-- Global errors -->
+          {% if form.non_field_errors %}
+            <div class="bg-red-900/30 border-l-4 border-red-500 p-4 rounded-xl mb-6">
+              {% for error in form.non_field_errors %}
+                <p class="text-red-300"><i class="fas fa-exclamation-circle mr-2"></i>{{ error }}</p>
+              {% endfor %}
+            </div>
+          {% endif %}
+
+          <!-- Contextual info (readonly) -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 bg-slate-700/30 rounded-xl p-4">
+            <div>
+              <p class="text-xs text-slate-400 font-medium">Order Number</p>
+              <p class="text-sm text-white font-mono">{{ order.order_number }}</p>
+            </div>
+            <div>
+              <p class="text-xs text-slate-400 font-medium">Patient</p>
+              <p class="text-sm text-white">{{ order.patient.user.get_full_name|default:order.patient.user.username }}</p>
+            </div>
+            <div>
+              <p class="text-xs text-slate-400 font-medium">Doctor</p>
+              <p class="text-sm text-white">Dr. {{ order.doctor.user.get_full_name|default:order.doctor.user.username }}</p>
+            </div>
+            <div>
+              <p class="text-xs text-slate-400 font-medium">Test</p>
+              <p class="text-sm text-white">{{ item.test.name }}</p>
+            </div>
+          </div>
+
+          <!-- Form fields -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Result -->
+            <div class="col-span-1 md:col-span-2">
+              <label for="{{ form.result.id_for_label }}" class="block text-sm font-semibold text-slate-300 mb-1.5">
+                {{ form.result.label }} <span class="text-red-400">*</span>
+              </label>
+              <div class="relative">
+                <i class="fas fa-edit absolute left-3 top-4 text-slate-500"></i>
+                {{ form.result }}
+              </div>
+              <p class="text-xs text-slate-500 mt-1">{{ form.result.help_text }}</p>
+              {% for error in form.result.errors %}
+                <p class="text-red-400 text-sm mt-1">{{ error }}</p>
+              {% endfor %}
+            </div>
+
+            <!-- Interpretation -->
+            <div class="col-span-1 md:col-span-2">
+              <label for="{{ form.interpretation.id_for_label }}" class="block text-sm font-semibold text-slate-300 mb-1.5">
+                {{ form.interpretation.label }}
+              </label>
+              <div class="relative">
+                <i class="fas fa-comment-medical absolute left-3 top-4 text-slate-500"></i>
+                {{ form.interpretation }}
+              </div>
+              <p class="text-xs text-slate-500 mt-1">{{ form.interpretation.help_text }}</p>
+              {% for error in form.interpretation.errors %}
+                <p class="text-red-400 text-sm mt-1">{{ error }}</p>
+              {% endfor %}
+            </div>
+
+            <!-- Remarks -->
+            <div class="col-span-1 md:col-span-2">
+              <label for="{{ form.remarks.id_for_label }}" class="block text-sm font-semibold text-slate-300 mb-1.5">
+                {{ form.remarks.label }}
+              </label>
+              <div class="relative">
+                <i class="fas fa-sticky-note absolute left-3 top-4 text-slate-500"></i>
+                {{ form.remarks }}
+              </div>
+              <p class="text-xs text-slate-500 mt-1">{{ form.remarks.help_text }}</p>
+              {% for error in form.remarks.errors %}
+                <p class="text-red-400 text-sm mt-1">{{ error }}</p>
+              {% endfor %}
+            </div>
+
+            <!-- Report File -->
+            <div class="col-span-1 md:col-span-2">
+              <label for="{{ form.report_file.id_for_label }}" class="block text-sm font-semibold text-slate-300 mb-1.5">
+                {{ form.report_file.label }}
+              </label>
+              <div class="relative">
+                <i class="fas fa-file-upload absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"></i>
+                {{ form.report_file }}
+              </div>
+              {% if result.report_file %}
+                <div class="mt-2">
+                  <span class="text-sm text-slate-400">Current file:</span>
+                  <a href="{{ result.report_file.url }}" target="_blank" class="text-blue-400 hover:text-blue-300 text-sm font-medium ml-2">
+                    <i class="fas fa-file-pdf mr-1"></i> {{ result.report_file.name|cut:"laboratory/reports/" }}
+                  </a>
+                </div>
+              {% endif %}
+              <p class="text-xs text-slate-500 mt-1">{{ form.report_file.help_text }}</p>
+              {% for error in form.report_file.errors %}
+                <p class="text-red-400 text-sm mt-1">{{ error }}</p>
+              {% endfor %}
+            </div>
+          </div>
+
+          <!-- Form Actions -->
+          <div class="flex flex-wrap items-center justify-end gap-4 mt-8 pt-6 border-t border-slate-700">
+            <a href="{% url 'laboratory:order_detail' order.pk %}" class="inline-flex items-center gap-2 px-6 py-2.5 border border-slate-600 rounded-xl hover:bg-slate-700 transition shadow-sm text-slate-300 font-medium">
+              <i class="fas fa-times"></i> Cancel
+            </a>
+            <button type="submit" id="submitBtn" class="inline-flex items-center gap-2 px-8 py-3 bg-blue-600 hover:bg-blue-700 active:scale-95 transition duration-200 rounded-xl shadow-lg shadow-blue-900/30 text-white font-semibold">
+              <i class="fas fa-save"></i> Save Result
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast Container -->
+<div id="toast-container" class="fixed bottom-5 right-5 z-9999 flex flex-col gap-2"></div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  (function() {
+    'use strict';
+
+    const form = document.getElementById('resultForm');
+    const submitBtn = document.getElementById('submitBtn');
+
+    // ---------- Form submit ----------
+    form.addEventListener('submit', function(e) {
+      // Disable button and show spinner
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = `<span class="inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2"></span> Saving...`;
+      submitBtn.classList.add('opacity-70', 'cursor-not-allowed');
+    });
+
+    // ---------- Toast system ----------
+    function showToast(message, type = 'success') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      toast.className = `bg-slate-800 rounded-xl shadow-xl p-4 flex items-center gap-3 border-l-4 transform transition-all duration-300 translate-x-full opacity-0 ${type === 'success' ? 'border-green-500' : 'border-red-500'}`;
+      const icon = type === 'success' ? 'fa-check-circle text-green-400' : 'fa-exclamation-circle text-red-400';
+      toast.innerHTML = `
+        <i class="fas ${icon} text-xl"></i>
+        <div class="flex-1 text-slate-200 text-sm">${message}</div>
+        <button class="text-slate-400 hover:text-slate-200 transition" onclick="this.parentElement.remove()"><i class="fas fa-times"></i></button>
+      `;
+      container.appendChild(toast);
+      requestAnimationFrame(() => {
+        toast.classList.remove('translate-x-full', 'opacity-0');
+      });
+      setTimeout(() => {
+        toast.classList.add('translate-x-full', 'opacity-0');
+        setTimeout(() => toast.remove(), 300);
+      }, 4000);
+    }
+
+    // ---------- Cancel confirmation ----------
+    document.querySelector('a[href*="laboratory:order_detail"]')?.addEventListener('click', function(e) {
+      if (!confirm('Are you sure you want to cancel? Unsaved changes will be lost.')) {
+        e.preventDefault();
+      }
+    });
+
+    // ---------- Auto-resize textareas ----------
+    document.querySelectorAll('textarea').forEach(ta => {
+      ta.addEventListener('input', function() {
+        this.style.height = 'auto';
+        this.style.height = this.scrollHeight + 'px';
+      });
+      setTimeout(() => {
+        ta.style.height = 'auto';
+        ta.style.height = ta.scrollHeight + 'px';
+      }, 100);
+    });
+
+  })();
+</script>
+{% endblock %}

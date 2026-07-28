@@ -1,0 +1,49 @@
+{% load static %}
+<div class="glass-card p-4">
+    <h5 class="text-white font-semibold text-base flex items-center gap-2 mb-3">
+        <i class="fas fa-bolt text-yellow-400"></i>
+        Quick Actions
+    </h5>
+    <div class="grid grid-cols-2 gap-3">
+        <a href="{% url 'patients:create' %}" class="quick-action-card group">
+            <div class="icon"><i class="fas fa-user-plus"></i></div>
+            <div class="title">Register Patient</div>
+            <div class="desc">Add new patient</div>
+        </a>
+        <a href="{% url 'appointments:create' %}" class="quick-action-card group">
+            <div class="icon"><i class="fas fa-calendar-plus"></i></div>
+            <div class="title">Book Appointment</div>
+            <div class="desc">Schedule visit</div>
+        </a>
+        <a href="{% url 'prescriptions:create' %}" class="quick-action-card group">
+            <div class="icon"><i class="fas fa-prescription-bottle"></i></div>
+            <div class="title">Create Prescription</div>
+            <div class="desc">E-prescription</div>
+        </a>
+        <a href="{% url 'laboratory:order_create' %}" class="quick-action-card group">
+            <div class="icon"><i class="fas fa-flask"></i></div>
+            <div class="title">Lab Order</div>
+            <div class="desc">Request tests</div>
+        </a>
+        <a href="{% url 'doctors:create' %}" class="quick-action-card group">
+            <div class="icon"><i class="fas fa-user-md"></i></div>
+            <div class="title">Add Doctor</div>
+            <div class="desc">Register physician</div>
+        </a>
+        <a href="{% url 'hospitals:create' %}" class="quick-action-card group">
+            <div class="icon"><i class="fas fa-hospital"></i></div>
+            <div class="title">Add Hospital</div>
+            <div class="desc">Register facility</div>
+        </a>
+        <a href="{% url 'pharmacy:sale_create' %}" class="quick-action-card group">
+            <div class="icon"><i class="fas fa-pills"></i></div>
+            <div class="title">Dispense Medicine</div>
+            <div class="desc">Pharmacy sale</div>
+        </a>
+        <a href="#" class="quick-action-card group" onclick="alert('Reports coming soon')">
+            <div class="icon"><i class="fas fa-file-alt"></i></div>
+            <div class="title">Generate Reports</div>
+            <div class="desc">View analytics</div>
+        </a>
+    </div>
+</div>

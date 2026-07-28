@@ -1,0 +1,517 @@
+<!-- appointments/templates/appointments/appointment_create.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Create Appointment - NHIMS{% endblock %}
+
+{% block extra_head %}
+<!-- Font Awesome (already in base) -->
+<!-- Include only Tailwind CSS (base already has it) -->
+<style>
+  
+  select option {
+  color: #e2e8f0 !important;
+  background-color: #1e293b !important;
+}
+  .custom-select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%2394a3b8' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+    background-position: right 0.75rem center;
+    background-repeat: no-repeat;
+    background-size: 1.25rem 1.25rem;
+    padding-right: 2.5rem;
+    appearance: none;
+  }
+  /* Remove spin buttons from number inputs (if any) */
+  input[type=number]::-webkit-inner-spin-button, 
+  input[type=number]::-webkit-outer-spin-button { 
+    -webkit-appearance: none; 
+    margin: 0; 
+  }
+  input[type=number] { -moz-appearance: textfield; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="bg-slate-900 min-h-screen py-8 px-4 sm:px-6 lg:px-8">
+  <div class="max-w-7xl mx-auto">
+    <!-- Breadcrumb -->
+    <nav class="flex items-center text-sm text-slate-400 mb-6" aria-label="Breadcrumb">
+      <a href="/" class="hover:text-blue-400 transition">
+        <i class="fas fa-home mr-1"></i> Dashboard
+      </a>
+      <span class="mx-2 text-slate-600">/</span>
+      <a href="{% url 'appointments:list' %}" class="hover:text-blue-400 transition">Appointments</a>
+      <span class="mx-2 text-slate-600">/</span>
+      <span class="text-slate-200 font-medium">Create Appointment</span>
+    </nav>
+
+    <!-- Page Header -->
+    <div class="flex flex-wrap items-center justify-between gap-4 mb-8">
+      <div>
+        <h1 class="text-3xl font-bold text-white flex items-center gap-3">
+          <span class="bg-blue-600 p-3 rounded-xl shadow-lg shadow-blue-900/30">
+            <i class="fas fa-calendar-plus text-white text-xl"></i>
+          </span>
+          Create Appointment
+        </h1>
+        <p class="text-slate-400 mt-1 ml-1">Schedule a new appointment with a doctor</p>
+      </div>
+      <a href="{% url 'appointments:list' %}" class="inline-flex items-center gap-2 px-5 py-2.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl transition shadow-sm text-slate-300 font-medium">
+        <i class="fas fa-arrow-left"></i> Back to List
+      </a>
+    </div>
+
+    <!-- Main Card -->
+    <div class="bg-slate-800 rounded-2xl shadow-xl overflow-hidden">
+      <!-- Card Header -->
+      <div class="bg-gradient-to-r from-blue-600 to-blue-700 px-8 py-6">
+        <div class="flex items-center gap-4">
+          <div class="bg-white/20 backdrop-blur p-3 rounded-xl">
+            <i class="fas fa-clipboard-list text-white text-2xl"></i>
+          </div>
+          <div>
+            <h2 class="text-xl font-bold text-white">New Appointment</h2>
+            <p class="text-blue-100 text-sm">Fill in the details to schedule an appointment</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card Body -->
+      <div class="p-8">
+        <form id="appointmentForm" method="post" novalidate>
+          {% csrf_token %}
+
+          <!-- Global errors -->
+          {% if form.non_field_errors %}
+            <div class="bg-red-900/30 border-l-4 border-red-500 p-4 rounded-xl mb-6">
+              {% for error in form.non_field_errors %}
+                <p class="text-red-300"><i class="fas fa-exclamation-circle mr-2"></i>{{ error }}</p>
+              {% endfor %}
+            </div>
+          {% endif %}
+
+          <!-- Two-column grid -->
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+
+            <!-- LEFT COLUMN -->
+            <div class="space-y-6">
+
+              <!-- Hospital -->
+              <div>
+                <label for="{{ form.hospital.id_for_label }}" class="block text-sm font-semibold text-slate-300 mb-1.5">
+                  {{ form.hospital.label }} <span class="text-red-400">*</span>
+                </label>
+                <div class="relative">
+                  <i class="fas fa-hospital absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"></i>
+                  <select id="{{ form.hospital.id_for_label }}" name="{{ form.hospital.name }}"
+                          class="custom-select w-full rounded-xl border border-slate-600 bg-slate-700/50 focus:bg-slate-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition duration-200 py-3 pl-10 pr-4 text-slate-200 placeholder-slate-400 shadow-sm">
+                    <option value="">Select Hospital</option>
+                    {% for hospital in form.hospital.field.queryset %}
+                      <option value="{{ hospital.pk }}">{{ hospital.name }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+                <div class="text-red-400 text-sm mt-1 hidden" id="hospitalError"></div>
+                <p class="text-xs text-slate-500 mt-1">{{ form.hospital.help_text }}</p>
+              </div>
+
+              <!-- Patient -->
+              <div>
+                <label for="{{ form.patient.id_for_label }}" class="block text-sm font-semibold text-slate-300 mb-1.5">
+                  {{ form.patient.label }} <span class="text-red-400">*</span>
+                </label>
+                <div class="relative">
+                  <i class="fas fa-user-injured absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"></i>
+                  <select id="{{ form.patient.id_for_label }}" name="{{ form.patient.name }}"
+                          class="custom-select w-full rounded-xl border border-slate-600 bg-slate-700/50 focus:bg-slate-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition duration-200 py-3 pl-10 pr-4 text-slate-200 placeholder-slate-400 shadow-sm">
+                    <option value="">Select Patient</option>
+                    {% for value, label in form.patient.field.choices %}
+                      <option value="{{ value }}" {% if form.patient.value == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+                <div class="text-red-400 text-sm mt-1 hidden" id="patientError"></div>
+                <p class="text-xs text-slate-500 mt-1">{{ form.patient.help_text }}</p>
+              </div>
+
+              <!-- Visit Type (custom) -->
+              <div>
+                <label for="visitType" class="block text-sm font-semibold text-slate-300 mb-1.5">
+                  Visit Type <span class="text-red-400">*</span>
+                </label>
+                <div class="relative">
+                  <i class="fas fa-clinic-medical absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"></i>
+                  <select id="visitType" name="visit_type"
+                          class="custom-select w-full rounded-xl border border-slate-600 bg-slate-700/50 focus:bg-slate-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition duration-200 py-3 pl-10 pr-4 text-slate-200 placeholder-slate-400 shadow-sm">
+                    <option value="">Select Visit Type</option>
+                    <option value="new">New Patient</option>
+                    <option value="followup">Follow-up</option>
+                    <option value="emergency">Emergency</option>
+                    <option value="consultation">Consultation</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Priority (custom) -->
+              <div>
+                <label for="priority" class="block text-sm font-semibold text-slate-300 mb-1.5">
+                  Priority <span class="text-red-400">*</span>
+                </label>
+                <div class="relative">
+                  <i class="fas fa-flag absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"></i>
+                  <select id="priority" name="priority"
+                          class="custom-select w-full rounded-xl border border-slate-600 bg-slate-700/50 focus:bg-slate-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition duration-200 py-3 pl-10 pr-4 text-slate-200 placeholder-slate-400 shadow-sm">
+                    <option value="normal">Normal</option>
+                    <option value="high">High</option>
+                    <option value="urgent">Urgent</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Symptoms (custom) -->
+              <div>
+                <label for="symptoms" class="block text-sm font-semibold text-slate-300 mb-1.5">Symptoms</label>
+                <div class="relative">
+                  <i class="fas fa-notes-medical absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"></i>
+                  <input type="text" id="symptoms" name="symptoms"
+                         class="w-full rounded-xl border border-slate-600 bg-slate-700/50 focus:bg-slate-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition duration-200 py-3 pl-10 pr-4 text-slate-200 placeholder-slate-400 shadow-sm"
+                         placeholder="e.g., fever, cough, headache">
+                </div>
+              </div>
+
+              <!-- Chief Complaint (custom) -->
+              <div>
+                <label for="chiefComplaint" class="block text-sm font-semibold text-slate-300 mb-1.5">
+                  Chief Complaint <span class="text-red-400">*</span>
+                </label>
+                <div class="relative">
+                  <i class="fas fa-comment-medical absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"></i>
+                  <input type="text" id="chiefComplaint" name="chief_complaint"
+                         class="w-full rounded-xl border border-slate-600 bg-slate-700/50 focus:bg-slate-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition duration-200 py-3 pl-10 pr-4 text-slate-200 placeholder-slate-400 shadow-sm"
+                         placeholder="Main reason for visit">
+                </div>
+                <div class="text-red-400 text-sm mt-1 hidden" id="chiefError"></div>
+              </div>
+
+              <!-- Reason (from model) -->
+              <div>
+                <label for="{{ form.reason.id_for_label }}" class="block text-sm font-semibold text-slate-300 mb-1.5">
+                  {{ form.reason.label }}
+                </label>
+                <div class="relative">
+                  <i class="fas fa-pencil-alt absolute left-3 top-4 text-slate-500"></i>
+                  <textarea id="{{ form.reason.id_for_label }}" name="{{ form.reason.name }}"
+                            rows="2"
+                            class="w-full rounded-xl border border-slate-600 bg-slate-700/50 focus:bg-slate-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition duration-200 py-3 pl-10 pr-4 text-slate-200 placeholder-slate-400 shadow-sm resize-none"
+                            placeholder="Brief reason for appointment">{{ form.reason.value|default:'' }}</textarea>
+                </div>
+                <p class="text-xs text-slate-500 mt-1">{{ form.reason.help_text }}</p>
+              </div>
+
+              <!-- Notes (custom) -->
+              <div>
+                <label for="notes" class="block text-sm font-semibold text-slate-300 mb-1.5">Notes</label>
+                <div class="relative">
+                  <i class="fas fa-sticky-note absolute left-3 top-4 text-slate-500"></i>
+                  <textarea id="notes" name="notes" rows="2"
+                            class="w-full rounded-xl border border-slate-600 bg-slate-700/50 focus:bg-slate-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition duration-200 py-3 pl-10 pr-4 text-slate-200 placeholder-slate-400 shadow-sm resize-none"
+                            placeholder="Additional notes..."></textarea>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- RIGHT COLUMN -->
+            <div class="space-y-6">
+
+              <!-- Doctor -->
+              <div>
+                <label for="{{ form.doctor.id_for_label }}" class="block text-sm font-semibold text-slate-300 mb-1.5">
+                  {{ form.doctor.label }} <span class="text-red-400">*</span>
+                </label>
+                <div class="relative">
+                  <i class="fas fa-user-md absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"></i>
+                  <select id="{{ form.doctor.id_for_label }}" name="{{ form.doctor.name }}"
+                          class="custom-select w-full rounded-xl border border-slate-600 bg-slate-700/50 focus:bg-slate-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition duration-200 py-3 pl-10 pr-4 text-slate-200 placeholder-slate-400 shadow-sm">
+                    <option value="">Select Doctor</option>
+                    {% for value, label in form.doctor.field.choices %}
+                      <option value="{{ value }}" {% if form.doctor.value == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+                <div class="text-red-400 text-sm mt-1 hidden" id="doctorError"></div>
+                <p class="text-xs text-slate-500 mt-1">{{ form.doctor.help_text }}</p>
+              </div>
+
+              <!-- Appointment Date -->
+              <div>
+                <label for="{{ form.appointment_date.id_for_label }}" class="block text-sm font-semibold text-slate-300 mb-1.5">
+                  {{ form.appointment_date.label }} <span class="text-red-400">*</span>
+                </label>
+                <div class="relative">
+                  <i class="fas fa-calendar-day absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"></i>
+                  <input type="date" id="{{ form.appointment_date.id_for_label }}" name="{{ form.appointment_date.name }}"
+                         class="w-full rounded-xl border border-slate-600 bg-slate-700/50 focus:bg-slate-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition duration-200 py-3 pl-10 pr-4 text-slate-200 placeholder-slate-400 shadow-sm"
+                         min="{% now 'Y-m-d' %}" value="{{ form.appointment_date.value|default:'' }}">
+                </div>
+                <div class="text-red-400 text-sm mt-1 hidden" id="dateError"></div>
+                <p class="text-xs text-slate-500 mt-1">{{ form.appointment_date.help_text }}</p>
+              </div>
+
+              <!-- Appointment Time -->
+              <div>
+                <label for="{{ form.appointment_time.id_for_label }}" class="block text-sm font-semibold text-slate-300 mb-1.5">
+                  {{ form.appointment_time.label }} <span class="text-red-400">*</span>
+                </label>
+                <div class="relative">
+                  <i class="fas fa-clock absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"></i>
+                  <input type="time" id="{{ form.appointment_time.id_for_label }}" name="{{ form.appointment_time.name }}"
+                         class="w-full rounded-xl border border-slate-600 bg-slate-700/50 focus:bg-slate-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition duration-200 py-3 pl-10 pr-4 text-slate-200 placeholder-slate-400 shadow-sm"
+                         step="900" value="{{ form.appointment_time.value|default:'' }}">
+                </div>
+                <div class="text-red-400 text-sm mt-1 hidden" id="timeError"></div>
+                <p class="text-xs text-slate-500 mt-1">{{ form.appointment_time.help_text }}</p>
+              </div>
+
+              <!-- Estimated Duration (custom) -->
+              <div>
+                <label for="duration" class="block text-sm font-semibold text-slate-300 mb-1.5">Estimated Duration (min)</label>
+                <div class="relative">
+                  <i class="fas fa-hourglass-half absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"></i>
+                  <select id="duration" name="duration"
+                          class="custom-select w-full rounded-xl border border-slate-600 bg-slate-700/50 focus:bg-slate-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition duration-200 py-3 pl-10 pr-4 text-slate-200 placeholder-slate-400 shadow-sm">
+                    <option value="15">15 minutes</option>
+                    <option value="30" selected>30 minutes</option>
+                    <option value="45">45 minutes</option>
+                    <option value="60">60 minutes</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Status -->
+              <div>
+                <label for="{{ form.status.id_for_label }}" class="block text-sm font-semibold text-slate-300 mb-1.5">
+                  {{ form.status.label }} <span class="text-red-400">*</span>
+                </label>
+                <div class="relative">
+                  <i class="fas fa-circle absolute left-3 top-1/2 -translate-y-1/2 text-blue-500"></i>
+                  <select id="{{ form.status.id_for_label }}" name="{{ form.status.name }}"
+                          class="custom-select w-full rounded-xl border border-slate-600 bg-slate-700/50 focus:bg-slate-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition duration-200 py-3 pl-10 pr-4 text-slate-200 placeholder-slate-400 shadow-sm">
+                    {% for value, label in form.status.field.choices %}
+                      <option value="{{ value }}" {% if form.status.value == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+                <p class="text-xs text-slate-500 mt-1">{{ form.status.help_text }}</p>
+              </div>
+
+              <!-- Token Number (readonly) -->
+              <div>
+                <label for="tokenNumber" class="block text-sm font-semibold text-slate-300 mb-1.5">Token Number</label>
+                <div class="relative">
+                  <i class="fas fa-ticket-alt absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"></i>
+                  <input type="text" id="tokenNumber" value="Will be auto-generated"
+                         class="w-full rounded-xl border border-slate-600 bg-slate-700/30 text-slate-400 py-3 pl-10 pr-4 shadow-sm cursor-not-allowed" readonly>
+                </div>
+                <p class="text-xs text-slate-500 mt-1">Auto-generated after saving</p>
+              </div>
+
+              <!-- Appointment Number (readonly) -->
+              <div>
+                <label for="appointmentNumber" class="block text-sm font-semibold text-slate-300 mb-1.5">Appointment Number</label>
+                <div class="relative">
+                  <i class="fas fa-hashtag absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"></i>
+                  <input type="text" id="appointmentNumber" value="APP-202600001 (will be generated)"
+                         class="w-full rounded-xl border border-slate-600 bg-slate-700/30 text-slate-400 py-3 pl-10 pr-4 shadow-sm cursor-not-allowed" readonly>
+                </div>
+                <p class="text-xs text-slate-500 mt-1">Auto-generated after saving</p>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- Form Actions -->
+          <div class="flex flex-wrap items-center justify-end gap-4 mt-8 pt-6 border-t border-slate-700">
+            <a href="{% url 'appointments:list' %}" class="inline-flex items-center gap-2 px-6 py-2.5 border border-slate-600 rounded-xl hover:bg-slate-700 transition shadow-sm text-slate-300 font-medium">
+              <i class="fas fa-times"></i> Cancel
+            </a>
+            <button type="submit" id="submitBtn" class="inline-flex items-center gap-2 px-8 py-3 bg-blue-600 hover:bg-blue-700 active:scale-95 transition duration-200 rounded-xl shadow-lg shadow-blue-900/30 text-white font-semibold">
+              <i class="fas fa-save"></i> Create Appointment
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast Container -->
+<div id="toast-container" class="fixed bottom-5 right-5 z-[9999] flex flex-col gap-2"></div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  (function() {
+    'use strict';
+
+    // DOM refs
+    const form = document.getElementById('appointmentForm');
+    const submitBtn = document.getElementById('submitBtn');
+    const hospitalSelect = document.getElementById('{{ form.hospital.id_for_label }}');
+    const doctorSelect = document.getElementById('{{ form.doctor.id_for_label }}');
+    const dateInput = document.getElementById('{{ form.appointment_date.id_for_label }}');
+    const timeInput = document.getElementById('{{ form.appointment_time.id_for_label }}');
+    const patientSelect = document.getElementById('{{ form.patient.id_for_label }}');
+
+    // ---------- Dynamic doctor loading ----------
+    if (hospitalSelect && doctorSelect) {
+      // Store original options for reset
+      doctorSelect.dataset.originalOptions = doctorSelect.innerHTML;
+
+      hospitalSelect.addEventListener('change', function() {
+        const hospitalId = this.value;
+        if (!hospitalId) {
+          doctorSelect.innerHTML = doctorSelect.dataset.originalOptions;
+          doctorSelect.disabled = false;
+          return;
+        }
+
+        doctorSelect.disabled = true;
+        doctorSelect.innerHTML = '<option value="" disabled>Loading doctors...</option>';
+
+        fetch(`{% url 'appointments:doctors_by_hospital' %}?hospital_id=${hospitalId}`)
+          .then(res => {
+            if (!res.ok) throw new Error('Network error');
+            return res.json();
+          })
+          .then(data => {
+            let options = '<option value="">Select Doctor</option>';
+            if (data.doctors && data.doctors.length) {
+              data.doctors.forEach(doc => {
+                options += `<option value="${doc.id}">${doc.name}</option>`;
+              });
+            } else {
+              options += '<option value="" disabled>No doctors available</option>';
+            }
+            doctorSelect.innerHTML = options;
+            doctorSelect.disabled = false;
+          })
+          .catch(() => {
+            doctorSelect.innerHTML = '<option value="" disabled>Error loading doctors</option>';
+            doctorSelect.disabled = false;
+            showToast('Failed to load doctors', 'error');
+          });
+      });
+    }
+
+    // ---------- Validation ----------
+    function validateField(field, errorId) {
+      const errorEl = document.getElementById(errorId);
+      if (!errorEl) return;
+      if (field.validity.valid) {
+        field.classList.remove('border-red-500', 'ring-1', 'ring-red-500');
+        field.classList.add('border-green-500', 'ring-1', 'ring-green-500');
+        errorEl.classList.add('hidden');
+        errorEl.textContent = '';
+      } else {
+        field.classList.remove('border-green-500', 'ring-1', 'ring-green-500');
+        field.classList.add('border-red-500', 'ring-1', 'ring-red-500');
+        errorEl.classList.remove('hidden');
+        errorEl.textContent = field.validationMessage || 'Invalid value';
+      }
+    }
+
+    const requiredFields = [
+      { el: hospitalSelect, errorId: 'hospitalError' },
+      { el: patientSelect, errorId: 'patientError' },
+      { el: doctorSelect, errorId: 'doctorError' },
+      { el: dateInput, errorId: 'dateError' },
+      { el: timeInput, errorId: 'timeError' },
+      { el: document.getElementById('chiefComplaint'), errorId: 'chiefError' }
+    ];
+
+    requiredFields.forEach(({ el, errorId }) => {
+      if (el) {
+        el.addEventListener('blur', function() {
+          validateField(this, errorId);
+        });
+        el.addEventListener('change', function() {
+          validateField(this, errorId);
+        });
+      }
+    });
+
+    // ---------- Form submit ----------
+    form.addEventListener('submit', function(e) {
+      let isValid = true;
+      requiredFields.forEach(({ el, errorId }) => {
+        if (el) {
+          validateField(el, errorId);
+          if (!el.validity.valid) isValid = false;
+        }
+      });
+      const chief = document.getElementById('chiefComplaint');
+      if (chief && !chief.value.trim()) {
+        chief.classList.add('border-red-500', 'ring-1', 'ring-red-500');
+        document.getElementById('chiefError').classList.remove('hidden');
+        document.getElementById('chiefError').textContent = 'Please enter chief complaint';
+        isValid = false;
+      }
+      if (!isValid) {
+        e.preventDefault();
+        showToast('Please fill all required fields correctly.', 'error');
+        return;
+      }
+
+      // Disable button and show spinner
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = `<span class="inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2"></span> Creating...`;
+      submitBtn.classList.add('opacity-70', 'cursor-not-allowed');
+    });
+
+    // ---------- Toast system (dark theme) ----------
+    function showToast(message, type = 'success') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      toast.className = `bg-slate-800 rounded-xl shadow-xl p-4 flex items-center gap-3 border-l-4 transform transition-all duration-300 translate-x-full opacity-0 ${type === 'success' ? 'border-green-500' : 'border-red-500'}`;
+      const icon = type === 'success' ? 'fa-check-circle text-green-400' : 'fa-exclamation-circle text-red-400';
+      toast.innerHTML = `
+        <i class="fas ${icon} text-xl"></i>
+        <div class="flex-1 text-slate-200 text-sm">${message}</div>
+        <button class="text-slate-400 hover:text-slate-200 transition" onclick="this.parentElement.remove()">
+          <i class="fas fa-times"></i>
+        </button>
+      `;
+      container.appendChild(toast);
+      requestAnimationFrame(() => {
+        toast.classList.remove('translate-x-full', 'opacity-0');
+      });
+      setTimeout(() => {
+        toast.classList.add('translate-x-full', 'opacity-0');
+        setTimeout(() => toast.remove(), 300);
+      }, 4000);
+    }
+
+    // ---------- Cancel confirmation ----------
+    document.querySelector('a[href*="appointments:list"]')?.addEventListener('click', function(e) {
+      if (!confirm('Are you sure you want to cancel? Unsaved changes will be lost.')) {
+        e.preventDefault();
+      }
+    });
+
+    // ---------- Auto-resize textareas ----------
+    document.querySelectorAll('textarea').forEach(ta => {
+      ta.addEventListener('input', function() {
+        this.style.height = 'auto';
+        this.style.height = this.scrollHeight + 'px';
+      });
+      // initial resize
+      setTimeout(() => {
+        ta.style.height = 'auto';
+        ta.style.height = ta.scrollHeight + 'px';
+      }, 100);
+    });
+
+  })();
+</script>
+{% endblock %}

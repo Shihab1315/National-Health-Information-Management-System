@@ -1,0 +1,257 @@
+<!-- laboratory/templates/laboratory/laborder_list.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Lab Orders - NHIMS{% endblock %}
+
+{% block extra_head %}
+<style>
+  .custom-select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%2394a3b8' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+    background-position: right 0.75rem center;
+    background-repeat: no-repeat;
+    background-size: 1.25rem 1.25rem;
+    padding-right: 2.5rem;
+    appearance: none;
+  }
+  .table-row-hover:hover {
+    background-color: #1e293b;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="bg-slate-900 min-h-screen py-8 px-4 sm:px-6 lg:px-8">
+  <div class="max-w-7xl mx-auto">
+    <!-- Breadcrumb -->
+    <nav class="flex items-center text-sm text-slate-400 mb-6" aria-label="Breadcrumb">
+      <a href="/" class="hover:text-blue-400 transition">
+        <i class="fas fa-home mr-1"></i> Dashboard
+      </a>
+      <span class="mx-2 text-slate-600">/</span>
+      <span class="text-slate-200 font-medium">Laboratory</span>
+    </nav>
+
+    <!-- Header -->
+    <div class="flex flex-wrap items-center justify-between gap-4 mb-8">
+      <div>
+        <h1 class="text-3xl font-bold text-white flex items-center gap-3">
+          <span class="bg-blue-600 p-3 rounded-xl shadow-lg shadow-blue-900/30">
+            <i class="fas fa-flask text-white text-xl"></i>
+          </span>
+          Lab Orders
+        </h1>
+        <p class="text-slate-400 mt-1 ml-1">Manage all laboratory test orders</p>
+      </div>
+      <a href="{% url 'laboratory:order_create' %}" class="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 border border-blue-700 rounded-xl transition shadow-sm text-white font-medium">
+        <i class="fas fa-plus"></i> New Order
+      </a>
+    </div>
+
+    <!-- Main Card -->
+    <div class="bg-slate-800 rounded-2xl shadow-xl overflow-hidden">
+      <!-- Card Header -->
+      <div class="bg-gradient-to-r from-blue-600 to-blue-700 px-8 py-6">
+        <div class="flex items-center gap-4">
+          <div class="bg-white/20 backdrop-blur p-3 rounded-xl">
+            <i class="fas fa-list-ul text-white text-2xl"></i>
+          </div>
+          <div>
+            <h2 class="text-xl font-bold text-white">Order List</h2>
+            <p class="text-blue-100 text-sm">View and manage all laboratory orders</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card Body -->
+      <div class="p-8">
+        <!-- Search & Filter Form -->
+        <form method="get" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <!-- Search -->
+          <div>
+            <label for="search" class="block text-sm font-semibold text-slate-300 mb-1.5">Search</label>
+            {% include 'laboratory/components/search_bar.html' with placeholder="Order #, patient, doctor..." search_query=search %}
+          </div>
+
+          <!-- Status -->
+          <div>
+            <label for="status" class="block text-sm font-semibold text-slate-300 mb-1.5">Status</label>
+            <div class="relative">
+              <i class="fas fa-circle absolute left-3 top-1/2 -translate-y-1/2 text-blue-500"></i>
+              <select id="status" name="status"
+                      class="custom-select w-full rounded-xl border border-slate-600 bg-slate-700/50 focus:bg-slate-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition duration-200 py-2 pl-10 pr-4 text-slate-200 shadow-sm">
+                <option value="">All</option>
+                {% for value, label in status_choices %}
+                  <option value="{{ value }}" {% if status_filter == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+
+          <!-- Date From -->
+          <div>
+            <label for="date_from" class="block text-sm font-semibold text-slate-300 mb-1.5">From</label>
+            <div class="relative">
+              <i class="fas fa-calendar-day absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"></i>
+              <input type="date" id="date_from" name="date_from" value="{{ date_from }}"
+                     class="w-full rounded-xl border border-slate-600 bg-slate-700/50 focus:bg-slate-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition duration-200 py-2 pl-10 pr-4 text-slate-200 shadow-sm">
+            </div>
+          </div>
+
+          <!-- Date To -->
+          <div>
+            <label for="date_to" class="block text-sm font-semibold text-slate-300 mb-1.5">To</label>
+            <div class="relative">
+              <i class="fas fa-calendar-day absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"></i>
+              <input type="date" id="date_to" name="date_to" value="{{ date_to }}"
+                     class="w-full rounded-xl border border-slate-600 bg-slate-700/50 focus:bg-slate-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition duration-200 py-2 pl-10 pr-4 text-slate-200 shadow-sm">
+            </div>
+          </div>
+
+          <!-- Patient & Doctor (hidden by default) – SAFE FALLBACKS ADDED -->
+          <div class="hidden">
+            <label for="patient" class="block text-sm font-semibold text-slate-300 mb-1.5">Patient</label>
+            <select id="patient" name="patient" class="custom-select w-full rounded-xl border border-slate-600 bg-slate-700/50 focus:bg-slate-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition duration-200 py-2 px-4 text-slate-200 shadow-sm">
+              <option value="">All</option>
+              {% for patient in patients %}
+                <option value="{{ patient.pk }}" {% if patient_filter|add:0 == patient.pk %}selected{% endif %}>
+                  {% if patient.user %}
+                    {{ patient.user.get_full_name|default:patient.user.username }}
+                  {% else %}
+                    N/A
+                  {% endif %}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="hidden">
+            <label for="doctor" class="block text-sm font-semibold text-slate-300 mb-1.5">Doctor</label>
+            <select id="doctor" name="doctor" class="custom-select w-full rounded-xl border border-slate-600 bg-slate-700/50 focus:bg-slate-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition duration-200 py-2 px-4 text-slate-200 shadow-sm">
+              <option value="">All</option>
+              {% for doctor in doctors %}
+                <option value="{{ doctor.pk }}" {% if doctor_filter|add:0 == doctor.pk %}selected{% endif %}>
+                  {% if doctor.user %}
+                    Dr. {{ doctor.user.get_full_name|default:doctor.user.username }}
+                  {% else %}
+                    N/A
+                  {% endif %}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <!-- Actions -->
+          <div class="flex items-end gap-2">
+            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-xl transition duration-200 shadow-sm flex items-center justify-center gap-2">
+              <i class="fas fa-search"></i> Filter
+            </button>
+            <a href="{% url 'laboratory:order_list' %}" class="bg-slate-700 hover:bg-slate-600 text-slate-300 font-medium py-2 px-4 rounded-xl transition duration-200 shadow-sm flex items-center justify-center gap-1">
+              <i class="fas fa-times"></i>
+            </a>
+          </div>
+        </form>
+
+        <!-- Table – SAFE FALLBACKS ADDED -->
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm text-left text-slate-300">
+            <thead class="text-xs uppercase text-slate-400 border-b border-slate-700">
+              <tr>
+                <th scope="col" class="px-4 py-3">#</th>
+                <th scope="col" class="px-4 py-3">Patient</th>
+                <th scope="col" class="px-4 py-3">Doctor</th>
+                <th scope="col" class="px-4 py-3">Hospital</th>
+                <th scope="col" class="px-4 py-3">Date</th>
+                <th scope="col" class="px-4 py-3">Status</th>
+                <th scope="col" class="px-4 py-3 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for order in orders %}
+                <tr class="border-b border-slate-700/50 table-row-hover transition">
+                  <td class="px-4 py-3 font-mono text-slate-400">
+                    <a href="{% url 'laboratory:order_detail' order.pk %}" class="hover:text-blue-400">
+                      {{ order.order_number }}
+                    </a>
+                  </td>
+                  <td class="px-4 py-3 font-medium text-white">
+                    {% with patient=order.patient %}
+                      {% if patient and patient.user %}
+                        {{ patient.user.get_full_name|default:patient.user.username }}
+                      {% elif patient and patient.full_name %}
+                        {{ patient.full_name }}
+                      {% else %}
+                        N/A
+                      {% endif %}
+                    {% endwith %}
+                  </td>
+                  <td class="px-4 py-3">
+                    {% with doctor=order.doctor %}
+                      {% if doctor and doctor.user %}
+                        Dr. {{ doctor.user.get_full_name|default:doctor.user.username }}
+                      {% elif doctor and doctor.full_name %}
+                        Dr. {{ doctor.full_name }}
+                      {% else %}
+                        N/A
+                      {% endif %}
+                    {% endwith %}
+                  </td>
+                  <td class="px-4 py-3">{{ order.hospital.name|default:"N/A" }}</td>
+                  <td class="px-4 py-3">{{ order.ordered_date|date:"M d, Y" }}</td>
+                  <td class="px-4 py-3">
+                    {% include 'laboratory/components/status_badge.html' with status=order.status %}
+                  </td>
+                  <td class="px-4 py-3 text-right">
+                    <div class="flex items-center justify-end gap-2">
+                      <a href="{% url 'laboratory:order_detail' order.pk %}" class="text-slate-400 hover:text-blue-400 transition" title="View">
+                        <i class="fas fa-eye"></i>
+                      </a>
+                      <a href="{% url 'laboratory:order_update' order.pk %}" class="text-slate-400 hover:text-yellow-400 transition" title="Edit">
+                        <i class="fas fa-edit"></i>
+                      </a>
+                      <a href="{% url 'laboratory:order_delete' order.pk %}" class="text-slate-400 hover:text-red-400 transition" title="Delete">
+                        <i class="fas fa-trash-alt"></i>
+                      </a>
+                    </div>
+                  </td>
+                </tr>
+              {% empty %}
+                <tr>
+                  <td colspan="7" class="px-4 py-8 text-center text-slate-400">
+                    <i class="fas fa-flask text-4xl block mb-2 text-slate-600"></i>
+                    No lab orders found.
+                    <a href="{% url 'laboratory:order_create' %}" class="text-blue-400 hover:underline block mt-2">Create your first lab order</a>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if is_paginated %}
+          <div class="flex flex-wrap items-center justify-between gap-4 mt-6 pt-4 border-t border-slate-700">
+            <span class="text-sm text-slate-400">
+              Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }} entries
+            </span>
+            <div class="flex gap-1">
+              {% if page_obj.has_previous %}
+                <a href="?page=1{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" 
+                   class="px-3 py-1 rounded-lg border border-slate-600 hover:bg-slate-700 transition text-slate-300">«</a>
+                <a href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" 
+                   class="px-3 py-1 rounded-lg border border-slate-600 hover:bg-slate-700 transition text-slate-300">‹</a>
+              {% endif %}
+              <span class="px-3 py-1 rounded-lg bg-blue-600 text-white">{{ page_obj.number }}</span>
+              {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" 
+                   class="px-3 py-1 rounded-lg border border-slate-600 hover:bg-slate-700 transition text-slate-300">›</a>
+                <a href="?page={{ page_obj.paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" 
+                   class="px-3 py-1 rounded-lg border border-slate-600 hover:bg-slate-700 transition text-slate-300">»</a>
+              {% endif %}
+            </div>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

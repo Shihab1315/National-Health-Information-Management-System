@@ -1,0 +1,89 @@
+<!-- laboratory/templates/laboratory/laborder_confirm_delete.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Delete Lab Order - NHIMS{% endblock %}
+
+{% block content %}
+<div class="bg-slate-900 min-h-screen py-8 px-4 sm:px-6 lg:px-8">
+  <div class="max-w-lg mx-auto">
+    <!-- Breadcrumb -->
+    <nav class="flex items-center text-sm text-slate-400 mb-6" aria-label="Breadcrumb">
+      <a href="/" class="hover:text-blue-400 transition">
+        <i class="fas fa-home mr-1"></i> Dashboard
+      </a>
+      <span class="mx-2 text-slate-600">/</span>
+      <a href="{% url 'laboratory:order_list' %}" class="hover:text-blue-400 transition">Lab Orders</a>
+      <span class="mx-2 text-slate-600">/</span>
+      <span class="text-slate-200 font-medium">Delete Order</span>
+    </nav>
+
+    <!-- Confirmation Card -->
+    <div class="bg-slate-800 rounded-2xl shadow-xl overflow-hidden">
+      <!-- Header -->
+      <div class="bg-linear-to-r from-red-600 to-red-700 px-8 py-6">
+        <div class="flex items-center gap-4">
+          <div class="bg-white/20 backdrop-blur p-3 rounded-xl">
+            <i class="fas fa-trash-alt text-white text-2xl"></i>
+          </div>
+          <div>
+            <h2 class="text-xl font-bold text-white">Delete Lab Order</h2>
+            <p class="text-red-100 text-sm">This action cannot be undone</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Body -->
+      <div class="p-8">
+        <div class="text-center">
+          <div class="mx-auto flex items-center justify-center h-20 w-20 rounded-full bg-red-900/30 mb-4">
+            <i class="fas fa-exclamation-triangle text-red-400 text-4xl"></i>
+          </div>
+          <p class="text-slate-300 text-lg font-medium mb-2">
+            Are you sure you want to delete this lab order?
+          </p>
+          <div class="bg-slate-700/30 rounded-xl p-4 mb-6 text-left">
+            <p class="text-slate-400 text-sm">
+              <span class="font-medium text-slate-300">Order Number:</span>
+              <span class="text-white font-mono">{{ order.order_number }}</span>
+            </p>
+            <p class="text-slate-400 text-sm mt-1">
+              <span class="font-medium text-slate-300">Patient:</span>
+              <span class="text-white">{{ order.patient.user.get_full_name|default:order.patient.user.username }}</span>
+            </p>
+            <p class="text-slate-400 text-sm mt-1">
+              <span class="font-medium text-slate-300">Doctor:</span>
+              <span class="text-white">Dr. {{ order.doctor.user.get_full_name|default:order.doctor.user.username }}</span>
+            </p>
+            <p class="text-slate-400 text-sm mt-1">
+              <span class="font-medium text-slate-300">Status:</span>
+              <span class="text-white">{{ order.get_status_display }}</span>
+            </p>
+            <p class="text-slate-400 text-sm mt-1">
+              <span class="font-medium text-slate-300">Tests:</span>
+              <span class="text-white">{{ order.items.count }}</span>
+            </p>
+          </div>
+
+          {% if order.items.exists %}
+            <div class="bg-yellow-900/20 border border-yellow-500/30 rounded-xl p-3 mb-4 text-sm text-yellow-300">
+              <i class="fas fa-info-circle mr-1"></i>
+              This order contains {{ order.items.count }} test(s). Deleting it will also remove all associated test items and results.
+            </div>
+          {% endif %}
+
+          <form method="post" class="flex justify-center gap-4">
+            {% csrf_token %}
+            <a href="{% url 'laboratory:order_detail' order.pk %}" class="inline-flex items-center gap-2 px-6 py-2.5 border border-slate-600 rounded-xl hover:bg-slate-700 transition shadow-sm text-slate-300 font-medium">
+              <i class="fas fa-times"></i> Cancel
+            </a>
+            <button type="submit" class="inline-flex items-center gap-2 px-6 py-2.5 bg-red-600 hover:bg-red-700 active:scale-95 transition duration-200 rounded-xl shadow-lg shadow-red-900/30 text-white font-medium">
+              <i class="fas fa-trash-alt"></i> Delete Permanently
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

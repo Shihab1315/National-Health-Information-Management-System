@@ -1,0 +1,63 @@
+<!-- laboratory/templates/laboratory/components/messages.html -->
+{% load static %}
+
+{% if messages %}
+  <div id="messages-container" class="space-y-2 mb-4" role="alert">
+    {% for message in messages %}
+      <div class="relative rounded-xl p-4 border-l-4 shadow-lg 
+        {% if message.tags == 'success' %}
+          bg-green-900/30 border-green-500 text-green-300
+        {% elif message.tags == 'error' %}
+          bg-red-900/30 border-red-500 text-red-300
+        {% elif message.tags == 'warning' %}
+          bg-yellow-900/30 border-yellow-500 text-yellow-300
+        {% elif message.tags == 'info' %}
+          bg-blue-900/30 border-blue-500 text-blue-300
+        {% else %}
+          bg-slate-700/30 border-slate-500 text-slate-300
+        {% endif %}
+      ">
+        <div class="flex items-center gap-3">
+          <span class="text-xl">
+            {% if message.tags == 'success' %}
+              <i class="fas fa-check-circle text-green-400"></i>
+            {% elif message.tags == 'error' %}
+              <i class="fas fa-exclamation-circle text-red-400"></i>
+            {% elif message.tags == 'warning' %}
+              <i class="fas fa-exclamation-triangle text-yellow-400"></i>
+            {% elif message.tags == 'info' %}
+              <i class="fas fa-info-circle text-blue-400"></i>
+            {% else %}
+              <i class="fas fa-bell text-slate-400"></i>
+            {% endif %}
+          </span>
+          <div class="flex-1 text-sm font-medium">
+            {{ message }}
+          </div>
+          <button type="button" class="text-slate-400 hover:text-slate-200 transition" onclick="this.parentElement.parentElement.remove()" aria-label="Dismiss message">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+{% endif %}
+
+<!-- Optional: Auto-dismiss after 5 seconds -->
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const messagesContainer = document.getElementById('messages-container');
+    if (messagesContainer) {
+      const messages = messagesContainer.querySelectorAll('.relative');
+      messages.forEach(function(msg) {
+        setTimeout(function() {
+          msg.style.opacity = '0';
+          msg.style.transition = 'opacity 0.5s ease';
+          setTimeout(function() {
+            msg.remove();
+          }, 500);
+        }, 5000);
+      });
+    }
+  });
+</script>

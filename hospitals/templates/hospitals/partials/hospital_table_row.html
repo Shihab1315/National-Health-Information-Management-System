@@ -1,0 +1,26 @@
+<tr class="hover:bg-white/5 transition">
+    <td class="px-4 py-3">
+        <div class="flex items-center gap-2">
+            {% if hospital.logo %}
+            <img src="{{ hospital.logo.url }}" alt="{{ hospital.name }}" class="w-8 h-8 rounded-full object-cover">
+            {% else %}
+            <div class="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-300 text-xs font-bold">
+                {{ hospital.name|slice:":1"|upper }}
+            </div>
+            {% endif %}
+            <span class="text-white">{{ hospital.name }}</span>
+        </div>
+    </td>
+    <td class="px-4 py-3 text-gray-300">{{ hospital.get_hospital_type_display }}</td>
+    <td class="px-4 py-3 text-gray-300">{{ hospital.district }}</td>
+    <td class="px-4 py-3 text-gray-300">{{ hospital.total_beds }}</td>
+    <td class="px-4 py-3 text-amber-400">{{ hospital.average_rating|floatformat:1 }}</td>
+    <td class="px-4 py-3">{% if hospital.emergency_available %}<i class="fas fa-circle text-red-500" title="Emergency"></i>{% endif %}</td>
+    <td class="px-4 py-3">{% if hospital.verified %}<i class="fas fa-check-circle text-emerald-400" title="Verified"></i>{% endif %}</td>
+    <td class="px-4 py-3">{% include 'hospitals/partials/status_badge.html' with active=hospital.active %}</td>
+    <td class="px-4 py-3 text-right">
+        <a href="{% url 'hospitals:detail' hospital.slug %}" class="text-blue-400 hover:text-blue-300"><i class="fas fa-eye"></i></a>
+        <a href="{% url 'hospitals:update' hospital.slug %}" class="text-amber-400 hover:text-amber-300 ml-2"><i class="fas fa-edit"></i></a>
+        <a href="{% url 'hospitals:delete' hospital.slug %}" class="text-red-400 hover:text-red-300 ml-2"><i class="fas fa-trash-alt"></i></a>
+    </td>
+</tr>

@@ -1,0 +1,55 @@
+{% load static tailwind_tags %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}NHIMS{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="bg-[#0a1628] text-white font-sans antialiased min-h-screen flex flex-col">
+
+    {% block navbar %}
+    <!-- পাবলিক নেভবার (শুধু লগইন/সাইনআপ পেজে দেখাবে) -->
+    <nav class="bg-[#0d2137]/80 backdrop-blur-md border-b border-white/10 px-6 py-3">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <a href="/" class="text-xl font-bold text-white">NHIMS <span class="text-blue-400">Bangladesh</span></a>
+            <div class="flex items-center gap-4">
+                {% if user.is_authenticated %}
+                    <span class="text-sm text-gray-300">{{ user.get_full_name|default:user.username }}</span>
+                   <form method="post" action="{% url 'accounts:logout' %}" style="display:inline;">
+    {% csrf_token %}
+    <button type="submit" class="logout-btn" title="Logout"
+            style="background:none;border:none;padding:0;cursor:pointer;">
+        <i class="fas fa-sign-out-alt"></i>
+    </button>
+</form>
+                {% else %}
+                    <a href="{% url 'accounts:login' %}" class="text-sm text-gray-300 hover:text-white">Login</a>
+                    <a href="{% url 'accounts:signup' %}" class="text-sm bg-blue-600 px-4 py-1.5 rounded-full hover:bg-blue-700">Sign Up</a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+    {% endblock %}
+
+    <!-- ===== MESSAGES ===== -->
+    {% block messages %}
+        {% include 'laboratory/components/messages.html' %}
+    {% endblock %}
+
+    <main class="grow">
+        {% block content %}{% endblock %}
+    </main>
+
+    {% block footer %}
+    <footer class="bg-[#060e1a] border-t border-white/10 text-center text-gray-400 text-sm py-4">
+        &copy; 2026 NHIMS — Ministry of Health and Family Welfare, Bangladesh
+    </footer>
+    {% endblock %}
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

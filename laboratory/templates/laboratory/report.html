@@ -1,0 +1,236 @@
+<!-- laboratory/templates/laboratory/report.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Laboratory Report - NHIMS{% endblock %}
+
+{% block extra_head %}
+<style>
+  /* Print styles */
+  .report-container {
+    background: white;
+    padding: 2rem;
+    max-width: 1000px;
+    margin: 0 auto;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+    border-radius: 8px;
+  }
+  .report-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    border-bottom: 2px solid #1e293b;
+    padding-bottom: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  .report-logo {
+    max-height: 80px;
+  }
+  .report-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #1e293b;
+  }
+  .patient-info, .doctor-info {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  .info-label {
+    font-size: 0.8rem;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .info-value {
+    font-weight: 500;
+    color: #0f172a;
+  }
+  .test-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 1.5rem;
+  }
+  .test-table th {
+    background: #f1f5f9;
+    border: 1px solid #cbd5e1;
+    padding: 8px 12px;
+    text-align: left;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+  }
+  .test-table td {
+    border: 1px solid #cbd5e1;
+    padding: 8px 12px;
+    font-size: 0.9rem;
+  }
+  .signature-box {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 2rem;
+    padding-top: 1rem;
+    border-top: 1px solid #e2e8f0;
+  }
+  .signature-placeholder {
+    width: 200px;
+    border-bottom: 1px solid #000;
+    margin-top: 0.5rem;
+    height: 40px;
+  }
+  .qr-placeholder {
+    width: 120px;
+    height: 120px;
+    border: 1px dashed #94a3b8;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #94a3b8;
+    font-size: 0.8rem;
+  }
+  .print-footer {
+    margin-top: 2rem;
+    text-align: center;
+    font-size: 0.7rem;
+    color: #94a3b8;
+  }
+
+  @media print {
+    body { background: white !important; padding: 0 !important; }
+    .no-print { display: none !important; }
+    .report-container { box-shadow: none !important; padding: 0 !important; margin: 0 !important; max-width: 100% !important; border-radius: 0 !important; }
+    .report-header { border-bottom: 2px solid #000 !important; }
+    .test-table th { background: #f1f5f9 !important; border: 1px solid #000 !important; }
+    .test-table td { border: 1px solid #000 !important; }
+    .signature-placeholder { border-bottom: 1px solid #000 !important; }
+    .qr-placeholder { border: 1px solid #000 !important; }
+    .print-footer { color: #000 !important; }
+    .report-title { color: #000 !important; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="bg-slate-900 min-h-screen py-8 px-4 sm:px-6 lg:px-8">
+  <div class="max-w-5xl mx-auto no-print mb-6">
+    <div class="flex justify-between items-center">
+      <a href="{% url 'laboratory:order_detail' order.pk %}" class="inline-flex items-center gap-2 px-5 py-2.5 bg-slate-700 hover:bg-slate-600 border border-slate-600 rounded-xl transition text-slate-300 font-medium">
+        <i class="fas fa-arrow-left"></i> Back to Order
+      </a>
+      <button onclick="window.print()" class="inline-flex items-center gap-2 px-6 py-2.5 bg-blue-600 hover:bg-blue-700 border border-blue-700 rounded-xl transition text-white font-medium">
+        <i class="fas fa-print"></i> Print / Save PDF
+      </button>
+    </div>
+    <p class="text-slate-400 text-sm mt-2">Click the print button or press Ctrl+P to print or save as PDF.</p>
+  </div>
+
+  <!-- Report Content -->
+  <div class="report-container">
+    <!-- Header -->
+    <div class="report-header">
+      <div>
+        <h1 class="text-2xl font-bold text-blue-700">{{ order.hospital.name }}</h1>
+        <p class="text-sm text-slate-600">{{ order.hospital.full_address|default:"" }}</p>
+        <p class="text-sm text-slate-600">Phone: {{ order.hospital.phone|default:"N/A" }}</p>
+      </div>
+      <div class="text-right">
+        <p class="report-title">Laboratory Report</p>
+        <p class="text-sm text-slate-600">Report #: {{ order.order_number }}</p>
+        <p class="text-sm text-slate-600">Date: {{ order.ordered_date|date:"d M Y" }}</p>
+        <p class="text-sm font-medium text-slate-700">Status: {{ order.get_status_display }}</p>
+      </div>
+    </div>
+
+    <!-- Patient & Doctor Info -->
+    <div class="patient-info">
+      <div>
+        <p class="info-label">Patient</p>
+        <p class="info-value">{{ order.patient.user.get_full_name|default:order.patient.user.username }}</p>
+        <p class="text-sm text-slate-600">{{ order.patient.user.email|default:"N/A" }}</p>
+        <p class="text-sm text-slate-600">Phone: {{ order.patient.user.phone|default:"N/A" }}</p>
+        <p class="text-sm text-slate-600">Patient ID: {{ order.patient.id }}</p>
+      </div>
+      <div>
+        <p class="info-label">Doctor</p>
+        <p class="info-value">Dr. {{ order.doctor.user.get_full_name|default:order.doctor.user.username }}</p>
+        <p class="text-sm text-slate-600">Reg. No: {{ order.doctor.registration_number|default:"N/A" }}</p>
+        <p class="text-sm text-slate-600">Specialty: {{ order.doctor.specialization|default:"General" }}</p>
+      </div>
+    </div>
+
+    <!-- Test Results Table -->
+    <h3 class="text-lg font-semibold text-slate-800 mb-2">Test Results</h3>
+    <table class="test-table">
+      <thead>
+        <tr>
+          <th>Test Name</th>
+          <th>Category</th>
+          <th>Result</th>
+          <th>Unit</th>
+          <th>Reference Range</th>
+          <th>Interpretation</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in order.items.all %}
+          <tr>
+            <td>{{ item.test.name }}</td>
+            <td>{{ item.test.category.name }}</td>
+            <td>
+              {% if item.result %}
+                {{ item.result.result|default:"—" }}
+              {% else %}
+                <span class="text-slate-400">Not uploaded</span>
+              {% endif %}
+            </td>
+            <td>{{ item.test.unit|default:"—" }}</td>
+            <td>{{ item.test.normal_range|default:"—" }}</td>
+            <td>
+              {% if item.result and item.result.interpretation %}
+                {{ item.result.interpretation }}
+              {% else %}
+                <span class="text-slate-400">—</span>
+              {% endif %}
+            </td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="6" class="text-center text-slate-400">No tests found for this order.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <!-- Remarks & Notes -->
+    {% if order.notes %}
+      <div class="mb-4">
+        <h4 class="text-sm font-semibold text-slate-700">Order Notes</h4>
+        <p class="text-sm text-slate-600">{{ order.notes }}</p>
+      </div>
+    {% endif %}
+
+    <!-- Signature and QR Code -->
+    <div class="signature-box">
+      <div>
+        <p class="text-sm font-semibold text-slate-700">Doctor's Signature</p>
+        <div class="signature-placeholder"></div>
+        <p class="text-sm text-slate-600 mt-1">Dr. {{ order.doctor.user.get_full_name|default:order.doctor.user.username }}</p>
+      </div>
+      <div>
+        <p class="text-sm font-semibold text-slate-700">QR Code</p>
+        <div class="qr-placeholder">
+          <span class="text-center text-xs text-slate-400">QR Code Placeholder</span>
+        </div>
+        <p class="text-xs text-slate-400 mt-1">Scan to verify</p>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="print-footer">
+      <p>This is a computer-generated laboratory report. Valid without signature.</p>
+      <p>Generated on: {% now "d M Y H:i" %}</p>
+      <p>NHIMS — National Health Information Management System, Bangladesh</p>
+    </div>
+  </div>
+</div>
+{% endblock %}

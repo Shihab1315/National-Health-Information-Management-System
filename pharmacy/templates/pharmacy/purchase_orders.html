@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Purchase Orders — NHIMS Pharmacy{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+    <!-- Breadcrumb -->
+    <nav class="flex items-center gap-2 text-sm text-gray-400 mb-6" aria-label="Breadcrumb">
+        <a href="{% url 'pharmacy:dashboard' %}" class="hover:text-white transition">Dashboard</a>
+        <span class="text-gray-600">/</span>
+        <span class="text-white">Purchase Orders</span>
+    </nav>
+
+    <!-- Header -->
+    <div class="flex flex-wrap justify-between items-center gap-4 mb-8">
+        <div>
+            <h1 class="text-3xl font-bold text-white flex items-center gap-3">
+                <i class="fas fa-shopping-cart text-amber-400 text-2xl"></i>
+                Purchase Orders
+            </h1>
+            <p class="text-gray-400 text-sm">Manage all purchase orders</p>
+        </div>
+        <a href="{% url 'pharmacy:purchase_create' %}" class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-medium shadow-lg shadow-blue-500/30 hover:scale-105 transition">
+            <i class="fas fa-plus-circle"></i> New Purchase
+        </a>
+    </div>
+
+    <!-- Filters & Search -->
+    <div class="glass-card rounded-2xl border border-white/10 p-5 mb-8">
+        <form method="get" class="flex flex-wrap gap-3">
+            <div class="relative flex-1 min-w-50">
+                <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                <input type="text" name="q" placeholder="Search by PO number or invoice..." value="{{ request.GET.q|default:'' }}" class="w-full pl-11 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-400 focus:border-blue-500 outline-none transition">
+            </div>
+            <select name="payment_status" class="w-full md:w-48 px-4 py-3 bg-[#0d2137] border border-white/10 rounded-xl text-white focus:border-blue-500 outline-none">
+                <option value="">All Payment Status</option>
+                <option value="paid" {% if request.GET.payment_status == 'paid' %}selected{% endif %}>Paid</option>
+                <option value="partial" {% if request.GET.payment_status == 'partial' %}selected{% endif %}>Partial</option>
+                <option value="due" {% if request.GET.payment_status == 'due' %}selected{% endif %}>Due</option>
+            </select>
+            <select name="supplier" class="w-full md:w-48 px-4 py-3 bg-[#0d2137] border border-white/10 rounded-xl text-white focus:border-blue-500 outline-none">
+                <option value="">All Suppliers</option>
+                {% for supplier in suppliers %}
+                <option value="{{ supplier.id }}" {% if request.GET.supplier == supplier.id|stringformat:"s" %}selected{% endif %}>{{ supplier.name }}</option>
+                {% endfor %}
+            </select>
+            <button type="submit" class="bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-xl text-white font-medium transition">Filter</button>
+            <a href="{% url 'pharmacy:purchase_list' %}" class="bg-white/5 hover:bg-white/10 px-6 py-3 rounded-xl text-gray-300 transition">Reset</a>
+        </form>
+    </div>
+
+    <!-- Table -->
+    <div class="glass-card rounded-2xl border border-white/10 overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead class="bg-white/5 border-b border-white/10">
+                    <tr class="text-left text-gray-400 font-medium">
+                        <th class="px-4 py-3">PO Number</th>
+                        <th class="px-4 py-3">Supplier</th>
+                        <th class="px-4 py-3">Date</th>
+                        <th class="px-4 py-3">Total</th>
+                        <th class="px-4 py-3">Payment Status</th>
+                        <th class="px-4 py-3 text-center">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-white/5">
+                    {% for purchase in purchase_orders %}
+                    <tr class="hover:bg-white/5 transition">
+                        <td class="px-4 py-3 text-white font-mono text-xs">{{ purchase.purchase_number }}</td>
+                        <td class="px-4 py-3 text-white font-medium">{{ purchase.supplier.name }}</td>
+                        <td class="px-4 py-3 text-gray-300">{{ purchase.purchase_date|date:"M d, Y" }}</td>
+                        <td class="px-4 py-3 text-white font-semibold">${{ purchase.total_amount|floatformat:2 }}</td>
+                        <td class="px-4 py-3">
+                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium
+                                {% if purchase.payment_status == 'paid' %}bg-emerald-500/20 text-emerald-300
+                                {% elif purchase.payment_status == 'partial' %}bg-amber-500/20 text-amber-300
+                                {% else %}bg-red-500/20 text-red-300{% endif %}">
+                                <span class="w-1.5 h-1.5 rounded-full inline-block
+                                    {% if purchase.payment_status == 'paid' %}bg-emerald-400
+                                    {% elif purchase.payment_status == 'partial' %}bg-amber-400
+                                    {% else %}bg-red-400{% endif %}"></span>
+                                {{ purchase.get_payment_status_display }}
+                            </span>
+                        </td>
+                        <td class="px-4 py-3 text-center">
+                            <div class="flex items-center justify-center gap-1">
+                                <a href="{% url 'pharmacy:purchase_detail' purchase.pk %}" class="text-blue-400 hover:text-blue-300 transition p-1.5" title="View">
+                                    <i class="fas fa-eye text-sm"></i>
+                                </a>
+                                <a href="{% url 'pharmacy:purchase_edit' purchase.pk %}" class="text-amber-400 hover:text-amber-300 transition p-1.5" title="Edit">
+                                    <i class="fas fa-pen text-sm"></i>
+                                </a>
+                                <a href="{% url 'pharmacy:purchase_delete' purchase.pk %}" class="text-red-400 hover:text-red-300 transition p-1.5" title="Delete">
+                                    <i class="fas fa-trash-alt text-sm"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center py-12 text-gray-400">
+                            <i class="fas fa-shopping-cart text-4xl block mb-3 opacity-40"></i>
+                            <p class="text-lg font-medium">No purchase orders found</p>
+                            <p class="text-sm">Create your first purchase order using the "New Purchase" button.</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    {% if page_obj.paginator.num_pages > 1 %}
+    <div class="mt-6 flex flex-wrap items-center justify-between gap-3">
+        <div class="text-sm text-gray-400">
+            Showing {{ page_obj.start_index }}–{{ page_obj.end_index }} of {{ page_obj.paginator.count }}
+        </div>
+        <div class="flex gap-2">
+            {% if page_obj.has_previous %}
+            <a href="?page=1{% for key, val in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ val }}{% endif %}{% endfor %}" class="px-3 py-1.5 bg-white/5 rounded-lg hover:bg-white/10 transition">&laquo;</a>
+            <a href="?page={{ page_obj.previous_page_number }}{% for key, val in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ val }}{% endif %}{% endfor %}" class="px-3 py-1.5 bg-white/5 rounded-lg hover:bg-white/10 transition">&lsaquo;</a>
+            {% endif %}
+            <span class="px-4 py-1.5 bg-blue-600/30 text-blue-300 font-medium rounded-lg">{{ page_obj.number }}</span>
+            {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}{% for key, val in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ val }}{% endif %}{% endfor %}" class="px-3 py-1.5 bg-white/5 rounded-lg hover:bg-white/10 transition">&rsaquo;</a>
+            <a href="?page={{ page_obj.paginator.num_pages }}{% for key, val in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ val }}{% endif %}{% endfor %}" class="px-3 py-1.5 bg-white/5 rounded-lg hover:bg-white/10 transition">&raquo;</a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

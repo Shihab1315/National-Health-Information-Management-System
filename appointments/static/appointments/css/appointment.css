@@ -1,0 +1,329 @@
+/* appointments/static/appointments/css/appointment.css */
+
+/* ============================================
+   Appointment Module Global Styles
+   ============================================ */
+
+/* --- Root Variables --- */
+:root {
+    --app-primary: #2563eb;
+    --app-primary-hover: #1d4ed8;
+    --app-danger: #dc2626;
+    --app-success: #16a34a;
+    --app-warning: #f59e0b;
+    --app-info: #8b5cf6;
+    --app-border-color: #e5e7eb;
+    --app-bg-light: #f9fafb;
+    --app-text-primary: #111827;
+    --app-text-secondary: #6b7280;
+    --app-border-radius: 0.75rem;
+}
+
+/* --- Status Badges (used in tables & details) --- */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.3rem 0.85rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border-radius: 9999px;
+    text-transform: capitalize;
+    letter-spacing: 0.02em;
+    background: #e5e7eb;
+    color: #374151;
+}
+
+.status-badge i {
+    font-size: 0.65rem;
+}
+
+.status-pending {
+    background: #fef3c7;
+    color: #92400e;
+}
+.status-confirmed {
+    background: #d1fae5;
+    color: #065f46;
+}
+.status-cancelled {
+    background: #fee2e2;
+    color: #991b1b;
+}
+.status-completed {
+    background: #e0e7ff;
+    color: #3730a3;
+}
+
+/* --- Appointment Detail Page --- */
+.appointment-detail-card {
+    background: #ffffff;
+    border-radius: var(--app-border-radius);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+    padding: 1.5rem;
+    transition: box-shadow var(--transition-speed) ease;
+}
+
+.appointment-detail-card:hover {
+    box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+}
+
+.appointment-detail-card .detail-label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--app-text-secondary);
+    margin-bottom: 0.25rem;
+}
+
+.appointment-detail-card .detail-value {
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--app-text-primary);
+}
+
+/* --- Quick Action Buttons (POST forms) --- */
+.action-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1.25rem;
+    border-radius: 0.5rem;
+    font-weight: 500;
+    font-size: 0.875rem;
+    transition: all var(--transition-speed) ease;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+
+.action-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.10);
+}
+
+.action-btn-confirm {
+    background: var(--app-success);
+    color: white;
+}
+.action-btn-confirm:hover {
+    background: #15803d;
+}
+
+.action-btn-cancel {
+    background: var(--app-danger);
+    color: white;
+}
+.action-btn-cancel:hover {
+    background: #b91c1c;
+}
+
+.action-btn-complete {
+    background: var(--app-info);
+    color: white;
+}
+.action-btn-complete:hover {
+    background: #7c3aed;
+}
+
+/* --- Filter & Search Bar --- */
+.filter-bar {
+    background: #ffffff;
+    border-radius: var(--app-border-radius);
+    box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+    padding: 1.25rem 1.5rem;
+}
+
+.filter-bar .form-control,
+.filter-bar .form-select {
+    border-radius: 0.5rem;
+    border-color: var(--app-border-color);
+    transition: border-color var(--transition-speed) ease, box-shadow var(--transition-speed) ease;
+}
+
+.filter-bar .form-control:focus,
+.filter-bar .form-select:focus {
+    border-color: var(--app-primary);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+    outline: none;
+}
+
+.filter-bar .filter-label {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--app-text-secondary);
+    margin-bottom: 0.2rem;
+}
+
+/* --- Table (appointment list) --- */
+.appointment-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.appointment-table th {
+    background: #f9fafb;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--app-text-secondary);
+    padding: 0.85rem 1.25rem;
+    border-bottom: 1px solid var(--app-border-color);
+}
+
+.appointment-table td {
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--app-border-color);
+    vertical-align: middle;
+    font-size: 0.875rem;
+}
+
+.appointment-table tbody tr {
+    transition: background var(--transition-speed) ease;
+}
+
+.appointment-table tbody tr:hover {
+    background: #f3f4f6;
+}
+
+.appointment-table .action-links a {
+    color: var(--app-text-secondary);
+    transition: color var(--transition-speed) ease;
+    margin-right: 0.75rem;
+}
+
+.appointment-table .action-links a:hover {
+    color: var(--app-primary);
+}
+
+.appointment-table .action-links a.danger:hover {
+    color: var(--app-danger);
+}
+
+/* --- Form Styles (create/update) --- */
+.appointment-form .form-group {
+    margin-bottom: 1.25rem;
+}
+
+.appointment-form label {
+    font-weight: 500;
+    font-size: 0.9rem;
+    color: var(--app-text-primary);
+    margin-bottom: 0.3rem;
+    display: block;
+}
+
+.appointment-form .form-control,
+.appointment-form .form-select {
+    border-radius: 0.5rem;
+    border: 1px solid var(--app-border-color);
+    padding: 0.6rem 0.9rem;
+    width: 100%;
+    transition: all var(--transition-speed) ease;
+}
+
+.appointment-form .form-control:focus,
+.appointment-form .form-select:focus {
+    border-color: var(--app-primary);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+    outline: none;
+}
+
+.appointment-form .help-text {
+    font-size: 0.75rem;
+    color: var(--app-text-secondary);
+    margin-top: 0.2rem;
+}
+
+.appointment-form .error-message {
+    font-size: 0.8rem;
+    color: var(--app-danger);
+    margin-top: 0.2rem;
+}
+
+.appointment-form .form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--app-border-color);
+    margin-top: 1.5rem;
+}
+
+/* --- Pagination --- */
+.pagination-wrapper {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.25rem;
+    background: #f9fafb;
+    border-top: 1px solid var(--app-border-color);
+    border-radius: 0 0 var(--app-border-radius) var(--app-border-radius);
+}
+
+.pagination-links a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2.25rem;
+    height: 2.25rem;
+    border: 1px solid var(--app-border-color);
+    border-radius: 0.375rem;
+    color: var(--app-text-secondary);
+    text-decoration: none;
+    transition: all var(--transition-speed) ease;
+    margin: 0 0.15rem;
+}
+
+.pagination-links a:hover {
+    background: #e5e7eb;
+    border-color: #9ca3af;
+}
+
+.pagination-links .current {
+    background: var(--app-primary);
+    color: white;
+    border-color: var(--app-primary);
+}
+
+/* --- Responsive --- */
+@media (max-width: 768px) {
+    .appointment-table th,
+    .appointment-table td {
+        padding: 0.6rem 0.75rem;
+        font-size: 0.8rem;
+    }
+    .appointment-table .action-links a {
+        margin-right: 0.4rem;
+    }
+    .filter-bar {
+        padding: 1rem;
+    }
+    .filter-bar .row {
+        gap: 0.75rem;
+    }
+    .appointment-detail-card {
+        padding: 1rem;
+    }
+    .appointment-form .form-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .appointment-form .form-actions .btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .appointment-table th,
+    .appointment-table td {
+        font-size: 0.7rem;
+        padding: 0.4rem 0.5rem;
+    }
+    .status-badge {
+        font-size: 0.6rem;
+        padding: 0.15rem 0.5rem;
+    }
+}

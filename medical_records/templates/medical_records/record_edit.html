@@ -1,0 +1,884 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Edit Medical Record — NHIMS{% endblock %}
+
+{% block extra_css %}
+<style>
+    .tab-btn {
+        transition: all 0.3s ease;
+        border-bottom: 3px solid transparent;
+    }
+    .tab-btn.active {
+        border-bottom-color: #3b82f6;
+        color: #ffffff;
+        background: rgba(59, 130, 246, 0.1);
+    }
+    .tab-btn:hover:not(.active) {
+        background: rgba(255, 255, 255, 0.05);
+        border-bottom-color: rgba(59, 130, 246, 0.3);
+    }
+    .tab-panel {
+        display: none;
+        animation: fadeIn 0.3s ease;
+    }
+    .tab-panel.active {
+        display: block;
+    }
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(8px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .section-icon {
+        width: 32px;
+        text-align: center;
+        margin-right: 8px;
+        color: #3b82f6;
+    }
+    .vital-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+    }
+    @media (max-width: 640px) {
+        .vital-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+    .bmi-warning {
+        color: #f59e0b;
+        font-size: 0.875rem;
+        margin-top: 0.25rem;
+    }
+    .bmi-danger {
+        color: #ef4444;
+    }
+    .bp-group {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+    }
+    .bp-group input {
+        width: 48%;
+    }
+    .bp-group span {
+        color: #94a3b8;
+        font-weight: 500;
+    }
+    .glass-input {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border-radius: 0.75rem;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: #ffffff;
+        transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        outline: none;
+        font-size: 0.95rem;
+    }
+    .glass-input:focus {
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+    }
+    .glass-input::placeholder {
+        color: rgba(255, 255, 255, 0.3);
+    }
+    .glass-input.error {
+        border-color: #ef4444;
+        box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2);
+    }
+    .glass-input[readonly] {
+        opacity: 0.7;
+        cursor: not-allowed;
+    }
+    select.glass-input {
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2394a3b8' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 1rem center;
+        padding-right: 2.5rem;
+    }
+    select.glass-input option {
+        background: #1a2438;
+        color: #ffffff;
+    }
+    textarea.glass-input {
+        resize: vertical;
+        min-height: 80px;
+    }
+    .field-label {
+        display: block;
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: #c8d0dc;
+        margin-bottom: 0.375rem;
+    }
+    .field-errors {
+        color: #ef4444;
+        font-size: 0.8rem;
+        margin-top: 0.25rem;
+        list-style: none;
+        padding: 0;
+    }
+    .field-errors li {
+        margin-bottom: 0.125rem;
+    }
+    /* File preview list */
+    .file-preview-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.5rem 0.75rem;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 0.5rem;
+        margin-bottom: 0.375rem;
+        font-size: 0.875rem;
+        color: #c8d0dc;
+    }
+    .file-preview-item .file-size {
+        color: #94a3b8;
+        font-size: 0.75rem;
+    }
+    .file-preview-item .file-remove {
+        color: #ef4444;
+        cursor: pointer;
+        transition: color 0.2s;
+        background: none;
+        border: none;
+        font-size: 1rem;
+    }
+    .file-preview-item .file-remove:hover {
+        color: #dc2626;
+    }
+    .drop-zone {
+        border: 2px dashed rgba(255, 255, 255, 0.1);
+        transition: border-color 0.3s ease, background 0.3s ease;
+        cursor: pointer;
+    }
+    .drop-zone:hover {
+        border-color: rgba(59, 130, 246, 0.5);
+        background: rgba(59, 130, 246, 0.05);
+    }
+    .drop-zone.dragover {
+        border-color: #3b82f6;
+        background: rgba(59, 130, 246, 0.1);
+    }
+    .sticky-footer {
+        position: sticky;
+        bottom: 0;
+        z-index: 50;
+        background: rgba(10, 22, 40, 0.85);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
+        padding: 1rem 0;
+        margin-top: 1.5rem;
+    }
+    /* Existing attachment item */
+    .existing-attachment {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.5rem 0.75rem;
+        background: rgba(255, 255, 255, 0.03);
+        border-radius: 0.5rem;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        margin-bottom: 0.375rem;
+    }
+    .existing-attachment .file-info {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: #c8d0dc;
+        font-size: 0.875rem;
+    }
+    .existing-attachment .file-actions a {
+        color: #94a3b8;
+        transition: color 0.2s;
+        margin-left: 0.75rem;
+        font-size: 0.8rem;
+    }
+    .existing-attachment .file-actions a:hover {
+        color: #ffffff;
+    }
+    .existing-attachment .file-actions .remove-link {
+        color: #ef4444;
+    }
+    .existing-attachment .file-actions .remove-link:hover {
+        color: #dc2626;
+    }
+    @media (max-width: 768px) {
+        .tab-btn {
+            font-size: 0.75rem;
+            padding: 0.5rem 0.75rem;
+        }
+        .glass-card {
+            padding: 1rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto px-4 py-8">
+    <!-- Breadcrumb Navigation -->
+    <nav class="flex items-center gap-2 text-sm text-gray-500 mb-4" aria-label="Breadcrumb">
+        <a href="{% url 'dashboard' %}" class="hover:text-emerald-400 transition-colors">
+            <i class="fas fa-home mr-1"></i> Dashboard
+        </a>
+        <span class="text-gray-600">/</span>
+        <a href="{% url 'medical_records:record_list' %}" class="hover:text-emerald-400 transition-colors">Medical Records</a>
+        <span class="text-gray-600">/</span>
+        <a href="{% url 'medical_records:record_detail' object.pk %}" class="hover:text-emerald-400 transition-colors">{{ object.record_id|default:object.pk }}</a>
+        <span class="text-gray-600">/</span>
+        <span class="text-emerald-400 font-medium">Edit Record</span>
+    </nav>
+
+    <!-- Page Header -->
+    <div class="flex items-center gap-4 mb-6">
+        <a href="{% url 'medical_records:record_detail' object.pk %}" class="text-gray-400 hover:text-white transition-colors" aria-label="Back to record">
+            <i class="fas fa-arrow-left text-xl"></i>
+        </a>
+        <div class="flex-1">
+            <h1 class="text-2xl font-bold text-white">Edit Medical Record</h1>
+            <p class="text-sm text-gray-400 mt-0.5">Update patient clinical information and history</p>
+        </div>
+        <div class="flex items-center gap-2 bg-white/5 px-4 py-2 rounded-full border border-white/10">
+            <i class="fas fa-user-circle text-blue-400 text-lg"></i>
+            <span class="text-sm font-medium text-white">{{ object.patient.full_name|default:object.patient }}</span>
+        </div>
+    </div>
+
+    <!-- Edit Form -->
+    <form method="post" enctype="multipart/form-data" id="record-edit-form" novalidate>
+        {% csrf_token %}
+
+        <!-- Display non-field errors -->
+        {% if form.non_field_errors %}
+            <div class="bg-red-500/20 border border-red-500/30 text-red-300 px-4 py-3 rounded-xl mb-4 text-sm">
+                <i class="fas fa-exclamation-triangle mr-2"></i>
+                {% for error in form.non_field_errors %}
+                    <p>{{ error }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <!-- Tab Navigation -->
+        <div class="glass-card rounded-2xl border border-white/10 p-1.5 flex flex-wrap gap-1 bg-white/5 backdrop-blur-sm">
+            <button type="button" class="tab-btn active px-4 py-2.5 rounded-lg text-sm font-medium text-gray-300 hover:text-white transition-all duration-200" data-tab="patient">
+                <i class="fas fa-user mr-2 text-blue-400"></i>Patient
+            </button>
+            <button type="button" class="tab-btn px-4 py-2.5 rounded-lg text-sm font-medium text-gray-300 hover:text-white transition-all duration-200" data-tab="clinical">
+                <i class="fas fa-stethoscope mr-2 text-emerald-400"></i>Clinical
+            </button>
+            <button type="button" class="tab-btn px-4 py-2.5 rounded-lg text-sm font-medium text-gray-300 hover:text-white transition-all duration-200" data-tab="vitals">
+                <i class="fas fa-heartbeat mr-2 text-rose-400"></i>Vitals
+            </button>
+            <button type="button" class="tab-btn px-4 py-2.5 rounded-lg text-sm font-medium text-gray-300 hover:text-white transition-all duration-200" data-tab="treatment">
+                <i class="fas fa-prescription-bottle mr-2 text-purple-400"></i>Treatment
+            </button>
+            <button type="button" class="tab-btn px-4 py-2.5 rounded-lg text-sm font-medium text-gray-300 hover:text-white transition-all duration-200" data-tab="attachments">
+                <i class="fas fa-paperclip mr-2 text-amber-400"></i>Attachments
+            </button>
+        </div>
+
+        <!-- Tab Panels -->
+        <div class="glass-card rounded-2xl border border-white/10 p-6 mt-4 bg-white/5 backdrop-blur-sm">
+
+            <!-- ===== TAB 1: Patient Information ===== -->
+            <div class="tab-panel active" id="tab-patient">
+                <div class="flex items-center gap-2 mb-5">
+                    <i class="fas fa-user-circle text-2xl text-blue-400"></i>
+                    <h2 class="text-lg font-semibold text-white">Patient Information</h2>
+                    <span class="ml-auto text-xs text-gray-500 bg-white/5 px-2 py-1 rounded-full">Required fields marked *</span>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <!-- Patient -->
+                    <div>
+                        <label for="{{ form.patient.id_for_label }}" class="field-label">
+                            {{ form.patient.label }} <span class="text-red-400">*</span>
+                        </label>
+                        {{ form.patient }}
+                        {% if form.patient.errors %}
+                            <ul class="field-errors">{% for err in form.patient.errors %}<li>{{ err }}</li>{% endfor %}</ul>
+                        {% endif %}
+                    </div>
+                    <!-- Doctor -->
+                    <div>
+                        <label for="{{ form.doctor.id_for_label }}" class="field-label">
+                            {{ form.doctor.label }} <span class="text-red-400">*</span>
+                        </label>
+                        {{ form.doctor }}
+                        {% if form.doctor.errors %}
+                            <ul class="field-errors">{% for err in form.doctor.errors %}<li>{{ err }}</li>{% endfor %}</ul>
+                        {% endif %}
+                    </div>
+                    <!-- Hospital -->
+                    <div>
+                        <label for="{{ form.hospital.id_for_label }}" class="field-label">
+                            {{ form.hospital.label }}
+                        </label>
+                        {{ form.hospital }}
+                        {% if form.hospital.errors %}
+                            <ul class="field-errors">{% for err in form.hospital.errors %}<li>{{ err }}</li>{% endfor %}</ul>
+                        {% endif %}
+                    </div>
+                    <!-- Appointment -->
+                    <div>
+                        <label for="{{ form.appointment.id_for_label }}" class="field-label">
+                            {{ form.appointment.label }}
+                        </label>
+                        {{ form.appointment }}
+                        {% if form.appointment.errors %}
+                            <ul class="field-errors">{% for err in form.appointment.errors %}<li>{{ err }}</li>{% endfor %}</ul>
+                        {% endif %}
+                    </div>
+                    <!-- Prescription (related) -->
+                    <div>
+                        <label for="{{ form.prescription.id_for_label }}" class="field-label">
+                            {{ form.prescription.label }}
+                        </label>
+                        {{ form.prescription }}
+                        {% if form.prescription.errors %}
+                            <ul class="field-errors">{% for err in form.prescription.errors %}<li>{{ err }}</li>{% endfor %}</ul>
+                        {% endif %}
+                    </div>
+                    <!-- Lab Order -->
+                    <div>
+                        <label for="{{ form.lab_order.id_for_label }}" class="field-label">
+                            {{ form.lab_order.label }}
+                        </label>
+                        {{ form.lab_order }}
+                        {% if form.lab_order.errors %}
+                            <ul class="field-errors">{% for err in form.lab_order.errors %}<li>{{ err }}</li>{% endfor %}</ul>
+                        {% endif %}
+                    </div>
+                    <!-- Visit Date -->
+                    <div class="md:col-span-2">
+                        <label for="{{ form.visit_date.id_for_label }}" class="field-label">
+                            {{ form.visit_date.label }} <span class="text-red-400">*</span>
+                        </label>
+                        {{ form.visit_date }}
+                        {% if form.visit_date.errors %}
+                            <ul class="field-errors">{% for err in form.visit_date.errors %}<li>{{ err }}</li>{% endfor %}</ul>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== TAB 2: Clinical Details ===== -->
+            <div class="tab-panel" id="tab-clinical">
+                <div class="flex items-center gap-2 mb-5">
+                    <i class="fas fa-notes-medical text-2xl text-emerald-400"></i>
+                    <h2 class="text-lg font-semibold text-white">Clinical Details</h2>
+                </div>
+                <div class="space-y-4">
+                    <!-- Chief Complaint -->
+                    <div>
+                        <label for="{{ form.chief_complaint.id_for_label }}" class="field-label">
+                            {{ form.chief_complaint.label }} <span class="text-red-400">*</span>
+                        </label>
+                        {{ form.chief_complaint }}
+                        {% if form.chief_complaint.errors %}
+                            <ul class="field-errors">{% for err in form.chief_complaint.errors %}<li>{{ err }}</li>{% endfor %}</ul>
+                        {% endif %}
+                    </div>
+                    <!-- Symptoms -->
+                    <div>
+                        <label for="{{ form.symptoms.id_for_label }}" class="field-label">
+                            {{ form.symptoms.label }}
+                        </label>
+                        {{ form.symptoms }}
+                        {% if form.symptoms.errors %}
+                            <ul class="field-errors">{% for err in form.symptoms.errors %}<li>{{ err }}</li>{% endfor %}</ul>
+                        {% endif %}
+                    </div>
+                    <!-- History of Present Illness -->
+                    <div>
+                        <label for="{{ form.history_of_present_illness.id_for_label }}" class="field-label">
+                            {{ form.history_of_present_illness.label }}
+                        </label>
+                        {{ form.history_of_present_illness }}
+                        {% if form.history_of_present_illness.errors %}
+                            <ul class="field-errors">{% for err in form.history_of_present_illness.errors %}<li>{{ err }}</li>{% endfor %}</ul>
+                        {% endif %}
+                    </div>
+                    <!-- Clinical Findings -->
+                    <div>
+                        <label for="{{ form.clinical_findings.id_for_label }}" class="field-label">
+                            {{ form.clinical_findings.label }}
+                        </label>
+                        {{ form.clinical_findings }}
+                        {% if form.clinical_findings.errors %}
+                            <ul class="field-errors">{% for err in form.clinical_findings.errors %}<li>{{ err }}</li>{% endfor %}</ul>
+                        {% endif %}
+                    </div>
+                    <!-- Diagnosis -->
+                    <div>
+                        <label for="{{ form.diagnosis.id_for_label }}" class="field-label">
+                            {{ form.diagnosis.label }} <span class="text-red-400">*</span>
+                        </label>
+                        {{ form.diagnosis }}
+                        {% if form.diagnosis.errors %}
+                            <ul class="field-errors">{% for err in form.diagnosis.errors %}<li>{{ err }}</li>{% endfor %}</ul>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== TAB 3: Vital Signs ===== -->
+            <div class="tab-panel" id="tab-vitals">
+                <div class="flex items-center gap-2 mb-5">
+                    <i class="fas fa-heartbeat text-2xl text-rose-400"></i>
+                    <h2 class="text-lg font-semibold text-white">Vital Signs</h2>
+                    <span class="ml-auto text-xs text-gray-500 bg-white/5 px-2 py-1 rounded-full">Auto-calculates BMI</span>
+                </div>
+                <div class="vital-grid">
+                    <!-- Blood Pressure: Systolic + Diastolic -->
+                    <div class="md:col-span-2">
+                        <label class="field-label">Blood Pressure <span class="text-gray-500 text-xs font-normal">(systolic / diastolic)</span></label>
+                        <div class="bp-group">
+                            {{ form.blood_pressure_systolic }}
+                            <span>/</span>
+                            {{ form.blood_pressure_diastolic }}
+                        </div>
+                        <span class="text-xs text-gray-500">mmHg</span>
+                        {% if form.blood_pressure_systolic.errors %}
+                            <ul class="field-errors">{% for err in form.blood_pressure_systolic.errors %}<li>{{ err }}</li>{% endfor %}</ul>
+                        {% endif %}
+                        {% if form.blood_pressure_diastolic.errors %}
+                            <ul class="field-errors">{% for err in form.blood_pressure_diastolic.errors %}<li>{{ err }}</li>{% endfor %}</ul>
+                        {% endif %}
+                    </div>
+
+                    <!-- Pulse -->
+                    <div>
+                        <label for="{{ form.pulse.id_for_label }}" class="field-label">{{ form.pulse.label }}</label>
+                        {{ form.pulse }}
+                        <span class="text-xs text-gray-500">bpm</span>
+                        {% if form.pulse.errors %}
+                            <ul class="field-errors">{% for err in form.pulse.errors %}<li>{{ err }}</li>{% endfor %}</ul>
+                        {% endif %}
+                    </div>
+
+                    <!-- Temperature -->
+                    <div>
+                        <label for="{{ form.temperature.id_for_label }}" class="field-label">{{ form.temperature.label }}</label>
+                        {{ form.temperature }}
+                        <span class="text-xs text-gray-500">°F</span>
+                        {% if form.temperature.errors %}
+                            <ul class="field-errors">{% for err in form.temperature.errors %}<li>{{ err }}</li>{% endfor %}</ul>
+                        {% endif %}
+                    </div>
+
+                    <!-- Height -->
+                    <div>
+                        <label for="{{ form.height.id_for_label }}" class="field-label">{{ form.height.label }}</label>
+                        {{ form.height }}
+                        <span class="text-xs text-gray-500">cm</span>
+                        {% if form.height.errors %}
+                            <ul class="field-errors">{% for err in form.height.errors %}<li>{{ err }}</li>{% endfor %}</ul>
+                        {% endif %}
+                    </div>
+
+                    <!-- Weight -->
+                    <div>
+                        <label for="{{ form.weight.id_for_label }}" class="field-label">{{ form.weight.label }}</label>
+                        {{ form.weight }}
+                        <span class="text-xs text-gray-500">kg</span>
+                        {% if form.weight.errors %}
+                            <ul class="field-errors">{% for err in form.weight.errors %}<li>{{ err }}</li>{% endfor %}</ul>
+                        {% endif %}
+                    </div>
+
+                    <!-- BMI (auto-calc, readonly) -->
+                    <div>
+                        <label class="field-label">BMI <span class="text-gray-500 text-xs font-normal">(auto)</span></label>
+                        <input type="text" id="bmi-display" value="{{ form.bmi.value|default:'' }}" class="glass-input" readonly placeholder="—" />
+                        <div id="bmi-warning" class="text-xs mt-1"></div>
+                        <input type="hidden" name="bmi" id="bmi-hidden" value="{{ form.bmi.value|default:'' }}" />
+                        {% if form.bmi.errors %}
+                            <ul class="field-errors">{% for err in form.bmi.errors %}<li>{{ err }}</li>{% endfor %}</ul>
+                        {% endif %}
+                    </div>
+
+                    <!-- Oxygen Saturation -->
+                    <div>
+                        <label for="{{ form.oxygen_saturation.id_for_label }}" class="field-label">{{ form.oxygen_saturation.label }}</label>
+                        {{ form.oxygen_saturation }}
+                        <span class="text-xs text-gray-500">%</span>
+                        {% if form.oxygen_saturation.errors %}
+                            <ul class="field-errors">{% for err in form.oxygen_saturation.errors %}<li>{{ err }}</li>{% endfor %}</ul>
+                        {% endif %}
+                    </div>
+
+                    <!-- Respiratory Rate -->
+                    <div>
+                        <label for="{{ form.respiratory_rate.id_for_label }}" class="field-label">{{ form.respiratory_rate.label }}</label>
+                        {{ form.respiratory_rate }}
+                        <span class="text-xs text-gray-500">breaths/min</span>
+                        {% if form.respiratory_rate.errors %}
+                            <ul class="field-errors">{% for err in form.respiratory_rate.errors %}<li>{{ err }}</li>{% endfor %}</ul>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== TAB 4: Treatment & Follow-up ===== -->
+            <div class="tab-panel" id="tab-treatment">
+                <div class="flex items-center gap-2 mb-5">
+                    <i class="fas fa-prescription-bottle text-2xl text-purple-400"></i>
+                    <h2 class="text-lg font-semibold text-white">Treatment &amp; Follow-up</h2>
+                </div>
+                <div class="space-y-4">
+                    <!-- Treatment Plan -->
+                    <div>
+                        <label for="{{ form.treatment_plan.id_for_label }}" class="field-label">
+                            {{ form.treatment_plan.label }}
+                        </label>
+                        {{ form.treatment_plan }}
+                        {% if form.treatment_plan.errors %}
+                            <ul class="field-errors">{% for err in form.treatment_plan.errors %}<li>{{ err }}</li>{% endfor %}</ul>
+                        {% endif %}
+                    </div>
+                    <!-- Doctor Notes -->
+                    <div>
+                        <label for="{{ form.doctor_notes.id_for_label }}" class="field-label">
+                            {{ form.doctor_notes.label }}
+                        </label>
+                        {{ form.doctor_notes }}
+                        {% if form.doctor_notes.errors %}
+                            <ul class="field-errors">{% for err in form.doctor_notes.errors %}<li>{{ err }}</li>{% endfor %}</ul>
+                        {% endif %}
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <!-- Follow-up Date -->
+                        <div>
+                            <label for="{{ form.follow_up_date.id_for_label }}" class="field-label">
+                                {{ form.follow_up_date.label }}
+                            </label>
+                            {{ form.follow_up_date }}
+                            {% if form.follow_up_date.errors %}
+                                <ul class="field-errors">{% for err in form.follow_up_date.errors %}<li>{{ err }}</li>{% endfor %}</ul>
+                            {% endif %}
+                        </div>
+                        <!-- Status -->
+                        <div>
+                            <label for="{{ form.status.id_for_label }}" class="field-label">
+                                {{ form.status.label }} <span class="text-red-400">*</span>
+                            </label>
+                            {{ form.status }}
+                            {% if form.status.errors %}
+                                <ul class="field-errors">{% for err in form.status.errors %}<li>{{ err }}</li>{% endfor %}</ul>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== TAB 5: Attachments ===== -->
+            <div class="tab-panel" id="tab-attachments">
+                <div class="flex items-center gap-2 mb-5">
+                    <i class="fas fa-paperclip text-2xl text-amber-400"></i>
+                    <h2 class="text-lg font-semibold text-white">Attachments</h2>
+                    <span class="ml-auto text-xs text-gray-500 bg-white/5 px-2 py-1 rounded-full">Optional</span>
+                </div>
+
+                <!-- Existing attachments -->
+                {% if object.attachments.all %}
+                    <div class="mb-4">
+                        <h4 class="text-sm font-medium text-gray-300 mb-2">Current Files</h4>
+                        <div class="space-y-1">
+                            {% for att in object.attachments.all %}
+                            <div class="existing-attachment">
+                                <div class="file-info">
+                                    <i class="fas fa-file-{{ att.file.name|slice:'-3:'|lower }} text-blue-400"></i>
+                                    <span>{{ att.description|default:att.file.name }}</span>
+                                    <span class="text-xs text-gray-500">({{ att.file.size|filesizeformat }})</span>
+                                </div>
+                                <div class="file-actions">
+                                    <a href="{{ att.file.url }}" target="_blank" class="hover:text-blue-400">
+                                        <i class="fas fa-eye"></i> View
+                                    </a>
+                                    <a href="{% url 'medical_records:attachment_delete' att.pk %}" 
+                                       class="remove-link" 
+                                       onclick="return confirm('Are you sure you want to delete this attachment?');">
+                                        <i class="fas fa-trash-alt"></i> Remove
+                                    </a>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% else %}
+                    <p class="text-sm text-gray-400 mb-4">No attachments currently.</p>
+                {% endif %}
+
+                <!-- Upload new attachments -->
+                <div class="drop-zone rounded-xl p-8 text-center transition-all duration-300" id="drop-zone">
+                    <i class="fas fa-cloud-upload-alt text-4xl text-gray-500 mb-3 block"></i>
+                    <p class="text-gray-400 text-sm">Drag &amp; drop new files here, or click to browse</p>
+                    <p class="text-xs text-gray-500 mt-1">Supports: PDF, JPG, PNG, DOC, DOCX, XLS, XLSX (max 20 MB each)</p>
+                    <input type="file" name="attachments" id="attachment-file-input" multiple class="hidden" accept=".pdf,.png,.jpg,.jpeg,.gif,.doc,.docx,.xls,.xlsx,.txt" />
+                    <button type="button" onclick="document.getElementById('attachment-file-input').click()" class="mt-4 bg-blue-600/20 text-blue-400 px-5 py-2.5 rounded-lg hover:bg-blue-600/30 transition-all duration-200 text-sm font-medium">
+                        <i class="fas fa-plus mr-1.5"></i> Select Files
+                    </button>
+                </div>
+
+                <!-- File Preview List for new uploads -->
+                <div id="file-preview-list" class="mt-3 space-y-1"></div>
+                <p class="text-xs text-gray-500 mt-2" id="file-count-message">No new files selected</p>
+                <p class="text-xs text-gray-500 mt-1">Note: Existing files will remain unless you remove them using the Remove link above.</p>
+            </div>
+        </div>
+
+        <!-- Sticky Action Bar -->
+        <div class="sticky-footer">
+            <div class="max-w-5xl mx-auto px-4 flex flex-wrap items-center justify-end gap-3">
+                <a href="{% url 'medical_records:record_detail' object.pk %}" class="px-6 py-2.5 rounded-xl text-gray-300 hover:text-white hover:bg-white/10 transition-all duration-200 text-sm font-medium">
+                    <i class="fas fa-times mr-1.5"></i> Cancel
+                </a>
+                <button type="submit" class="bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-600 text-white px-8 py-3 rounded-xl font-medium transition-all duration-200 shadow-lg shadow-blue-500/30 flex items-center gap-2">
+                    <i class="fas fa-save"></i> Update Record
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    (function() {
+        'use strict';
+
+        // =======================================================
+        // 1. TAB SWITCHING
+        // =======================================================
+        const tabs = document.querySelectorAll('.tab-btn');
+        const panels = document.querySelectorAll('.tab-panel');
+
+        tabs.forEach(btn => {
+            btn.addEventListener('click', function() {
+                tabs.forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                const target = this.dataset.tab;
+                panels.forEach(p => p.classList.remove('active'));
+                const panel = document.getElementById('tab-' + target);
+                if (panel) panel.classList.add('active');
+            });
+        });
+
+        // =======================================================
+        // 2. BMI CALCULATOR
+        // =======================================================
+        const heightInput = document.getElementById('id_height');
+        const weightInput = document.getElementById('id_weight');
+        const bmiDisplay = document.getElementById('bmi-display');
+        const bmiHidden = document.getElementById('bmi-hidden');
+        const bmiWarning = document.getElementById('bmi-warning');
+
+        function calculateBMI() {
+            const height = parseFloat(heightInput?.value);
+            const weight = parseFloat(weightInput?.value);
+
+            if (height && weight && height > 0) {
+                const heightM = height / 100;
+                const bmi = weight / (heightM * heightM);
+                const bmiRounded = bmi.toFixed(1);
+                bmiDisplay.value = bmiRounded;
+                bmiHidden.value = bmiRounded;
+
+                let msg = '', className = '';
+                if (bmi < 18.5) {
+                    msg = '⚠️ Underweight – consult nutritionist.';
+                    className = 'bmi-warning';
+                } else if (bmi >= 18.5 && bmi < 25) {
+                    msg = '✅ Normal weight – keep it up!';
+                    className = 'text-emerald-400 text-xs';
+                } else if (bmi >= 25 && bmi < 30) {
+                    msg = '⚠️ Overweight – consider lifestyle changes.';
+                    className = 'bmi-warning';
+                } else if (bmi >= 30) {
+                    msg = '🚨 Obese – consult a physician.';
+                    className = 'bmi-danger text-xs';
+                }
+                bmiWarning.textContent = msg;
+                bmiWarning.className = className + ' mt-1 text-xs';
+            } else {
+                bmiDisplay.value = '';
+                bmiHidden.value = '';
+                bmiWarning.textContent = '';
+                bmiWarning.className = 'mt-1 text-xs';
+            }
+        }
+
+        if (heightInput) heightInput.addEventListener('input', calculateBMI);
+        if (weightInput) weightInput.addEventListener('input', calculateBMI);
+
+        // =======================================================
+        // 3. FILE UPLOAD – PREVIEW & REMOVE (for new files)
+        // =======================================================
+        const fileInput = document.getElementById('attachment-file-input');
+        const previewList = document.getElementById('file-preview-list');
+        const fileCountMsg = document.getElementById('file-count-message');
+        let selectedFiles = [];
+
+        function renderFilePreview() {
+            previewList.innerHTML = '';
+            if (selectedFiles.length === 0) {
+                fileCountMsg.textContent = 'No new files selected';
+                return;
+            }
+            fileCountMsg.textContent = selectedFiles.length + ' new file(s) selected';
+
+            selectedFiles.forEach((file, index) => {
+                const div = document.createElement('div');
+                div.className = 'file-preview-item';
+                const sizeKB = (file.size / 1024).toFixed(1);
+                div.innerHTML = `
+                    <span>
+                        <i class="fas fa-file-${file.type.includes('pdf') ? 'pdf' : 
+                            file.type.includes('image') ? 'image' : 
+                            file.type.includes('word') ? 'word' : 
+                            file.type.includes('excel') ? 'excel' : 'alt'} mr-2 text-blue-400"></i>
+                        ${file.name}
+                        <span class="file-size ml-2">${sizeKB} KB</span>
+                    </span>
+                    <button type="button" class="file-remove" data-index="${index}" aria-label="Remove file">
+                        <i class="fas fa-times-circle"></i>
+                    </button>
+                `;
+                previewList.appendChild(div);
+            });
+
+            document.querySelectorAll('.file-remove').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const idx = parseInt(this.dataset.index, 10);
+                    selectedFiles.splice(idx, 1);
+                    const dataTransfer = new DataTransfer();
+                    selectedFiles.forEach(f => dataTransfer.items.add(f));
+                    fileInput.files = dataTransfer.files;
+                    renderFilePreview();
+                });
+            });
+        }
+
+        fileInput.addEventListener('change', function() {
+            const files = Array.from(this.files);
+            const existingNames = new Set(selectedFiles.map(f => f.name + f.size));
+            files.forEach(f => {
+                const key = f.name + f.size;
+                if (!existingNames.has(key)) {
+                    selectedFiles.push(f);
+                    existingNames.add(key);
+                }
+            });
+            const dataTransfer = new DataTransfer();
+            selectedFiles.forEach(f => dataTransfer.items.add(f));
+            this.files = dataTransfer.files;
+            renderFilePreview();
+        });
+
+        // Drag and drop support
+        const dropZone = document.getElementById('drop-zone');
+        if (dropZone) {
+            ['dragenter', 'dragover'].forEach(evt => {
+                dropZone.addEventListener(evt, function(e) {
+                    e.preventDefault();
+                    this.classList.add('dragover');
+                });
+            });
+            ['dragleave', 'drop'].forEach(evt => {
+                dropZone.addEventListener(evt, function(e) {
+                    e.preventDefault();
+                    this.classList.remove('dragover');
+                });
+            });
+            dropZone.addEventListener('drop', function(e) {
+                e.preventDefault();
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    const existingNames = new Set(selectedFiles.map(f => f.name + f.size));
+                    for (let f of files) {
+                        const key = f.name + f.size;
+                        if (!existingNames.has(key)) {
+                            selectedFiles.push(f);
+                            existingNames.add(key);
+                        }
+                    }
+                    const dataTransfer = new DataTransfer();
+                    selectedFiles.forEach(f => dataTransfer.items.add(f));
+                    fileInput.files = dataTransfer.files;
+                    renderFilePreview();
+                }
+            });
+        }
+
+        // =======================================================
+        // 4. CLIENT-SIDE VALIDATION
+        // =======================================================
+        const form = document.getElementById('record-edit-form');
+
+        form.addEventListener('submit', function(e) {
+            let valid = true;
+            let errorMsg = [];
+
+            const pulse = parseInt(document.getElementById('id_pulse')?.value);
+            if (pulse && (pulse < 20 || pulse > 300)) {
+                errorMsg.push('Pulse must be between 20 and 300 bpm.');
+                valid = false;
+            }
+
+            const temp = parseFloat(document.getElementById('id_temperature')?.value);
+            if (temp && (temp < 32 || temp > 110)) {
+                errorMsg.push('Temperature must be between 32 and 110 °F.');
+                valid = false;
+            }
+
+            const o2 = parseInt(document.getElementById('id_oxygen_saturation')?.value);
+            if (o2 && (o2 < 50 || o2 > 100)) {
+                errorMsg.push('Oxygen saturation must be between 50 and 100%.');
+                valid = false;
+            }
+
+            const sys = parseInt(document.getElementById('id_blood_pressure_systolic')?.value);
+            const dia = parseInt(document.getElementById('id_blood_pressure_diastolic')?.value);
+            if (sys && dia && sys <= dia) {
+                errorMsg.push('Systolic blood pressure must be greater than diastolic.');
+                valid = false;
+            }
+
+            if (!valid) {
+                e.preventDefault();
+                alert('Please fix the following:\n\n• ' + errorMsg.join('\n• '));
+                const firstErr = document.querySelector('.glass-input.error');
+                if (firstErr) firstErr.focus();
+            }
+        });
+
+        // Mark invalid fields on blur (optional)
+        document.querySelectorAll('.glass-input:not([readonly])').forEach(input => {
+            input.addEventListener('blur', function() {
+                if (this.hasAttribute('required') && !this.value.trim()) {
+                    this.classList.add('error');
+                } else {
+                    this.classList.remove('error');
+                }
+            });
+            input.addEventListener('input', function() {
+                if (this.value.trim()) {
+                    this.classList.remove('error');
+                }
+            });
+        });
+
+        // =======================================================
+        // 5. AUTO-FOCUS FIRST INPUT
+        // =======================================================
+        const firstInput = document.querySelector('input:not([readonly])');
+        if (firstInput) firstInput.focus();
+
+    })();
+</script>
+{% endblock %}

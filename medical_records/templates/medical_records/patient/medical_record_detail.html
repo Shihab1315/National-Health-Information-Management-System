@@ -1,0 +1,544 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Medical Record #{{ record.id }} — NHIMS{% endblock %}
+
+{% block extra_css %}
+<style>
+    .top-navbar { display: none !important; }
+
+    .badge-active {
+        background: linear-gradient(135deg, rgba(52, 211, 153, 0.2), rgba(52, 211, 153, 0.05));
+        color: #34d399;
+        border: 1px solid rgba(52, 211, 153, 0.3);
+        box-shadow: 0 0 20px rgba(52, 211, 153, 0.08);
+    }
+    .badge-closed {
+        background: linear-gradient(135deg, rgba(96, 165, 250, 0.2), rgba(96, 165, 250, 0.05));
+        color: #60a5fa;
+        border: 1px solid rgba(96, 165, 250, 0.3);
+        box-shadow: 0 0 20px rgba(96, 165, 250, 0.08);
+    }
+    .badge-pending {
+        background: linear-gradient(135deg, rgba(251, 191, 36, 0.2), rgba(251, 191, 36, 0.05));
+        color: #fbbf24;
+        border: 1px solid rgba(251, 191, 36, 0.3);
+        box-shadow: 0 0 20px rgba(251, 191, 36, 0.08);
+    }
+    .badge-archived {
+        background: linear-gradient(135deg, rgba(156, 163, 175, 0.2), rgba(156, 163, 175, 0.05));
+        color: #9ca3af;
+        border: 1px solid rgba(156, 163, 175, 0.3);
+        box-shadow: 0 0 20px rgba(156, 163, 175, 0.08);
+    }
+
+    .detail-card {
+        transition: transform 0.2s ease, border-color 0.2s ease;
+        border: 1px solid rgba(255,255,255,0.06);
+        border-radius: 16px;
+        background: rgba(255,255,255,0.02);
+        padding: 1.25rem;
+    }
+    .detail-card:hover {
+        border-color: rgba(59,130,246,0.3);
+        transform: translateY(-2px);
+    }
+
+    .vital-card {
+        background: rgba(255,255,255,0.04);
+        border-radius: 12px;
+        padding: 0.75rem;
+        text-align: center;
+        border: 1px solid rgba(255,255,255,0.06);
+        transition: all 0.2s ease;
+    }
+    .vital-card:hover {
+        border-color: rgba(59,130,246,0.3);
+        transform: scale(1.02);
+    }
+    .vital-card .vital-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: white;
+    }
+    .vital-card .vital-label {
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        color: #94a3b8;
+        letter-spacing: 0.05em;
+    }
+
+    .table-medicines {
+        border-collapse: collapse;
+        width: 100%;
+    }
+    .table-medicines thead {
+        background: rgba(255,255,255,0.03);
+        backdrop-filter: blur(4px);
+    }
+    .table-medicines th {
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.65rem;
+        letter-spacing: 0.06em;
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid rgba(255,255,255,0.06);
+        color: #94a3b8;
+    }
+    .table-medicines td {
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid rgba(255,255,255,0.04);
+        color: #e2e8f0;
+        font-size: 0.9rem;
+    }
+    .table-medicines tbody tr:last-child td { border-bottom: none; }
+
+    .timeline-item {
+        position: relative;
+        padding-left: 2.5rem;
+        padding-bottom: 1.5rem;
+        border-left: 2px solid rgba(255,255,255,0.08);
+    }
+    .timeline-item:last-child {
+        border-left-color: transparent;
+        padding-bottom: 0;
+    }
+    .timeline-dot {
+        position: absolute;
+        left: -0.6rem;
+        top: 0.25rem;
+        width: 1rem;
+        height: 1rem;
+        border-radius: 50%;
+        border: 2px solid #0a1628;
+    }
+    .timeline-dot.blue { background: #3b82f6; }
+    .timeline-dot.emerald { background: #34d399; }
+    .timeline-dot.purple { background: #8b5cf6; }
+    .timeline-dot.amber { background: #f59e0b; }
+    .timeline-dot.rose { background: #f43f5e; }
+    .timeline-dot.green { background: #22c55e; }
+
+    .action-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 34px;
+        height: 34px;
+        border-radius: 8px;
+        background: rgba(255,255,255,0.04);
+        transition: all 0.2s ease;
+        color: #94a3b8;
+    }
+    .action-btn:hover {
+        background: rgba(255,255,255,0.1);
+        transform: scale(1.1);
+    }
+    .action-btn.view:hover { background: rgba(59,130,246,0.2); color: #60a5fa; }
+    .action-btn.download:hover { background: rgba(52,211,153,0.2); color: #34d399; }
+    .action-btn.print:hover { background: rgba(251,191,36,0.2); color: #fbbf24; }
+
+    @media print {
+        body * { visibility: hidden; }
+        #record-content, #record-content * { visibility: visible; }
+        #record-content { position: absolute; left: 0; top: 0; width: 100%; padding: 20px; background: white; color: black; }
+        #record-content .glass-card { background: white !important; border-color: #e5e7eb !important; box-shadow: none !important; }
+        #record-content .no-print { display: none !important; }
+        .no-print { display: none !important; }
+    }
+</style>
+{% endblock %}
+
+{% block navbar %}
+<nav class="fixed top-0 left-0 right-0 z-40 bg-[#0a1628]/80 backdrop-blur-sm border-b border-white/10 px-4 py-3 md:hidden">
+    <div class="flex items-center justify-between">
+        <button id="sidebarToggle" class="text-white text-2xl">
+            <i class="fas fa-bars"></i>
+        </button>
+        <span class="text-white font-semibold">NHIMS Patient</span>
+        <div class="w-8"></div>
+    </div>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="flex min-h-screen bg-[#0a1628]">
+    <!-- ===== SIDEBAR (reuse patient sidebar) ===== -->
+    <aside id="sidebar" class="fixed top-0 left-0 z-50 h-full w-72 bg-[#0d1f3c] border-r border-white/10 transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out overflow-y-auto">
+        <div class="p-4 border-b border-white/10">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 text-xl font-bold">
+                    {{ patient.full_name|slice:":1"|upper|default:"U" }}
+                </div>
+                <div>
+                    <p class="text-white font-semibold text-sm">{{ patient.full_name|default:"Patient" }}</p>
+                    <p class="text-gray-400 text-xs">Patient</p>
+                </div>
+            </div>
+        </div>
+        <nav class="p-3 space-y-1">
+            <a href="{% url 'dashboard:patient_dashboard' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
+                <i class="fas fa-th-large w-5 text-center"></i> Dashboard
+            </a>
+            <a href="{% url 'appointments:patient_appointment_list' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
+                <i class="fas fa-calendar-check w-5 text-center"></i> Appointments
+            </a>
+            <a href="{% url 'prescriptions:patient_my_prescriptions' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
+                <i class="fas fa-prescription-bottle w-5 text-center"></i> Prescriptions
+            </a>
+            <a href="{% url 'laboratory:patient_lab_history' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
+                <i class="fas fa-flask w-5 text-center"></i> Laboratory
+            </a>
+            <a href="{% url 'medical_records:patient_medical_record_list' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
+                <i class="fas fa-file-medical w-5 text-center"></i> Medical Records
+            </a>
+            <hr class="border-white/10 my-3">
+            <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition bg-blue-600/30 text-blue-300">
+                <i class="fas fa-file-medical w-5 text-center"></i> Record Detail
+            </a>
+            <a href="{% url 'notifications:center' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
+                <i class="fas fa-bell w-5 text-center"></i> Notifications
+            </a>
+            <hr class="border-white/10 my-3">
+            <a href="{% url 'patients:profile' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
+            <i class="fas fa-user-circle w-5 text-center"></i> Profile
+            </a>
+            <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
+                <i class="fas fa-cog w-5 text-center"></i> Settings
+            </a>
+            {% url 'logout' as logout_url %}
+            {% if logout_url %}
+                <a href="{{ logout_url }}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-red-400 hover:bg-red-500/10 hover:text-red-300">
+                    <i class="fas fa-sign-out-alt w-5 text-center"></i> Logout
+                </a>
+            {% else %}
+                <a href="{% url 'accounts:logout' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-red-400 hover:bg-red-500/10 hover:text-red-300">
+                    <i class="fas fa-sign-out-alt w-5 text-center"></i> Logout
+                </a>
+            {% endif %}
+        </nav>
+        <div class="absolute bottom-4 left-4 right-4 text-center text-gray-500 text-xs">
+            NHIMS v2.0
+        </div>
+    </aside>
+
+    <!-- ===== MAIN CONTENT ===== -->
+    <main class="flex-1 md:ml-72 p-4 md:p-8 space-y-6 mt-14 md:mt-0" id="record-content">
+
+        <!-- ===== BREADCRUMB ===== -->
+        <nav class="flex items-center gap-2 text-sm text-gray-400 no-print">
+            <a href="{% url 'dashboard:patient_dashboard' %}" class="hover:text-white transition">Dashboard</a>
+            <span class="text-gray-600">/</span>
+            <a href="{% url 'medical_records:patient_medical_record_list' %}" class="hover:text-white transition">Medical Records</a>
+            <span class="text-gray-600">/</span>
+            <span class="text-white">Record Detail</span>
+        </nav>
+
+        <!-- ===== HEADER CARD ===== -->
+        <div class="glass-card rounded-2xl border border-white/10 p-6 detail-card">
+            <div class="flex flex-wrap items-center justify-between gap-4">
+                <div>
+                    <h1 class="text-2xl font-bold text-white flex items-center gap-3">
+                        <span class="bg-blue-600/20 p-2.5 rounded-xl">
+                            <i class="fas fa-file-medical text-blue-400 text-xl"></i>
+                        </span>
+                        Medical Record
+                    </h1>
+                    <p class="text-gray-400 text-sm mt-1">
+                        Record #{{ record.id }} · {{ record.visit_date|date:"l, F j, Y" }}
+                    </p>
+                </div>
+                <div>
+                    <span class="inline-block px-4 py-2 rounded-full text-sm font-medium
+                        {% if record.status == 'active' %}badge-active
+                        {% elif record.status == 'closed' %}badge-closed
+                        {% elif record.status == 'pending' %}badge-pending
+                        {% elif record.status == 'archived' %}badge-archived
+                        {% else %}bg-gray-500/20 text-gray-300{% endif %}">
+                        {{ status_display|default:record.status|title }}
+                    </span>
+                </div>
+            </div>
+            <div class="mt-2 text-sm text-gray-400">
+                <span class="text-gray-500">Doctor:</span> Dr. {{ record.doctor.full_name|default:"N/A" }}
+                <span class="mx-2 text-gray-600">|</span>
+                <span class="text-gray-500">Hospital:</span> {{ record.hospital.name|default:"N/A" }}
+            </div>
+        </div>
+
+        <!-- ===== PATIENT + DOCTOR + HOSPITAL GRID ===== -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- Patient Card -->
+            <div class="glass-card rounded-2xl border border-white/10 p-5 detail-card">
+                <h3 class="text-white font-semibold text-sm flex items-center gap-2 mb-3">
+                    <i class="fas fa-user-injured text-amber-400"></i> Patient
+                </h3>
+                <p class="text-white font-medium">{{ record.patient.full_name }}</p>
+                <p class="text-gray-400 text-sm">ID: {{ record.patient.health_id|default:"N/A" }}</p>
+                <p class="text-gray-400 text-sm">
+                    Age: {% if record.patient.date_of_birth %}{{ record.patient.date_of_birth|timesince }}{% else %}N/A{% endif %}
+                </p>
+                <p class="text-gray-400 text-sm">Gender: {{ record.patient.get_gender_display|default:"N/A" }}</p>
+                <p class="text-gray-400 text-sm">Blood Group: {{ record.patient.blood_group|default:"N/A" }}</p>
+                <p class="text-gray-400 text-sm">Phone: {{ record.patient.phone|default:"N/A" }}</p>
+                <p class="text-gray-400 text-sm">Email: {{ record.patient.email|default:"N/A" }}</p>
+                <p class="text-gray-400 text-sm">Emergency: {{ record.patient.emergency_contact_name|default:"N/A" }} ({{ record.patient.emergency_contact_phone|default:"N/A" }})</p>
+            </div>
+
+            <!-- Doctor Card -->
+            <div class="glass-card rounded-2xl border border-white/10 p-5 detail-card">
+                <h3 class="text-white font-semibold text-sm flex items-center gap-2 mb-3">
+                    <i class="fas fa-user-md text-emerald-400"></i> Doctor
+                </h3>
+                <p class="text-white font-medium">Dr. {{ record.doctor.full_name|default:"N/A" }}</p>
+                <p class="text-gray-400 text-sm">{{ record.doctor.specialties.all|join:", "|default:"N/A" }}</p>
+                <p class="text-gray-400 text-sm">{{ record.doctor.qualification|default:"N/A" }}</p>
+                <p class="text-gray-400 text-sm">Room: {{ record.doctor.room_number|default:"N/A" }}</p>
+            </div>
+
+            <!-- Hospital Card -->
+            <div class="glass-card rounded-2xl border border-white/10 p-5 detail-card">
+                <h3 class="text-white font-semibold text-sm flex items-center gap-2 mb-3">
+                    <i class="fas fa-hospital text-blue-400"></i> Hospital
+                </h3>
+                <p class="text-white font-medium">{{ record.hospital.name|default:"N/A" }}</p>
+                <p class="text-gray-400 text-sm">{{ record.hospital.full_address|default:"N/A" }}</p>
+                <p class="text-gray-400 text-sm">Phone: {{ record.hospital.phone|default:"N/A" }}</p>
+                <p class="text-gray-400 text-sm">Email: {{ record.hospital.email|default:"N/A" }}</p>
+            </div>
+        </div>
+
+        <!-- ===== VISIT INFORMATION ===== -->
+        <div class="glass-card rounded-2xl border border-white/10 p-6 detail-card">
+            <h3 class="text-white font-semibold text-sm flex items-center gap-2 mb-3">
+                <i class="fas fa-calendar-check text-cyan-400"></i> Visit Information
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <p class="text-gray-400 text-xs uppercase">Visit Date</p>
+                    <p class="text-white">{{ record.visit_date|date:"l, F j, Y" }}</p>
+                </div>
+                <div>
+                    <p class="text-gray-400 text-xs uppercase">Chief Complaint</p>
+                    <p class="text-white">{{ record.chief_complaint|default:"N/A" }}</p>
+                </div>
+                <div class="md:col-span-2">
+                    <p class="text-gray-400 text-xs uppercase">Symptoms</p>
+                    <p class="text-white">{{ record.symptoms|default:"N/A" }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== DIAGNOSIS ===== -->
+        <div class="glass-card rounded-2xl border border-white/10 p-6 detail-card">
+            <h3 class="text-white font-semibold text-sm flex items-center gap-2 mb-3">
+                <i class="fas fa-stethoscope text-purple-400"></i> Diagnosis
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <p class="text-gray-400 text-xs uppercase">Primary Diagnosis</p>
+                    <p class="text-white">{{ record.diagnosis|default:"N/A" }}</p>
+                </div>
+                <div>
+                    <p class="text-gray-400 text-xs uppercase">Clinical Findings</p>
+                    <p class="text-white">{{ record.clinical_findings|default:"N/A" }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== VITAL SIGNS ===== -->
+        <div class="glass-card rounded-2xl border border-white/10 p-6 detail-card">
+            <h3 class="text-white font-semibold text-sm flex items-center gap-2 mb-3">
+                <i class="fas fa-heartbeat text-rose-400"></i> Vital Signs
+            </h3>
+            <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-3">
+                <div class="vital-card">
+                    <div class="vital-value">{{ record.height|default:"—" }}</div>
+                    <div class="vital-label">Height (cm)</div>
+                </div>
+                <div class="vital-card">
+                    <div class="vital-value">{{ record.weight|default:"—" }}</div>
+                    <div class="vital-label">Weight (kg)</div>
+                </div>
+                <div class="vital-card">
+                    <div class="vital-value">{{ record.bmi|default:"—" }}</div>
+                    <div class="vital-label">BMI</div>
+                </div>
+                <div class="vital-card">
+                    <div class="vital-value">{{ record.blood_pressure_systolic|default:"—" }}/{{ record.blood_pressure_diastolic|default:"—" }}</div>
+                    <div class="vital-label">BP (mmHg)</div>
+                </div>
+                <div class="vital-card">
+                    <div class="vital-value">{{ record.pulse|default:"—" }}</div>
+                    <div class="vital-label">Pulse (bpm)</div>
+                </div>
+                <div class="vital-card">
+                    <div class="vital-value">{{ record.respiratory_rate|default:"—" }}</div>
+                    <div class="vital-label">Resp. Rate</div>
+                </div>
+                <div class="vital-card">
+                    <div class="vital-value">{{ record.temperature|default:"—" }}°F</div>
+                    <div class="vital-label">Temperature</div>
+                </div>
+                <div class="vital-card">
+                    <div class="vital-value">{{ record.oxygen_saturation|default:"—" }}%</div>
+                    <div class="vital-label">O₂ Sat</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== DOCTOR NOTES ===== -->
+        <div class="glass-card rounded-2xl border border-white/10 p-6 detail-card">
+            <h3 class="text-white font-semibold text-sm flex items-center gap-2 mb-3">
+                <i class="fas fa-notes-medical text-amber-400"></i> Doctor Notes
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <p class="text-gray-400 text-xs uppercase">Consultation Notes</p>
+                    <p class="text-white">{{ record.doctor_notes|default:"N/A" }}</p>
+                </div>
+                <div>
+                    <p class="text-gray-400 text-xs uppercase">Treatment Plan</p>
+                    <p class="text-white">{{ record.treatment_plan|default:"N/A" }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== MEDICATIONS (if prescription exists) ===== -->
+        {% if record.prescription %}
+        <div class="glass-card rounded-2xl border border-white/10 p-6 detail-card">
+            <h3 class="text-white font-semibold text-sm flex items-center gap-2 mb-3">
+                <i class="fas fa-capsules text-rose-400"></i> Medications
+            </h3>
+            {% with medicines=record.prescription.medicines.all %}
+            {% if medicines %}
+            <div class="overflow-x-auto">
+                <table class="table-medicines">
+                    <thead>
+                        <tr>
+                            <th>Medicine</th>
+                            <th>Dosage</th>
+                            <th>Frequency</th>
+                            <th>Duration</th>
+                            <th>Instructions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in medicines %}
+                        <tr>
+                            <td class="text-white">{{ item.medicine_name }}</td>
+                            <td>{{ item.dosage|default:"—" }}</td>
+                            <td>{{ item.frequency|default:"—" }}</td>
+                            <td>{{ item.duration|default:"—" }}</td>
+                            <td>{{ item.instruction|default:"—" }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-gray-400 text-sm">No medications listed.</p>
+            {% endif %}
+            {% endwith %}
+        </div>
+        {% endif %}
+
+        <!-- ===== LABORATORY ===== -->
+        {% if record.lab_order %}
+        <div class="glass-card rounded-2xl border border-white/10 p-6 detail-card">
+            <h3 class="text-white font-semibold text-sm flex items-center gap-2 mb-3">
+                <i class="fas fa-flask text-blue-400"></i> Laboratory
+            </h3>
+            <p class="text-gray-300 text-sm">
+                <span class="text-gray-400">Order #:</span> {{ record.lab_order.order_number }}
+                <span class="mx-2 text-gray-600">|</span>
+                <span class="text-gray-400">Status:</span> {{ record.lab_order.get_status_display|default:record.lab_order.status }}
+            </p>
+            <a href="{% url 'laboratory:patient_lab_report_detail' record.lab_order.items.first.id %}" class="mt-2 inline-block text-blue-400 hover:text-blue-300 text-sm transition">
+                <i class="fas fa-eye"></i> View Lab Report
+            </a>
+        </div>
+        {% endif %}
+
+        <!-- ===== ATTACHMENTS ===== -->
+        <div class="glass-card rounded-2xl border border-white/10 p-6 detail-card">
+            <h3 class="text-white font-semibold text-sm flex items-center gap-2 mb-3">
+                <i class="fas fa-paperclip text-amber-400"></i> Attachments
+            </h3>
+            {% with attachments=record.attachments.all %}
+            {% if attachments %}
+            <div class="space-y-2">
+                {% for att in attachments %}
+                <div class="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/5">
+                    <div class="flex items-center gap-3">
+                        <i class="fas fa-file-pdf text-red-400"></i>
+                        <span class="text-white text-sm">{{ att.file.name|cut:"medical_records/" }}</span>
+                    </div>
+                    <div class="flex gap-2">
+                        <a href="{{ att.file.url }}" target="_blank" class="bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 px-3 py-1 rounded-lg text-xs transition">View</a>
+                        <a href="{{ att.file.url }}" download class="bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 px-3 py-1 rounded-lg text-xs transition">Download</a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="text-gray-400 text-sm">No attachments uploaded.</p>
+            {% endif %}
+            {% endwith %}
+        </div>
+
+        <!-- ===== TIMELINE ===== -->
+        <div class="glass-card rounded-2xl border border-white/10 p-6 detail-card">
+            <h3 class="text-white font-semibold text-sm flex items-center gap-2 mb-3">
+                <i class="fas fa-history text-purple-400"></i> Timeline
+            </h3>
+            <div class="space-y-4">
+                {% for item in timeline %}
+                <div class="timeline-item">
+                    <div class="timeline-dot {{ item.color }}"></div>
+                    <div>
+                        <p class="text-white font-medium">{{ item.stage }}</p>
+                        <p class="text-gray-400 text-sm">{{ item.date|date:"M d, Y H:i" }}</p>
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-gray-400 text-sm">No timeline available.</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- ===== ACTIONS ===== -->
+        <div class="flex flex-wrap gap-3 no-print">
+            <a href="{% url 'medical_records:patient_medical_record_list' %}" class="bg-white/5 hover:bg-white/10 px-6 py-2.5 rounded-xl text-gray-300 transition text-sm flex items-center gap-2">
+                <i class="fas fa-arrow-left"></i> Back to Records
+            </a>
+            <a href="{% url 'medical_records:download_medical_record_pdf' record.pk %}" class="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2.5 rounded-xl text-sm font-medium transition shadow-lg shadow-emerald-500/30 flex items-center gap-2">
+    <i class="fas fa-download"></i> Download PDF
+</a>
+            <button onclick="window.print()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-xl text-sm font-medium transition shadow-lg shadow-blue-500/30 flex items-center gap-2">
+              <i class="fas fa-print"></i> Print
+           </button>
+        </div>
+
+    </main>
+</div>
+
+<!-- ===== SIDEBAR TOGGLE ===== -->
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const sidebar = document.getElementById('sidebar');
+        const toggleBtn = document.getElementById('sidebarToggle');
+        if (toggleBtn && sidebar) {
+            toggleBtn.addEventListener('click', function () {
+                sidebar.classList.toggle('-translate-x-full');
+            });
+            document.addEventListener('click', function (event) {
+                const isClickInside = sidebar.contains(event.target) || toggleBtn.contains(event.target);
+                if (!isClickInside && window.innerWidth < 768) {
+                    sidebar.classList.add('-translate-x-full');
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

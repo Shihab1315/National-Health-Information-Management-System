@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medical Record #{{ record.id }} — NHIMS</title>
+    <style>
+        /* Reset and base styles */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Helvetica', 'Arial', sans-serif;
+            background: white;
+            color: #1a202c;
+            padding: 20px;
+            line-height: 1.5;
+        }
+        .report-container {
+            max-width: 210mm;
+            margin: 0 auto;
+            background: white;
+            padding: 10mm;
+        }
+        /* Header */
+        .report-header {
+            text-align: center;
+            border-bottom: 3px solid #2b6cb0;
+            padding-bottom: 12px;
+            margin-bottom: 20px;
+        }
+        .report-header h1 {
+            font-size: 22px;
+            color: #2b6cb0;
+            margin: 0;
+        }
+        .report-header .subtitle {
+            font-size: 14px;
+            color: #4a5568;
+            margin-top: 4px;
+        }
+        .report-header .hospital-info {
+            font-size: 12px;
+            color: #4a5568;
+            margin-top: 2px;
+        }
+        .report-title {
+            text-align: center;
+            font-size: 20px;
+            font-weight: bold;
+            color: #2b6cb0;
+            margin-bottom: 16px;
+        }
+
+        /* Sections */
+        .section-title {
+            font-weight: bold;
+            font-size: 13px;
+            color: #2b6cb0;
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 4px;
+            margin-top: 16px;
+            margin-bottom: 8px;
+        }
+        .info-row {
+            display: flex;
+            padding: 3px 0;
+            border-bottom: 1px solid #f7fafc;
+            font-size: 11px;
+        }
+        .info-row .label {
+            width: 30%;
+            font-weight: 600;
+            color: #4a5568;
+        }
+        .info-row .value {
+            width: 70%;
+            color: #2d3748;
+        }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 11px;
+            margin-top: 6px;
+        }
+        th {
+            background: #edf2f7;
+            font-weight: 600;
+            padding: 6px 8px;
+            border: 1px solid #cbd5e0;
+            text-align: left;
+        }
+        td {
+            padding: 6px 8px;
+            border: 1px solid #cbd5e0;
+        }
+
+        /* QR Code */
+        .qr-container {
+            text-align: right;
+            margin-top: 12px;
+        }
+        .qr-container img {
+            max-width: 100px;
+            height: auto;
+        }
+
+        /* Footer */
+        .report-footer {
+            margin-top: 24px;
+            border-top: 2px dashed #cbd5e0;
+            padding-top: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            font-size: 11px;
+        }
+        .signature-area {
+            text-align: left;
+        }
+        .signature-line {
+            margin-top: 30px;
+            width: 150px;
+            border-top: 1px solid #a0aec0;
+        }
+        .seal-area {
+            text-align: right;
+        }
+        .seal-placeholder {
+            width: 80px;
+            height: 80px;
+            border: 2px dashed #a0aec0;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            color: #a0aec0;
+        }
+        .generated-info {
+            text-align: center;
+            font-size: 10px;
+            color: #718096;
+            margin-top: 12px;
+            border-top: 1px solid #e2e8f0;
+            padding-top: 10px;
+        }
+        .confidential {
+            font-style: italic;
+            color: #718096;
+        }
+
+        /* Vital signs grid */
+        .vital-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 6px;
+            margin: 6px 0;
+        }
+        .vital-item {
+            background: #f7fafc;
+            padding: 4px 8px;
+            border-radius: 4px;
+            text-align: center;
+            font-size: 11px;
+            border: 1px solid #e2e8f0;
+        }
+        .vital-item .vital-value {
+            font-weight: 700;
+            font-size: 13px;
+            color: #1a202c;
+        }
+        .vital-item .vital-label {
+            color: #4a5568;
+        }
+
+        /* Print-specific overrides */
+        @media print {
+            body { padding: 0; background: white; }
+            .report-container { padding: 5mm; max-width: 100%; }
+            .no-print { display: none !important; }
+            .page-break { page-break-after: always; }
+        }
+
+        /* Hide buttons and navigation */
+        .no-print { display: none; }
+    </style>
+</head>
+<body>
+    <div class="report-container" id="record-content">
+
+        <!-- ===== HEADER ===== -->
+        <div class="report-header">
+            <h1>{{ record.hospital.name|default:"NHIMS Hospital" }}</h1>
+            <div class="hospital-info">
+                {{ record.hospital.full_address|default:"Dhaka, Bangladesh" }}<br>
+                Phone: {{ record.hospital.phone|default:"+880 1234 567890" }} &nbsp;|&nbsp; Email: {{ record.hospital.email|default:"info@nhims.gov.bd" }}
+            </div>
+            <div class="subtitle">National Health Information Management System (NHIMS)</div>
+        </div>
+
+        <div class="report-title">MEDICAL RECORD</div>
+
+        <!-- ===== RECORD INFORMATION ===== -->
+        <div class="section-title">Record Information</div>
+        <div class="info-row"><span class="label">Record Number</span><span class="value">{{ record.id }}</span></div>
+        <div class="info-row"><span class="label">Visit Date</span><span class="value">{{ record.visit_date|date:"F d, Y" }}</span></div>
+        <div class="info-row"><span class="label">Status</span><span class="value">{{ status_display|default:record.status|title }}</span></div>
+
+        <!-- ===== PATIENT INFORMATION ===== -->
+        <div class="section-title">Patient Information</div>
+        <div class="info-row"><span class="label">Name</span><span class="value">{{ record.patient.full_name }}</span></div>
+        <div class="info-row"><span class="label">Patient ID</span><span class="value">{{ record.patient.health_id|default:"N/A" }}</span></div>
+        <div class="info-row"><span class="label">Age</span><span class="value">
+            {% if record.patient.date_of_birth %}{{ record.patient.date_of_birth|timesince }}{% else %}N/A{% endif %}
+        </span></div>
+        <div class="info-row"><span class="label">Gender</span><span class="value">{{ record.patient.get_gender_display|default:"N/A" }}</span></div>
+        <div class="info-row"><span class="label">Blood Group</span><span class="value">{{ record.patient.blood_group|default:"N/A" }}</span></div>
+        <div class="info-row"><span class="label">Phone</span><span class="value">{{ record.patient.phone|default:"N/A" }}</span></div>
+        <div class="info-row"><span class="label">Emergency Contact</span><span class="value">{{ record.patient.emergency_contact_name|default:"N/A" }} ({{ record.patient.emergency_contact_phone|default:"N/A" }})</span></div>
+
+        <!-- ===== DOCTOR INFORMATION ===== -->
+        <div class="section-title">Doctor Information</div>
+        <div class="info-row"><span class="label">Name</span><span class="value">Dr. {{ record.doctor.full_name|default:"N/A" }}</span></div>
+        <div class="info-row"><span class="label">Specialization</span><span class="value">{{ record.doctor.specialties.all|join:", "|default:"N/A" }}</span></div>
+        <div class="info-row"><span class="label">Qualification</span><span class="value">{{ record.doctor.qualification|default:"N/A" }}</span></div>
+
+        <!-- ===== HOSPITAL INFORMATION ===== -->
+        <div class="section-title">Hospital Information</div>
+        <div class="info-row"><span class="label">Name</span><span class="value">{{ record.hospital.name|default:"N/A" }}</span></div>
+        <div class="info-row"><span class="label">Address</span><span class="value">{{ record.hospital.full_address|default:"N/A" }}</span></div>
+        <div class="info-row"><span class="label">Phone</span><span class="value">{{ record.hospital.phone|default:"N/A" }}</span></div>
+
+        <!-- ===== VISIT INFORMATION ===== -->
+        <div class="section-title">Visit Information</div>
+        <div class="info-row"><span class="label">Visit Date</span><span class="value">{{ record.visit_date|date:"F d, Y" }}</span></div>
+        <div class="info-row"><span class="label">Chief Complaint</span><span class="value">{{ record.chief_complaint|default:"N/A" }}</span></div>
+        <div class="info-row"><span class="label">Symptoms</span><span class="value">{{ record.symptoms|default:"N/A" }}</span></div>
+
+        <!-- ===== DIAGNOSIS ===== -->
+        <div class="section-title">Diagnosis</div>
+        <div class="info-row"><span class="label">Primary Diagnosis</span><span class="value">{{ record.diagnosis|default:"N/A" }}</span></div>
+        <div class="info-row"><span class="label">Clinical Findings</span><span class="value">{{ record.clinical_findings|default:"N/A" }}</span></div>
+
+        <!-- ===== VITAL SIGNS ===== -->
+        <div class="section-title">Vital Signs</div>
+        <div class="vital-grid">
+            <div class="vital-item"><div class="vital-value">{{ record.height|default:"—" }}</div><div class="vital-label">Height (cm)</div></div>
+            <div class="vital-item"><div class="vital-value">{{ record.weight|default:"—" }}</div><div class="vital-label">Weight (kg)</div></div>
+            <div class="vital-item"><div class="vital-value">{{ record.bmi|default:"—" }}</div><div class="vital-label">BMI</div></div>
+            <div class="vital-item"><div class="vital-value">{{ record.blood_pressure_systolic|default:"—" }}/{{ record.blood_pressure_diastolic|default:"—" }}</div><div class="vital-label">BP (mmHg)</div></div>
+            <div class="vital-item"><div class="vital-value">{{ record.pulse|default:"—" }}</div><div class="vital-label">Pulse (bpm)</div></div>
+            <div class="vital-item"><div class="vital-value">{{ record.respiratory_rate|default:"—" }}</div><div class="vital-label">Resp. Rate</div></div>
+            <div class="vital-item"><div class="vital-value">{{ record.temperature|default:"—" }}°F</div><div class="vital-label">Temperature</div></div>
+            <div class="vital-item"><div class="vital-value">{{ record.oxygen_saturation|default:"—" }}%</div><div class="vital-label">O₂ Sat</div></div>
+        </div>
+
+        <!-- ===== DOCTOR NOTES ===== -->
+        <div class="section-title">Doctor Notes</div>
+        <div class="info-row"><span class="label">Consultation Notes</span><span class="value">{{ record.doctor_notes|default:"N/A" }}</span></div>
+        <div class="info-row"><span class="label">Treatment Plan</span><span class="value">{{ record.treatment_plan|default:"N/A" }}</span></div>
+
+        <!-- ===== MEDICATIONS ===== -->
+        {% if record.prescription %}
+        <div class="section-title">Medications</div>
+        {% with medicines=record.prescription.medicines.all %}
+        {% if medicines %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Medicine</th>
+                    <th>Dosage</th>
+                    <th>Frequency</th>
+                    <th>Duration</th>
+                    <th>Instructions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in medicines %}
+                <tr>
+                    <td>{{ item.medicine_name }}</td>
+                    <td>{{ item.dosage|default:"—" }}</td>
+                    <td>{{ item.frequency|default:"—" }}</td>
+                    <td>{{ item.duration|default:"—" }}</td>
+                    <td>{{ item.instruction|default:"—" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="info-row"><span class="label">No medications listed.</span></div>
+        {% endif %}
+        {% endwith %}
+        {% endif %}
+
+        <!-- ===== LABORATORY ===== -->
+        {% if record.lab_order %}
+        <div class="section-title">Laboratory</div>
+        <div class="info-row"><span class="label">Order #</span><span class="value">{{ record.lab_order.order_number }}</span></div>
+        <div class="info-row"><span class="label">Status</span><span class="value">{{ record.lab_order.get_status_display|default:record.lab_order.status }}</span></div>
+        {% if record.lab_order.items.all %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Test</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in record.lab_order.items.all %}
+                <tr>
+                    <td>{{ item.test.name|default:"N/A" }}</td>
+                    <td>{{ item.get_status_display|default:item.status|default:"N/A" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% endif %}
+        {% endif %}
+
+        <!-- ===== PRESCRIPTIONS ===== -->
+        {% if record.prescription %}
+        <div class="section-title">Prescription</div>
+        <div class="info-row"><span class="label">Number</span><span class="value">{{ record.prescription.prescription_number }}</span></div>
+        <div class="info-row"><span class="label">Date</span><span class="value">{{ record.prescription.created_at|date:"F d, Y" }}</span></div>
+        <div class="info-row"><span class="label">Status</span><span class="value">{{ record.prescription.get_status_display|default:record.prescription.status }}</span></div>
+        {% endif %}
+
+        <!-- ===== ATTACHMENTS ===== -->
+        {% if record.attachments.all %}
+        <div class="section-title">Attachments</div>
+        <div class="info-row"><span class="label">Files</span><span class="value">
+            {% for att in record.attachments.all %}
+                {{ att.file.name|cut:"medical_records/" }}{% if not forloop.last %}, {% endif %}
+            {% endfor %}
+        </span></div>
+        {% endif %}
+
+        <!-- ===== QR CODE ===== -->
+        <div class="qr-container">
+            <img src="{{ qr_image_data }}" alt="QR Code">
+        </div>
+
+        <!-- ===== FOOTER ===== -->
+        <div class="report-footer">
+            <div class="signature-area">
+                <div><strong>Doctor Signature</strong></div>
+                <div class="signature-line"></div>
+                <div style="font-size:10px; margin-top:4px;">{{ record.doctor.full_name|default:"N/A" }}</div>
+            </div>
+            <div class="seal-area">
+                <div><strong>Hospital Seal</strong></div>
+                <div class="seal-placeholder">SEAL</div>
+            </div>
+        </div>
+
+        <div class="generated-info">
+            Generated by NHIMS • {{ current_date|date:"F d, Y H:i" }} • Medical Record #{{ record.id }}
+            <br>
+            <span class="confidential">This is a confidential medical document.</span>
+        </div>
+
+        <!-- ===== BACK BUTTON (only visible on screen, not print) ===== -->
+        <div class="no-print" style="text-align:center; margin-top:20px;">
+            <a href="{% url 'medical_records:patient_medical_record_detail' record.pk %}" class="no-print" style="display:inline-block; background:#2b6cb0; color:white; padding:8px 20px; border-radius:6px; text-decoration:none; font-size:14px;">
+                ← Back to Record
+            </a>
+        </div>
+
+    </div>
+
+    <!-- ===== AUTO-PRINT SCRIPT ===== -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            window.print();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,614 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ title|default:"Prescription" }} - NHIMS{% endblock %}
+
+{% block extra_head %}
+<style>
+  select option {
+    color: #e2e8f0 !important;
+    background-color: #1e293b !important;
+  }
+  .custom-select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%2394a3b8' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+    background-position: right 0.75rem center;
+    background-repeat: no-repeat;
+    background-size: 1.25rem 1.25rem;
+    padding-right: 2.5rem;
+    appearance: none;
+  }
+  .form-check-input {
+    background-color: #1e293b;
+    border-color: #475569;
+  }
+  .form-check-input:checked {
+    background-color: #3b82f6;
+    border-color: #3b82f6;
+  }
+  /* Hide the empty form template */
+  #empty-form-template {
+    display: none;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="bg-slate-900 min-h-screen py-8 px-4 sm:px-6 lg:px-8">
+  <div class="max-w-5xl mx-auto">
+    <!-- Breadcrumb -->
+    <nav class="flex items-center text-sm text-slate-400 mb-6" aria-label="Breadcrumb">
+      <a href="/" class="hover:text-blue-400 transition">
+        <i class="fas fa-home mr-1"></i> Dashboard
+      </a>
+      <span class="mx-2 text-slate-600">/</span>
+      <a href="{% url 'prescriptions:list' %}" class="hover:text-blue-400 transition">Prescriptions</a>
+      <span class="mx-2 text-slate-600">/</span>
+      <span class="text-slate-200 font-medium">{{ title|default:"Prescription" }}</span>
+    </nav>
+
+    <!-- Page Header -->
+    <div class="flex flex-wrap items-center justify-between gap-4 mb-8">
+      <div>
+        <h1 class="text-3xl font-bold text-white flex items-center gap-3">
+          <span class="bg-blue-600 p-3 rounded-xl shadow-lg shadow-blue-900/30">
+            <i class="fas fa-prescription-bottle text-white text-xl"></i>
+          </span>
+          {{ title|default:"Prescription" }}
+        </h1>
+        <p class="text-slate-400 mt-1 ml-1">{{ subtitle|default:"" }}</p>
+      </div>
+      <a href="{% url 'prescriptions:list' %}" class="inline-flex items-center gap-2 px-5 py-2.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl transition shadow-sm text-slate-300 font-medium">
+        <i class="fas fa-arrow-left"></i> Back to List
+      </a>
+    </div>
+
+    <!-- Main Card -->
+    <div class="bg-slate-800 rounded-2xl shadow-xl overflow-hidden">
+      <!-- Card Header -->
+      <div class="bg-gradient-to-r from-blue-600 to-blue-700 px-8 py-6">
+        <div class="flex items-center gap-4">
+          <div class="bg-white/20 backdrop-blur p-3 rounded-xl">
+            <i class="fas fa-clipboard-list text-white text-2xl"></i>
+          </div>
+          <div>
+            <h2 class="text-xl font-bold text-white">{{ title|default:"Prescription" }}</h2>
+            <p class="text-blue-100 text-sm">{{ subtitle|default:"" }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card Body -->
+      <div class="p-8">
+        <form id="prescriptionForm" method="post" novalidate>
+          {% csrf_token %}
+
+          <!-- Global errors -->
+          {% if form.non_field_errors %}
+            <div class="bg-red-900/30 border-l-4 border-red-500 p-4 rounded-xl mb-6">
+              {% for error in form.non_field_errors %}
+                <p class="text-red-300"><i class="fas fa-exclamation-circle mr-2"></i>{{ error }}</p>
+              {% endfor %}
+            </div>
+          {% endif %}
+
+          <!-- Auto‑populated readonly fields (hidden) -->
+          <div class="hidden">
+            {{ form.hospital }}
+            {{ form.doctor }}
+            {{ form.patient }}
+          </div>
+
+          <!-- Two‑column grid for main fields -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <!-- Left Column -->
+            <div class="space-y-4">
+              <!-- Appointment -->
+              <div>
+                <label for="{{ form.appointment.id_for_label }}" class="block text-sm font-semibold text-slate-300 mb-1.5">
+                  {{ form.appointment.label }} <span class="text-red-400">*</span>
+                </label>
+                <div class="relative">
+                  <i class="fas fa-calendar-check absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"></i>
+                  {{ form.appointment }}
+                </div>
+                <div class="text-red-400 text-sm mt-1 hidden" id="appointmentError"></div>
+                <p class="text-xs text-slate-500 mt-1">{{ form.appointment.help_text }}</p>
+              </div>
+
+              <!-- Auto‑populated fields (readonly display) -->
+              <div class="grid grid-cols-3 gap-3 bg-slate-700/30 rounded-xl p-4">
+                <div>
+                  <p class="text-xs text-slate-400 font-medium">Hospital</p>
+                  <p id="displayHospital" class="text-sm text-slate-200">—</p>
+                </div>
+                <div>
+                  <p class="text-xs text-slate-400 font-medium">Doctor</p>
+                  <p id="displayDoctor" class="text-sm text-slate-200">—</p>
+                </div>
+                <div>
+                  <p class="text-xs text-slate-400 font-medium">Patient</p>
+                  <p id="displayPatient" class="text-sm text-slate-200">—</p>
+                </div>
+              </div>
+
+              <!-- Diagnosis -->
+              <div>
+                <label for="{{ form.diagnosis.id_for_label }}" class="block text-sm font-semibold text-slate-300 mb-1.5">
+                  {{ form.diagnosis.label }} <span class="text-red-400">*</span>
+                </label>
+                <div class="relative">
+                  <i class="fas fa-stethoscope absolute left-3 top-4 text-slate-500"></i>
+                  {{ form.diagnosis }}
+                </div>
+                <p class="text-xs text-slate-500 mt-1">{{ form.diagnosis.help_text }}</p>
+                {% for error in form.diagnosis.errors %}
+                  <p class="text-red-400 text-sm mt-1">{{ error }}</p>
+                {% endfor %}
+              </div>
+
+              <!-- Symptoms -->
+              <div>
+                <label for="{{ form.symptoms.id_for_label }}" class="block text-sm font-semibold text-slate-300 mb-1.5">
+                  {{ form.symptoms.label }}
+                </label>
+                <div class="relative">
+                  <i class="fas fa-notes-medical absolute left-3 top-4 text-slate-500"></i>
+                  {{ form.symptoms }}
+                </div>
+                <p class="text-xs text-slate-500 mt-1">{{ form.symptoms.help_text }}</p>
+                {% for error in form.symptoms.errors %}
+                  <p class="text-red-400 text-sm mt-1">{{ error }}</p>
+                {% endfor %}
+              </div>
+
+              <!-- Clinical Notes -->
+              <div>
+                <label for="{{ form.clinical_notes.id_for_label }}" class="block text-sm font-semibold text-slate-300 mb-1.5">
+                  {{ form.clinical_notes.label }}
+                </label>
+                <div class="relative">
+                  <i class="fas fa-file-medical-alt absolute left-3 top-4 text-slate-500"></i>
+                  {{ form.clinical_notes }}
+                </div>
+                <p class="text-xs text-slate-500 mt-1">{{ form.clinical_notes.help_text }}</p>
+                {% for error in form.clinical_notes.errors %}
+                  <p class="text-red-400 text-sm mt-1">{{ error }}</p>
+                {% endfor %}
+              </div>
+            </div>
+
+            <!-- Right Column -->
+            <div class="space-y-4">
+              <!-- Advice -->
+              <div>
+                <label for="{{ form.advice.id_for_label }}" class="block text-sm font-semibold text-slate-300 mb-1.5">
+                  {{ form.advice.label }}
+                </label>
+                <div class="relative">
+                  <i class="fas fa-lightbulb absolute left-3 top-4 text-slate-500"></i>
+                  {{ form.advice }}
+                </div>
+                <p class="text-xs text-slate-500 mt-1">{{ form.advice.help_text }}</p>
+                {% for error in form.advice.errors %}
+                  <p class="text-red-400 text-sm mt-1">{{ error }}</p>
+                {% endfor %}
+              </div>
+
+              <!-- Follow-up Date -->
+              <div>
+                <label for="{{ form.follow_up_date.id_for_label }}" class="block text-sm font-semibold text-slate-300 mb-1.5">
+                  {{ form.follow_up_date.label }}
+                </label>
+                <div class="relative">
+                  <i class="fas fa-calendar-plus absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"></i>
+                  {{ form.follow_up_date }}
+                </div>
+                <p class="text-xs text-slate-500 mt-1">{{ form.follow_up_date.help_text }}</p>
+                {% for error in form.follow_up_date.errors %}
+                  <p class="text-red-400 text-sm mt-1">{{ error }}</p>
+                {% endfor %}
+              </div>
+
+              <!-- Status -->
+              <div>
+                <label for="{{ form.status.id_for_label }}" class="block text-sm font-semibold text-slate-300 mb-1.5">
+                  {{ form.status.label }} <span class="text-red-400">*</span>
+                </label>
+                <div class="relative">
+                  <i class="fas fa-circle absolute left-3 top-1/2 -translate-y-1/2 text-blue-500"></i>
+                  {{ form.status }}
+                </div>
+                <p class="text-xs text-slate-500 mt-1">{{ form.status.help_text }}</p>
+                {% for error in form.status.errors %}
+                  <p class="text-red-400 text-sm mt-1">{{ error }}</p>
+                {% endfor %}
+              </div>
+
+              <!-- Prescription Number (readonly) -->
+              <div>
+                <label class="block text-sm font-semibold text-slate-300 mb-1.5">Prescription Number</label>
+                <div class="relative">
+                  <i class="fas fa-hashtag absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"></i>
+                  <input type="text" id="displayPrescriptionNumber" value="{% if form.instance.prescription_number %}{{ form.instance.prescription_number }}{% else %}Will be auto-generated{% endif %}"
+                         class="w-full rounded-xl border border-slate-600 bg-slate-700/30 text-slate-400 py-3 pl-10 pr-4 shadow-sm cursor-not-allowed" readonly>
+                </div>
+                <p class="text-xs text-slate-500 mt-1">Auto-generated after saving</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Medicine Formset -->
+          <div class="border-t border-slate-700 pt-6 mt-6">
+            <div class="flex justify-between items-center mb-4">
+              <h3 class="text-lg font-semibold text-white flex items-center gap-2">
+                <i class="fas fa-pills text-blue-400"></i> Medicines
+              </h3>
+              <button type="button" id="addMedicineBtn" class="inline-flex items-center gap-1 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm transition">
+                <i class="fas fa-plus"></i> Add Medicine
+              </button>
+            </div>
+
+            <div id="medicineFormsetContainer">
+              {{ medicine_formset.management_form }}
+
+              <!-- Existing forms -->
+              {% for formset_form in medicine_formset %}
+                <div class="medicine-formset-row bg-slate-700/30 rounded-xl p-4 mb-4 relative border border-slate-600">
+                  {{ formset_form.id }}
+                  {{ formset_form.DELETE }}
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div>
+                      <label class="block text-sm font-medium text-slate-300 mb-1">{{ formset_form.medicine_name.label }}</label>
+                      {{ formset_form.medicine_name }}
+                    </div>
+                    <div>
+                      <label class="block text-sm font-medium text-slate-300 mb-1">{{ formset_form.dosage.label }}</label>
+                      {{ formset_form.dosage }}
+                    </div>
+                    <div>
+                      <label class="block text-sm font-medium text-slate-300 mb-1">{{ formset_form.frequency.label }}</label>
+                      {{ formset_form.frequency }}
+                    </div>
+                    <div>
+                      <label class="block text-sm font-medium text-slate-300 mb-1">{{ formset_form.duration.label }}</label>
+                      {{ formset_form.duration }}
+                    </div>
+                    <div>
+                      <label class="block text-sm font-medium text-slate-300 mb-1">{{ formset_form.route.label }}</label>
+                      {{ formset_form.route }}
+                    </div>
+                    <div>
+                      <label class="block text-sm font-medium text-slate-300 mb-1">{{ formset_form.instruction.label }}</label>
+                      {{ formset_form.instruction }}
+                    </div>
+                    <div class="col-span-1 md:col-span-2">
+                      <label class="block text-sm font-medium text-slate-300 mb-1">Timing</label>
+                      <div class="flex flex-wrap gap-4">
+                        <label class="flex items-center gap-1 text-sm text-slate-300">
+                          {{ formset_form.before_food }} Before Food
+                        </label>
+                        <label class="flex items-center gap-1 text-sm text-slate-300">
+                          {{ formset_form.after_food }} After Food
+                        </label>
+                        <label class="flex items-center gap-1 text-sm text-slate-300">
+                          {{ formset_form.morning }} Morning
+                        </label>
+                        <label class="flex items-center gap-1 text-sm text-slate-300">
+                          {{ formset_form.afternoon }} Afternoon
+                        </label>
+                        <label class="flex items-center gap-1 text-sm text-slate-300">
+                          {{ formset_form.night }} Night
+                        </label>
+                      </div>
+                    </div>
+                    <div class="col-span-1 md:col-span-2">
+                      <label class="block text-sm font-medium text-slate-300 mb-1">{{ formset_form.notes.label }}</label>
+                      {{ formset_form.notes }}
+                    </div>
+                  </div>
+                  <button type="button" class="remove-medicine-btn absolute top-2 right-2 text-red-400 hover:text-red-300 transition">
+                    <i class="fas fa-times"></i>
+                  </button>
+                </div>
+              {% endfor %}
+
+              <!-- Empty form template (hidden, for cloning) -->
+              <div id="empty-form-template">
+                <div class="medicine-formset-row bg-slate-700/30 rounded-xl p-4 mb-4 relative border border-slate-600">
+                  {{ medicine_formset.empty_form.id }}
+                  {{ medicine_formset.empty_form.DELETE }}
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div>
+                      <label class="block text-sm font-medium text-slate-300 mb-1">{{ medicine_formset.empty_form.medicine_name.label }}</label>
+                      {{ medicine_formset.empty_form.medicine_name }}
+                    </div>
+                    <div>
+                      <label class="block text-sm font-medium text-slate-300 mb-1">{{ medicine_formset.empty_form.dosage.label }}</label>
+                      {{ medicine_formset.empty_form.dosage }}
+                    </div>
+                    <div>
+                      <label class="block text-sm font-medium text-slate-300 mb-1">{{ medicine_formset.empty_form.frequency.label }}</label>
+                      {{ medicine_formset.empty_form.frequency }}
+                    </div>
+                    <div>
+                      <label class="block text-sm font-medium text-slate-300 mb-1">{{ medicine_formset.empty_form.duration.label }}</label>
+                      {{ medicine_formset.empty_form.duration }}
+                    </div>
+                    <div>
+                      <label class="block text-sm font-medium text-slate-300 mb-1">{{ medicine_formset.empty_form.route.label }}</label>
+                      {{ medicine_formset.empty_form.route }}
+                    </div>
+                    <div>
+                      <label class="block text-sm font-medium text-slate-300 mb-1">{{ medicine_formset.empty_form.instruction.label }}</label>
+                      {{ medicine_formset.empty_form.instruction }}
+                    </div>
+                    <div class="col-span-1 md:col-span-2">
+                      <label class="block text-sm font-medium text-slate-300 mb-1">Timing</label>
+                      <div class="flex flex-wrap gap-4">
+                        <label class="flex items-center gap-1 text-sm text-slate-300">
+                          {{ medicine_formset.empty_form.before_food }} Before Food
+                        </label>
+                        <label class="flex items-center gap-1 text-sm text-slate-300">
+                          {{ medicine_formset.empty_form.after_food }} After Food
+                        </label>
+                        <label class="flex items-center gap-1 text-sm text-slate-300">
+                          {{ medicine_formset.empty_form.morning }} Morning
+                        </label>
+                        <label class="flex items-center gap-1 text-sm text-slate-300">
+                          {{ medicine_formset.empty_form.afternoon }} Afternoon
+                        </label>
+                        <label class="flex items-center gap-1 text-sm text-slate-300">
+                          {{ medicine_formset.empty_form.night }} Night
+                        </label>
+                      </div>
+                    </div>
+                    <div class="col-span-1 md:col-span-2">
+                      <label class="block text-sm font-medium text-slate-300 mb-1">{{ medicine_formset.empty_form.notes.label }}</label>
+                      {{ medicine_formset.empty_form.notes }}
+                    </div>
+                  </div>
+                  <button type="button" class="remove-medicine-btn absolute top-2 right-2 text-red-400 hover:text-red-300 transition">
+                    <i class="fas fa-times"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Form Actions -->
+          <div class="flex flex-wrap items-center justify-end gap-4 mt-8 pt-6 border-t border-slate-700">
+            <a href="{% url 'prescriptions:list' %}" class="inline-flex items-center gap-2 px-6 py-2.5 border border-slate-600 rounded-xl hover:bg-slate-700 transition shadow-sm text-slate-300 font-medium">
+              <i class="fas fa-times"></i> Cancel
+            </a>
+            <button type="submit" id="submitBtn" class="inline-flex items-center gap-2 px-8 py-3 bg-blue-600 hover:bg-blue-700 active:scale-95 transition duration-200 rounded-xl shadow-lg shadow-blue-900/30 text-white font-semibold">
+              <i class="fas fa-save"></i> {{ button_text|default:"Save Prescription" }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast Container -->
+<div id="toast-container" class="fixed bottom-5 right-5 z-[9999] flex flex-col gap-2"></div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  (function() {
+    'use strict';
+
+    // ---------- DOM refs ----------
+    const form = document.getElementById('prescriptionForm');
+    const submitBtn = document.getElementById('submitBtn');
+    const appointmentSelect = document.getElementById('{{ form.appointment.id_for_label }}');
+    const displayHospital = document.getElementById('displayHospital');
+    const displayDoctor = document.getElementById('displayDoctor');
+    const displayPatient = document.getElementById('displayPatient');
+    const medicineContainer = document.getElementById('medicineFormsetContainer');
+    const addMedicineBtn = document.getElementById('addMedicineBtn');
+    const totalForms = document.getElementById('id_medicines-TOTAL_FORMS');
+    const emptyFormTemplate = document.getElementById('empty-form-template');
+
+    // ---------- Auto‑populate appointment data ----------
+    function populateAppointmentData(appointmentId) {
+      if (!appointmentId) {
+        displayHospital.textContent = '—';
+        displayDoctor.textContent = '—';
+        displayPatient.textContent = '—';
+        return;
+      }
+      fetch(`{% url 'prescriptions:appointment_data' %}?appointment_id=${appointmentId}`)
+        .then(res => {
+          if (!res.ok) throw new Error('Network error');
+          return res.json();
+        })
+        .then(data => {
+          displayHospital.textContent = data.hospital_name || '—';
+          displayDoctor.textContent = data.doctor_name || '—';
+          displayPatient.textContent = data.patient_name || '—';
+        })
+        .catch(() => {
+          displayHospital.textContent = 'Error loading data';
+          displayDoctor.textContent = 'Error loading data';
+          displayPatient.textContent = 'Error loading data';
+          showToast('Failed to load appointment details', 'error');
+        });
+    }
+
+    if (appointmentSelect) {
+      appointmentSelect.addEventListener('change', function() {
+        populateAppointmentData(this.value);
+      });
+      // Trigger on page load if there's a pre‑selected appointment (edit mode)
+      if (appointmentSelect.value) {
+        populateAppointmentData(appointmentSelect.value);
+      }
+    }
+
+    // ---------- Medicine formset add/remove ----------
+    function updateFormIndexes() {
+      const rows = medicineContainer.querySelectorAll('.medicine-formset-row:not([style*="display: none"])');
+      const total = rows.length;
+      totalForms.value = total;
+      rows.forEach((row, index) => {
+        // Update all inputs with name/id containing medicine-{oldIndex}
+        row.querySelectorAll('input, select, textarea, label').forEach(el => {
+          if (el.name) {
+            el.name = el.name.replace(/medicines-\d+-(.+)/, `medicines-${index}-$1`);
+          }
+          if (el.id) {
+            el.id = el.id.replace(/id_medicines-\d+-(.+)/, `id_medicines-${index}-$1`);
+          }
+          if (el.htmlFor) {
+            el.htmlFor = el.htmlFor.replace(/id_medicines-\d+-(.+)/, `id_medicines-${index}-$1`);
+          }
+        });
+        // Also update the DELETE input (hidden) if exists
+        const deleteInput = row.querySelector('input[name$="-DELETE"]');
+        if (deleteInput) {
+          deleteInput.name = deleteInput.name.replace(/medicines-\d+-DELETE/, `medicines-${index}-DELETE`);
+        }
+      });
+    }
+
+    function addMedicineRow() {
+      if (!emptyFormTemplate) return;
+      const templateContent = emptyFormTemplate.innerHTML;
+      // Create a new row by cloning the template content
+      const newRow = document.createElement('div');
+      newRow.innerHTML = templateContent;
+      const rowElement = newRow.firstElementChild;
+      if (!rowElement) return;
+
+      // Clear values (optional)
+      rowElement.querySelectorAll('input, select, textarea').forEach(el => {
+        if (el.type !== 'checkbox' && el.type !== 'hidden') {
+          el.value = '';
+        } else if (el.type === 'checkbox') {
+          el.checked = false;
+        }
+      });
+      // Remove any error messages
+      rowElement.querySelectorAll('.text-red-400').forEach(el => el.remove());
+
+      // Append to container
+      medicineContainer.insertBefore(rowElement, emptyFormTemplate);
+      updateFormIndexes();
+    }
+
+    function removeMedicineRow(btn) {
+      const row = btn.closest('.medicine-formset-row');
+      if (!row) return;
+      const deleteInput = row.querySelector('input[name$="-DELETE"]');
+      if (deleteInput) {
+        // mark for deletion (existing row)
+        deleteInput.checked = true;
+        row.style.display = 'none';
+        updateFormIndexes(); // will count only visible rows
+      } else {
+        // new row, just remove
+        row.remove();
+        updateFormIndexes();
+      }
+    }
+
+    addMedicineBtn.addEventListener('click', addMedicineRow);
+    medicineContainer.addEventListener('click', function(e) {
+      const btn = e.target.closest('.remove-medicine-btn');
+      if (btn) {
+        removeMedicineRow(btn);
+      }
+    });
+
+    // ---------- Validation (frontend) ----------
+    function validateField(field, errorId) {
+      const errorEl = document.getElementById(errorId);
+      if (!errorEl) return;
+      if (field.validity.valid) {
+        field.classList.remove('border-red-500', 'ring-1', 'ring-red-500');
+        field.classList.add('border-green-500', 'ring-1', 'ring-green-500');
+        errorEl.classList.add('hidden');
+        errorEl.textContent = '';
+      } else {
+        field.classList.remove('border-green-500', 'ring-1', 'ring-green-500');
+        field.classList.add('border-red-500', 'ring-1', 'ring-red-500');
+        errorEl.classList.remove('hidden');
+        errorEl.textContent = field.validationMessage || 'Invalid value';
+      }
+    }
+
+    // ---------- Form submit ----------
+    form.addEventListener('submit', function(e) {
+      // Basic validation
+      let isValid = true;
+      const requiredFields = [
+        { el: appointmentSelect, errorId: 'appointmentError' }
+      ];
+      requiredFields.forEach(({ el, errorId }) => {
+        if (el) {
+          validateField(el, errorId);
+          if (!el.validity.valid) isValid = false;
+        }
+      });
+      if (!isValid) {
+        e.preventDefault();
+        showToast('Please correct the highlighted fields.', 'error');
+        return;
+      }
+
+      // Disable button and show spinner
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = `<span class="inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2"></span> Saving...`;
+      submitBtn.classList.add('opacity-70', 'cursor-not-allowed');
+    });
+
+    // ---------- Toast system ----------
+    function showToast(message, type = 'success') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      toast.className = `bg-slate-800 rounded-xl shadow-xl p-4 flex items-center gap-3 border-l-4 transform transition-all duration-300 translate-x-full opacity-0 ${type === 'success' ? 'border-green-500' : 'border-red-500'}`;
+      const icon = type === 'success' ? 'fa-check-circle text-green-400' : 'fa-exclamation-circle text-red-400';
+      toast.innerHTML = `
+        <i class="fas ${icon} text-xl"></i>
+        <div class="flex-1 text-slate-200 text-sm">${message}</div>
+        <button class="text-slate-400 hover:text-slate-200 transition" onclick="this.parentElement.remove()">
+          <i class="fas fa-times"></i>
+        </button>
+      `;
+      container.appendChild(toast);
+      requestAnimationFrame(() => {
+        toast.classList.remove('translate-x-full', 'opacity-0');
+      });
+      setTimeout(() => {
+        toast.classList.add('translate-x-full', 'opacity-0');
+        setTimeout(() => toast.remove(), 300);
+      }, 4000);
+    }
+
+    // ---------- Cancel confirmation ----------
+    document.querySelector('a[href*="prescriptions:list"]')?.addEventListener('click', function(e) {
+      if (!confirm('Are you sure you want to cancel? Unsaved changes will be lost.')) {
+        e.preventDefault();
+      }
+    });
+
+    // ---------- Auto-resize textareas ----------
+    document.querySelectorAll('textarea').forEach(ta => {
+      ta.addEventListener('input', function() {
+        this.style.height = 'auto';
+        this.style.height = this.scrollHeight + 'px';
+      });
+      setTimeout(() => {
+        ta.style.height = 'auto';
+        ta.style.height = ta.scrollHeight + 'px';
+      }, 100);
+    });
+
+    // ---------- Initialize form indexes on page load ----------
+    updateFormIndexes();
+
+  })();
+</script>
+{% endblock %}

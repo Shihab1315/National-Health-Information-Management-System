@@ -1,0 +1,378 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Reschedule Appointment — NHIMS{% endblock %}
+
+{% block extra_css %}
+<style>
+    .top-navbar { display: none !important; }
+    .step { display: none; }
+    .step.active { display: block; }
+    .step-indicator { display: flex; justify-content: center; gap: 1rem; margin-bottom: 2rem; }
+    .step-dot { width: 2rem; height: 2rem; border-radius: 50%; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; color: #9ca3af; font-weight: bold; border: 2px solid transparent; transition: all 0.3s; }
+    .step-dot.active { background: rgba(59, 130, 246, 0.3); border-color: #3b82f6; color: #3b82f6; }
+    .step-dot.completed { background: rgba(52, 211, 153, 0.3); border-color: #34d399; color: #34d399; }
+</style>
+{% endblock %}
+
+{% block navbar %}
+<nav class="fixed top-0 left-0 right-0 z-40 bg-[#0a1628]/80 backdrop-blur-sm border-b border-white/10 px-4 py-3 md:hidden">
+    <div class="flex items-center justify-between">
+        <button id="sidebarToggle" class="text-white text-2xl">
+            <i class="fas fa-bars"></i>
+        </button>
+        <span class="text-white font-semibold">NHIMS Patient</span>
+        <div class="w-8"></div>
+    </div>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="flex min-h-screen bg-[#0a1628]">
+    <!-- ===== SIDEBAR (reuse patient sidebar) ===== -->
+    <aside id="sidebar" class="fixed top-0 left-0 z-50 h-full w-72 bg-[#0d1f3c] border-r border-white/10 transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out overflow-y-auto">
+        <div class="p-4 border-b border-white/10">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 text-xl font-bold">
+                    {{ patient.full_name|slice:":1"|upper|default:"U" }}
+                </div>
+                <div>
+                    <p class="text-white font-semibold text-sm">{{ patient.full_name|default:"Patient" }}</p>
+                    <p class="text-gray-400 text-xs">Patient</p>
+                </div>
+            </div>
+        </div>
+        <nav class="p-3 space-y-1">
+            <a href="{% url 'dashboard:patient_dashboard' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
+                <i class="fas fa-th-large w-5 text-center"></i> Dashboard
+            </a>
+            <a href="{% url 'appointments:patient_appointment_list' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
+                <i class="fas fa-calendar-check w-5 text-center"></i> Appointments
+            </a>
+            <hr class="border-white/10 my-3">
+            <a href="{% url 'appointments:patient_appointment_detail' appointment.pk %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
+                <i class="fas fa-arrow-left w-5 text-center"></i> Back to Detail
+            </a>
+            <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition bg-blue-600/30 text-blue-300">
+                <i class="fas fa-calendar-alt w-5 text-center"></i> Reschedule
+            </a>
+            <hr class="border-white/10 my-3">
+            <a href="{% url 'patients:profile' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
+            <i class="fas fa-user-circle w-5 text-center"></i> Profile
+            </a>
+            <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
+                <i class="fas fa-cog w-5 text-center"></i> Settings
+            </a>
+            {% url 'logout' as logout_url %}
+            {% if logout_url %}
+                <a href="{{ logout_url }}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-red-400 hover:bg-red-500/10 hover:text-red-300">
+                    <i class="fas fa-sign-out-alt w-5 text-center"></i> Logout
+                </a>
+            {% else %}
+                <a href="{% url 'accounts:logout' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-red-400 hover:bg-red-500/10 hover:text-red-300">
+                    <i class="fas fa-sign-out-alt w-5 text-center"></i> Logout
+                </a>
+            {% endif %}
+        </nav>
+        <div class="absolute bottom-4 left-4 right-4 text-center text-gray-500 text-xs">
+            NHIMS v2.0
+        </div>
+    </aside>
+
+    <!-- ===== MAIN CONTENT ===== -->
+    <main class="flex-1 md:ml-72 p-4 md:p-6 space-y-6 mt-14 md:mt-0">
+        <div class="flex items-center gap-4 mb-6">
+            <a href="{% url 'appointments:patient_appointment_detail' appointment.pk %}" class="text-gray-400 hover:text-white transition">
+                <i class="fas fa-arrow-left text-xl"></i>
+            </a>
+            <div>
+                <h1 class="text-2xl font-bold text-white">Reschedule Appointment</h1>
+                <p class="text-sm text-gray-400">#{{ appointment.appointment_number }}</p>
+            </div>
+        </div>
+
+        <!-- Current Appointment Summary -->
+        <div class="glass-card rounded-2xl border border-white/10 p-6 mb-6">
+            <h3 class="text-white font-semibold text-lg mb-4">Current Appointment Details</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <p class="text-gray-400 text-xs uppercase">Doctor</p>
+                    <p class="text-white font-medium">Dr. {{ appointment.doctor.full_name|default:"N/A" }}</p>
+                </div>
+                <div>
+                    <p class="text-gray-400 text-xs uppercase">Hospital</p>
+                    <p class="text-white font-medium">{{ appointment.hospital.name|default:"N/A" }}</p>
+                </div>
+                <div>
+                    <p class="text-gray-400 text-xs uppercase">Current Date</p>
+                    <p class="text-white font-medium">{{ appointment.appointment_date|date:"l, F j, Y" }}</p>
+                </div>
+                <div>
+                    <p class="text-gray-400 text-xs uppercase">Current Time</p>
+                    <p class="text-white font-medium">{{ appointment.appointment_time|time:"h:i A" }}</p>
+                </div>
+                <div>
+                    <p class="text-gray-400 text-xs uppercase">Status</p>
+                    <span class="inline-block px-3 py-1 rounded-full text-sm font-medium
+                        {% if appointment.status == 'pending' %}badge-pending
+                        {% elif appointment.status == 'confirmed' %}badge-confirmed
+                        {% else %}badge-missed{% endif %}">
+                        {{ appointment.get_status_display }}
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reschedule Form -->
+        <form method="post" id="reschedule-form" class="glass-card rounded-2xl border border-white/10 p-6 space-y-6">
+            {% csrf_token %}
+
+            <!-- Step indicators (3 steps) -->
+            <div class="step-indicator">
+                <div class="step-dot active" id="dot1">1</div>
+                <div class="step-dot" id="dot2">2</div>
+                <div class="step-dot" id="dot3">3</div>
+            </div>
+
+            <!-- Step 1: Select New Date -->
+            <div class="step active" data-step="1">
+                <h3 class="text-white font-semibold text-lg mb-4">Select New Date</h3>
+                <p class="text-gray-400 text-sm mb-4">Choose a new date for your appointment.</p>
+                <div class="grid grid-cols-3 md:grid-cols-4 gap-3" id="date-grid">
+                    <p class="text-gray-400">Loading available dates...</p>
+                </div>
+            </div>
+
+            <!-- Step 2: Select New Time -->
+            <div class="step" data-step="2">
+                <h3 class="text-white font-semibold text-lg mb-4">Select New Time</h3>
+                <p class="text-gray-400 text-sm mb-4">Choose an available time slot.</p>
+                <div class="grid grid-cols-3 md:grid-cols-4 gap-3" id="time-grid">
+                    <p class="text-gray-400">Select a date first to see available slots.</p>
+                </div>
+            </div>
+
+            <!-- Step 3: Reason & Confirm -->
+            <div class="step" data-step="3">
+                <h3 class="text-white font-semibold text-lg mb-4">Reason for Reschedule</h3>
+                <div class="space-y-3">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-2">Please select a reason</label>
+                        <div class="space-y-2">
+                            <label class="flex items-center gap-3 p-3 rounded-xl border border-white/5 hover:bg-white/5 transition reason-option">
+                                <input type="radio" name="reason" value="personal" class="w-4 h-4 text-blue-600">
+                                <span class="text-white">Personal reason</span>
+                            </label>
+                            <label class="flex items-center gap-3 p-3 rounded-xl border border-white/5 hover:bg-white/5 transition reason-option">
+                                <input type="radio" name="reason" value="doctor_unavailable" class="w-4 h-4 text-blue-600">
+                                <span class="text-white">Doctor is unavailable on current date</span>
+                            </label>
+                            <label class="flex items-center gap-3 p-3 rounded-xl border border-white/5 hover:bg-white/5 transition reason-option">
+                                <input type="radio" name="reason" value="need_earlier" class="w-4 h-4 text-blue-600">
+                                <span class="text-white">Need an earlier appointment</span>
+                            </label>
+                            <label class="flex items-center gap-3 p-3 rounded-xl border border-white/5 hover:bg-white/5 transition reason-option">
+                                <input type="radio" name="reason" value="need_later" class="w-4 h-4 text-blue-600">
+                                <span class="text-white">Need a later appointment</span>
+                            </label>
+                            <label class="flex items-center gap-3 p-3 rounded-xl border border-white/5 hover:bg-white/5 transition reason-option">
+                                <input type="radio" name="reason" value="emergency" class="w-4 h-4 text-blue-600">
+                                <span class="text-white">Emergency</span>
+                            </label>
+                            <label class="flex items-center gap-3 p-3 rounded-xl border border-white/5 hover:bg-white/5 transition reason-option">
+                                <input type="radio" name="reason" value="other" class="w-4 h-4 text-blue-600">
+                                <span class="text-white">Other</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div id="other-textarea-container" class="hidden">
+                        <label for="other_text" class="block text-sm font-medium text-gray-300 mb-1">Additional Details</label>
+                        <textarea name="other_text" id="other_text" rows="3" class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-400 focus:border-blue-500 outline-none" placeholder="Please explain your reason in detail..."></textarea>
+                        {% if errors.other_text %}
+                        <p class="text-red-400 text-sm mt-1">{{ errors.other_text }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Navigation Buttons -->
+            <div class="flex justify-between mt-6 pt-4 border-t border-white/10">
+                <button type="button" id="prev-step" class="bg-white/5 hover:bg-white/10 px-6 py-2 rounded-xl text-gray-300 transition">Previous</button>
+                <button type="button" id="next-step" class="bg-blue-600 hover:bg-blue-700 px-6 py-2 rounded-xl text-white transition shadow-lg shadow-blue-500/30">Next</button>
+            </div>
+
+            <!-- Submit button -->
+            <div id="submit-area" style="display:none;">
+                <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-xl font-medium transition shadow-lg shadow-emerald-500/30">
+                    <i class="fas fa-check-circle mr-2"></i> Confirm Reschedule
+                </button>
+            </div>
+        </form>
+    </main>
+</div>
+
+<!-- ===== SIDEBAR TOGGLE ===== -->
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const sidebar = document.getElementById('sidebar');
+        const toggleBtn = document.getElementById('sidebarToggle');
+        if (toggleBtn && sidebar) {
+            toggleBtn.addEventListener('click', function () {
+                sidebar.classList.toggle('-translate-x-full');
+            });
+            document.addEventListener('click', function (event) {
+                const isClickInside = sidebar.contains(event.target) || toggleBtn.contains(event.target);
+                if (!isClickInside && window.innerWidth < 768) {
+                    sidebar.classList.add('-translate-x-full');
+                }
+            });
+        }
+    });
+</script>
+
+<!-- ===== RESCHEDULE WIZARD SCRIPT ===== -->
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        let currentStep = 1;
+        const totalSteps = 3;
+        const appointmentDoctorId = {{ appointment.doctor.id }};
+
+        const steps = document.querySelectorAll('.step');
+        const dots = document.querySelectorAll('.step-dot');
+        const prevBtn = document.getElementById('prev-step');
+        const nextBtn = document.getElementById('next-step');
+        const submitArea = document.getElementById('submit-area');
+        const dateGrid = document.getElementById('date-grid');
+        const timeGrid = document.getElementById('time-grid');
+        const reasonRadios = document.querySelectorAll('input[name="reason"]');
+        const otherContainer = document.getElementById('other-textarea-container');
+
+        // Load available dates on page load
+        function loadDates() {
+            fetch(`/appointments/api/available-dates/?doctor_id=${appointmentDoctorId}`)
+                .then(response => response.json())
+                .then(data => {
+                    dateGrid.innerHTML = '';
+                    if (data.dates.length === 0) {
+                        dateGrid.innerHTML = '<p class="text-gray-400 col-span-full">No available dates for this doctor.</p>';
+                        return;
+                    }
+                    data.dates.forEach(date => {
+                        const label = document.createElement('label');
+                        label.className = 'glass-card rounded-xl border border-white/10 p-3 text-center hover:border-blue-400/50 transition cursor-pointer';
+                        label.innerHTML = `<input type="radio" name="new_date" value="${date}" class="hidden"> ${date}`;
+                        label.addEventListener('click', function() {
+                            document.querySelectorAll('label[data-date]').forEach(l => l.classList.remove('border-blue-400'));
+                            this.classList.add('border-blue-400');
+                            this.querySelector('input').checked = true;
+                        });
+                        label.dataset.date = date;
+                        dateGrid.appendChild(label);
+                    });
+                })
+                .catch(error => console.error('Error fetching dates:', error));
+        }
+        loadDates();
+
+        function updateSteps() {
+            steps.forEach((step, index) => {
+                step.classList.toggle('active', (index + 1) === currentStep);
+            });
+            dots.forEach((dot, index) => {
+                const num = index + 1;
+                dot.classList.remove('active', 'completed');
+                if (num === currentStep) dot.classList.add('active');
+                else if (num < currentStep) dot.classList.add('completed');
+            });
+            if (currentStep === totalSteps) {
+                submitArea.style.display = 'block';
+                nextBtn.style.display = 'none';
+            } else {
+                submitArea.style.display = 'none';
+                nextBtn.style.display = 'inline-block';
+            }
+            prevBtn.style.display = currentStep === 1 ? 'none' : 'inline-block';
+        }
+
+        function nextStep() {
+            if (currentStep === 1) {
+                const selectedDate = document.querySelector('input[name="new_date"]:checked');
+                if (!selectedDate) {
+                    alert('Please select a new date.');
+                    return;
+                }
+                // Populate time slots for the selected date
+                const date = selectedDate.value;
+                fetch(`/appointments/api/available-slots/?doctor_id=${appointmentDoctorId}&date=${date}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        timeGrid.innerHTML = '';
+                        if (data.slots.length === 0) {
+                            timeGrid.innerHTML = '<p class="text-gray-400 col-span-full">No available time slots for this date.</p>';
+                            return;
+                        }
+                        data.slots.forEach(slot => {
+                            const label = document.createElement('label');
+                            label.className = 'glass-card rounded-xl border border-white/10 p-3 text-center hover:border-blue-400/50 transition cursor-pointer';
+                            label.innerHTML = `<input type="radio" name="new_time" value="${slot}" class="hidden"> ${slot}`;
+                            label.addEventListener('click', function() {
+                                document.querySelectorAll('label[data-time]').forEach(l => l.classList.remove('border-blue-400'));
+                                this.classList.add('border-blue-400');
+                                this.querySelector('input').checked = true;
+                            });
+                            label.dataset.time = slot;
+                            timeGrid.appendChild(label);
+                        });
+                    })
+                    .catch(error => console.error('Error fetching slots:', error));
+            }
+            if (currentStep === 2) {
+                const selectedTime = document.querySelector('input[name="new_time"]:checked');
+                if (!selectedTime) {
+                    alert('Please select a time slot.');
+                    return;
+                }
+            }
+            if (currentStep < totalSteps) {
+                currentStep++;
+                updateSteps();
+            }
+        }
+
+        function prevStep() {
+            if (currentStep > 1) {
+                currentStep--;
+                updateSteps();
+            }
+        }
+
+        // Toggle "Other" textarea
+        reasonRadios.forEach(radio => {
+            radio.addEventListener('change', function() {
+                if (this.value === 'other') {
+                    otherContainer.classList.remove('hidden');
+                } else {
+                    otherContainer.classList.add('hidden');
+                }
+            });
+        });
+
+        nextBtn.addEventListener('click', nextStep);
+        prevBtn.addEventListener('click', prevStep);
+
+        submitArea.style.display = 'none';
+        updateSteps();
+
+        // Keyboard shortcut (Enter to proceed)
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.target.closest('form')) {
+                if (currentStep < totalSteps) {
+                    e.preventDefault();
+                    nextStep();
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,765 @@
+{% extends 'dashboard_base.html' %}
+{% load static %}
+{% load role_tags %}
+
+{% block title %}Dashboard — NHIMS{% endblock %}
+
+{% block extra_css %}
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{% static 'analytics/css/dashboard.css' %}">
+<style>
+    /* ── Dark theme overrides ── */
+    :root {
+        --bg-body: #0B1220;
+        --bg-card: #111827;
+        --bg-hover: #1E293B;
+        --border-color: rgba(255,255,255,0.06);
+        --text-primary: #F8FAFC;
+        --text-secondary: #94A3B8;
+        --primary: #2563EB;
+        --success: #22C55E;
+        --warning: #F59E0B;
+        --danger: #EF4444;
+    }
+    body {
+        background: var(--bg-body);
+        font-family: 'Inter', system-ui, sans-serif;
+    }
+    .dashboard-wrapper {
+        display: flex;
+        min-height: 100vh;
+    }
+    .main-content {
+        flex: 1;
+        padding: 1.5rem 2rem 1rem;
+        margin-left: 280px;
+        background: var(--bg-body);
+        overflow-x: hidden;
+    }
+    @media (max-width: 991.98px) {
+        .main-content {
+            margin-left: 0;
+            padding: 1rem;
+        }
+    }
+    .glass-card {
+        background: rgba(17, 24, 39, 0.7);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        border: 1px solid var(--border-color);
+        border-radius: 18px;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+        transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+    }
+    .glass-card:hover {
+        border-color: rgba(37, 99, 235, 0.3);
+        box-shadow: 0 16px 48px rgba(0,0,0,0.5);
+    }
+    .stat-card {
+        background: var(--bg-card);
+        border-radius: 18px;
+        padding: 1.25rem 1.25rem 1rem;
+        border: 1px solid var(--border-color);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        height: 100%;
+        position: relative;
+        overflow: hidden;
+    }
+    .stat-card:hover {
+        transform: translateY(-4px);
+        border-color: var(--primary);
+        box-shadow: 0 12px 32px rgba(0,0,0,0.5);
+    }
+    .stat-card .stat-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.3rem;
+        color: #fff;
+        flex-shrink: 0;
+    }
+    .stat-card .stat-value {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        font-variant-numeric: tabular-nums;
+        line-height: 1.2;
+    }
+    .stat-card .stat-label {
+        font-size: 0.7rem;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-top: 0.15rem;
+    }
+    .stat-card .stat-trend {
+        font-size: 0.7rem;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.2rem;
+        padding: 0.1rem 0.5rem;
+        border-radius: 20px;
+        background: rgba(255,255,255,0.04);
+    }
+    .stat-card .stat-trend.up { color: var(--success); }
+    .stat-card .stat-trend.down { color: var(--danger); }
+    .stat-card .stat-sparkline {
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        width: 80px;
+        height: 40px;
+        opacity: 0.15;
+    }
+    .filter-bar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        align-items: center;
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 18px;
+        padding: 0.75rem 1rem;
+        margin-bottom: 1.5rem;
+    }
+    .filter-bar .filter-group {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.5rem;
+        flex: 1 1 auto;
+    }
+    .filter-bar select, .filter-bar input {
+        background: rgba(255,255,255,0.05);
+        border: 1px solid var(--border-color);
+        border-radius: 30px;
+        color: var(--text-primary);
+        padding: 0.35rem 1rem 0.35rem 2.2rem;
+        font-size: 0.8rem;
+        outline: none;
+        transition: border-color 0.2s;
+        min-width: 130px;
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2394a3b8' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 0.8rem center;
+        padding-right: 2.2rem;
+    }
+    .filter-bar select:focus, .filter-bar input:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(37,99,235,0.15);
+    }
+    .filter-bar select option {
+        background: #111827;
+        color: #F8FAFC;
+    }
+    .filter-bar .filter-icon {
+        position: relative;
+    }
+    .filter-bar .filter-icon i {
+        position: absolute;
+        left: 0.8rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-secondary);
+        font-size: 0.8rem;
+        pointer-events: none;
+    }
+    .filter-bar .btn-filter {
+        background: var(--primary);
+        color: #fff;
+        border: none;
+        border-radius: 30px;
+        padding: 0.35rem 1.2rem;
+        font-size: 0.8rem;
+        font-weight: 500;
+        transition: background 0.2s;
+        cursor: pointer;
+    }
+    .filter-bar .btn-filter:hover { background: #1D4ED8; }
+    .filter-bar .btn-reset {
+        background: rgba(255,255,255,0.05);
+        color: var(--text-secondary);
+        border: 1px solid var(--border-color);
+        border-radius: 30px;
+        padding: 0.35rem 1.2rem;
+        font-size: 0.8rem;
+        transition: all 0.2s;
+        cursor: pointer;
+    }
+    .filter-bar .btn-reset:hover {
+        background: rgba(255,255,255,0.1);
+        color: var(--text-primary);
+    }
+    /* ── ApexCharts container ── */
+    .chart-container {
+        background: var(--bg-card);
+        border-radius: 18px;
+        padding: 1.2rem 1.2rem 0.8rem;
+        border: 1px solid var(--border-color);
+        height: 100%;
+        transition: border-color 0.3s;
+    }
+    .chart-container:hover {
+        border-color: rgba(37,99,235,0.25);
+    }
+    .chart-container .chart-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.5rem;
+    }
+    .chart-container .chart-title {
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin: 0;
+    }
+    .chart-container .chart-actions {
+        display: flex;
+        gap: 0.3rem;
+    }
+    .chart-container .chart-actions button {
+        background: rgba(255,255,255,0.04);
+        border: none;
+        color: var(--text-secondary);
+        width: 28px;
+        height: 28px;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background 0.2s, color 0.2s;
+        font-size: 0.8rem;
+    }
+    .chart-container .chart-actions button:hover {
+        background: rgba(255,255,255,0.08);
+        color: var(--text-primary);
+    }
+    /* ── Quick Actions ── */
+    .quick-action-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 18px;
+        padding: 1.2rem 0.8rem;
+        text-align: center;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
+    }
+    .quick-action-card:hover {
+        transform: scale(1.03);
+        border-color: var(--primary);
+        box-shadow: 0 8px 30px rgba(37,99,235,0.2);
+    }
+    .quick-action-card:active {
+        transform: scale(0.95);
+    }
+    .quick-action-card .icon {
+        font-size: 2rem;
+        margin-bottom: 0.3rem;
+        color: var(--primary);
+        transition: transform 0.3s;
+    }
+    .quick-action-card:hover .icon {
+        transform: scale(1.1) rotate(-3deg);
+    }
+    .quick-action-card .title {
+        font-size: 0.8rem;
+        font-weight: 500;
+        color: var(--text-primary);
+    }
+    .quick-action-card .desc {
+        font-size: 0.65rem;
+        color: var(--text-secondary);
+        margin-top: 0.1rem;
+    }
+    /* ── Recent Activity ── */
+    .timeline-item {
+        display: flex;
+        gap: 0.75rem;
+        padding: 0.6rem 0;
+        border-bottom: 1px solid var(--border-color);
+    }
+    .timeline-item:last-child {
+        border-bottom: none;
+    }
+    .timeline-item .icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        flex-shrink: 0;
+        font-size: 0.9rem;
+    }
+    .timeline-item .content {
+        flex: 1;
+    }
+    .timeline-item .content .head {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .timeline-item .content .head .text {
+        font-size: 0.85rem;
+        color: var(--text-primary);
+    }
+    .timeline-item .content .head .time {
+        font-size: 0.65rem;
+        color: var(--text-secondary);
+    }
+    .timeline-item .content .details {
+        font-size: 0.75rem;
+        color: var(--text-secondary);
+    }
+    .timeline-item .badge {
+        font-size: 0.6rem;
+        padding: 0.1rem 0.5rem;
+        border-radius: 20px;
+        color: #fff;
+        background: var(--primary);
+    }
+    /* ── Responsive ── */
+    @media (max-width: 640px) {
+        .filter-bar {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        .filter-bar .filter-group {
+            flex-wrap: wrap;
+        }
+        .filter-bar select, .filter-bar input {
+            width: 100%;
+            min-width: unset;
+        }
+        .stat-card .stat-value {
+            font-size: 1.4rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-wrapper">
+    <!-- Sidebar -->
+    {% include 'analytics/partials/sidebar.html' %}
+
+    <div class="main-content">
+        <!-- Top Navbar -->
+        {% include 'analytics/partials/navbar.html' %}
+
+        <!-- Breadcrumb -->
+        <nav class="flex mb-1 text-sm text-gray-400" aria-label="Breadcrumb">
+            <ol class="flex items-center space-x-2">
+                <li><a href="{% url 'analytics:dashboard' %}" class="hover:text-white transition">Home</a></li>
+                <li><span class="mx-1 text-gray-600">/</span></li>
+                <li class="text-white font-medium">Dashboard</li>
+            </ol>
+        </nav>
+
+        <!-- Page Header -->
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+            <div>
+                <h1 class="text-2xl font-bold text-white">Dashboard</h1>
+                <p class="text-sm text-gray-400">Welcome back, {{ user.get_full_name|default:user.username }} · {{ user.get_role_display }}</p>
+            </div>
+            <div class="flex items-center gap-2 text-xs text-gray-400">
+                <span id="lastUpdated">Last updated: Just now</span>
+                <button id="refreshBtn" class="text-gray-400 hover:text-white p-1 rounded-lg hover:bg-[#1E293B] transition">
+                    <i class="fas fa-sync-alt"></i>
+                </button>
+                <span id="liveIndicator" class="flex items-center gap-1">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    Live
+                </span>
+            </div>
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- ROLE-BASED STATISTICS CARDS                                     -->
+        <!-- ============================================================ -->
+        <section class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 mb-6">
+            {% if is_super_admin %}
+                <!-- Super Admin Stats -->
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:linear-gradient(135deg,#2563EB,#3B82F6);"><i class="fas fa-hospital"></i></div>
+                    <div class="stat-content">
+                        <div class="stat-label">Hospitals</div>
+                        <div class="stat-value">{{ role_data.total_hospitals|default:0 }}</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:linear-gradient(135deg,#22C55E,#16A34A);"><i class="fas fa-user-md"></i></div>
+                    <div class="stat-content">
+                        <div class="stat-label">Doctors</div>
+                        <div class="stat-value">{{ role_data.total_doctors|default:0 }}</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:linear-gradient(135deg,#F59E0B,#D97706);"><i class="fas fa-users"></i></div>
+                    <div class="stat-content">
+                        <div class="stat-label">Patients</div>
+                        <div class="stat-value">{{ role_data.total_patients|default:0 }}</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:linear-gradient(135deg,#EC4899,#DB2777);"><i class="fas fa-money-bill-wave"></i></div>
+                    <div class="stat-content">
+                        <div class="stat-label">Revenue (BDT)</div>
+                        <div class="stat-value">{{ role_data.revenue|default:0|floatformat:0 }}</div>
+                    </div>
+                </div>
+
+            {% elif is_hospital_admin %}
+                <!-- Hospital Admin Stats -->
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:linear-gradient(135deg,#22C55E,#16A34A);"><i class="fas fa-user-md"></i></div>
+                    <div class="stat-content">
+                        <div class="stat-label">Doctors</div>
+                        <div class="stat-value">{{ role_data.total_doctors|default:0 }}</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:linear-gradient(135deg,#F59E0B,#D97706);"><i class="fas fa-users"></i></div>
+                    <div class="stat-content">
+                        <div class="stat-label">Patients</div>
+                        <div class="stat-value">{{ role_data.total_patients|default:0 }}</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:linear-gradient(135deg,#8B5CF6,#7C3AED);"><i class="fas fa-calendar-check"></i></div>
+                    <div class="stat-content">
+                        <div class="stat-label">Today's Appointments</div>
+                        <div class="stat-value">{{ role_data.today_appointments|default:0 }}</div>
+                    </div>
+                </div>
+
+            {% elif is_doctor %}
+                <!-- Doctor Stats -->
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:linear-gradient(135deg,#8B5CF6,#7C3AED);"><i class="fas fa-calendar-check"></i></div>
+                    <div class="stat-content">
+                        <div class="stat-label">Today's Appointments</div>
+                        <div class="stat-value">{{ role_data.today_appointments|default:0 }}</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:linear-gradient(135deg,#F59E0B,#D97706);"><i class="fas fa-users"></i></div>
+                    <div class="stat-content">
+                        <div class="stat-label">My Patients</div>
+                        <div class="stat-value">{{ role_data.my_patients|default:0 }}</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:linear-gradient(135deg,#EC4899,#DB2777);"><i class="fas fa-prescription-bottle"></i></div>
+                    <div class="stat-content">
+                        <div class="stat-label">Pending Prescriptions</div>
+                        <div class="stat-value">{{ role_data.pending_prescriptions|default:0 }}</div>
+                    </div>
+                </div>
+
+            {% elif is_receptionist %}
+                <!-- Receptionist Stats -->
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:linear-gradient(135deg,#EF4444,#DC2626);"><i class="fas fa-clock"></i></div>
+                    <div class="stat-content">
+                        <div class="stat-label">Today's Queue</div>
+                        <div class="stat-value">{{ role_data.today_queue|default:0 }}</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:linear-gradient(135deg,#8B5CF6,#7C3AED);"><i class="fas fa-calendar-check"></i></div>
+                    <div class="stat-content">
+                        <div class="stat-label">Today's Appointments</div>
+                        <div class="stat-value">{{ role_data.today_appointments|default:0 }}</div>
+                    </div>
+                </div>
+
+            {% elif is_lab_technician %}
+                <!-- Lab Technician Stats -->
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:linear-gradient(135deg,#06B6D4,#0891B2);"><i class="fas fa-flask"></i></div>
+                    <div class="stat-content">
+                        <div class="stat-label">Pending Tests</div>
+                        <div class="stat-value">{{ role_data.pending_tests|default:0 }}</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:linear-gradient(135deg,#22C55E,#16A34A);"><i class="fas fa-check-circle"></i></div>
+                    <div class="stat-content">
+                        <div class="stat-label">Completed Tests</div>
+                        <div class="stat-value">{{ role_data.completed_tests|default:0 }}</div>
+                    </div>
+                </div>
+
+            {% elif is_pharmacist %}
+                <!-- Pharmacist Stats -->
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:linear-gradient(135deg,#EC4899,#DB2777);"><i class="fas fa-prescription-bottle"></i></div>
+                    <div class="stat-content">
+                        <div class="stat-label">Today's Prescriptions</div>
+                        <div class="stat-value">{{ role_data.today_prescriptions|default:0 }}</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:linear-gradient(135deg,#F59E0B,#D97706);"><i class="fas fa-capsules"></i></div>
+                    <div class="stat-content">
+                        <div class="stat-label">Medicine Stock</div>
+                        <div class="stat-value">{{ role_data.medicine_stock|default:0 }}</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:linear-gradient(135deg,#EF4444,#DC2626);"><i class="fas fa-exclamation-triangle"></i></div>
+                    <div class="stat-content">
+                        <div class="stat-label">Low Stock Alerts</div>
+                        <div class="stat-value">{{ role_data.low_stock_alert|default:0 }}</div>
+                    </div>
+                </div>
+
+            {% elif is_patient %}
+                <!-- Patient Stats -->
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:linear-gradient(135deg,#8B5CF6,#7C3AED);"><i class="fas fa-calendar-check"></i></div>
+                    <div class="stat-content">
+                        <div class="stat-label">Upcoming Appointment</div>
+                        <div class="stat-value">
+                            {% if role_data.upcoming_appointment %}
+                                {{ role_data.upcoming_appointment.appointment_date|date:"M d, Y" }}
+                            {% else %}
+                                None
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:linear-gradient(135deg,#EC4899,#DB2777);"><i class="fas fa-prescription-bottle"></i></div>
+                    <div class="stat-content">
+                        <div class="stat-label">Prescriptions</div>
+                        <div class="stat-value">{{ role_data.prescriptions|default:0 }}</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:linear-gradient(135deg,#3B82F6,#2563EB);"><i class="fas fa-notes-medical"></i></div>
+                    <div class="stat-content">
+                        <div class="stat-label">Medical Records</div>
+                        <div class="stat-value">{{ role_data.medical_history|default:0 }}</div>
+                    </div>
+                </div>
+            {% endif %}
+        </section>
+
+        <!-- ============================================================ -->
+        <!-- COMMON CHARTS – Only show for admin roles                    -->
+        <!-- ============================================================ -->
+        {% if is_super_admin or is_hospital_admin %}
+        <section class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <div class="chart-container">
+                <div class="chart-header">
+                    <h5 class="chart-title">Patient Registration Trend</h5>
+                    <div class="chart-actions">
+                        <button onclick="downloadChart('patientsTrend','png')"><i class="fas fa-download"></i></button>
+                    </div>
+                </div>
+                <div id="patientsTrend"></div>
+            </div>
+            <div class="chart-container">
+                <div class="chart-header">
+                    <h5 class="chart-title">Appointment Trend</h5>
+                    <div class="chart-actions">
+                        <button onclick="downloadChart('appointmentsTrend','png')"><i class="fas fa-download"></i></button>
+                    </div>
+                </div>
+                <div id="appointmentsTrend"></div>
+            </div>
+        </section>
+
+        <section class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            <div class="chart-container">
+                <div class="chart-header">
+                    <h5 class="chart-title">Revenue Analytics</h5>
+                    <div class="chart-actions">
+                        <button onclick="downloadChart('revenueChart','png')"><i class="fas fa-download"></i></button>
+                    </div>
+                </div>
+                <div id="revenueChart"></div>
+            </div>
+            <div class="chart-container">
+                <div class="chart-header">
+                    <h5 class="chart-title">Hospital Performance</h5>
+                    <div class="chart-actions">
+                        <button onclick="downloadChart('hospitalPerformance','png')"><i class="fas fa-download"></i></button>
+                    </div>
+                </div>
+                <div id="hospitalPerformance"></div>
+            </div>
+            <div class="chart-container">
+                <div class="chart-header">
+                    <h5 class="chart-title">Department Distribution</h5>
+                    <div class="chart-actions">
+                        <button onclick="downloadChart('departmentDist','png')"><i class="fas fa-download"></i></button>
+                    </div>
+                </div>
+                <div id="departmentDist"></div>
+            </div>
+        </section>
+        {% endif %}
+
+        <!-- ============================================================ -->
+        <!-- BOTTOM ROW: ALERTS / RECENT ACTIVITY / QUICK ACTIONS        -->
+        <!-- ============================================================ -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+            <div class="lg:col-span-2">
+                {% include 'analytics/partials/recent_activity.html' %}
+            </div>
+            <div class="lg:col-span-1">
+                <!-- Quick Actions – role based -->
+                <div class="glass-card p-4">
+                    <h5 class="text-white font-semibold text-base flex items-center gap-2 mb-3">
+                        <i class="fas fa-bolt text-yellow-400"></i>
+                        Quick Actions
+                    </h5>
+                    <div class="grid grid-cols-2 gap-3">
+                        {% if is_super_admin or is_hospital_admin or is_receptionist %}
+                            <a href="{% url 'patients:create' %}" class="quick-action-card group">
+                                <div class="icon"><i class="fas fa-user-plus"></i></div>
+                                <div class="title">Register Patient</div>
+                            </a>
+                            <a href="{% url 'appointments:create' %}" class="quick-action-card group">
+                                <div class="icon"><i class="fas fa-calendar-plus"></i></div>
+                                <div class="title">Book Appointment</div>
+                            </a>
+                        {% endif %}
+                        {% if is_doctor or is_super_admin or is_hospital_admin %}
+                            <a href="{% url 'prescriptions:create' %}" class="quick-action-card group">
+                                <div class="icon"><i class="fas fa-prescription-bottle"></i></div>
+                                <div class="title">Create Prescription</div>
+                            </a>
+                        {% endif %}
+                        {% if is_lab_technician or is_super_admin or is_hospital_admin %}
+                            <a href="{% url 'laboratory:order_create' %}" class="quick-action-card group">
+                                <div class="icon"><i class="fas fa-flask"></i></div>
+                                <div class="title">Create Lab Order</div>
+                            </a>
+                        {% endif %}
+                        {% if is_pharmacist or is_super_admin or is_hospital_admin %}
+                            <a href="{% url 'pharmacy:sale_create' %}" class="quick-action-card group">
+                                <div class="icon"><i class="fas fa-pills"></i></div>
+                                <div class="title">Dispense Medicine</div>
+                            </a>
+                        {% endif %}
+                        {% if is_patient %}
+                            <a href="{% url 'appointments:create' %}" class="quick-action-card group">
+                                <div class="icon"><i class="fas fa-calendar-plus"></i></div>
+                                <div class="title">Book Appointment</div>
+                            </a>
+                            <a href="{% url 'medical_records:record_list' %}" class="quick-action-card group">
+                                <div class="icon"><i class="fas fa-notes-medical"></i></div>
+                                <div class="title">View Records</div>
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        {% include 'analytics/partials/footer.html' %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+<script src="https://cdn.jsdelivr.net/npm/apexcharts/dist/apexcharts.min.js"></script>
+<script src="{% static 'analytics/js/dashboard.js' %}"></script>
+<script src="{% static 'analytics/js/charts.js' %}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Auto-refresh every 30 seconds
+        setInterval(function() {
+            location.reload();
+        }, 30000);
+
+        // Refresh button
+        document.getElementById('refreshBtn').addEventListener('click', function() {
+            const icon = this.querySelector('i');
+            icon.classList.add('fa-spin');
+            setTimeout(function() {
+                location.reload();
+            }, 300);
+        });
+
+        // Last updated time
+        function updateTime() {
+            const now = new Date();
+            document.getElementById('lastUpdated').textContent = 'Last updated: ' + now.toLocaleTimeString();
+        }
+        updateTime();
+        setInterval(updateTime, 10000);
+
+        // Apply Filters (placeholder – implement later)
+        document.getElementById('applyFilters').addEventListener('click', function() {
+            alert('Filters applied (demo) – implement your own logic');
+        });
+
+        // Reset Filters
+        document.getElementById('resetFilters').addEventListener('click', function() {
+            document.querySelectorAll('.filter-select, .filter-input').forEach(el => el.value = '');
+            document.getElementById('filterDateRange').value = '';
+            alert('Filters reset (demo)');
+        });
+
+        // Quick date buttons
+        document.querySelectorAll('.btn-filter[data-days]').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                const days = this.getAttribute('data-days');
+                alert('Date range set to ' + days + ' days (demo)');
+            });
+        });
+
+        // Chart download
+        window.downloadChart = function(chartId, format) {
+            const chart = window.charts && window.charts[chartId];
+            if (!chart) {
+                alert('Chart not loaded yet. Please wait a moment and try again.');
+                return;
+            }
+            if (format === 'png') {
+                chart.dataURI().then(function(uri) {
+                    const link = document.createElement('a');
+                    link.download = chartId + '.png';
+                    link.href = uri;
+                    link.click();
+                }).catch(function(err) {
+                    alert('Error downloading PNG: ' + err);
+                });
+            } else if (format === 'csv') {
+                try {
+                    const series = chart.w.config.series;
+                    let csv = 'Category,Value\n';
+                    series.forEach(function(s) {
+                        csv += s.name + ',' + s.data.join(',') + '\n';
+                    });
+                    const blob = new Blob([csv], {type: 'text/csv'});
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.download = chartId + '.csv';
+                    a.href = url;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                } catch (err) {
+                    alert('Error downloading CSV: ' + err);
+                }
+            }
+        };
+    });
+</script>
+{% endblock %}

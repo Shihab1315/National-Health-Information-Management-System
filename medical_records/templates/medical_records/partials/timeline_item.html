@@ -1,0 +1,19 @@
+<div class="relative pl-4">
+    <div class="absolute -left-8 top-1 w-4 h-4 rounded-full 
+        {% if event.type == 'record' %}bg-blue-400
+        {% elif event.type == 'prescription' %}bg-emerald-400
+        {% elif event.type == 'lab' %}bg-amber-400
+        {% else %}bg-cyan-400{% endif %}">
+    </div>
+    <div class="text-xs text-gray-500">{{ event.date|date:"M d, Y H:i" }}</div>
+    <div class="text-white font-medium">{{ event.title }}</div>
+    <div class="text-gray-400 text-sm">{{ event.description }}</div>
+    {% if event.object %}
+        <a href="
+            {% if event.type == 'record' %}{% url 'medical_records:record_detail' event.object.pk %}
+            {% elif event.type == 'prescription' %}{% url 'prescriptions:detail' event.object.pk %}
+            {% elif event.type == 'lab' %}{% url 'laboratory:order_detail' event.object.pk %}
+            {% else %}#{% endif %}
+        " class="text-blue-400 hover:text-blue-300 text-xs">View</a>
+    {% endif %}
+</div>

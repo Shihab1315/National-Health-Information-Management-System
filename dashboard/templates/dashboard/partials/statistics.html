@@ -1,0 +1,12 @@
+<section class="py-16 md:py-20 bg-[#060e1a] border-y border-white/5">
+    <div class="max-w-7xl mx-auto px-4 md:px-8">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
+            {% for stat in stats %}
+                <div class="stat-card">
+                    <div class="stat-number">{{ stat.value }}</div>
+                    <div class="text-gray-400 font-medium mt-1">{{ stat.title }}</div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>

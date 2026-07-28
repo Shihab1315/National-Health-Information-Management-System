@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Expired Medicines — NHIMS Pharmacy{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+    <h1 class="text-3xl font-bold text-white mb-6 flex items-center gap-3">
+        <i class="fas fa-calendar-times text-red-400 text-2xl"></i>
+        Expired Medicines
+    </h1>
+    <div class="glass-card rounded-2xl border border-white/10 overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left">
+                <thead class="bg-white/5">
+                    <tr>
+                        <th class="px-6 py-4 text-xs text-gray-400 uppercase">Medicine</th>
+                        <th class="px-6 py-4 text-xs text-gray-400 uppercase">Batch</th>
+                        <th class="px-6 py-4 text-xs text-gray-400 uppercase">Expiry</th>
+                        <th class="px-6 py-4 text-xs text-gray-400 uppercase">Stock</th>
+                        <th class="px-6 py-4 text-xs text-gray-400 uppercase text-right">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for med in expired_medicines %}
+                    <tr>
+                        <td class="px-6 py-4 text-white">{{ med.brand_name }}</td>
+                        <td class="px-6 py-4 text-gray-300">{{ med.batch_number|default:"N/A" }}</td>
+                        <td class="px-6 py-4 text-red-400">{{ med.expiry_date|date:"M d, Y" }}</td>
+                        <td class="px-6 py-4">{{ med.current_stock }}</td>
+                        <td class="px-6 py-4 text-right">
+                            <a href="{% url 'pharmacy:medicine_detail' med.pk %}" class="text-blue-400 hover:text-blue-300">View</a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="5" class="px-6 py-12 text-center text-gray-400">No expired medicines.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

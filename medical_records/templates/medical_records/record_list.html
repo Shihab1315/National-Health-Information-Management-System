@@ -1,0 +1,272 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Medical Records — NHIMS{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-10">
+    <!-- ========== BREADCRUMB ========== -->
+    <nav class="flex items-center text-sm text-gray-400 mb-4" aria-label="Breadcrumb">
+        <a href="/" class="hover:text-blue-400 transition-colors">
+            <i class="fas fa-home mr-1"></i> Dashboard
+        </a>
+        <span class="mx-2 text-gray-600">/</span>
+        <span class="text-white font-medium">Medical Records</span>
+    </nav>
+
+    <!-- ========== PAGE HEADER ========== -->
+    <div class="flex flex-wrap items-center justify-between gap-4 mb-8">
+        <div>
+            <h1 class="text-3xl md:text-4xl font-bold text-white flex items-center gap-3">
+                <i class="fas fa-notes-medical text-blue-400 text-2xl md:text-3xl"></i>
+                Medical Records
+            </h1>
+            <p class="text-gray-400 text-sm mt-1">Manage all patient records</p>
+        </div>
+        <a href="{% url 'medical_records:record_create' %}"
+           class="inline-flex items-center gap-2 bg-linear-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-5 py-2.5 rounded-xl font-medium shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 transition duration-300 transform hover:scale-105">
+            <i class="fas fa-plus-circle"></i> New Record
+        </a>
+    </div>
+
+    <!-- ========== SUMMARY CARDS ========== -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <!-- Total Records -->
+        <div class="bg-white/5 backdrop-blur-sm border border-white/10 hover:border-blue-400/50 rounded-2xl p-4 transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/10 hover:-translate-y-1">
+            <div class="flex items-center justify-between">
+                <span class="text-gray-400 text-xs uppercase tracking-wider font-medium">Total Records</span>
+                <div class="w-8 h-8 rounded-xl bg-blue-500/20 flex items-center justify-center text-blue-400">
+                    <i class="fas fa-file-medical"></i>
+                </div>
+            </div>
+            <div class="text-2xl font-bold text-white mt-2">{{ page_obj.paginator.count|default:0 }}</div>
+        </div>
+
+        <!-- Active Records -->
+        <div class="bg-white/5 backdrop-blur-sm border border-white/10 hover:border-green-400/50 rounded-2xl p-4 transition-all duration-300 hover:shadow-lg hover:shadow-green-500/10 hover:-translate-y-1">
+            <div class="flex items-center justify-between">
+                <span class="text-gray-400 text-xs uppercase tracking-wider font-medium">Active</span>
+                <div class="w-8 h-8 rounded-xl bg-green-500/20 flex items-center justify-center text-green-400">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+            </div>
+            <div class="text-2xl font-bold text-white mt-2">
+                {% with active_count=page_obj.object_list|length %}
+                    {{ active_count }}
+                {% endwith %}
+            </div>
+        </div>
+
+        <!-- Today's Visits -->
+        <div class="bg-white/5 backdrop-blur-sm border border-white/10 hover:border-amber-400/50 rounded-2xl p-4 transition-all duration-300 hover:shadow-lg hover:shadow-amber-500/10 hover:-translate-y-1">
+            <div class="flex items-center justify-between">
+                <span class="text-gray-400 text-xs uppercase tracking-wider font-medium">Today's Visits</span>
+                <div class="w-8 h-8 rounded-xl bg-amber-500/20 flex items-center justify-center text-amber-400">
+                    <i class="fas fa-calendar-day"></i>
+                </div>
+            </div>
+            <div class="text-2xl font-bold text-white mt-2">{{ today_visits|default:0 }}</div>
+        </div>
+
+        <!-- Critical Records -->
+        <div class="bg-white/5 backdrop-blur-sm border border-white/10 hover:border-red-400/50 rounded-2xl p-4 transition-all duration-300 hover:shadow-lg hover:shadow-red-500/10 hover:-translate-y-1">
+            <div class="flex items-center justify-between">
+                <span class="text-gray-400 text-xs uppercase tracking-wider font-medium">Critical</span>
+                <div class="w-8 h-8 rounded-xl bg-red-500/20 flex items-center justify-center text-red-400">
+                    <i class="fas fa-heartbeat"></i>
+                </div>
+            </div>
+            <div class="text-2xl font-bold text-white mt-2">{{ critical_records|default:0 }}</div>
+        </div>
+    </div>
+
+    <!-- ========== SEARCH & FILTER ========== -->
+    <div class="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-5 mb-8 shadow-lg">
+        <form method="get" class="flex flex-wrap gap-3">
+            <!-- Search -->
+            <div class="relative flex-1 min-w-50">
+                <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                <input type="text" name="q" placeholder="Search by patient, diagnosis..."
+                       value="{{ search|default:'' }}"
+                       class="w-full pl-11 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-400 focus:border-blue-500 outline-none transition">
+            </div>
+
+            <!-- Status Filter -->
+            <select name="status" class="w-full md:w-40 px-4 py-3 bg-[#0d2137] border border-white/10 rounded-xl text-white focus:border-blue-500 outline-none">
+                <option value="">All Status</option>
+                {% for key, label in statuses %}
+                <option value="{{ key }}" {% if status_filter == key %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+
+            <!-- Date From -->
+            <input type="date" name="date_from" value="{{ date_from|default:'' }}"
+                   class="w-full md:w-40 px-4 py-3 bg-[#0d2137] border border-white/10 rounded-xl text-white focus:border-blue-500 outline-none">
+
+            <!-- Date To -->
+            <input type="date" name="date_to" value="{{ date_to|default:'' }}"
+                   class="w-full md:w-40 px-4 py-3 bg-[#0d2137] border border-white/10 rounded-xl text-white focus:border-blue-500 outline-none">
+
+            <!-- Buttons -->
+            <button type="submit" class="bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-xl text-white font-medium transition shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50">
+                <i class="fas fa-filter mr-1"></i> Filter
+            </button>
+            <a href="{% url 'medical_records:record_list' %}" class="bg-white/5 hover:bg-white/10 px-6 py-3 rounded-xl text-gray-300 transition border border-white/10 hover:border-white/20">
+                <i class="fas fa-times mr-1"></i> Reset
+            </a>
+        </form>
+    </div>
+
+    <!-- ========== RECORDS TABLE ========== -->
+    <div class="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl overflow-hidden shadow-xl">
+        <div class="overflow-x-auto">
+            <!-- Desktop Table -->
+            <table class="w-full text-left hidden md:table">
+                <thead class="bg-white/5 backdrop-blur-sm border-b border-white/10">
+                    <tr>
+                        <th class="px-6 py-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Patient</th>
+                        <th class="px-6 py-4 text-xs font-semibold text-gray-400 uppercase tracking-wider hidden lg:table-cell">Doctor</th>
+                        <th class="px-6 py-4 text-xs font-semibold text-gray-400 uppercase tracking-wider hidden sm:table-cell">Date</th>
+                        <th class="px-6 py-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Diagnosis</th>
+                        <th class="px-6 py-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Status</th>
+                        <th class="px-6 py-4 text-xs font-semibold text-gray-400 uppercase tracking-wider text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-white/5">
+                    {% for record in page_obj %}
+                    <tr class="hover:bg-white/5 transition group">
+                        <td class="px-6 py-4 text-white font-medium">{{ record.patient.full_name }}</td>
+                        <td class="px-6 py-4 text-gray-300 hidden lg:table-cell">Dr. {{ record.doctor.full_name|default:"N/A" }}</td>
+                        <td class="px-6 py-4 text-gray-400 hidden sm:table-cell">{{ record.visit_date|date:"M d, Y" }}</td>
+                        <td class="px-6 py-4 text-gray-300 max-w-xs truncate">{{ record.diagnosis|default:"No diagnosis" }}</td>
+                        <td class="px-6 py-4">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                {% if record.status == 'active' %}bg-blue-500/20 text-blue-300 border border-blue-500/30
+                                {% elif record.status == 'completed' %}bg-emerald-500/20 text-emerald-300 border border-emerald-500/30
+                                {% elif record.status == 'cancelled' %}bg-red-500/20 text-red-300 border border-red-500/30
+                                {% else %}bg-gray-500/20 text-gray-300 border border-gray-500/30{% endif %}">
+                                {{ record.get_status_display }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-right">
+                            <div class="flex items-center justify-end gap-2 opacity-70 group-hover:opacity-100 transition">
+                                <a href="{% url 'medical_records:record_detail' record.pk %}" class="text-blue-400 hover:text-blue-300 transition" title="View">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{% url 'medical_records:record_edit' record.pk %}" class="text-amber-400 hover:text-amber-300 transition" title="Edit">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <a href="{% url 'medical_records:record_delete' record.pk %}" class="text-red-400 hover:text-red-300 transition" title="Delete">
+                                    <i class="fas fa-trash-alt"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="px-6 py-16 text-center">
+                            <div class="text-5xl text-gray-600 mb-4">
+                                <i class="fas fa-inbox"></i>
+                            </div>
+                            <h4 class="text-white font-medium text-lg">No Records Found</h4>
+                            <p class="text-gray-400 text-sm mt-1">Adjust your filters or create a new record.</p>
+                            <a href="{% url 'medical_records:record_create' %}" class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl font-medium mt-4 transition">
+                                <i class="fas fa-plus-circle"></i> Create Record
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <!-- Mobile Cards -->
+            <div class="md:hidden divide-y divide-white/5">
+                {% for record in page_obj %}
+                <div class="p-4 hover:bg-white/5 transition">
+                    <div class="flex items-start justify-between">
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-2">
+                                <span class="text-white font-medium">{{ record.patient.full_name }}</span>
+                                <span class="text-xs text-gray-400">{{ record.visit_date|date:"M d, Y" }}</span>
+                            </div>
+                            <div class="text-sm text-gray-300 mt-0.5">
+                                Dr. {{ record.doctor.full_name|default:"N/A" }}
+                            </div>
+                            <div class="text-sm text-gray-400 mt-1">{{ record.diagnosis|default:"No diagnosis" }}</div>
+                            <div class="mt-2">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                    {% if record.status == 'active' %}bg-blue-500/20 text-blue-300 border border-blue-500/30
+                                    {% elif record.status == 'completed' %}bg-emerald-500/20 text-emerald-300 border border-emerald-500/30
+                                    {% elif record.status == 'cancelled' %}bg-red-500/20 text-red-300 border border-red-500/30
+                                    {% else %}bg-gray-500/20 text-gray-300 border border-gray-500/30{% endif %}">
+                                    {{ record.get_status_display }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-3 ml-3">
+                            <a href="{% url 'medical_records:record_detail' record.pk %}" class="text-blue-400 hover:text-blue-300" title="View">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            <a href="{% url 'medical_records:record_edit' record.pk %}" class="text-amber-400 hover:text-amber-300" title="Edit">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <a href="{% url 'medical_records:record_delete' record.pk %}" class="text-red-400 hover:text-red-300" title="Delete">
+                                <i class="fas fa-trash-alt"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="p-8 text-center text-gray-400">
+                    <i class="fas fa-inbox text-4xl block mb-2 text-gray-600"></i>
+                    No records found.
+                    <a href="{% url 'medical_records:record_create' %}" class="text-blue-400 hover:underline block mt-2">Create one</a>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- ========== PAGINATION ========== -->
+        {% if page_obj.has_other_pages %}
+        <div class="px-6 py-4 border-t border-white/10 flex flex-wrap items-center justify-between gap-3">
+            <div class="text-sm text-gray-400">
+                Showing {{ page_obj.start_index }}–{{ page_obj.end_index }} of {{ page_obj.paginator.count }}
+            </div>
+            <div class="flex gap-1 items-center">
+                {% if page_obj.has_previous %}
+                <a href="?page=1{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
+                   class="px-3 py-1.5 bg-white/5 hover:bg-white/10 rounded-lg transition text-gray-300 text-sm">
+                    <i class="fas fa-chevron-left text-xs mr-0.5"></i><i class="fas fa-chevron-left text-xs"></i>
+                </a>
+                <a href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
+                   class="px-3 py-1.5 bg-white/5 hover:bg-white/10 rounded-lg transition text-gray-300 text-sm">
+                    <i class="fas fa-chevron-left"></i>
+                </a>
+                {% else %}
+                <span class="px-3 py-1.5 text-gray-500 text-sm cursor-not-allowed opacity-40">
+                    <i class="fas fa-chevron-left"></i>
+                </span>
+                {% endif %}
+
+                <span class="px-4 py-1.5 bg-blue-600/30 text-blue-300 font-medium rounded-lg text-sm">{{ page_obj.number }}</span>
+
+                {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
+                   class="px-3 py-1.5 bg-white/5 hover:bg-white/10 rounded-lg transition text-gray-300 text-sm">
+                    <i class="fas fa-chevron-right"></i>
+                </a>
+                <a href="?page={{ page_obj.paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
+                   class="px-3 py-1.5 bg-white/5 hover:bg-white/10 rounded-lg transition text-gray-300 text-sm">
+                    <i class="fas fa-chevron-right text-xs mr-0.5"></i><i class="fas fa-chevron-right text-xs"></i>
+                </a>
+                {% else %}
+                <span class="px-3 py-1.5 text-gray-500 text-sm cursor-not-allowed opacity-40">
+                    <i class="fas fa-chevron-right"></i>
+                </span>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

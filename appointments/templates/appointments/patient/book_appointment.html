@@ -1,0 +1,451 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Book Appointment — NHIMS{% endblock %}
+
+{% block extra_css %}
+<style>
+    .top-navbar { display: none !important; }
+    .step { display: none; }
+    .step.active { display: block; }
+    .step-indicator { display: flex; justify-content: center; gap: 1rem; margin-bottom: 2rem; }
+    .step-dot { width: 2rem; height: 2rem; border-radius: 50%; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; color: #9ca3af; font-weight: bold; border: 2px solid transparent; transition: all 0.3s; }
+    .step-dot.active { background: rgba(59, 130, 246, 0.3); border-color: #3b82f6; color: #3b82f6; }
+    .step-dot.completed { background: rgba(52, 211, 153, 0.3); border-color: #34d399; color: #34d399; }
+</style>
+{% endblock %}
+
+{% block navbar %}
+<nav class="fixed top-0 left-0 right-0 z-40 bg-[#0a1628]/80 backdrop-blur-sm border-b border-white/10 px-4 py-3 md:hidden">
+    <div class="flex items-center justify-between">
+        <button id="sidebarToggle" class="text-white text-2xl">
+            <i class="fas fa-bars"></i>
+        </button>
+        <span class="text-white font-semibold">NHIMS Patient</span>
+        <div class="w-8"></div>
+    </div>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="flex min-h-screen bg-[#0a1628]">
+    <!-- ===== SIDEBAR ===== -->
+    <aside id="sidebar" class="fixed top-0 left-0 z-50 h-full w-72 bg-[#0d1f3c] border-r border-white/10 transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out overflow-y-auto">
+        <div class="p-4 border-b border-white/10">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 text-xl font-bold">
+                    {{ patient.full_name|slice:":1"|upper|default:"U" }}
+                </div>
+                <div>
+                    <p class="text-white font-semibold text-sm">{{ patient.full_name|default:"Patient" }}</p>
+                    <p class="text-gray-400 text-xs">Patient</p>
+                </div>
+            </div>
+        </div>
+        <nav class="p-3 space-y-1">
+            <a href="{% url 'dashboard:patient_dashboard' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
+                <i class="fas fa-th-large w-5 text-center"></i> Dashboard
+            </a>
+            <a href="{% url 'appointments:patient_appointment_list' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
+                <i class="fas fa-calendar-check w-5 text-center"></i> Appointments
+            </a>
+            <a href="{% url 'appointments:patient_book_appointment' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition bg-blue-600/30 text-blue-300">
+                <i class="fas fa-plus-circle w-5 text-center"></i> Book Appointment
+            </a>
+            <a href="{% url 'prescriptions:list' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
+                <i class="fas fa-prescription-bottle w-5 text-center"></i> Prescriptions
+            </a>
+            <a href="{% url 'medical_records:record_list' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
+                <i class="fas fa-file-medical w-5 text-center"></i> Medical Records
+            </a>
+            <a href="{% url 'laboratory:order_list' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
+                <i class="fas fa-flask w-5 text-center"></i> Laboratory
+            </a>
+            <a href="{% url 'notifications:center' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
+                <i class="fas fa-bell w-5 text-center"></i> Notifications
+            </a>
+            <hr class="border-white/10 my-3">
+            <a href="{% url 'patients:profile' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
+            <i class="fas fa-user-circle w-5 text-center"></i> Profile
+            </a>
+            <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
+                <i class="fas fa-cog w-5 text-center"></i> Settings
+            </a>
+            {% url 'logout' as logout_url %}
+            {% if logout_url %}
+                <a href="{{ logout_url }}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-red-400 hover:bg-red-500/10 hover:text-red-300">
+                    <i class="fas fa-sign-out-alt w-5 text-center"></i> Logout
+                </a>
+            {% else %}
+                <a href="{% url 'accounts:logout' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-red-400 hover:bg-red-500/10 hover:text-red-300">
+                    <i class="fas fa-sign-out-alt w-5 text-center"></i> Logout
+                </a>
+            {% endif %}
+        </nav>
+        <div class="absolute bottom-4 left-4 right-4 text-center text-gray-500 text-xs">
+            NHIMS v2.0
+        </div>
+    </aside>
+
+    <!-- ===== MAIN CONTENT ===== -->
+    <main class="flex-1 md:ml-72 p-4 md:p-6 space-y-6 mt-14 md:mt-0">
+        <div class="flex items-center gap-4 mb-6">
+            <a href="{% url 'appointments:patient_appointment_list' %}" class="text-gray-400 hover:text-white transition">
+                <i class="fas fa-arrow-left text-xl"></i>
+            </a>
+            <div>
+                <h1 class="text-2xl font-bold text-white">Book Appointment</h1>
+                <p class="text-sm text-gray-400">Step-by-step booking wizard</p>
+            </div>
+        </div>
+
+        <!-- Step Indicators -->
+        <div class="step-indicator">
+            <div class="step-dot active" id="dot1">1</div>
+            <div class="step-dot" id="dot2">2</div>
+            <div class="step-dot" id="dot3">3</div>
+            <div class="step-dot" id="dot4">4</div>
+            <div class="step-dot" id="dot5">5</div>
+        </div>
+
+        <!-- Messages -->
+        {% if messages %}
+            {% for message in messages %}
+            <div class="bg-{{ message.tags }}-500/20 border border-{{ message.tags }}-500/30 text-{{ message.tags }}-300 px-4 py-3 rounded-xl text-sm">
+                {{ message }}
+            </div>
+            {% endfor %}
+        {% endif %}
+
+        <!-- Booking Form -->
+        <form method="post" id="booking-form" class="glass-card rounded-2xl border border-white/10 p-6 space-y-6">
+            {% csrf_token %}
+
+            <!-- Step 1: Select Hospital -->
+            <div class="step active" data-step="1">
+                <h3 class="text-white font-semibold text-lg mb-4">Select Hospital</h3>
+                <select name="hospital" id="hospital-select" class="w-full px-4 py-3 bg-[#0d2137] border border-white/10 rounded-xl text-white focus:border-blue-500 outline-none">
+                    <option value="">-- Choose Hospital --</option>
+                    {% for hospital in hospitals %}
+                    <option value="{{ hospital.id }}">{{ hospital.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Step 2: Select Department -->
+            <div class="step" data-step="2">
+                <h3 class="text-white font-semibold text-lg mb-4">Select Department</h3>
+                <select name="department" id="department-select" class="w-full px-4 py-3 bg-[#0d2137] border border-white/10 rounded-xl text-white focus:border-blue-500 outline-none">
+                    <option value="">-- Choose Department --</option>
+                    {% for department in departments %}
+                    <option value="{{ department }}">{{ department }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Step 3: Select Doctor -->
+            <div class="step" data-step="3">
+                <h3 class="text-white font-semibold text-lg mb-4">Select Doctor</h3>
+                <select name="doctor" id="doctor-select" class="w-full px-4 py-3 bg-[#0d2137] border border-white/10 rounded-xl text-white focus:border-blue-500 outline-none">
+                    <option value="">-- Choose Doctor --</option>
+                </select>
+                <div id="doctor-info" class="mt-4 p-4 glass-card rounded-xl border border-white/10 hidden">
+                    <div class="flex items-center gap-4">
+                        <div class="w-16 h-16 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 text-2xl font-bold border-2 border-blue-400/30" id="doctor-avatar">D</div>
+                        <div>
+                            <p class="text-white font-semibold" id="doctor-name">Dr. Name</p>
+                            <p class="text-gray-400 text-sm" id="doctor-specialty">Specialty</p>
+                            <p class="text-gray-400 text-sm" id="doctor-experience">Experience: 0 years</p>
+                            <p class="text-gray-400 text-sm" id="doctor-fee">Fee: $0</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 4: Select Date -->
+            <div class="step" data-step="4">
+                <h3 class="text-white font-semibold text-lg mb-4">Choose Date</h3>
+                <div class="grid grid-cols-3 md:grid-cols-4 gap-3" id="date-grid">
+                    <p class="text-gray-400">Select a doctor first to see available dates.</p>
+                </div>
+            </div>
+
+            <!-- Step 5: Select Time & Reason -->
+            <div class="step" data-step="5">
+                <h3 class="text-white font-semibold text-lg mb-4">Select Time & Reason</h3>
+                <div class="grid grid-cols-3 md:grid-cols-4 gap-3" id="time-grid">
+                    <p class="text-gray-400">Select a date first to see available slots.</p>
+                </div>
+                <div class="mt-4">
+                    <label for="id_reason" class="block text-sm font-medium text-gray-300 mb-1">Reason for Visit</label>
+                    <textarea name="reason" id="id_reason" rows="3" class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-400 focus:border-blue-500 outline-none" placeholder="e.g., General Checkup, Fever, etc."></textarea>
+                </div>
+            </div>
+
+            <!-- Navigation Buttons -->
+            <div class="flex justify-between mt-6 pt-4 border-t border-white/10">
+                <button type="button" id="prev-step" class="bg-white/5 hover:bg-white/10 px-6 py-2 rounded-xl text-gray-300 transition">Previous</button>
+                <button type="button" id="next-step" class="bg-blue-600 hover:bg-blue-700 px-6 py-2 rounded-xl text-white transition shadow-lg shadow-blue-500/30">Next</button>
+            </div>
+
+            <!-- Hidden submit button (shown on final step) -->
+            <div id="submit-area" style="display:none;">
+                <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-xl font-medium transition shadow-lg shadow-emerald-500/30">
+                    <i class="fas fa-check-circle mr-2"></i> Book Appointment
+                </button>
+            </div>
+        </form>
+
+    </main>
+</div>
+
+<!-- ===== SIDEBAR TOGGLE ===== -->
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const sidebar = document.getElementById('sidebar');
+        const toggleBtn = document.getElementById('sidebarToggle');
+        if (toggleBtn && sidebar) {
+            toggleBtn.addEventListener('click', function () {
+                sidebar.classList.toggle('-translate-x-full');
+            });
+            document.addEventListener('click', function (event) {
+                const isClickInside = sidebar.contains(event.target) || toggleBtn.contains(event.target);
+                if (!isClickInside && window.innerWidth < 768) {
+                    sidebar.classList.add('-translate-x-full');
+                }
+            });
+        }
+    });
+</script>
+
+<!-- ===== BOOKING WIZARD SCRIPT ===== -->
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        let currentStep = 1;
+        const totalSteps = 5;
+
+        // DOM elements
+        const steps = document.querySelectorAll('.step');
+        const dots = document.querySelectorAll('.step-dot');
+        const prevBtn = document.getElementById('prev-step');
+        const nextBtn = document.getElementById('next-step');
+        const submitArea = document.getElementById('submit-area');
+        const hospitalSelect = document.getElementById('hospital-select');
+        const departmentSelect = document.getElementById('department-select');
+        const doctorSelect = document.getElementById('doctor-select');
+        const doctorInfo = document.getElementById('doctor-info');
+        const dateGrid = document.getElementById('date-grid');
+        const timeGrid = document.getElementById('time-grid');
+
+        // Update step display
+        function updateSteps() {
+            steps.forEach((step, index) => {
+                step.classList.toggle('active', (index + 1) === currentStep);
+            });
+            dots.forEach((dot, index) => {
+                const num = index + 1;
+                dot.classList.remove('active', 'completed');
+                if (num === currentStep) dot.classList.add('active');
+                else if (num < currentStep) dot.classList.add('completed');
+            });
+            // Show/hide submit button on last step
+            if (currentStep === totalSteps) {
+                submitArea.style.display = 'block';
+                nextBtn.style.display = 'none';
+            } else {
+                submitArea.style.display = 'none';
+                nextBtn.style.display = 'inline-block';
+            }
+            prevBtn.style.display = currentStep === 1 ? 'none' : 'inline-block';
+        }
+
+        // Move to next step
+        function nextStep() {
+            // Validate current step before proceeding
+            if (currentStep === 1) {
+                if (!hospitalSelect.value) {
+                    alert('Please select a hospital.');
+                    return;
+                }
+                // Populate departments – we have a static list from context, but we can filter by hospital if needed.
+                // For simplicity, we'll keep all departments; the doctor list will be filtered by hospital+department.
+            }
+            if (currentStep === 2) {
+                if (!departmentSelect.value) {
+                    alert('Please select a department.');
+                    return;
+                }
+                // Populate doctors
+                populateDoctors(hospitalSelect.value, departmentSelect.value);
+            }
+            if (currentStep === 3) {
+                if (!doctorSelect.value) {
+                    alert('Please select a doctor.');
+                    return;
+                }
+                // Show doctor info
+                showDoctorInfo(doctorSelect.value);
+                // Populate dates
+                populateDates(doctorSelect.value);
+            }
+            if (currentStep === 4) {
+               const selectedDate = document.querySelector('input[name="appointment_date"]:checked');
+                if (!selectedDate) {
+                    alert('Please select a date.');
+                    return;
+                }
+                // Populate time slots
+                populateTimeSlots(doctorSelect.value, selectedDate.value);
+            }
+            if (currentStep < totalSteps) {
+                currentStep++;
+                updateSteps();
+            }
+        }
+
+        // Previous step
+        function prevStep() {
+            if (currentStep > 1) {
+                currentStep--;
+                updateSteps();
+            }
+        }
+
+        // Populate doctors via AJAX
+        function populateDoctors(hospitalId, department) {
+            fetch(`/appointments/api/doctors/?hospital_id=${hospitalId}&department=${encodeURIComponent(department)}`)
+                .then(response => response.json())
+                .then(data => {
+                    doctorSelect.innerHTML = '<option value="">-- Choose Doctor --</option>';
+                    data.doctors.forEach(doc => {
+                        const opt = document.createElement('option');
+                        opt.value = doc.id;
+                        opt.textContent = `Dr. ${doc.full_name} (${doc.specialty})`;
+                        opt.dataset.specialty = doc.specialty;
+                        opt.dataset.experience = doc.experience;
+                        opt.dataset.fee = doc.consultation_fee;
+                        doctorSelect.appendChild(opt);
+                    });
+                })
+                .catch(error => console.error('Error fetching doctors:', error));
+        }
+
+        // Show doctor info card
+        function showDoctorInfo(doctorId) {
+            const selected = doctorSelect.options[doctorSelect.selectedIndex];
+            if (selected && selected.value) {
+                const name = selected.text.split(' (')[0];
+                const specialty = selected.dataset.specialty || 'N/A';
+                const experience = selected.dataset.experience || '0';
+                const fee = selected.dataset.fee || '0';
+                document.getElementById('doctor-avatar').textContent = name.charAt(0) || 'D';
+                document.getElementById('doctor-name').textContent = name;
+                document.getElementById('doctor-specialty').textContent = `Specialty: ${specialty}`;
+                document.getElementById('doctor-experience').textContent = `Experience: ${experience} years`;
+                document.getElementById('doctor-fee').textContent = `Fee: $${fee}`;
+                doctorInfo.classList.remove('hidden');
+            }
+        }
+
+        // Populate available dates via AJAX
+        function populateDates(doctorId) {
+            fetch(`/appointments/api/available-dates/?doctor_id=${doctorId}`)
+                .then(response => response.json())
+                .then(data => {
+                    dateGrid.innerHTML = '';
+                    if (data.dates.length === 0) {
+                        dateGrid.innerHTML = '<p class="text-gray-400 col-span-full">No available dates for this doctor.</p>';
+                        return;
+                    }
+                    data.dates.forEach(date => {
+                        const label = document.createElement('label');
+                        label.className = 'glass-card rounded-xl border border-white/10 p-3 text-center hover:border-blue-400/50 transition cursor-pointer';
+                        label.innerHTML = `<input type="radio" name="appointment_date" value="${date}" class="hidden"> ${date}`;
+                        label.addEventListener('click', function() {
+                            document.querySelectorAll('label[data-date]').forEach(l => l.classList.remove('border-blue-400'));
+                            this.classList.add('border-blue-400');
+                            this.querySelector('input').checked = true;
+                        });
+                        label.dataset.date = date;
+                        dateGrid.appendChild(label);
+                    });
+                })
+                .catch(error => console.error('Error fetching dates:', error));
+        }
+
+        // Populate time slots via AJAX
+        function populateTimeSlots(doctorId, date) {
+            fetch(`/appointments/api/available-slots/?doctor_id=${doctorId}&date=${date}`)
+                .then(response => response.json())
+                .then(data => {
+                    timeGrid.innerHTML = '';
+                    if (data.slots.length === 0) {
+                        timeGrid.innerHTML = '<p class="text-gray-400 col-span-full">No available time slots for this date.</p>';
+                        return;
+                    }
+                    data.slots.forEach(slot => {
+                        const label = document.createElement('label');
+                        label.className = 'glass-card rounded-xl border border-white/10 p-3 text-center hover:border-blue-400/50 transition cursor-pointer';
+                        label.innerHTML = `<input type="radio" name="appointment_time" value="${slot}" class="hidden"> ${slot}`;
+                        label.addEventListener('click', function() {
+                            document.querySelectorAll('label[data-time]').forEach(l => l.classList.remove('border-blue-400'));
+                            this.classList.add('border-blue-400');
+                            this.querySelector('input').checked = true;
+                        });
+                        label.dataset.time = slot;
+                        timeGrid.appendChild(label);
+                    });
+                })
+                .catch(error => console.error('Error fetching slots:', error));
+        }
+
+        // Event listeners
+        nextBtn.addEventListener('click', nextStep);
+        prevBtn.addEventListener('click', prevStep);
+
+        // Keyboard shortcut (Enter to proceed)
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.target.closest('form')) {
+                if (currentStep < totalSteps) {
+                    e.preventDefault();
+                    nextStep();
+                }
+            }
+        });
+
+        // Initially, hide submit area
+        submitArea.style.display = 'none';
+        updateSteps();
+
+        // On hospital change, reset steps after 1
+        hospitalSelect.addEventListener('change', function() {
+            if (currentStep > 1) {
+                currentStep = 1;
+                updateSteps();
+            }
+        });
+
+        // On department change, reset to step 2
+        departmentSelect.addEventListener('change', function() {
+            if (currentStep > 2) {
+                currentStep = 2;
+                updateSteps();
+            }
+        });
+
+        // On doctor change, reset to step 3
+        doctorSelect.addEventListener('change', function() {
+            if (currentStep > 3) {
+                currentStep = 3;
+                updateSteps();
+            }
+            if (this.value) {
+                showDoctorInfo(this.value);
+                populateDates(this.value);
+            } else {
+                doctorInfo.classList.add('hidden');
+            }
+        });
+    });
+</script>
+{% endblock %}

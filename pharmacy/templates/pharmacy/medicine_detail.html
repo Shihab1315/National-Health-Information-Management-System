@@ -1,0 +1,213 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ medicine.brand_name }} — NHIMS Pharmacy{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 sm:px-6 py-8">
+    <!-- Breadcrumb -->
+    <nav class="flex items-center gap-2 text-sm text-gray-400 mb-6" aria-label="Breadcrumb">
+        <a href="{% url 'pharmacy:dashboard' %}" class="hover:text-white transition">Dashboard</a>
+        <span class="text-gray-600">/</span>
+        <a href="{% url 'pharmacy:medicine_list' %}" class="hover:text-white transition">Medicines</a>
+        <span class="text-gray-600">/</span>
+        <span class="text-white">{{ medicine.brand_name }}</span>
+    </nav>
+
+    <!-- Header -->
+    <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+        <div class="flex items-center gap-4">
+            <a href="{% url 'pharmacy:medicine_list' %}" class="text-gray-400 hover:text-white transition">
+                <i class="fas fa-arrow-left text-xl"></i>
+            </a>
+            <div>
+                <h1 class="text-2xl font-bold text-white">{{ medicine.brand_name }}</h1>
+                <p class="text-sm text-gray-400">{{ medicine.generic_name|default:"No generic name" }}</p>
+            </div>
+        </div>
+        <div class="flex gap-2">
+            <a href="{% url 'pharmacy:medicine_edit' medicine.pk %}" class="bg-amber-600/20 text-amber-400 px-4 py-2 rounded-xl hover:bg-amber-600/30 transition flex items-center gap-2">
+                <i class="fas fa-pen"></i> Edit
+            </a>
+            <a href="{% url 'pharmacy:medicine_delete' medicine.pk %}" class="bg-red-600/20 text-red-400 px-4 py-2 rounded-xl hover:bg-red-600/30 transition flex items-center gap-2">
+                <i class="fas fa-trash-alt"></i> Delete
+            </a>
+        </div>
+    </div>
+
+    <!-- Status badges -->
+    <div class="flex flex-wrap gap-3 mb-6">
+        <!-- Stock Status -->
+        <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium
+            {% if medicine.is_out_of_stock %}bg-red-500/20 text-red-300
+            {% elif medicine.is_low_stock %}bg-amber-500/20 text-amber-300
+            {% else %}bg-emerald-500/20 text-emerald-300{% endif %}">
+            <span class="w-2 h-2 rounded-full inline-block
+                {% if medicine.is_out_of_stock %}bg-red-400
+                {% elif medicine.is_low_stock %}bg-amber-400
+                {% else %}bg-emerald-400{% endif %}"></span>
+            Stock: 
+            {% if medicine.is_out_of_stock %}Out of Stock
+            {% elif medicine.is_low_stock %}Low Stock ({{ medicine.current_stock }} left)
+            {% else %}In Stock ({{ medicine.current_stock }}){% endif %}
+        </span>
+
+        <!-- Expiry Status -->
+        <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium
+            {% if medicine.is_expired %}bg-red-500/20 text-red-300
+            {% elif medicine.expiry_date <= today|add:30 %}bg-amber-500/20 text-amber-300
+            {% else %}bg-emerald-500/20 text-emerald-300{% endif %}">
+            <span class="w-2 h-2 rounded-full inline-block
+                {% if medicine.is_expired %}bg-red-400
+                {% elif medicine.expiry_date <= today|add:30 %}bg-amber-400
+                {% else %}bg-emerald-400{% endif %}"></span>
+            Expiry: 
+            {% if medicine.is_expired %}Expired on {{ medicine.expiry_date|date:"M d, Y" }}
+            {% elif medicine.expiry_date <= today|add:30 %}Expiring Soon ({{ medicine.expiry_date|date:"M d, Y" }})
+            {% else %}Valid until {{ medicine.expiry_date|date:"M d, Y" }}{% endif %}
+        </span>
+
+        <!-- Active Status -->
+        <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium
+            {% if medicine.is_active %}bg-emerald-500/20 text-emerald-300
+            {% else %}bg-gray-500/20 text-gray-300{% endif %}">
+            <span class="w-2 h-2 rounded-full inline-block
+                {% if medicine.is_active %}bg-emerald-400
+                {% else %}bg-gray-400{% endif %}"></span>
+            {{ medicine.is_active|yesno:"Active,Inactive" }}
+        </span>
+    </div>
+
+    <!-- Detail Card -->
+    <div class="glass-card rounded-2xl border border-white/10 p-6 space-y-6">
+        <!-- Main info grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+                <h3 class="text-gray-400 text-xs uppercase tracking-wider font-semibold mb-3">Basic Information</h3>
+                <dl class="space-y-2 text-sm">
+                    <div class="flex justify-between border-b border-white/5 pb-1">
+                        <dt class="text-gray-400">Medicine Code</dt>
+                        <dd class="text-white font-mono">{{ medicine.medicine_code }}</dd>
+                    </div>
+                    <div class="flex justify-between border-b border-white/5 pb-1">
+                        <dt class="text-gray-400">Barcode</dt>
+                        <dd class="text-white font-mono">{{ medicine.barcode }}</dd>
+                    </div>
+                    <div class="flex justify-between border-b border-white/5 pb-1">
+                        <dt class="text-gray-400">Generic Name</dt>
+                        <dd class="text-white">{{ medicine.generic_name|default:"—" }}</dd>
+                    </div>
+                    <div class="flex justify-between border-b border-white/5 pb-1">
+                        <dt class="text-gray-400">Category</dt>
+                        <dd class="text-white">{{ medicine.category.name|default:"—" }}</dd>
+                    </div>
+                    <div class="flex justify-between border-b border-white/5 pb-1">
+                        <dt class="text-gray-400">Manufacturer</dt>
+                        <dd class="text-white">{{ medicine.manufacturer|default:"—" }}</dd>
+                    </div>
+                </dl>
+            </div>
+            <div>
+                <h3 class="text-gray-400 text-xs uppercase tracking-wider font-semibold mb-3">Formulation & Pricing</h3>
+                <dl class="space-y-2 text-sm">
+                    <div class="flex justify-between border-b border-white/5 pb-1">
+                        <dt class="text-gray-400">Dosage Form</dt>
+                        <dd class="text-white">{{ medicine.get_dosage_form_display }}</dd>
+                    </div>
+                    <div class="flex justify-between border-b border-white/5 pb-1">
+                        <dt class="text-gray-400">Strength</dt>
+                        <dd class="text-white">{{ medicine.strength|default:"—" }}</dd>
+                    </div>
+                    <div class="flex justify-between border-b border-white/5 pb-1">
+                        <dt class="text-gray-400">Unit</dt>
+                        <dd class="text-white">{{ medicine.unit }}</dd>
+                    </div>
+                    <div class="flex justify-between border-b border-white/5 pb-1">
+                        <dt class="text-gray-400">Buying Price</dt>
+                        <dd class="text-white">BDT {{ medicine.buying_price|floatformat:2 }}</dd>
+                    </div>
+                    <div class="flex justify-between border-b border-white/5 pb-1">
+                        <dt class="text-gray-400">Selling Price</dt>
+                        <dd class="text-white">BDT {{ medicine.selling_price|floatformat:2 }}</dd>
+                    </div>
+                    <div class="flex justify-between border-b border-white/5 pb-1">
+                        <dt class="text-gray-400">Profit Margin</dt>
+                        <dd class="text-emerald-400">+ BDT {{ medicine.profit_margin|floatformat:2 }}</dd>
+                    </div>
+                </dl>
+            </div>
+        </div>
+
+        <!-- Stock & Batch -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 border-t border-white/10 pt-6">
+            <div>
+                <h3 class="text-gray-400 text-xs uppercase tracking-wider font-semibold mb-3">Inventory</h3>
+                <dl class="space-y-2 text-sm">
+                    <div class="flex justify-between border-b border-white/5 pb-1">
+                        <dt class="text-gray-400">Current Stock</dt>
+                        <dd class="text-white font-semibold">{{ medicine.current_stock }}</dd>
+                    </div>
+                    <div class="flex justify-between border-b border-white/5 pb-1">
+                        <dt class="text-gray-400">Minimum Stock</dt>
+                        <dd class="text-white">{{ medicine.minimum_stock }}</dd>
+                    </div>
+                    <div class="flex justify-between border-b border-white/5 pb-1">
+                        <dt class="text-gray-400">Maximum Stock</dt>
+                        <dd class="text-white">{{ medicine.maximum_stock }}</dd>
+                    </div>
+                    <div class="flex justify-between border-b border-white/5 pb-1">
+                        <dt class="text-gray-400">Batch Number</dt>
+                        <dd class="text-white">{{ medicine.batch_number|default:"—" }}</dd>
+                    </div>
+                </dl>
+            </div>
+            <div>
+                <h3 class="text-gray-400 text-xs uppercase tracking-wider font-semibold mb-3">Dates</h3>
+                <dl class="space-y-2 text-sm">
+                    <div class="flex justify-between border-b border-white/5 pb-1">
+                        <dt class="text-gray-400">Expiry Date</dt>
+                        <dd class="text-white">{{ medicine.expiry_date|date:"M d, Y" }}</dd>
+                    </div>
+                    <div class="flex justify-between border-b border-white/5 pb-1">
+                        <dt class="text-gray-400">Created</dt>
+                        <dd class="text-white">{{ medicine.created_at|date:"M d, Y H:i" }}</dd>
+                    </div>
+                    <div class="flex justify-between border-b border-white/5 pb-1">
+                        <dt class="text-gray-400">Last Updated</dt>
+                        <dd class="text-white">{{ medicine.updated_at|date:"M d, Y H:i" }}</dd>
+                    </div>
+                </dl>
+            </div>
+        </div>
+
+        <!-- Description -->
+        {% if medicine.description %}
+        <div class="border-t border-white/10 pt-6">
+            <h3 class="text-gray-400 text-xs uppercase tracking-wider font-semibold mb-2">Description</h3>
+            <p class="text-gray-300 text-sm whitespace-pre-wrap">{{ medicine.description }}</p>
+        </div>
+        {% endif %}
+
+        <!-- QR/Barcode image if available -->
+        {% if medicine.qr_code %}
+        <div class="border-t border-white/10 pt-6">
+            <h3 class="text-gray-400 text-xs uppercase tracking-wider font-semibold mb-2">QR Code</h3>
+            <img src="{{ medicine.qr_code.url }}" alt="QR Code" class="w-32 h-32 object-contain bg-white rounded-lg p-2">
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Quick actions -->
+    <div class="mt-6 flex flex-wrap gap-3">
+        <a href="{% url 'pharmacy:medicine_edit' medicine.pk %}" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl text-sm font-medium transition shadow-lg shadow-blue-500/30 flex items-center gap-2">
+            <i class="fas fa-pen"></i> Edit
+        </a>
+        <a href="{% url 'pharmacy:medicine_delete' medicine.pk %}" class="bg-red-600 hover:bg-red-700 text-white px-5 py-2.5 rounded-xl text-sm font-medium transition shadow-lg shadow-red-500/30 flex items-center gap-2">
+            <i class="fas fa-trash-alt"></i> Delete
+        </a>
+        <a href="{% url 'pharmacy:inventory' %}" class="bg-white/5 hover:bg-white/10 text-gray-300 px-5 py-2.5 rounded-xl text-sm font-medium transition flex items-center gap-2">
+            <i class="fas fa-boxes"></i> View Inventory
+        </a>
+    </div>
+</div>
+{% endblock %}

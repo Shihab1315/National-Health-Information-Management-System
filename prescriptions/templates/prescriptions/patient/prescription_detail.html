@@ -1,0 +1,391 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Prescription #{{ prescription.prescription_number }} — NHIMS{% endblock %}
+
+{% block extra_css %}
+<style>
+    .top-navbar { display: none !important; }
+    /* Status badges */
+    .badge-issued {
+        background: linear-gradient(135deg, rgba(52, 211, 153, 0.15), rgba(52, 211, 153, 0.05));
+        color: #34d399;
+        border: 1px solid rgba(52, 211, 153, 0.3);
+        box-shadow: 0 0 15px rgba(52, 211, 153, 0.1);
+    }
+    .badge-completed {
+        background: linear-gradient(135deg, rgba(96, 165, 250, 0.15), rgba(96, 165, 250, 0.05));
+        color: #60a5fa;
+        border: 1px solid rgba(96, 165, 250, 0.3);
+        box-shadow: 0 0 15px rgba(96, 165, 250, 0.1);
+    }
+    .badge-cancelled {
+        background: linear-gradient(135deg, rgba(248, 113, 113, 0.15), rgba(248, 113, 113, 0.05));
+        color: #f87171;
+        border: 1px solid rgba(248, 113, 113, 0.3);
+        box-shadow: 0 0 15px rgba(248, 113, 113, 0.1);
+    }
+    .badge-draft {
+        background: linear-gradient(135deg, rgba(156, 163, 175, 0.15), rgba(156, 163, 175, 0.05));
+        color: #9ca3af;
+        border: 1px solid rgba(156, 163, 175, 0.3);
+    }
+    .detail-card {
+        transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+    .detail-card:hover {
+        border-color: rgba(59, 130, 246, 0.3);
+        transform: translateY(-2px);
+    }
+    .table-medicines {
+        border-collapse: collapse;
+        width: 100%;
+    }
+    .table-medicines thead {
+        background: rgba(255,255,255,0.03);
+        backdrop-filter: blur(4px);
+    }
+    .table-medicines th {
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.7rem;
+        letter-spacing: 0.05em;
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .table-medicines td {
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid rgba(255,255,255,0.04);
+    }
+    .table-medicines tbody tr:last-child td {
+        border-bottom: none;
+    }
+    .prescription-footer {
+        border-top: 2px dashed rgba(255,255,255,0.1);
+        padding-top: 1.5rem;
+        margin-top: 2rem;
+    }
+    @media print {
+        body * { visibility: hidden; }
+        #prescription-content, #prescription-content * { visibility: visible; }
+        #prescription-content { position: absolute; left: 0; top: 0; width: 100%; padding: 20px; background: white; color: black; }
+        #prescription-content .glass-card { background: white !important; border-color: #e5e7eb !important; box-shadow: none !important; }
+        #prescription-content .badge-issued, #prescription-content .badge-completed,
+        #prescription-content .badge-cancelled, #prescription-content .badge-draft {
+            background: #f3f4f6 !important;
+            border-color: #d1d5db !important;
+            color: #111827 !important;
+            box-shadow: none !important;
+        }
+        #prescription-content .no-print { display: none !important; }
+        .no-print { display: none !important; }
+    }
+</style>
+{% endblock %}
+
+{% block navbar %}
+<nav class="fixed top-0 left-0 right-0 z-40 bg-[#0a1628]/80 backdrop-blur-sm border-b border-white/10 px-4 py-3 md:hidden">
+    <div class="flex items-center justify-between">
+        <button id="sidebarToggle" class="text-white text-2xl">
+            <i class="fas fa-bars"></i>
+        </button>
+        <span class="text-white font-semibold">NHIMS Patient</span>
+        <div class="w-8"></div>
+    </div>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="flex min-h-screen bg-[#0a1628]">
+    <!-- ===== SIDEBAR (reuse patient sidebar) ===== -->
+    <aside id="sidebar" class="fixed top-0 left-0 z-50 h-full w-72 bg-[#0d1f3c] border-r border-white/10 transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out overflow-y-auto">
+        <div class="p-4 border-b border-white/10">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 text-xl font-bold">
+                    {{ patient.full_name|slice:":1"|upper|default:"U" }}
+                </div>
+                <div>
+                    <p class="text-white font-semibold text-sm">{{ patient.full_name|default:"Patient" }}</p>
+                    <p class="text-gray-400 text-xs">Patient</p>
+                </div>
+            </div>
+        </div>
+        <nav class="p-3 space-y-1">
+            <a href="{% url 'dashboard:patient_dashboard' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
+                <i class="fas fa-th-large w-5 text-center"></i> Dashboard
+            </a>
+            <a href="{% url 'appointments:patient_appointment_list' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
+                <i class="fas fa-calendar-check w-5 text-center"></i> Appointments
+            </a>
+            <a href="{% url 'prescriptions:patient_my_prescriptions' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
+                <i class="fas fa-prescription-bottle w-5 text-center"></i> Prescriptions
+            </a>
+            <hr class="border-white/10 my-3">
+            <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition bg-blue-600/30 text-blue-300">
+                <i class="fas fa-file-medical w-5 text-center"></i> Prescription Detail
+            </a>
+            <a href="{% url 'medical_records:record_list' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
+                <i class="fas fa-file-medical w-5 text-center"></i> Medical Records
+            </a>
+            <a href="{% url 'laboratory:patient_lab_report_list' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
+                <i class="fas fa-flask w-5 text-center"></i> Laboratory
+            </a>
+            <a href="{% url 'notifications:center' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
+                <i class="fas fa-bell w-5 text-center"></i> Notifications
+            </a>
+            <hr class="border-white/10 my-3">
+            <a href="{% url 'patients:profile' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
+            <i class="fas fa-user-circle w-5 text-center"></i> Profile
+            </a>
+            <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
+                <i class="fas fa-cog w-5 text-center"></i> Settings
+            </a>
+            {% url 'logout' as logout_url %}
+            {% if logout_url %}
+                <a href="{{ logout_url }}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-red-400 hover:bg-red-500/10 hover:text-red-300">
+                    <i class="fas fa-sign-out-alt w-5 text-center"></i> Logout
+                </a>
+            {% else %}
+                <a href="{% url 'accounts:logout' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-red-400 hover:bg-red-500/10 hover:text-red-300">
+                    <i class="fas fa-sign-out-alt w-5 text-center"></i> Logout
+                </a>
+            {% endif %}
+        </nav>
+        <div class="absolute bottom-4 left-4 right-4 text-center text-gray-500 text-xs">
+            NHIMS v2.0
+        </div>
+    </aside>
+
+    <!-- ===== MAIN CONTENT ===== -->
+    <main class="flex-1 md:ml-72 p-4 md:p-6 space-y-6 mt-14 md:mt-0" id="prescription-content">
+
+        <!-- ===== BREADCRUMB ===== -->
+        <nav class="flex items-center gap-2 text-sm text-gray-400 no-print">
+            <a href="{% url 'dashboard:patient_dashboard' %}" class="hover:text-white transition">Dashboard</a>
+            <span class="text-gray-600">/</span>
+            <a href="{% url 'prescriptions:patient_my_prescriptions' %}" class="hover:text-white transition">My Prescriptions</a>
+            <span class="text-gray-600">/</span>
+            <span class="text-white">Prescription Detail</span>
+        </nav>
+
+        <!-- ===== HEADER CARD ===== -->
+        <div class="glass-card rounded-2xl border border-white/10 p-6 detail-card">
+            <div class="flex flex-wrap items-center justify-between gap-4">
+                <div>
+                    <h1 class="text-2xl font-bold text-white flex items-center gap-3">
+                        <i class="fas fa-prescription-bottle text-blue-400"></i>
+                        Prescription #{{ prescription.prescription_number }}
+                    </h1>
+                    <p class="text-gray-400 text-sm mt-1">
+                        Issued on {{ prescription.created_at|date:"l, F j, Y" }} at {{ prescription.created_at|time:"h:i A" }}
+                    </p>
+                </div>
+                <div>
+                    <span class="inline-block px-4 py-2 rounded-full text-sm font-medium
+                        {% if prescription.status == 'issued' %}badge-issued
+                        {% elif prescription.status == 'completed' %}badge-completed
+                        {% elif prescription.status == 'cancelled' %}badge-cancelled
+                        {% else %}badge-draft{% endif %}">
+                        {{ prescription.get_status_display }}
+                    </span>
+                </div>
+            </div>
+            <div class="mt-2 text-sm text-gray-400">
+                <span class="text-gray-500">Issued By:</span> Dr. {{ prescription.doctor.full_name|default:"N/A" }}
+            </div>
+        </div>
+
+        <!-- ===== DOCTOR + HOSPITAL + PATIENT GRID ===== -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- Doctor Card -->
+            <div class="glass-card rounded-2xl border border-white/10 p-5 detail-card">
+                <h3 class="text-white font-semibold text-md flex items-center gap-2 mb-3">
+                    <i class="fas fa-user-md text-emerald-400"></i> Doctor
+                </h3>
+                <div class="flex items-start gap-3">
+                    <div class="shrink-0">
+                        <div class="w-14 h-14 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 text-2xl font-bold border-2 border-blue-400/30">
+                            {{ prescription.doctor.full_name|slice:":1"|upper|default:"D" }}
+                        </div>
+                    </div>
+                    <div class="flex-1">
+                        <p class="text-white font-semibold">Dr. {{ prescription.doctor.full_name|default:"N/A" }}</p>
+                        <p class="text-gray-400 text-sm">{{ prescription.doctor.specialties.all|join:", "|default:"N/A" }}</p>
+                        <p class="text-gray-400 text-sm">{{ prescription.doctor.qualification|default:"N/A" }}</p>
+                        <p class="text-gray-400 text-sm">{{ prescription.doctor.department|default:"" }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Hospital Card -->
+            <div class="glass-card rounded-2xl border border-white/10 p-5 detail-card">
+                <h3 class="text-white font-semibold text-md flex items-center gap-2 mb-3">
+                    <i class="fas fa-hospital text-blue-400"></i> Hospital
+                </h3>
+                <p class="text-white font-medium">{{ prescription.hospital.name|default:"N/A" }}</p>
+                <p class="text-gray-400 text-sm">{{ prescription.hospital.full_address|default:"N/A" }}</p>
+                <p class="text-gray-400 text-sm">Phone: {{ prescription.hospital.phone|default:"N/A" }}</p>
+                <p class="text-gray-400 text-sm">Email: {{ prescription.hospital.email|default:"N/A" }}</p>
+            </div>
+
+            <!-- Patient Card -->
+            <div class="glass-card rounded-2xl border border-white/10 p-5 detail-card">
+                <h3 class="text-white font-semibold text-md flex items-center gap-2 mb-3">
+                    <i class="fas fa-user-injured text-amber-400"></i> Patient
+                </h3>
+                <p class="text-white font-medium">{{ prescription.patient.full_name }}</p>
+                <p class="text-gray-400 text-sm">ID: {{ prescription.patient.health_id|default:"N/A" }}</p>
+                <p class="text-gray-400 text-sm">
+                    Age: {% if prescription.patient.date_of_birth %}{{ prescription.patient.date_of_birth|timesince }}{% else %}N/A{% endif %}
+                </p>
+                <p class="text-gray-400 text-sm">Gender: {{ prescription.patient.get_gender_display|default:"N/A" }}</p>
+                <p class="text-gray-400 text-sm">Blood Group: {{ prescription.patient.blood_group|default:"N/A" }}</p>
+            </div>
+        </div>
+
+        <!-- ===== MEDICAL INFORMATION ===== -->
+        <div class="glass-card rounded-2xl border border-white/10 p-6 detail-card">
+            <h3 class="text-white font-semibold text-md flex items-center gap-2 mb-3">
+                <i class="fas fa-notes-medical text-purple-400"></i> Medical Information
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <p class="text-gray-400 text-xs uppercase">Diagnosis</p>
+                    <p class="text-white">{{ prescription.diagnosis|default:"N/A" }}</p>
+                </div>
+                <div>
+                    <p class="text-gray-400 text-xs uppercase">Symptoms</p>
+                    <p class="text-white">{{ prescription.symptoms|default:"N/A" }}</p>
+                </div>
+                <div class="md:col-span-2">
+                    <p class="text-gray-400 text-xs uppercase">Clinical Notes</p>
+                    <p class="text-white">{{ prescription.clinical_notes|default:"N/A" }}</p>
+                </div>
+                <div class="md:col-span-2">
+                    <p class="text-gray-400 text-xs uppercase">Doctor's Advice</p>
+                    <p class="text-white">{{ prescription.advice|default:"N/A" }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== MEDICINES TABLE ===== -->
+        <div class="glass-card rounded-2xl border border-white/10 p-6 detail-card">
+            <h3 class="text-white font-semibold text-md flex items-center gap-2 mb-4">
+                <i class="fas fa-capsules text-rose-400"></i> Medicines
+            </h3>
+            {% if prescription.medicines.all %}
+            <div class="overflow-x-auto">
+                <table class="table-medicines text-sm">
+                    <thead>
+                        <tr class="text-left text-gray-400">
+                            <th>Medicine Name</th>
+                            <th>Dosage</th>
+                            <th>Frequency</th>
+                            <th>Duration</th>
+                            <th>Instructions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-white/5">
+                        {% for item in prescription.medicines.all %}
+                        <tr class="hover:bg-white/5 transition">
+                            <td class="text-white">{{ item.medicine_name }}</td>
+                            <td class="text-gray-300">{{ item.dosage|default:"—" }}</td>
+                            <td class="text-gray-300">{{ item.frequency|default:"—" }}</td>
+                            <td class="text-gray-300">{{ item.duration|default:"—" }}</td>
+                            <td class="text-gray-300 text-xs">{{ item.instruction|default:"—" }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-gray-400 text-sm">No medicines listed in this prescription.</p>
+            {% endif %}
+        </div>
+
+        <!-- ===== FOLLOW-UP ===== -->
+        {% if prescription.follow_up_date %}
+        <div class="glass-card rounded-2xl border border-white/10 p-6 detail-card">
+            <h3 class="text-white font-semibold text-md flex items-center gap-2 mb-3">
+                <i class="fas fa-calendar-plus text-cyan-400"></i> Follow‑up
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <p class="text-gray-400 text-xs uppercase">Next Visit Date</p>
+                    <p class="text-white">{{ prescription.follow_up_date|date:"l, F j, Y" }}</p>
+                </div>
+                <div>
+                    <p class="text-gray-400 text-xs uppercase">Review Notes</p>
+                    <p class="text-white">{{ prescription.review_notes|default:"N/A" }}</p>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- ===== FOOTER ===== -->
+        <div class="prescription-footer">
+            <div class="flex flex-wrap justify-between items-center text-sm">
+                <div>
+                    <p class="text-gray-400">Doctor Signature</p>
+                    <div class="mt-2 w-40 h-12 border-b-2 border-dashed border-white/20"></div>
+                    <p class="text-gray-500 mt-1">_____________________</p>
+                    <p class="text-gray-400 text-xs">Dr. {{ prescription.doctor.full_name|default:"N/A" }}</p>
+                </div>
+                <div class="text-right">
+                    <p class="text-gray-400">Hospital Seal</p>
+                    <div class="mt-2 w-24 h-24 rounded-full border-2 border-dashed border-white/20 flex items-center justify-center text-gray-500 text-xs mx-auto">
+                        SEAL
+                    </div>
+                </div>
+            </div>
+            <div class="mt-4 pt-3 border-t border-white/10 text-center text-gray-500 text-xs">
+                <p>Generated by NHIMS • {{ current_date|date:"F d, Y H:i" }}</p>
+                <p>Prescription #{{ prescription.prescription_number }}</p>
+            </div>
+        </div>
+           <!-- ===== ACTIONS ===== -->
+<div class="flex flex-wrap gap-3 no-print mt-6">
+    <a href="{% url 'prescriptions:patient_my_prescriptions' %}" class="bg-white/5 hover:bg-white/10 px-6 py-2.5 rounded-xl text-gray-300 transition text-sm flex items-center gap-2">
+        <i class="fas fa-arrow-left"></i> Back to List
+    </a>
+
+    <!-- Download PDF button -->
+    {% url 'prescriptions:patient_prescription_download' prescription.pk as download_url %}
+    {% if download_url %}
+    <a href="{{ download_url }}" class="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2.5 rounded-xl text-sm font-medium transition shadow-lg shadow-emerald-500/30 flex items-center gap-2">
+        <i class="fas fa-download"></i> Download PDF
+    </a>
+    {% else %}
+    <a href="#" class="bg-emerald-600/50 text-white px-6 py-2.5 rounded-xl text-sm font-medium transition opacity-50 cursor-not-allowed flex items-center gap-2">
+        <i class="fas fa-download"></i> Download PDF (coming soon)
+    </a>
+    {% endif %}
+
+    <!-- Print button -->
+    <a href="{% url 'prescriptions:patient_prescription_print' prescription.pk %}" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-xl text-sm font-medium transition shadow-lg shadow-blue-500/30 flex items-center gap-2">
+    <i class="fas fa-print"></i> Print Prescription
+    </a>
+</div>
+
+    </main>
+</div>
+
+<!-- ===== SIDEBAR TOGGLE ===== -->
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const sidebar = document.getElementById('sidebar');
+        const toggleBtn = document.getElementById('sidebarToggle');
+        if (toggleBtn && sidebar) {
+            toggleBtn.addEventListener('click', function () {
+                sidebar.classList.toggle('-translate-x-full');
+            });
+            document.addEventListener('click', function (event) {
+                const isClickInside = sidebar.contains(event.target) || toggleBtn.contains(event.target);
+                if (!isClickInside && window.innerWidth < 768) {
+                    sidebar.classList.add('-translate-x-full');
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Print Prescription #{{ prescription.prescription_number }}</title>
+    <style>
+        /* Reset & base */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Times New Roman', Times, serif;
+            background: white;
+            color: #000;
+            padding: 20px;
+            margin: 0 auto;
+            max-width: 800px;
+            line-height: 1.4;
+        }
+        .print-container {
+            background: white;
+            padding: 20px;
+        }
+        /* Header */
+        .header {
+            text-align: center;
+            border-bottom: 2px solid #333;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+        .header h1 {
+            font-size: 24px;
+            font-weight: bold;
+            margin: 0;
+        }
+        .header p {
+            font-size: 14px;
+            margin: 2px 0;
+            color: #333;
+        }
+        .header .nhims-title {
+            font-size: 16px;
+            font-weight: bold;
+            margin-top: 5px;
+            color: #1a3c6e;
+        }
+        /* Title */
+        .prescription-title {
+            text-align: center;
+            font-size: 20px;
+            font-weight: bold;
+            margin: 15px 0;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        /* Info grid */
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px 20px;
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-bottom: 15px;
+            background: #f9f9f9;
+        }
+        .info-grid .label {
+            font-weight: bold;
+        }
+        .info-grid .value {
+            text-align: left;
+        }
+        /* Tables */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 12px 0;
+            font-size: 13px;
+        }
+        .data-table th {
+            background: #eaeaea;
+            font-weight: bold;
+            padding: 6px 8px;
+            border: 1px solid #333;
+            text-align: left;
+        }
+        .data-table td {
+            padding: 6px 8px;
+            border: 1px solid #333;
+            vertical-align: top;
+        }
+        .data-table .label-cell {
+            font-weight: bold;
+            background: #f3f3f3;
+            width: 30%;
+        }
+        /* Medicine table */
+        .medicine-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 12px 0;
+            font-size: 12px;
+        }
+        .medicine-table th {
+            background: #eaeaea;
+            font-weight: bold;
+            padding: 6px 8px;
+            border: 1px solid #333;
+            text-align: left;
+        }
+        .medicine-table td {
+            padding: 6px 8px;
+            border: 1px solid #333;
+        }
+        /* Footer */
+        .footer {
+            margin-top: 30px;
+            border-top: 2px solid #333;
+            padding-top: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            font-size: 13px;
+        }
+        .footer .signature {
+            width: 45%;
+        }
+        .footer .seal {
+            text-align: right;
+            width: 45%;
+        }
+        .footer .qr {
+            text-align: right;
+            width: 30%;
+        }
+        .footer .qr img {
+            max-width: 80px;
+            height: auto;
+        }
+        .footer .generated {
+            text-align: center;
+            font-size: 11px;
+            color: #555;
+            margin-top: 15px;
+            border-top: 1px solid #ccc;
+            padding-top: 10px;
+            width: 100%;
+        }
+        /* Print styles */
+        @media print {
+            body { padding: 0.5in; }
+            .no-print { display: none !important; }
+            .info-grid { background: #fff; }
+            .data-table th { background: #ddd !important; }
+            .medicine-table th { background: #ddd !important; }
+            .footer .qr img { max-width: 60px; }
+        }
+        /* Responsive adjustments */
+        @media (max-width: 600px) {
+            .info-grid { grid-template-columns: 1fr; }
+            .footer { flex-direction: column; align-items: center; text-align: center; }
+            .footer .seal, .footer .signature, .footer .qr { width: 100%; text-align: center; }
+            .footer .qr { margin-top: 10px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="print-container">
+
+        <!-- Header -->
+        <div class="header">
+            <h1>{{ prescription.hospital.name|default:"NHIMS Hospital" }}</h1>
+            <p>{{ prescription.hospital.full_address|default:"Dhaka, Bangladesh" }}</p>
+            <p>Phone: {{ prescription.hospital.phone|default:"+880 1234 567890" }} | Email: {{ prescription.hospital.email|default:"info@nhims.gov.bd" }}</p>
+            <div class="nhims-title">National Health Information Management System (NHIMS)</div>
+        </div>
+
+        <div class="prescription-title">Medical Prescription</div>
+
+        <!-- Prescription Info Grid -->
+        <div class="info-grid">
+            <div><span class="label">Prescription Number:</span> {{ prescription.prescription_number }}</div>
+            <div><span class="label">Date:</span> {{ prescription.created_at|date:"F d, Y" }}</div>
+            <div><span class="label">Status:</span> {{ prescription.get_status_display }}</div>
+            <div><span class="label">Issued By:</span> Dr. {{ prescription.doctor.full_name|default:"N/A" }}</div>
+            {% if prescription.token %}
+            <div><span class="label">Token:</span> {{ prescription.token }}</div>
+            {% endif %}
+        </div>
+
+        <!-- Patient & Doctor Tables side by side -->
+        <table class="data-table">
+            <tr>
+                <td class="label-cell">Patient Information</td>
+                <td style="width:70%;">
+                    <strong>Name:</strong> {{ prescription.patient.full_name }}<br>
+                    <strong>Patient ID:</strong> {{ prescription.patient.health_id|default:"N/A" }}<br>
+                    {% if prescription.patient.date_of_birth %}
+                        <strong>Age:</strong> 
+                        {% with born=prescription.patient.date_of_birth %}
+                            {% with age=now.year|add:born.year|add:born.year %}
+                                {{ age }} years
+                            {% endwith %}
+                        {% endwith %}
+                    {% else %}
+                        N/A
+                    {% endif %}<br>
+                    <strong>Gender:</strong> {{ prescription.patient.get_gender_display|default:"N/A" }}<br>
+                    <strong>Blood Group:</strong> {{ prescription.patient.blood_group|default:"N/A" }}<br>
+                    <strong>Phone:</strong> {{ prescription.patient.phone|default:"N/A" }}
+                </td>
+            </tr>
+            <tr>
+                <td class="label-cell">Doctor Information</td>
+                <td>
+                    <strong>Name:</strong> Dr. {{ prescription.doctor.full_name|default:"N/A" }}<br>
+                    <strong>Specialization:</strong> {{ prescription.doctor.specialties.all|join:", "|default:"N/A" }}<br>
+                    <strong>Qualification:</strong> {{ prescription.doctor.qualification|default:"N/A" }}<br>
+                    <strong>Registration No.:</strong> {{ prescription.doctor.registration_number|default:"N/A" }}
+                </td>
+            </tr>
+        </table>
+
+        <!-- Medical Information -->
+        <h3 style="margin-top:15px; font-size:16px;">Medical Information</h3>
+        <table class="data-table">
+            <tr><td class="label-cell">Diagnosis</td><td>{{ prescription.diagnosis|default:"N/A" }}</td></tr>
+            <tr><td class="label-cell">Symptoms</td><td>{{ prescription.symptoms|default:"N/A" }}</td></tr>
+            <tr><td class="label-cell">Clinical Notes</td><td>{{ prescription.clinical_notes|default:"N/A" }}</td></tr>
+            <tr><td class="label-cell">Doctor's Advice</td><td>{{ prescription.advice|default:"N/A" }}</td></tr>
+        </table>
+
+        <!-- Medicines -->
+        <h3 style="margin-top:15px; font-size:16px;">Prescribed Medicines</h3>
+        {% if prescription.medicines.all %}
+        <table class="medicine-table">
+            <thead>
+                <tr>
+                    <th>Medicine</th>
+                    <th>Dosage</th>
+                    <th>Frequency</th>
+                    <th>Duration</th>
+                    <th>Instructions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in prescription.medicines.all %}
+                <tr>
+                    <td>{{ item.medicine_name }}</td>
+                    <td>{{ item.dosage|default:"—" }}</td>
+                    <td>{{ item.frequency|default:"—" }}</td>
+                    <td>{{ item.duration|default:"—" }}</td>
+                    <td>{{ item.instruction|default:"—" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p>No medicines listed.</p>
+        {% endif %}
+
+        <!-- Follow-up -->
+        {% if prescription.follow_up_date %}
+        <h3 style="margin-top:15px; font-size:16px;">Follow-up</h3>
+        <table class="data-table">
+            <tr><td class="label-cell">Next Visit Date</td><td>{{ prescription.follow_up_date|date:"F d, Y" }}</td></tr>
+            <tr><td class="label-cell">Review Notes</td><td>{{ prescription.review_notes|default:"N/A" }}</td></tr>
+        </table>
+        {% endif %}
+
+        <!-- Footer -->
+        <div class="footer">
+            <div class="signature">
+                <strong>Doctor Signature</strong><br>
+                ______________________________<br>
+                <em>Dr. {{ prescription.doctor.full_name|default:"N/A" }}</em>
+                <br><br>
+                <strong>Hospital Seal</strong><br>
+                (Placeholder)
+            </div>
+            <div class="qr">
+                <img src="{{ qr_image_data }}" alt="QR Code">
+            </div>
+            <div class="generated">
+                Generated by NHIMS • {{ current_date|date:"F d, Y H:i" }}<br>
+                Prescription #{{ prescription.prescription_number }}
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Auto-print script -->
+    <script>
+        window.onload = function() {
+            // Small delay to ensure layout is ready
+            setTimeout(function() {
+                window.print();
+            }, 300);
+        };
+        // After printing or cancelling, go back to detail page
+        window.onafterprint = function() {
+            window.location.href = "{% url 'prescriptions:patient_prescription_detail' prescription.pk %}";
+        };
+    </script>
+</body>
+</html>

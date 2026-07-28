@@ -1,0 +1,9 @@
+{% if medicine.current_stock == 0 %}
+<span class="bg-red-500/20 text-red-300 text-xs px-2 py-0.5 rounded-full">Out of Stock</span>
+{% elif medicine.current_stock <= medicine.minimum_stock %}
+<span class="bg-amber-500/20 text-amber-300 text-xs px-2 py-0.5 rounded-full">Low Stock</span>
+{% elif medicine.expiry_date < now.date %}
+<span class="bg-gray-500/20 text-gray-300 text-xs px-2 py-0.5 rounded-full">Expired</span>
+{% else %}
+<span class="bg-emerald-500/20 text-emerald-300 text-xs px-2 py-0.5 rounded-full">Available</span>
+{% endif %}

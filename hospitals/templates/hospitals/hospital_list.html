@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Hospitals — NHIMS{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
+        <div>
+            <h1 class="text-3xl font-bold text-white flex items-center gap-3">
+                <i class="fas fa-hospital text-emerald-400 text-2xl"></i>
+                Hospitals
+            </h1>
+            <p class="text-gray-400 text-sm">Search and manage healthcare facilities</p>
+        </div>
+        <a href="{% url 'hospitals:create' %}" class="inline-flex items-center gap-2 bg-linear-to-r from-emerald-500 to-cyan-500 text-white px-6 py-3 rounded-xl font-medium shadow-lg shadow-emerald-500/30 hover:scale-105 transition">
+            <i class="fas fa-plus-circle"></i> Add Hospital
+        </a>
+    </div>
+
+    <!-- Filters -->
+    <div class="glass-card rounded-2xl border border-white/10 p-5 mb-8">
+        <form method="get" class="flex flex-wrap gap-3">
+            <div class="relative flex-1 min-w-[200px]">
+                <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 z-10"></i>
+                <input type="text" name="q" placeholder="Search by name, code, reg..." value="{{ search_query|default:'' }}" class="w-full pl-11 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-400 focus:border-emerald-500 outline-none transition">
+            </div>
+            <select name="division" class="w-full md:w-40 px-4 py-3 bg-[#0d2137] border border-white/10 rounded-xl text-white focus:border-emerald-500 outline-none">
+                <option value="">Division</option>
+                {% for div in divisions %}
+                <option value="{{ div }}" {% if division_filter == div %}selected{% endif %}>{{ div }}</option>
+                {% endfor %}
+            </select>
+            <select name="district" class="w-full md:w-40 px-4 py-3 bg-[#0d2137] border border-white/10 rounded-xl text-white focus:border-emerald-500 outline-none">
+                <option value="">District</option>
+                {% for dist in districts %}
+                <option value="{{ dist }}" {% if district_filter == dist %}selected{% endif %}>{{ dist }}</option>
+                {% endfor %}
+            </select>
+            <select name="type" class="w-full md:w-40 px-4 py-3 bg-[#0d2137] border border-white/10 rounded-xl text-white focus:border-emerald-500 outline-none">
+                <option value="">Type</option>
+                {% for key, label in hospital_types %}
+                <option value="{{ key }}" {% if type_filter == key %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+            <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 px-6 py-3 rounded-xl text-white font-medium transition">Filter</button>
+            <a href="{% url 'hospitals:list' %}" class="bg-white/5 hover:bg-white/10 px-6 py-3 rounded-xl text-gray-300 transition">Reset</a>
+        </form>
+    </div>
+
+    <!-- Results -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for hospital in page_obj %}
+            {% include 'hospitals/partials/hospital_card.html' with hospital=hospital %}
+        {% empty %}
+        <div class="col-span-full text-center py-16 text-gray-400">
+            <i class="fas fa-hospital text-5xl block mb-4 opacity-40"></i>
+            <p class="text-lg font-medium">No hospitals found</p>
+            <p class="text-sm">Adjust your filters or add a new hospital.</p>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    <div class="mt-8 flex flex-wrap items-center justify-between gap-3">
+        <div class="text-sm text-gray-400">
+            Showing {{ page_obj.start_index }}–{{ page_obj.end_index }} of {{ page_obj.paginator.count }}
+        </div>
+        <div class="flex gap-2">
+            {% if page_obj.has_previous %}
+            <a href="?page=1{% for key, val in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ val }}{% endif %}{% endfor %}" class="px-3 py-1.5 bg-white/5 rounded-lg hover:bg-white/10 transition">&laquo;</a>
+            <a href="?page={{ page_obj.previous_page_number }}{% for key, val in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ val }}{% endif %}{% endfor %}" class="px-3 py-1.5 bg-white/5 rounded-lg hover:bg-white/10 transition">&lsaquo;</a>
+            {% endif %}
+            <span class="px-4 py-1.5 bg-emerald-600/30 text-emerald-300 font-medium rounded-lg">{{ page_obj.number }}</span>
+            {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}{% for key, val in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ val }}{% endif %}{% endfor %}" class="px-3 py-1.5 bg-white/5 rounded-lg hover:bg-white/10 transition">&rsaquo;</a>
+            <a href="?page={{ page_obj.paginator.num_pages }}{% for key, val in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ val }}{% endif %}{% endfor %}" class="px-3 py-1.5 bg-white/5 rounded-lg hover:bg-white/10 transition">&raquo;</a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

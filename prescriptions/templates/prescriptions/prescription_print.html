@@ -1,0 +1,298 @@
+<!-- prescriptions/templates/prescriptions/prescription_print.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Prescription {{ prescription.prescription_number }}</title>
+  <style>
+    /* Reset and page setup */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f1f5f9;
+      display: flex;
+      justify-content: center;
+      padding: 2rem 1rem;
+    }
+    .prescription-wrapper {
+      background: white;
+      max-width: 800px;
+      width: 100%;
+      padding: 2rem;
+      border-radius: 8px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+    .no-print {
+      display: block;
+      text-align: center;
+      margin-bottom: 1.5rem;
+    }
+    .no-print button {
+      padding: 0.5rem 1.5rem;
+      background: #2563eb;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+    .no-print button:hover {
+      background: #1d4ed8;
+    }
+    .no-print a {
+      display: inline-block;
+      margin-left: 1rem;
+      color: #475569;
+      text-decoration: none;
+      font-size: 0.9rem;
+    }
+    .no-print a:hover {
+      text-decoration: underline;
+    }
+
+    /* Print styles */
+    @media print {
+      body {
+        background: white !important;
+        padding: 0 !important;
+        display: block !important;
+      }
+      .prescription-wrapper {
+        box-shadow: none !important;
+        border-radius: 0 !important;
+        padding: 0.5in !important;
+        max-width: 100% !important;
+      }
+      .no-print {
+        display: none !important;
+      }
+      .header {
+        border-bottom: 2px solid #000 !important;
+        margin-bottom: 1.5rem !important;
+        padding-bottom: 1rem !important;
+      }
+      .grid {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 1rem !important;
+      }
+      .grid-single {
+        grid-template-columns: 1fr !important;
+      }
+      .print-table {
+        width: 100% !important;
+        border-collapse: collapse !important;
+        font-size: 12px !important;
+      }
+      .print-table th {
+        background: #f1f5f9 !important;
+        border: 1px solid #94a3b8 !important;
+        padding: 6px 8px !important;
+        text-align: left !important;
+      }
+      .print-table td {
+        border: 1px solid #94a3b8 !important;
+        padding: 6px 8px !important;
+      }
+      .footer {
+        margin-top: 1.5rem !important;
+        border-top: 1px solid #94a3b8 !important;
+        padding-top: 0.75rem !important;
+        font-size: 11px !important;
+        color: #475569 !important;
+        text-align: center !important;
+      }
+      .signature-line {
+        border-bottom: 1px solid #000 !important;
+        width: 180px !important;
+        display: inline-block !important;
+      }
+      .badge {
+        display: inline-block !important;
+        padding: 2px 12px !important;
+        border: 1px solid #000 !important;
+        border-radius: 20px !important;
+        font-size: 12px !important;
+        font-weight: 600 !important;
+      }
+      /* Force black text for print */
+      .print-only * {
+        color: #000 !important;
+      }
+      .print-only .text-muted {
+        color: #475569 !important;
+      }
+      h1, h2, h3, h4 {
+        page-break-after: avoid;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="prescription-wrapper print-only">
+  <!-- Non-print controls -->
+  <div class="no-print">
+    <button onclick="window.print()">🖨️ Print / Save PDF</button>
+    <a href="{% url 'prescriptions:detail' prescription.pk %}">← Back to Detail</a>
+    <p style="margin-top: 0.5rem; font-size: 0.85rem; color: #64748b;">Use the print button or Ctrl+P to print or save as PDF.</p>
+  </div>
+
+  <!-- Header -->
+  <div class="header flex justify-between items-start pb-4 mb-4" style="border-bottom: 2px solid #e2e8f0;">
+    <div>
+      <h1 style="font-size: 1.5rem; font-weight: 700; color: #1e3a8a; margin: 0;">
+        {{ prescription.hospital.name }}
+      </h1>
+      <p style="font-size: 0.9rem; color: #475569; margin: 0.25rem 0;">
+        {{ prescription.hospital.full_address|default:"National Health Information Management System" }}
+      </p>
+      <p style="font-size: 0.9rem; color: #475569; margin: 0;">
+        Phone: {{ prescription.hospital.phone|default:"N/A" }}
+      </p>
+    </div>
+    <div style="text-align: right;">
+      <p style="font-weight: 600; font-size: 1rem; color: #1e293b;">Prescription</p>
+      <p style="font-size: 0.9rem; color: #475569;">#{{ prescription.prescription_number }}</p>
+      <p style="font-size: 0.9rem; color: #475569;">Date: {{ prescription.created_at|date:"d M Y" }}</p>
+      <span class="badge">
+        {{ prescription.get_status_display }}
+      </span>
+    </div>
+  </div>
+
+  <!-- Patient & Doctor -->
+<div class="grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
+  <div>
+    <h4 style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; color: #475569; margin-bottom: 0.25rem;">Patient</h4>
+    <p style="font-size: 1rem; font-weight: 600; color: #0f172a;">
+      {% with patient=prescription.patient %}
+        {% if patient.full_name and patient.full_name != 'Unknown' %}
+          {{ patient.full_name }}
+        {% elif patient.user %}
+          {{ patient.user.get_full_name|default:patient.user.username }}
+        {% else %}
+          N/A
+        {% endif %}
+      {% endwith %}
+    </p>
+    <p style="font-size: 0.9rem; color: #475569;">{{ prescription.patient.user.email }}</p>
+    <p style="font-size: 0.9rem; color: #475569;">Phone: {{ prescription.patient.user.phone|default:"N/A" }}</p>
+  </div>
+  <div>
+    <h4 style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; color: #475569; margin-bottom: 0.25rem;">Doctor</h4>
+    <p style="font-size: 1rem; font-weight: 600; color: #0f172a;">
+      {% with doctor=prescription.doctor %}
+        {% if doctor.full_name and doctor.full_name != 'Unknown' %}
+          Dr. {{ doctor.full_name }}
+        {% elif doctor.user %}
+          Dr. {{ doctor.user.get_full_name|default:doctor.user.username }}
+        {% else %}
+          N/A
+        {% endif %}
+      {% endwith %}
+    </p>
+    <p style="font-size: 0.9rem; color: #475569;">Reg. No: {{ prescription.doctor.registration_number|default:"N/A" }}</p>
+    <p style="font-size: 0.9rem; color: #475569;">Specialty: {{ prescription.doctor.specialization|default:"General" }}</p>
+  </div>
+</div>
+  <!-- Clinical Info -->
+  <div class="grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+    <div>
+      <h4 style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; color: #475569; margin-bottom: 0.25rem;">Diagnosis</h4>
+      <p style="font-size: 0.95rem; color: #0f172a;">{{ prescription.diagnosis }}</p>
+    </div>
+    <div>
+      <h4 style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; color: #475569; margin-bottom: 0.25rem;">Symptoms</h4>
+      <p style="font-size: 0.95rem; color: #0f172a;">{{ prescription.symptoms|default:"—" }}</p>
+    </div>
+    <div>
+      <h4 style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; color: #475569; margin-bottom: 0.25rem;">Clinical Notes</h4>
+      <p style="font-size: 0.95rem; color: #0f172a;">{{ prescription.clinical_notes|default:"—" }}</p>
+    </div>
+    <div>
+      <h4 style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; color: #475569; margin-bottom: 0.25rem;">Advice</h4>
+      <p style="font-size: 0.95rem; color: #0f172a;">{{ prescription.advice|default:"—" }}</p>
+    </div>
+  </div>
+
+  <!-- Medicines -->
+  <div style="margin-bottom: 1.5rem;">
+    <h4 style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; color: #475569; margin-bottom: 0.5rem;">Medicines</h4>
+    <table class="print-table" style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+      <thead>
+        <tr style="background: #f1f5f9; border: 1px solid #94a3b8;">
+          <th style="padding: 6px 8px; text-align: left; border: 1px solid #94a3b8;">Medicine</th>
+          <th style="padding: 6px 8px; text-align: left; border: 1px solid #94a3b8;">Dosage</th>
+          <th style="padding: 6px 8px; text-align: left; border: 1px solid #94a3b8;">Frequency</th>
+          <th style="padding: 6px 8px; text-align: left; border: 1px solid #94a3b8;">Duration</th>
+          <th style="padding: 6px 8px; text-align: left; border: 1px solid #94a3b8;">Route</th>
+          <th style="padding: 6px 8px; text-align: left; border: 1px solid #94a3b8;">Timing</th>
+          <th style="padding: 6px 8px; text-align: left; border: 1px solid #94a3b8;">Instruction</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for med in prescription.medicines.all %}
+          <tr style="border: 1px solid #94a3b8;">
+            <td style="padding: 6px 8px; border: 1px solid #94a3b8;">{{ med.medicine_name }}</td>
+            <td style="padding: 6px 8px; border: 1px solid #94a3b8;">{{ med.dosage }}</td>
+            <td style="padding: 6px 8px; border: 1px solid #94a3b8;">{{ med.get_frequency_display }}</td>
+            <td style="padding: 6px 8px; border: 1px solid #94a3b8;">{{ med.duration|default:"—" }}</td>
+            <td style="padding: 6px 8px; border: 1px solid #94a3b8;">{{ med.get_route_display }}</td>
+            <td style="padding: 6px 8px; border: 1px solid #94a3b8;">
+              {% if med.before_food %}BF{% endif %}
+              {% if med.after_food %}AF{% endif %}
+              {% if med.morning %}Morn{% endif %}
+              {% if med.afternoon %}Aft{% endif %}
+              {% if med.night %}Night{% endif %}
+              {% if not med.before_food and not med.after_food and not med.morning and not med.afternoon and not med.night %}—{% endif %}
+            </td>
+            <td style="padding: 6px 8px; border: 1px solid #94a3b8;">{{ med.instruction|default:"—" }}</td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="7" style="padding: 1rem; text-align: center; border: 1px solid #94a3b8;">No medicines prescribed.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Follow-up & Signature অংশে -->
+<div style="text-align: right;">
+  <h4 style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; color: #475569; margin-bottom: 0.25rem;">Doctor's Signature</h4>
+  <div style="margin-top: 0.5rem;">
+    {% if prescription.doctor_signature %}
+      <p style="font-size: 1.1rem; font-weight: 600; color: #0f172a; border-bottom: 1px solid #000; display: inline-block; padding-bottom: 2px;">
+        {{ prescription.doctor_signature }}
+      </p>
+    {% else %}
+      <span class="signature-line" style="display: inline-block; width: 180px; border-bottom: 1px solid #000;"></span>
+    {% endif %}
+    <p style="font-size: 0.95rem; color: #0f172a; margin-top: 0.25rem;">
+      {% with doctor=prescription.doctor %}
+        {% if doctor.full_name and doctor.full_name != 'Unknown' %}
+          Dr. {{ doctor.full_name }}
+        {% elif doctor.user %}
+          Dr. {{ doctor.user.get_full_name|default:doctor.user.username }}
+        {% else %}
+          N/A
+        {% endif %}
+      {% endwith %}
+    </p>
+  </div>
+</div>
+
+  <!-- Footer -->
+  <div class="footer" style="margin-top: 1.5rem; padding-top: 0.75rem; border-top: 1px solid #94a3b8; text-align: center; font-size: 0.8rem; color: #475569;">
+    <p>This is a computer-generated prescription. Valid without signature.</p>
+    <p>NHIMS — National Health Information Management System, Bangladesh</p>
+    <p>Generated on: {{ prescription.created_at|date:"d M Y H:i" }}</p>
+  </div>
+</div>
+
+</body>
+</html>

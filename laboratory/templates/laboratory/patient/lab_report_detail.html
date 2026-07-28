@@ -1,0 +1,449 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Lab Report #{{ report.id }} — NHIMS{% endblock %}
+
+{% block extra_css %}
+<style>
+    .top-navbar { display: none !important; }
+
+    .badge-pending {
+        background: linear-gradient(135deg, rgba(251, 191, 36, 0.2), rgba(251, 191, 36, 0.05));
+        color: #fbbf24;
+        border: 1px solid rgba(251, 191, 36, 0.3);
+        box-shadow: 0 0 20px rgba(251, 191, 36, 0.08);
+    }
+    .badge-completed {
+        background: linear-gradient(135deg, rgba(52, 211, 153, 0.2), rgba(52, 211, 153, 0.05));
+        color: #34d399;
+        border: 1px solid rgba(52, 211, 153, 0.3);
+        box-shadow: 0 0 20px rgba(52, 211, 153, 0.08);
+    }
+    .badge-verified {
+        background: linear-gradient(135deg, rgba(96, 165, 250, 0.2), rgba(96, 165, 250, 0.05));
+        color: #60a5fa;
+        border: 1px solid rgba(96, 165, 250, 0.3);
+        box-shadow: 0 0 20px rgba(96, 165, 250, 0.08);
+    }
+    .badge-cancelled {
+        background: linear-gradient(135deg, rgba(248, 113, 113, 0.2), rgba(248, 113, 113, 0.05));
+        color: #f87171;
+        border: 1px solid rgba(248, 113, 113, 0.3);
+        box-shadow: 0 0 20px rgba(248, 113, 113, 0.08);
+    }
+
+    .detail-card {
+        transition: transform 0.2s ease, border-color 0.2s ease;
+        border: 1px solid rgba(255,255,255,0.06);
+    }
+    .detail-card:hover {
+        border-color: rgba(59,130,246,0.3);
+        transform: translateY(-2px);
+    }
+
+    .timeline-item {
+        position: relative;
+        padding-left: 2rem;
+        border-left: 2px solid rgba(255,255,255,0.1);
+    }
+    .timeline-item:last-child {
+        border-left-color: transparent;
+    }
+    .timeline-dot {
+        position: absolute;
+        left: -0.6rem;
+        width: 1rem;
+        height: 1rem;
+        border-radius: 50%;
+        border: 2px solid #0a1628;
+    }
+    .timeline-dot.blue { background: #3b82f6; }
+    .timeline-dot.amber { background: #f59e0b; }
+    .timeline-dot.purple { background: #8b5cf6; }
+    .timeline-dot.green { background: #34d399; }
+
+    .abnormal {
+        background: rgba(239, 68, 68, 0.1);
+        border: 1px solid rgba(239, 68, 68, 0.3);
+        color: #f87171;
+        padding: 0.25rem 0.75rem;
+        border-radius: 0.5rem;
+        font-weight: 600;
+    }
+    .normal {
+        background: rgba(52, 211, 153, 0.1);
+        border: 1px solid rgba(52, 211, 153, 0.3);
+        color: #34d399;
+        padding: 0.25rem 0.75rem;
+        border-radius: 0.5rem;
+        font-weight: 600;
+    }
+
+    @media print {
+        body * { visibility: hidden; }
+        #report-content, #report-content * { visibility: visible; }
+        #report-content { position: absolute; left: 0; top: 0; width: 100%; padding: 20px; background: white; color: black; }
+        #report-content .glass-card { background: white !important; border-color: #e5e7eb !important; box-shadow: none !important; }
+        #report-content .no-print { display: none !important; }
+        .no-print { display: none !important; }
+    }
+
+    @media (max-width: 768px) {
+        .timeline-item { padding-left: 1.5rem; }
+        .timeline-dot { width: 0.8rem; height: 0.8rem; left: -0.4rem; }
+    }
+</style>
+{% endblock %}
+
+{% block navbar %}
+<nav class="fixed top-0 left-0 right-0 z-40 bg-[#0a1628]/80 backdrop-blur-sm border-b border-white/10 px-4 py-3 md:hidden">
+    <div class="flex items-center justify-between">
+        <button id="sidebarToggle" class="text-white text-2xl">
+            <i class="fas fa-bars"></i>
+        </button>
+        <span class="text-white font-semibold">NHIMS Patient</span>
+        <div class="w-8"></div>
+    </div>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="flex min-h-screen bg-[#0a1628]">
+    <!-- ===== SIDEBAR (reuse patient sidebar) ===== -->
+    <aside id="sidebar" class="fixed top-0 left-0 z-50 h-full w-72 bg-[#0d1f3c] border-r border-white/10 transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out overflow-y-auto">
+        <div class="p-4 border-b border-white/10">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 text-xl font-bold">
+                    {{ patient.full_name|slice:":1"|upper|default:"U" }}
+                </div>
+                <div>
+                    <p class="text-white font-semibold text-sm">{{ patient.full_name|default:"Patient" }}</p>
+                    <p class="text-gray-400 text-xs">Patient</p>
+                </div>
+            </div>
+        </div>
+        <nav class="p-3 space-y-1">
+            <a href="{% url 'dashboard:patient_dashboard' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
+                <i class="fas fa-th-large w-5 text-center"></i> Dashboard
+            </a>
+            <a href="{% url 'appointments:patient_appointment_list' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
+                <i class="fas fa-calendar-check w-5 text-center"></i> Appointments
+            </a>
+            <a href="{% url 'prescriptions:patient_my_prescriptions' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
+                <i class="fas fa-prescription-bottle w-5 text-center"></i> Prescriptions
+            </a>
+            <a href="{% url 'laboratory:patient_lab_report_list' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
+                <i class="fas fa-flask w-5 text-center"></i> Laboratory
+            </a>
+            <hr class="border-white/10 my-3">
+            <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition bg-blue-600/30 text-blue-300">
+                <i class="fas fa-file-medical w-5 text-center"></i> Report Detail
+            </a>
+            <a href="{% url 'medical_records:record_list' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
+                <i class="fas fa-file-medical w-5 text-center"></i> Medical Records
+            </a>
+            <a href="{% url 'notifications:center' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
+                <i class="fas fa-bell w-5 text-center"></i> Notifications
+            </a>
+            <hr class="border-white/10 my-3">
+            <a href="{% url 'patients:profile' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
+            <i class="fas fa-user-circle w-5 text-center"></i> Profile
+            </a>
+            <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
+                <i class="fas fa-cog w-5 text-center"></i> Settings
+            </a>
+            {% url 'logout' as logout_url %}
+            {% if logout_url %}
+                <a href="{{ logout_url }}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-red-400 hover:bg-red-500/10 hover:text-red-300">
+                    <i class="fas fa-sign-out-alt w-5 text-center"></i> Logout
+                </a>
+            {% else %}
+                <a href="{% url 'accounts:logout' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-red-400 hover:bg-red-500/10 hover:text-red-300">
+                    <i class="fas fa-sign-out-alt w-5 text-center"></i> Logout
+                </a>
+            {% endif %}
+        </nav>
+        <div class="absolute bottom-4 left-4 right-4 text-center text-gray-500 text-xs">
+            NHIMS v2.0
+        </div>
+    </aside>
+
+    <!-- ===== MAIN CONTENT ===== -->
+    <main class="flex-1 md:ml-72 p-4 md:p-8 space-y-6 mt-14 md:mt-0" id="report-content">
+
+        <!-- ===== BREADCRUMB ===== -->
+        <nav class="flex items-center gap-2 text-sm text-gray-400 no-print">
+            <a href="{% url 'dashboard:patient_dashboard' %}" class="hover:text-white transition">Dashboard</a>
+            <span class="text-gray-600">/</span>
+            <a href="{% url 'laboratory:patient_lab_report_list' %}" class="hover:text-white transition">My Lab Reports</a>
+            <span class="text-gray-600">/</span>
+            <span class="text-white">Report Detail</span>
+        </nav>
+
+        <!-- ===== HEADER CARD ===== -->
+        <div class="glass-card rounded-2xl border border-white/10 p-6 detail-card">
+            <div class="flex flex-wrap items-center justify-between gap-4">
+                <div>
+                    <h1 class="text-2xl font-bold text-white flex items-center gap-3">
+                        <span class="bg-blue-600/20 p-2.5 rounded-xl">
+                            <i class="fas fa-file-medical text-blue-400 text-xl"></i>
+                        </span>
+                        Laboratory Report
+                    </h1>
+                    <p class="text-gray-400 text-sm mt-1">
+                        Report #{{ report.id }} · {{ report.created_at|date:"l, F j, Y" }}
+                    </p>
+                </div>
+                <div>
+                    <span class="inline-block px-4 py-2 rounded-full text-sm font-medium
+                        {% if status == 'verified' %}badge-verified
+                        {% elif status == 'completed' %}badge-completed
+                        {% elif status == 'pending' %}badge-pending
+                        {% else %}badge-cancelled{% endif %}">
+                        {{ status_display }}
+                    </span>
+                </div>
+            </div>
+            <div class="mt-2 text-sm text-gray-400">
+                <span class="text-gray-500">Test:</span> {{ report.order_item.test.name|default:"N/A" }}
+            </div>
+        </div>
+
+        <!-- ===== PATIENT + DOCTOR + HOSPITAL GRID ===== -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- Patient Card -->
+            <div class="glass-card rounded-2xl border border-white/10 p-5 detail-card">
+                <h3 class="text-white font-semibold text-sm flex items-center gap-2 mb-3">
+                    <i class="fas fa-user-injured text-amber-400"></i> Patient
+                </h3>
+                <p class="text-white font-medium">{{ patient.full_name }}</p>
+                <p class="text-gray-400 text-sm">ID: {{ patient.health_id|default:"N/A" }}</p>
+                <p class="text-gray-400 text-sm">
+                    Age: {% if patient.date_of_birth %}{{ patient.date_of_birth|timesince }}{% else %}N/A{% endif %}
+                </p>
+                <p class="text-gray-400 text-sm">Gender: {{ patient.get_gender_display|default:"N/A" }}</p>
+                <p class="text-gray-400 text-sm">Blood Group: {{ patient.blood_group|default:"N/A" }}</p>
+                <p class="text-gray-400 text-sm">Phone: {{ patient.phone|default:"N/A" }}</p>
+            </div>
+
+            <!-- Doctor Card -->
+            <div class="glass-card rounded-2xl border border-white/10 p-5 detail-card">
+                <h3 class="text-white font-semibold text-sm flex items-center gap-2 mb-3">
+                    <i class="fas fa-user-md text-emerald-400"></i> Doctor
+                </h3>
+                <p class="text-white font-medium">Dr. {{ lab_order.doctor.full_name|default:"N/A" }}</p>
+                <p class="text-gray-400 text-sm">{{ lab_order.doctor.specialties.all|join:", "|default:"N/A" }}</p>
+                <p class="text-gray-400 text-sm">{{ lab_order.doctor.department|default:"" }}</p>
+                <p class="text-gray-400 text-sm">{{ lab_order.hospital.name|default:"N/A" }}</p>
+            </div>
+
+            <!-- Hospital Card -->
+            <div class="glass-card rounded-2xl border border-white/10 p-5 detail-card">
+                <h3 class="text-white font-semibold text-sm flex items-center gap-2 mb-3">
+                    <i class="fas fa-hospital text-blue-400"></i> Hospital
+                </h3>
+                <p class="text-white font-medium">{{ lab_order.hospital.name|default:"N/A" }}</p>
+                <p class="text-gray-400 text-sm">{{ lab_order.hospital.full_address|default:"N/A" }}</p>
+                <p class="text-gray-400 text-sm">Phone: {{ lab_order.hospital.phone|default:"N/A" }}</p>
+                <p class="text-gray-400 text-sm">Email: {{ lab_order.hospital.email|default:"N/A" }}</p>
+            </div>
+        </div>
+
+        <!-- ===== TEST INFORMATION ===== -->
+        <div class="glass-card rounded-2xl border border-white/10 p-6 detail-card">
+            <h3 class="text-white font-semibold text-sm flex items-center gap-2 mb-4">
+                <i class="fas fa-flask text-purple-400"></i> Test Information
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <p class="text-gray-400 text-xs uppercase">Test Name</p>
+                    <p class="text-white">{{ report.order_item.test.name|default:"N/A" }}</p>
+                </div>
+                <div>
+                    <p class="text-gray-400 text-xs uppercase">Category</p>
+                    <p class="text-white">{{ report.order_item.test.category|default:"N/A" }}</p>
+                </div>
+                <div>
+                    <p class="text-gray-400 text-xs uppercase">Sample Type</p>
+                    <p class="text-white">{{ report.order_item.sample_type|default:"N/A" }}</p>
+                </div>
+                <div>
+                    <p class="text-gray-400 text-xs uppercase">Collection Date</p>
+                    <p class="text-white">{{ lab_order.collected_at|date:"M d, Y H:i"|default:"N/A" }}</p>
+                </div>
+                <div>
+                    <p class="text-gray-400 text-xs uppercase">Report Date</p>
+                    <p class="text-white">{{ report.created_at|date:"M d, Y H:i" }}</p>
+                </div>
+                <div>
+                    <p class="text-gray-400 text-xs uppercase">Status</p>
+                    <span class="inline-block px-3 py-1 rounded-full text-xs font-medium
+                        {% if status == 'verified' %}badge-verified
+                        {% elif status == 'completed' %}badge-completed
+                        {% elif status == 'pending' %}badge-pending
+                        {% else %}badge-cancelled{% endif %}">
+                        {{ status_display }}
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== LABORATORY RESULT ===== -->
+        <div class="glass-card rounded-2xl border border-white/10 p-6 detail-card">
+            <h3 class="text-white font-semibold text-sm flex items-center gap-2 mb-4">
+                <i class="fas fa-chart-bar text-rose-400"></i> Laboratory Result
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <p class="text-gray-400 text-xs uppercase">Result Value</p>
+                    <p class="text-white text-lg font-semibold">{{ report.result|default:"N/A" }}</p>
+                </div>
+                <div>
+                    <p class="text-gray-400 text-xs uppercase">Reference Range</p>
+                    <p class="text-white">{{ report.reference_range|default:"N/A" }}</p>
+                </div>
+                <div>
+                    <p class="text-gray-400 text-xs uppercase">Unit</p>
+                    <p class="text-white">{{ report.unit|default:"N/A" }}</p>
+                </div>
+                <div>
+                    <p class="text-gray-400 text-xs uppercase">Interpretation</p>
+                    {% if report.interpretation %}
+                        <span class="{% if report.interpretation|lower == 'normal' or report.interpretation|lower == 'negative' %}normal{% else %}abnormal{% endif %} text-xs">
+                            {{ report.interpretation }}
+                        </span>
+                    {% else %}
+                        <p class="text-white">N/A</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== REMARKS ===== -->
+        {% if report.remarks or lab_order.remarks %}
+        <div class="glass-card rounded-2xl border border-white/10 p-6 detail-card">
+            <h3 class="text-white font-semibold text-sm flex items-center gap-2 mb-3">
+                <i class="fas fa-comment text-amber-400"></i> Remarks
+            </h3>
+            <div class="space-y-2 text-sm">
+                {% if report.remarks %}
+                <div>
+                    <p class="text-gray-400 text-xs uppercase">Technician Notes</p>
+                    <p class="text-white">{{ report.remarks }}</p>
+                </div>
+                {% endif %}
+                {% if lab_order.remarks %}
+                <div>
+                    <p class="text-gray-400 text-xs uppercase">Pathologist Remarks</p>
+                    <p class="text-white">{{ lab_order.remarks }}</p>
+                </div>
+                {% endif %}
+                {% if not report.remarks and not lab_order.remarks %}
+                <p class="text-gray-400">No remarks available.</p>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- ===== VERIFICATION INFORMATION ===== -->
+        <div class="glass-card rounded-2xl border border-white/10 p-6 detail-card">
+            <h3 class="text-white font-semibold text-sm flex items-center gap-2 mb-3">
+                <i class="fas fa-check-circle text-cyan-400"></i> Verification
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                <div>
+                    <p class="text-gray-400 text-xs uppercase">Verified By</p>
+                    <p class="text-white">{{ report.verified_by.get_full_name|default:"N/A" }}</p>
+                </div>
+                <div>
+                    <p class="text-gray-400 text-xs uppercase">Verification Date</p>
+                    <p class="text-white">{{ report.verified_at|date:"M d, Y H:i"|default:"N/A" }}</p>
+                </div>
+                <div>
+                    <p class="text-gray-400 text-xs uppercase">Verification Status</p>
+                    {% if report.verified_at %}
+                        <span class="text-emerald-400 font-medium">Verified</span>
+                    {% else %}
+                        <span class="text-amber-400 font-medium">Not Verified</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+       <!-- ===== TIMELINE ===== -->
+<div class="glass-card rounded-2xl border border-white/10 p-6 detail-card">
+    <h3 class="text-white font-semibold text-sm flex items-center gap-2 mb-4">
+        <i class="fas fa-history text-purple-400"></i> Timeline
+    </h3>
+    <div class="space-y-4">
+        {% for item in timeline %}
+        <div class="timeline-item">
+            <div class="timeline-dot {{ item.color }}"></div>
+            <div>
+                <p class="text-white font-medium">{{ item.stage }}</p>
+                <p class="text-gray-400 text-sm">{{ item.date|date:"M d, Y H:i" }}</p>
+            </div>
+        </div>
+        {% empty %}
+        <p class="text-gray-400 text-sm">No timeline available.</p>
+        {% endfor %}
+    </div>
+</div>
+
+        <!-- ===== ATTACHMENTS ===== -->
+        <div class="glass-card rounded-2xl border border-white/10 p-6 detail-card">
+            <h3 class="text-white font-semibold text-sm flex items-center gap-2 mb-3">
+                <i class="fas fa-paperclip text-amber-400"></i> Attachments
+            </h3>
+            {% if report.report_file %}
+            <div class="flex items-center gap-4 p-3 bg-white/5 rounded-xl border border-white/5">
+                <i class="fas fa-file-pdf text-red-400 text-2xl"></i>
+                <div>
+                    <p class="text-white text-sm">{{ report.report_file.name|cut:"laboratory/reports/" }}</p>
+                    <p class="text-gray-400 text-xs">{{ report.report_file.size|filesizeformat }}</p>
+                </div>
+                <div class="ml-auto flex gap-2">
+                    <a href="{{ report.report_file.url }}" target="_blank" class="bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 px-3 py-1.5 rounded-lg text-xs transition">View</a>
+                    <a href="{{ report.report_file.url }}" download class="bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 px-3 py-1.5 rounded-lg text-xs transition">Download</a>
+                </div>
+            </div>
+            {% else %}
+            <p class="text-gray-400 text-sm">No attachment uploaded.</p>
+            {% endif %}
+        </div>
+
+        <!-- ===== ACTIONS ===== -->
+        <div class="flex flex-wrap gap-3 no-print">
+            <a href="{% url 'laboratory:patient_lab_report_list' %}" class="bg-white/5 hover:bg-white/10 px-6 py-2.5 rounded-xl text-gray-300 transition text-sm flex items-center gap-2">
+                <i class="fas fa-arrow-left"></i> Back to Reports
+            </a>
+            <a href="{% url 'laboratory:patient_download_lab_report_pdf' report.pk %}" class="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2.5 rounded-xl text-sm font-medium transition shadow-lg shadow-emerald-500/30 flex items-center gap-2">
+    <i class="fas fa-download"></i> Download PDF
+</a>
+            <a href="{% url 'laboratory:patient_print_lab_report' report.pk %}" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-xl text-sm font-medium transition shadow-lg shadow-blue-500/30 flex items-center gap-2">
+    <i class="fas fa-print"></i> Print Report
+</a>
+        </div>
+
+    </main>
+</div>
+
+<!-- ===== SIDEBAR TOGGLE ===== -->
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const sidebar = document.getElementById('sidebar');
+        const toggleBtn = document.getElementById('sidebarToggle');
+        if (toggleBtn && sidebar) {
+            toggleBtn.addEventListener('click', function () {
+                sidebar.classList.toggle('-translate-x-full');
+            });
+            document.addEventListener('click', function (event) {
+                const isClickInside = sidebar.contains(event.target) || toggleBtn.contains(event.target);
+                if (!isClickInside && window.innerWidth < 768) {
+                    sidebar.classList.add('-translate-x-full');
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

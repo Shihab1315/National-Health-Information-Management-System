@@ -1,0 +1,371 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Medical Information — NHIMS{% endblock %}
+
+{% block extra_css %}
+<style>
+    .top-navbar { display: none !important; }
+    .form-input {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border-radius: 0.75rem;
+        background: rgba(255,255,255,0.04);
+        border: 1px solid rgba(255,255,255,0.08);
+        color: #e2e8f0;
+        font-size: 0.95rem;
+        transition: all 0.2s ease;
+        outline: none;
+    }
+    .form-input:focus {
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
+    }
+    .form-input.error {
+        border-color: #ef4444;
+        box-shadow: 0 0 0 3px rgba(239,68,68,0.15);
+    }
+    .form-input::placeholder {
+        color: #64748b;
+    }
+    select.form-input {
+        background: rgba(255,255,255,0.04);
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2394a3b8' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 1rem center;
+        padding-right: 2.5rem;
+    }
+    .form-label {
+        display: block;
+        font-size: 0.85rem;
+        font-weight: 500;
+        color: #cbd5e1;
+        margin-bottom: 0.3rem;
+    }
+    .form-label .required {
+        color: #ef4444;
+        margin-left: 0.2rem;
+    }
+    .form-error {
+        color: #ef4444;
+        font-size: 0.8rem;
+        margin-top: 0.25rem;
+        display: flex;
+        align-items: center;
+        gap: 0.3rem;
+    }
+    .form-help {
+        color: #94a3b8;
+        font-size: 0.75rem;
+        margin-top: 0.25rem;
+    }
+    .profile-card {
+        transition: transform 0.2s ease, border-color 0.2s ease;
+        border: 1px solid rgba(255,255,255,0.06);
+        border-radius: 16px;
+        background: rgba(255,255,255,0.02);
+        padding: 1.5rem;
+    }
+    .profile-card:hover {
+        border-color: rgba(59,130,246,0.3);
+        transform: translateY(-2px);
+    }
+    .section-title {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #94a3b8;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 1rem;
+        border-bottom: 1px solid rgba(255,255,255,0.06);
+        padding-bottom: 0.5rem;
+    }
+    .summary-card {
+        background: rgba(255,255,255,0.03);
+        border-radius: 12px;
+        padding: 1rem;
+        border: 1px solid rgba(255,255,255,0.05);
+        text-align: center;
+    }
+    .summary-card .value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #e2e8f0;
+    }
+    .summary-card .label {
+        color: #94a3b8;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+</style>
+{% endblock %}
+
+{% block navbar %}
+<nav class="fixed top-0 left-0 right-0 z-40 bg-[#0a1628]/80 backdrop-blur-sm border-b border-white/10 px-4 py-3 md:hidden">
+    <div class="flex items-center justify-between">
+        <button id="sidebarToggle" class="text-white text-2xl">
+            <i class="fas fa-bars"></i>
+        </button>
+        <span class="text-white font-semibold">NHIMS Patient</span>
+        <div class="w-8"></div>
+    </div>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="flex min-h-screen bg-[#0a1628]">
+    <!-- ===== SIDEBAR (reuse patient sidebar) ===== -->
+    <aside id="sidebar" class="fixed top-0 left-0 z-50 h-full w-72 bg-[#0d1f3c] border-r border-white/10 transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out overflow-y-auto">
+        <div class="p-4 border-b border-white/10">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 text-xl font-bold">
+                    {{ patient.full_name|slice:":1"|upper|default:"U" }}
+                </div>
+                <div>
+                    <p class="text-white font-semibold text-sm">{{ patient.full_name|default:"Patient" }}</p>
+                    <p class="text-gray-400 text-xs">Patient</p>
+                </div>
+            </div>
+        </div>
+        <nav class="p-3 space-y-1">
+            <a href="{% url 'dashboard:patient_dashboard' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
+                <i class="fas fa-th-large w-5 text-center"></i> Dashboard
+            </a>
+            <a href="{% url 'appointments:patient_appointment_list' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
+                <i class="fas fa-calendar-check w-5 text-center"></i> Appointments
+            </a>
+            <a href="{% url 'prescriptions:patient_my_prescriptions' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
+                <i class="fas fa-prescription-bottle w-5 text-center"></i> Prescriptions
+            </a>
+            <a href="{% url 'laboratory:patient_lab_history' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
+                <i class="fas fa-flask w-5 text-center"></i> Laboratory
+            </a>
+            <a href="{% url 'medical_records:patient_medical_record_list' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
+                <i class="fas fa-file-medical w-5 text-center"></i> Medical Records
+            </a>
+            <a href="{% url 'patients:profile' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
+                <i class="fas fa-user-circle w-5 text-center"></i> Profile
+            </a>
+            <hr class="border-white/10 my-3">
+            <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition bg-blue-600/30 text-blue-300">
+                <i class="fas fa-heartbeat w-5 text-center"></i> Medical Info
+            </a>
+            <a href="{% url 'patients:emergency_contact' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
+                <i class="fas fa-phone-alt w-5 text-center"></i> Emergency Contact
+            </a>
+            <a href="{% url 'notifications:center' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
+                <i class="fas fa-bell w-5 text-center"></i> Notifications
+            </a>
+            <hr class="border-white/10 my-3">
+            <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
+                <i class="fas fa-cog w-5 text-center"></i> Settings
+            </a>
+            {% url 'logout' as logout_url %}
+            {% if logout_url %}
+                <a href="{{ logout_url }}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-red-400 hover:bg-red-500/10 hover:text-red-300">
+                    <i class="fas fa-sign-out-alt w-5 text-center"></i> Logout
+                </a>
+            {% else %}
+                <a href="{% url 'accounts:logout' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-red-400 hover:bg-red-500/10 hover:text-red-300">
+                    <i class="fas fa-sign-out-alt w-5 text-center"></i> Logout
+                </a>
+            {% endif %}
+        </nav>
+        <div class="absolute bottom-4 left-4 right-4 text-center text-gray-500 text-xs">
+            NHIMS v2.0
+        </div>
+    </aside>
+
+    <!-- ===== MAIN CONTENT ===== -->
+    <main class="flex-1 md:ml-72 p-4 md:p-8 space-y-6 mt-14 md:mt-0">
+
+        <!-- ===== HEADER ===== -->
+        <div class="flex items-center gap-4">
+            <a href="{% url 'patients:profile' %}" class="text-gray-400 hover:text-white transition">
+                <i class="fas fa-arrow-left text-xl"></i>
+            </a>
+            <div>
+                <h1 class="text-2xl font-bold text-white">Medical Information</h1>
+                <p class="text-sm text-gray-400">Maintain your permanent medical information for safer healthcare</p>
+            </div>
+        </div>
+
+        <!-- ===== SUMMARY CARDS ===== -->
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+            <div class="summary-card">
+                <p class="label">Blood Group</p>
+                <p class="value">{{ patient.blood_group|default:"N/A" }}</p>
+            </div>
+            <div class="summary-card">
+                <p class="label">BMI</p>
+                <p class="value">{{ patient.bmi|default:"N/A" }}</p>
+            </div>
+            <div class="summary-card">
+                <p class="label">Allergies</p>
+                <p class="value">{% if patient.allergies %}{{ patient.allergies|truncatechars:10 }}{% else %}None{% endif %}</p>
+            </div>
+        </div>
+
+        <!-- ===== FORM ===== -->
+        <form method="post" class="space-y-6" id="medical-form">
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+            <div class="bg-red-500/20 border border-red-500/30 text-red-300 px-4 py-3 rounded-xl text-sm">
+                <i class="fas fa-exclamation-triangle mr-2"></i>
+                {% for error in form.non_field_errors %}
+                    <p>{{ error }}</p>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- ===== BASIC HEALTH ===== -->
+            <div class="glass-card rounded-2xl border border-white/10 p-6 profile-card">
+                <h2 class="section-title">Basic Health Information</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <!-- Blood Group (existing) -->
+                    <div>
+                        <label for="{{ form.blood_group.id_for_label }}" class="form-label">
+                            {{ form.blood_group.label }}
+                        </label>
+                        {{ form.blood_group }}
+                        {% if form.blood_group.errors %}
+                            <div class="form-error"><i class="fas fa-exclamation-circle"></i> {{ form.blood_group.errors|join:", " }}</div>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <label for="{{ form.height.id_for_label }}" class="form-label">
+                            {{ form.height.label }}
+                        </label>
+                        {{ form.height }}
+                        {% if form.height.errors %}
+                            <div class="form-error"><i class="fas fa-exclamation-circle"></i> {{ form.height.errors|join:", " }}</div>
+                        {% endif %}
+                        <p class="form-help">Height in centimeters</p>
+                    </div>
+                    <div>
+                        <label for="{{ form.weight.id_for_label }}" class="form-label">
+                            {{ form.weight.label }}
+                        </label>
+                        {{ form.weight }}
+                        {% if form.weight.errors %}
+                            <div class="form-error"><i class="fas fa-exclamation-circle"></i> {{ form.weight.errors|join:", " }}</div>
+                        {% endif %}
+                        <p class="form-help">Weight in kilograms</p>
+                    </div>
+                    <div>
+                        <label for="{{ form.bmi.id_for_label }}" class="form-label">
+                            {{ form.bmi.label }}
+                        </label>
+                        {{ form.bmi }}
+                        <p class="form-help">Auto-calculated from height and weight</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== ALLERGIES & CHRONIC DISEASES ===== -->
+            <div class="glass-card rounded-2xl border border-white/10 p-6 profile-card">
+                <h2 class="section-title">Allergies & Chronic Diseases</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div>
+                        <label for="{{ form.allergies.id_for_label }}" class="form-label">
+                            {{ form.allergies.label }}
+                        </label>
+                        {{ form.allergies }}
+                        {% if form.allergies.errors %}
+                            <div class="form-error"><i class="fas fa-exclamation-circle"></i> {{ form.allergies.errors|join:", " }}</div>
+                        {% endif %}
+                        <p class="form-help">List all known allergies (drug, food, environmental)</p>
+                    </div>
+                    <div>
+                        <label for="{{ form.chronic_diseases.id_for_label }}" class="form-label">
+                            {{ form.chronic_diseases.label }}
+                        </label>
+                        {{ form.chronic_diseases }}
+                        {% if form.chronic_diseases.errors %}
+                            <div class="form-error"><i class="fas fa-exclamation-circle"></i> {{ form.chronic_diseases.errors|join:", " }}</div>
+                        {% endif %}
+                        <p class="form-help">List all chronic conditions</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== LIFESTYLE ===== -->
+            <div class="glass-card rounded-2xl border border-white/10 p-6 profile-card">
+                <h2 class="section-title">Lifestyle</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div>
+                        <label for="{{ form.smoking_status.id_for_label }}" class="form-label">
+                            {{ form.smoking_status.label }}
+                        </label>
+                        {{ form.smoking_status }}
+                        {% if form.smoking_status.errors %}
+                            <div class="form-error"><i class="fas fa-exclamation-circle"></i> {{ form.smoking_status.errors|join:", " }}</div>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <label for="{{ form.alcohol_consumption.id_for_label }}" class="form-label">
+                            {{ form.alcohol_consumption.label }}
+                        </label>
+                        {{ form.alcohol_consumption }}
+                        {% if form.alcohol_consumption.errors %}
+                            <div class="form-error"><i class="fas fa-exclamation-circle"></i> {{ form.alcohol_consumption.errors|join:", " }}</div>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <label for="{{ form.exercise_frequency.id_for_label }}" class="form-label">
+                            {{ form.exercise_frequency.label }}
+                        </label>
+                        {{ form.exercise_frequency }}
+                        {% if form.exercise_frequency.errors %}
+                            <div class="form-error"><i class="fas fa-exclamation-circle"></i> {{ form.exercise_frequency.errors|join:", " }}</div>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <label for="{{ form.diet_preference.id_for_label }}" class="form-label">
+                            {{ form.diet_preference.label }}
+                        </label>
+                        {{ form.diet_preference }}
+                        {% if form.diet_preference.errors %}
+                            <div class="form-error"><i class="fas fa-exclamation-circle"></i> {{ form.diet_preference.errors|join:", " }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== FORM ACTIONS ===== -->
+            <div class="flex flex-wrap gap-4 pt-4">
+                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-xl font-medium transition shadow-lg shadow-blue-500/30 flex items-center gap-2" id="submit-btn">
+                    <i class="fas fa-save"></i> Save Medical Information
+                </button>
+                <a href="{% url 'patients:profile' %}" class="bg-white/5 hover:bg-white/10 px-6 py-3 rounded-xl text-gray-300 transition">
+                    Cancel
+                </a>
+            </div>
+
+        </form>
+
+    </main>
+</div>
+
+<!-- ===== SIDEBAR TOGGLE ===== -->
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const sidebar = document.getElementById('sidebar');
+        const toggleBtn = document.getElementById('sidebarToggle');
+        if (toggleBtn && sidebar) {
+            toggleBtn.addEventListener('click', function () {
+                sidebar.classList.toggle('-translate-x-full');
+            });
+            document.addEventListener('click', function (event) {
+                const isClickInside = sidebar.contains(event.target) || toggleBtn.contains(event.target);
+                if (!isClickInside && window.innerWidth < 768) {
+                    sidebar.classList.add('-translate-x-full');
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

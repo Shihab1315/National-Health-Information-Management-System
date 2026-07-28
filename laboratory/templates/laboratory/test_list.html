@@ -1,0 +1,204 @@
+<!-- laboratory/templates/laboratory/test_list.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Laboratory Tests - NHIMS{% endblock %}
+
+{% block extra_head %}
+<style>
+  .custom-select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%2394a3b8' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+    background-position: right 0.75rem center;
+    background-repeat: no-repeat;
+    background-size: 1.25rem 1.25rem;
+    padding-right: 2.5rem;
+    appearance: none;
+  }
+  .badge-active {
+    background-color: #22c55e20;
+    color: #22c55e;
+    border: 1px solid #22c55e40;
+  }
+  .badge-inactive {
+    background-color: #ef444420;
+    color: #ef4444;
+    border: 1px solid #ef444440;
+  }
+  .table-row-hover:hover {
+    background-color: #1e293b;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="bg-slate-900 min-h-screen py-8 px-4 sm:px-6 lg:px-8">
+  <div class="max-w-7xl mx-auto">
+    <!-- Breadcrumb -->
+    <nav class="flex items-center text-sm text-slate-400 mb-6" aria-label="Breadcrumb">
+      <a href="/" class="hover:text-blue-400 transition">
+        <i class="fas fa-home mr-1"></i> Dashboard
+      </a>
+      <span class="mx-2 text-slate-600">/</span>
+      <a href="{% url 'laboratory:dashboard' %}" class="hover:text-blue-400 transition">Laboratory</a>
+      <span class="mx-2 text-slate-600">/</span>
+      <span class="text-slate-200 font-medium">Tests</span>
+    </nav>
+
+    <!-- Header -->
+    <div class="flex flex-wrap items-center justify-between gap-4 mb-8">
+      <div>
+        <h1 class="text-3xl font-bold text-white flex items-center gap-3">
+          <span class="bg-blue-600 p-3 rounded-xl shadow-lg shadow-blue-900/30">
+            <i class="fas fa-vial text-white text-xl"></i>
+          </span>
+          Laboratory Tests
+        </h1>
+        <p class="text-slate-400 mt-1 ml-1">Manage laboratory test catalogue</p>
+      </div>
+      <a href="{% url 'laboratory:test_create' %}" class="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 border border-blue-700 rounded-xl transition shadow-sm text-white font-medium">
+        <i class="fas fa-plus"></i> Add Test
+      </a>
+    </div>
+
+    <!-- Main Card -->
+    <div class="bg-slate-800 rounded-2xl shadow-xl overflow-hidden">
+      <!-- Card Header -->
+      <div class="bg-linear-to-r from-blue-600 to-blue-700 px-8 py-6"> <!-- fixed gradient -->
+        <div class="flex items-center gap-4">
+          <div class="bg-white/20 backdrop-blur p-3 rounded-xl">
+            <i class="fas fa-list-ul text-white text-2xl"></i>
+          </div>
+          <div>
+            <h2 class="text-xl font-bold text-white">Test List</h2>
+            <p class="text-blue-100 text-sm">View and manage all laboratory tests</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card Body -->
+      <div class="p-8">
+        <!-- Search & Filter Form -->
+        <form method="get" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <!-- Search -->
+          <div>
+            <label for="search" class="block text-sm font-semibold text-slate-300 mb-1.5">Search</label>
+            {% include 'laboratory/components/search_bar.html' with placeholder="Name, code, or category..." search_query=search %}
+          </div>
+
+          <!-- Category Filter -->
+          <div>
+            <label for="category" class="block text-sm font-semibold text-slate-300 mb-1.5">Category</label>
+            <div class="relative">
+              <i class="fas fa-tag absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"></i>
+              <select id="category" name="category"
+                      class="custom-select w-full rounded-xl border border-slate-600 bg-slate-700/50 focus:bg-slate-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition duration-200 py-2 pl-10 pr-4 text-slate-200 shadow-sm">
+                <option value="">All</option>
+                {% for cat in categories %}
+                  <option value="{{ cat.pk }}" {% if category_filter|add:0 == cat.pk %}selected{% endif %}>{{ cat.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+
+          <!-- Active Status -->
+          <div>
+            <label for="is_active" class="block text-sm font-semibold text-slate-300 mb-1.5">Status</label>
+            <div class="relative">
+              <i class="fas fa-circle absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"></i>
+              <select id="is_active" name="is_active"
+                      class="custom-select w-full rounded-xl border border-slate-600 bg-slate-700/50 focus:bg-slate-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition duration-200 py-2 pl-10 pr-4 text-slate-200 shadow-sm">
+                <option value="">All</option>
+                <option value="1" {% if active_filter == '1' %}selected{% endif %}>Active</option>
+                <option value="0" {% if active_filter == '0' %}selected{% endif %}>Inactive</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Actions -->
+          <div class="flex items-end gap-2">
+            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-xl transition duration-200 shadow-sm flex items-center justify-center gap-2">
+              <i class="fas fa-search"></i> Filter
+            </button>
+            <a href="{% url 'laboratory:test_list' %}" class="bg-slate-700 hover:bg-slate-600 text-slate-300 font-medium py-2 px-4 rounded-xl transition duration-200 shadow-sm flex items-center justify-center gap-1">
+              <i class="fas fa-times"></i>
+            </a>
+          </div>
+        </form>
+
+        <!-- Table -->
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm text-left text-slate-300">
+            <thead class="text-xs uppercase text-slate-400 border-b border-slate-700">
+              <tr>
+                <th scope="col" class="px-4 py-3">#</th>
+                <th scope="col" class="px-4 py-3">Code</th>
+                <th scope="col" class="px-4 py-3">Name</th>
+                <th scope="col" class="px-4 py-3">Category</th>
+                <th scope="col" class="px-4 py-3">Price (BDT)</th>
+                <th scope="col" class="px-4 py-3">Status</th>
+                <th scope="col" class="px-4 py-3 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for test in tests %}
+                <tr class="border-b border-slate-700/50 table-row-hover transition">
+                  <td class="px-4 py-3 text-slate-400">{{ forloop.counter }}</td>
+                  <td class="px-4 py-3 font-mono text-slate-300">{{ test.test_code }}</td>
+                  <td class="px-4 py-3 font-medium text-white">{{ test.name }}</td>
+                  <td class="px-4 py-3">{{ test.category.name }}</td>
+                  <td class="px-4 py-3 text-slate-300">{{ test.price|floatformat:2 }}</td>
+                  <td class="px-4 py-3">
+                    {% include 'laboratory/components/status_badge.html' with status=test.is_active label=test.is_active|yesno:"Active,Inactive" is_active=test.is_active %}
+                  </td>
+                  <td class="px-4 py-3 text-right">
+                    <div class="flex items-center justify-end gap-2">
+                      <a href="{% url 'laboratory:test_update' test.pk %}" class="text-slate-400 hover:text-yellow-400 transition" title="Edit">
+                        <i class="fas fa-edit"></i>
+                      </a>
+                      <a href="{% url 'laboratory:test_delete' test.pk %}" class="text-slate-400 hover:text-red-400 transition" title="Delete">
+                        <i class="fas fa-trash-alt"></i>
+                      </a>
+                    </div>
+                  </td>
+                </tr>
+              {% empty %}
+                <tr>
+                  <td colspan="7" class="px-4 py-8 text-center text-slate-400">
+                    <i class="fas fa-vial text-4xl block mb-2 text-slate-600"></i>
+                    No tests found.
+                    <a href="{% url 'laboratory:test_create' %}" class="text-blue-400 hover:underline block mt-2">Add your first test</a>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if is_paginated %}
+          <div class="flex flex-wrap items-center justify-between gap-4 mt-6 pt-4 border-t border-slate-700">
+            <span class="text-sm text-slate-400">
+              Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }} entries
+            </span>
+            <div class="flex gap-1">
+              {% if page_obj.has_previous %}
+                <a href="?page=1{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" 
+                   class="px-3 py-1 rounded-lg border border-slate-600 hover:bg-slate-700 transition text-slate-300">«</a>
+                <a href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" 
+                   class="px-3 py-1 rounded-lg border border-slate-600 hover:bg-slate-700 transition text-slate-300">‹</a>
+              {% endif %}
+              <span class="px-3 py-1 rounded-lg bg-blue-600 text-white">{{ page_obj.number }}</span>
+              {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" 
+                   class="px-3 py-1 rounded-lg border border-slate-600 hover:bg-slate-700 transition text-slate-300">›</a>
+                <a href="?page={{ page_obj.paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" 
+                   class="px-3 py-1 rounded-lg border border-slate-600 hover:bg-slate-700 transition text-slate-300">»</a>
+              {% endif %}
+            </div>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

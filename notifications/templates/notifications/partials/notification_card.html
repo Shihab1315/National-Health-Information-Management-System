@@ -1,0 +1,56 @@
+{% load static %}
+<form method="get" action="" class="flex flex-wrap items-center gap-3 py-2" id="notification-toolbar">
+    <!-- Search -->
+    <div class="relative flex-1 min-w-[140px]">
+        <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+        <input type="text" name="q" placeholder="Search notifications..." value="{{ request.GET.q|default:'' }}"
+               class="w-full pl-9 pr-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-400 text-sm focus:border-blue-500 outline-none transition">
+    </div>
+
+    <!-- Notification Type -->
+    <div class="relative min-w-[150px]">
+        <select name="type" class="w-full appearance-none bg-white/5 border border-white/10 rounded-lg text-white text-sm py-1.5 pl-3 pr-8 focus:border-blue-500 outline-none transition cursor-pointer">
+            <option value="">All Types</option>
+            {% for key, label in filter_form.fields.type.choices %}
+                <option value="{{ key }}" {% if request.GET.type == key %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+        <i class="fas fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none text-xs"></i>
+    </div>
+
+    <!-- Status -->
+    <div class="relative min-w-[120px]">
+        <select name="status" class="w-full appearance-none bg-white/5 border border-white/10 rounded-lg text-white text-sm py-1.5 pl-3 pr-8 focus:border-blue-500 outline-none transition cursor-pointer">
+            <option value="">All Status</option>
+            <option value="unread" {% if request.GET.status == 'unread' %}selected{% endif %}>Unread</option>
+            <option value="read" {% if request.GET.status == 'read' %}selected{% endif %}>Read</option>
+        </select>
+        <i class="fas fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none text-xs"></i>
+    </div>
+
+    <!-- Priority -->
+    <div class="relative min-w-[120px]">
+        <select name="priority" class="w-full appearance-none bg-white/5 border border-white/10 rounded-lg text-white text-sm py-1.5 pl-3 pr-8 focus:border-blue-500 outline-none transition cursor-pointer">
+            <option value="">All Priorities</option>
+            {% for key, label in filter_form.fields.priority.choices %}
+                <option value="{{ key }}" {% if request.GET.priority == key %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+        <i class="fas fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none text-xs"></i>
+    </div>
+
+    <!-- Date From -->
+    <div class="relative min-w-[140px]">
+        <i class="fas fa-calendar-alt absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+        <input type="date" name="date_from" value="{{ request.GET.date_from|default:'' }}"
+               class="w-full pl-9 pr-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:border-blue-500 outline-none transition">
+    </div>
+
+    <!-- Buttons -->
+    <button type="submit" class="btn-filter text-sm flex items-center gap-1.5 px-4 py-1.5">
+        <i class="fas fa-sliders-h"></i> Apply
+    </button>
+    <a href="{% url 'notifications:center' %}" class="btn-reset text-sm flex items-center gap-1.5 px-4 py-1.5">
+        <i class="fas fa-undo-alt"></i> Reset
+    </a>
+</form>

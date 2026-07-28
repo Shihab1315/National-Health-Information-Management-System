@@ -1,0 +1,66 @@
+{% load static %}
+
+<div class="chart-card bg-[#111827] rounded-2xl border border-white/10 shadow-xl p-4 transition-all duration-200 hover:border-blue-500/30 hover:shadow-2xl group">
+    <!-- Card Header -->
+    <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+        <div>
+            <h5 class="text-sm font-semibold text-white">{{ title|default:"Chart Title" }}</h5>
+            {% if subtitle %}
+                <p class="text-xs text-gray-400">{{ subtitle }}</p>
+            {% endif %}
+        </div>
+        <!-- Action Buttons (optional – can be added later) -->
+        <div class="flex items-center gap-1">
+            <!-- আপনি চাইলে এখানে Refresh/Export বাটন যোগ করতে পারেন -->
+        </div>
+    </div>
+
+    <!-- Chart Body with Loading Skeleton -->
+    <div class="chart-body relative" style="height: {{ height|default:'200' }}px;">
+        <!-- Loading Spinner (hidden after chart loads) -->
+        <div id="loading-{{ chart_id|default:'chart' }}" class="absolute inset-0 flex items-center justify-center bg-[#111827] z-10">
+            <div class="flex flex-col items-center">
+                <div class="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                <span class="text-xs text-gray-500 mt-2">Loading chart...</span>
+            </div>
+        </div>
+
+        <!-- Canvas -->
+        <canvas id="{{ chart_id|default:'chartCanvas' }}" class="relative z-0"></canvas>
+
+        <!-- Empty State (hidden by default) -->
+        <div id="empty-{{ chart_id|default:'chart' }}" class="absolute inset-0 flex items-center justify-center bg-[#111827] z-0 hidden">
+            <div class="text-center">
+                <i class="fas fa-chart-line text-gray-600 text-3xl mb-2"></i>
+                <p class="text-gray-400 text-sm">No data available</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Card Footer -->
+    <div class="flex flex-wrap items-center justify-between mt-3 pt-2 border-t border-white/5">
+        <span class="text-[10px] text-gray-500" id="updated-{{ chart_id|default:'chart' }}">
+            Last updated: Just now
+        </span>
+        <!-- Legend (optional – can be added dynamically) -->
+        <div class="flex items-center gap-3"></div>
+    </div>
+</div>
+
+<!-- Auto-hide loading spinner after chart renders (using Chart.js callbacks) -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const canvas = document.getElementById('{{ chart_id|default:'chartCanvas' }}');
+        if (canvas) {
+            // Listen for chart render event (if using Chart.js)
+            // We'll hide the loading spinner when chart is ready
+            const loading = document.getElementById('loading-{{ chart_id|default:'chart' }}');
+            if (loading) {
+                // Assume chart will be rendered; hide spinner after 2 seconds as fallback
+                setTimeout(() => {
+                    loading.style.display = 'none';
+                }, 2000);
+            }
+        }
+    });
+</script>

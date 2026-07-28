@@ -1,0 +1,115 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Appointment Dashboard - NHIMS{% endblock %}
+
+{% block content %}
+<div class="bg-slate-900 min-h-screen py-8 px-4 sm:px-6 lg:px-8">
+  <div class="max-w-7xl mx-auto">
+    <!-- Header -->
+    <div class="flex flex-wrap items-center justify-between gap-4 mb-8">
+      <div>
+        <h1 class="text-2xl font-bold text-white flex items-center gap-3">
+          <span class="bg-blue-600 p-3 rounded-xl shadow-lg shadow-blue-900/30">
+            <i class="fas fa-chart-pie text-white text-xl"></i>
+          </span>
+          Appointment Dashboard
+        </h1>
+        <p class="text-slate-400 mt-1 ml-1">Overview of all appointments</p>
+      </div>
+      <a href="{% url 'appointments:create' %}" class="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 border border-blue-700 rounded-xl transition shadow-sm text-white font-medium">
+        <i class="fas fa-plus"></i> New Appointment
+      </a>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+      <div class="bg-slate-800 rounded-xl p-4 border-l-4 border-blue-500">
+        <p class="text-sm text-slate-400 font-medium">Total</p>
+        <p class="text-2xl font-bold text-white">{{ stats.total|default:0 }}</p>
+      </div>
+      <div class="bg-slate-800 rounded-xl p-4 border-l-4 border-yellow-500">
+        <p class="text-sm text-slate-400 font-medium">Pending</p>
+        <p class="text-2xl font-bold text-yellow-400">{{ stats.pending|default:0 }}</p>
+      </div>
+      <div class="bg-slate-800 rounded-xl p-4 border-l-4 border-green-500">
+        <p class="text-sm text-slate-400 font-medium">Confirmed</p>
+        <p class="text-2xl font-bold text-green-400">{{ stats.confirmed|default:0 }}</p>
+      </div>
+      <div class="bg-slate-800 rounded-xl p-4 border-l-4 border-red-500">
+        <p class="text-sm text-slate-400 font-medium">Cancelled</p>
+        <p class="text-2xl font-bold text-red-400">{{ stats.cancelled|default:0 }}</p>
+      </div>
+      <div class="bg-slate-800 rounded-xl p-4 border-l-4 border-purple-500">
+        <p class="text-sm text-slate-400 font-medium">Completed</p>
+        <p class="text-2xl font-bold text-purple-400">{{ stats.completed|default:0 }}</p>
+      </div>
+    </div>
+
+    <!-- Two-column layout: Today & Upcoming -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <!-- Today's Appointments -->
+      <div class="bg-slate-800 rounded-2xl shadow-xl p-6">
+        <h2 class="text-xl font-semibold text-white mb-4 flex items-center gap-2">
+          <i class="fas fa-calendar-day text-blue-400"></i> Today's Appointments
+        </h2>
+        {% if today_appointments %}
+          <ul class="divide-y divide-slate-700">
+            {% for apt in today_appointments %}
+              <li class="py-3 flex justify-between items-center">
+                <div>
+                  <p class="font-medium text-white">{{ apt.patient.user.get_full_name }}</p>
+                  <p class="text-sm text-slate-400">{{ apt.appointment_time|time:"g:i A" }} · Dr. {{ apt.doctor.user.get_full_name }}</p>
+                </div>
+                <span class="px-2 py-1 text-xs rounded-full 
+                  {% if apt.status == 'pending' %}bg-yellow-500/20 text-yellow-300 border border-yellow-500/30
+                  {% elif apt.status == 'confirmed' %}bg-green-500/20 text-green-300 border border-green-500/30
+                  {% elif apt.status == 'cancelled' %}bg-red-500/20 text-red-300 border border-red-500/30
+                  {% else %}bg-purple-500/20 text-purple-300 border border-purple-500/30{% endif %}">
+                  {{ apt.get_status_display }}
+                </span>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p class="text-slate-400 text-center py-4">No appointments today.</p>
+        {% endif %}
+        <div class="mt-4 text-right">
+          <a href="{% url 'appointments:today' %}" class="text-blue-400 hover:text-blue-300 text-sm font-medium">View all →</a>
+        </div>
+      </div>
+
+      <!-- Upcoming Appointments (next 7 days) -->
+      <div class="bg-slate-800 rounded-2xl shadow-xl p-6">
+        <h2 class="text-xl font-semibold text-white mb-4 flex items-center gap-2">
+          <i class="fas fa-calendar-alt text-green-400"></i> Upcoming (7 days)
+        </h2>
+        {% if upcoming_appointments %}
+          <ul class="divide-y divide-slate-700">
+            {% for apt in upcoming_appointments %}
+              <li class="py-3 flex justify-between items-center">
+                <div>
+                  <p class="font-medium text-white">{{ apt.patient.user.get_full_name }}</p>
+                  <p class="text-sm text-slate-400">{{ apt.appointment_date|date:"M d" }} · {{ apt.appointment_time|time:"g:i A" }}</p>
+                </div>
+                <span class="px-2 py-1 text-xs rounded-full 
+                  {% if apt.status == 'pending' %}bg-yellow-500/20 text-yellow-300 border border-yellow-500/30
+                  {% elif apt.status == 'confirmed' %}bg-green-500/20 text-green-300 border border-green-500/30
+                  {% elif apt.status == 'cancelled' %}bg-red-500/20 text-red-300 border border-red-500/30
+                  {% else %}bg-purple-500/20 text-purple-300 border border-purple-500/30{% endif %}">
+                  {{ apt.get_status_display }}
+                </span>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p class="text-slate-400 text-center py-4">No upcoming appointments.</p>
+        {% endif %}
+        <div class="mt-4 text-right">
+          <a href="{% url 'appointments:upcoming' %}" class="text-blue-400 hover:text-blue-300 text-sm font-medium">View all →</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

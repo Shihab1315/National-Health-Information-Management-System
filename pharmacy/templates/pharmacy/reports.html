@@ -1,0 +1,204 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Reports — NHIMS Pharmacy{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+    <!-- Breadcrumb -->
+    <nav class="flex items-center gap-2 text-sm text-gray-400 mb-6" aria-label="Breadcrumb">
+        <a href="{% url 'pharmacy:dashboard' %}" class="hover:text-white transition">Dashboard</a>
+        <span class="text-gray-600">/</span>
+        <span class="text-white">Reports</span>
+    </nav>
+
+    <!-- Header -->
+    <div class="flex flex-wrap justify-between items-center gap-4 mb-8">
+        <div>
+            <h1 class="text-3xl font-bold text-white flex items-center gap-3">
+                <i class="fas fa-chart-pie text-purple-400 text-2xl"></i>
+                Reports
+            </h1>
+            <p class="text-gray-400 text-sm">Generate and view pharmacy reports</p>
+        </div>
+    </div>
+
+    <!-- Report Cards Grid -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- Sales Report -->
+        <div class="glass-card rounded-2xl border border-white/10 p-6 hover:border-blue-400/50 transition hover:scale-[1.02] duration-200">
+            <div class="flex items-center gap-3 mb-3">
+                <div class="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center">
+                    <i class="fas fa-chart-line text-blue-400"></i>
+                </div>
+                <h3 class="text-white font-semibold text-lg">Sales Report</h3>
+            </div>
+            <p class="text-gray-400 text-sm mb-4">View sales summary, revenue, and trends by period.</p>
+            <a href="{% url 'pharmacy:sales_report' %}" class="inline-block text-blue-400 hover:text-blue-300 text-sm font-medium transition">
+                Generate <i class="fas fa-arrow-right ml-1"></i>
+            </a>
+        </div>
+
+        <!-- Purchase Report -->
+        <div class="glass-card rounded-2xl border border-white/10 p-6 hover:border-amber-400/50 transition hover:scale-[1.02] duration-200">
+            <div class="flex items-center gap-3 mb-3">
+                <div class="w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center">
+                    <i class="fas fa-shopping-cart text-amber-400"></i>
+                </div>
+                <h3 class="text-white font-semibold text-lg">Purchase Report</h3>
+            </div>
+            <p class="text-gray-400 text-sm mb-4">Purchase history, supplier performance, and expenditure.</p>
+            <a href="{% url 'pharmacy:purchases_report' %}" class="inline-block text-amber-400 hover:text-amber-300 text-sm font-medium transition">
+                Generate <i class="fas fa-arrow-right ml-1"></i>
+            </a>
+        </div>
+
+        <!-- Inventory Report -->
+        <div class="glass-card rounded-2xl border border-white/10 p-6 hover:border-emerald-400/50 transition hover:scale-[1.02] duration-200">
+            <div class="flex items-center gap-3 mb-3">
+                <div class="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center">
+                    <i class="fas fa-boxes text-emerald-400"></i>
+                </div>
+                <h3 class="text-white font-semibold text-lg">Inventory Report</h3>
+            </div>
+            <p class="text-gray-400 text-sm mb-4">Current stock levels, valuation, and movement summary.</p>
+            <a href="{% url 'pharmacy:inventory_report' %}" class="inline-block text-emerald-400 hover:text-emerald-300 text-sm font-medium transition">
+                Generate <i class="fas fa-arrow-right ml-1"></i>
+            </a>
+        </div>
+
+        <!-- Low Stock Report -->
+        <div class="glass-card rounded-2xl border border-white/10 p-6 hover:border-amber-500/50 transition hover:scale-[1.02] duration-200">
+            <div class="flex items-center gap-3 mb-3">
+                <div class="w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center">
+                    <i class="fas fa-exclamation-triangle text-amber-400"></i>
+                </div>
+                <h3 class="text-white font-semibold text-lg">Low Stock Alert</h3>
+            </div>
+            <p class="text-gray-400 text-sm mb-4">Medicines with stock below minimum threshold.</p>
+            <a href="{% url 'pharmacy:low_stock_report' %}" class="inline-block text-amber-400 hover:text-amber-300 text-sm font-medium transition">
+                Generate <i class="fas fa-arrow-right ml-1"></i>
+            </a>
+        </div>
+
+        <!-- Expired Medicines Report -->
+        <div class="glass-card rounded-2xl border border-white/10 p-6 hover:border-red-400/50 transition hover:scale-[1.02] duration-200">
+            <div class="flex items-center gap-3 mb-3">
+                <div class="w-10 h-10 rounded-full bg-red-500/20 flex items-center justify-center">
+                    <i class="fas fa-clock text-red-400"></i>
+                </div>
+                <h3 class="text-white font-semibold text-lg">Expired Medicines</h3>
+            </div>
+            <p class="text-gray-400 text-sm mb-4">List of medicines that have expired.</p>
+            <a href="{% url 'pharmacy:expired_medicines_report' %}" class="inline-block text-red-400 hover:text-red-300 text-sm font-medium transition">
+                Generate <i class="fas fa-arrow-right ml-1"></i>
+            </a>
+        </div>
+
+        <!-- Daily Report -->
+        <div class="glass-card rounded-2xl border border-white/10 p-6 hover:border-cyan-400/50 transition hover:scale-[1.02] duration-200">
+            <div class="flex items-center gap-3 mb-3">
+                <div class="w-10 h-10 rounded-full bg-cyan-500/20 flex items-center justify-center">
+                    <i class="fas fa-calendar-day text-cyan-400"></i>
+                </div>
+                <h3 class="text-white font-semibold text-lg">Daily Report</h3>
+            </div>
+            <p class="text-gray-400 text-sm mb-4">Summary of today's sales, purchases, and transactions.</p>
+            <a href="{% url 'pharmacy:daily_report' %}" class="inline-block text-cyan-400 hover:text-cyan-300 text-sm font-medium transition">
+                Generate <i class="fas fa-arrow-right ml-1"></i>
+            </a>
+        </div>
+
+        <!-- Monthly Report -->
+        <div class="glass-card rounded-2xl border border-white/10 p-6 hover:border-indigo-400/50 transition hover:scale-[1.02] duration-200">
+            <div class="flex items-center gap-3 mb-3">
+                <div class="w-10 h-10 rounded-full bg-indigo-500/20 flex items-center justify-center">
+                    <i class="fas fa-calendar-alt text-indigo-400"></i>
+                </div>
+                <h3 class="text-white font-semibold text-lg">Monthly Report</h3>
+            </div>
+            <p class="text-gray-400 text-sm mb-4">Monthly performance, revenue, and expenditure analysis.</p>
+            <a href="{% url 'pharmacy:monthly_report' %}" class="inline-block text-indigo-400 hover:text-indigo-300 text-sm font-medium transition">
+                Generate <i class="fas fa-arrow-right ml-1"></i>
+            </a>
+        </div>
+
+        <!-- Yearly Report -->
+        <div class="glass-card rounded-2xl border border-white/10 p-6 hover:border-purple-400/50 transition hover:scale-[1.02] duration-200">
+            <div class="flex items-center gap-3 mb-3">
+                <div class="w-10 h-10 rounded-full bg-purple-500/20 flex items-center justify-center">
+                    <i class="fas fa-calendar text-purple-400"></i>
+                </div>
+                <h3 class="text-white font-semibold text-lg">Yearly Report</h3>
+            </div>
+            <p class="text-gray-400 text-sm mb-4">Annual summary, growth trends, and overall performance.</p>
+            <a href="{% url 'pharmacy:yearly_report' %}" class="inline-block text-purple-400 hover:text-purple-300 text-sm font-medium transition">
+                Generate <i class="fas fa-arrow-right ml-1"></i>
+            </a>
+        </div>
+
+        <!-- Profit Report -->
+        <div class="glass-card rounded-2xl border border-white/10 p-6 hover:border-emerald-400/50 transition hover:scale-[1.02] duration-200">
+            <div class="flex items-center gap-3 mb-3">
+                <div class="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center">
+                    <i class="fas fa-dollar-sign text-emerald-400"></i>
+                </div>
+                <h3 class="text-white font-semibold text-lg">Profit Report</h3>
+            </div>
+            <p class="text-gray-400 text-sm mb-4">Profit analysis, margins, and revenue breakdown.</p>
+            <a href="{% url 'pharmacy:profit_report' %}" class="inline-block text-emerald-400 hover:text-emerald-300 text-sm font-medium transition">
+                Generate <i class="fas fa-arrow-right ml-1"></i>
+            </a>
+        </div>
+
+        <!-- Audit Logs -->
+        <div class="glass-card rounded-2xl border border-white/10 p-6 hover:border-gray-400/50 transition hover:scale-[1.02] duration-200">
+            <div class="flex items-center gap-3 mb-3">
+                <div class="w-10 h-10 rounded-full bg-gray-500/20 flex items-center justify-center">
+                    <i class="fas fa-history text-gray-400"></i>
+                </div>
+                <h3 class="text-white font-semibold text-lg">Audit Logs</h3>
+            </div>
+            <p class="text-gray-400 text-sm mb-4">Complete activity log of all pharmacy operations.</p>
+            <a href="{% url 'pharmacy:audit_logs' %}" class="inline-block text-gray-400 hover:text-white text-sm font-medium transition">
+                View <i class="fas fa-arrow-right ml-1"></i>
+            </a>
+        </div>
+
+        <!-- Activity Logs -->
+        <div class="glass-card rounded-2xl border border-white/10 p-6 hover:border-blue-400/50 transition hover:scale-[1.02] duration-200">
+            <div class="flex items-center gap-3 mb-3">
+                <div class="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center">
+                    <i class="fas fa-clock text-blue-400"></i>
+                </div>
+                <h3 class="text-white font-semibold text-lg">Activity Logs</h3>
+            </div>
+            <p class="text-gray-400 text-sm mb-4">Recent user activities and system events.</p>
+            <a href="{% url 'pharmacy:activity_logs' %}" class="inline-block text-blue-400 hover:text-blue-300 text-sm font-medium transition">
+                View <i class="fas fa-arrow-right ml-1"></i>
+            </a>
+        </div>
+    </div>
+
+    <!-- Export Section -->
+    <div class="mt-10 glass-card rounded-2xl border border-white/10 p-6">
+        <h2 class="text-white font-semibold text-lg flex items-center gap-2 mb-4">
+            <i class="fas fa-download text-emerald-400"></i> Export Data
+        </h2>
+        <div class="flex flex-wrap gap-4">
+            <a href="{% url 'pharmacy:export_medicines_csv' %}" class="bg-emerald-600/20 text-emerald-400 px-5 py-2.5 rounded-xl hover:bg-emerald-600/30 transition text-sm font-medium flex items-center gap-2">
+                <i class="fas fa-file-csv"></i> Medicines CSV
+            </a>
+            <a href="{% url 'pharmacy:export_medicines_excel' %}" class="bg-blue-600/20 text-blue-400 px-5 py-2.5 rounded-xl hover:bg-blue-600/30 transition text-sm font-medium flex items-center gap-2">
+                <i class="fas fa-file-excel"></i> Medicines Excel
+            </a>
+            <a href="{% url 'pharmacy:export_sales_csv' %}" class="bg-amber-600/20 text-amber-400 px-5 py-2.5 rounded-xl hover:bg-amber-600/30 transition text-sm font-medium flex items-center gap-2">
+                <i class="fas fa-file-csv"></i> Sales CSV
+            </a>
+            <a href="{% url 'pharmacy:export_purchases_csv' %}" class="bg-purple-600/20 text-purple-400 px-5 py-2.5 rounded-xl hover:bg-purple-600/30 transition text-sm font-medium flex items-center gap-2">
+                <i class="fas fa-file-csv"></i> Purchases CSV
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
