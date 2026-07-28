@@ -10,6 +10,11 @@ from .models import Notification
 from .forms import NotificationFilterForm
 from .services import mark_as_read, mark_all_as_read, delete_notification
 from django.contrib.auth.decorators import login_required
+
+from django.core.paginator import Paginator
+from django.shortcuts import render
+from django.utils import timezone
+from accounts.decorators import role_required
 class NotificationCenterView(LoginRequiredMixin, ListView):
     """Display all notifications for the current user."""
     model = Notification
@@ -86,3 +91,136 @@ def unread_count(request):
     return JsonResponse({
         'count': count
     })
+    
+@login_required
+@role_required(['patient'])
+def patient_notification_list(request):
+    """
+    Patient-specific notification list.
+    Shows only the logged-in patient's own notifications.
+    """
+    user = request.user
+
+    # Base queryset – only this user's notifications
+    base_qs = Notification.objects.for_user(user)
+
+    # ---------- Summary Cards ----------
+    total = base_qs.count()
+    unread = base_qs.filter(is_read=False).count()
+    read = base_qs.filter(is_read=True).count()
+    today = base_qs.filter(created_at__date=timezone.now().date()).count()
+
+    # ---------- Search ----------
+    search = request.GET.get('search', '')
+    if search:
+        base_qs = base_qs.filter(
+            Q(title__icontains=search) |
+            Q(message__icontains=search) |
+            Q(notification_type__icontains=search)
+        )
+
+    # ---------- Filter ----------
+    status_filter = request.GET.get('status', '')
+    if status_filter == 'unread':
+        base_qs = base_qs.filter(is_read=False)
+    elif status_filter == 'read':
+        base_qs = base_qs.filter(is_read=True)
+
+    type_filter = request.GET.get('type', '')
+    if type_filter:
+        base_qs = base_qs.filter(notification_type=type_filter)
+
+    # ---------- Sorting ----------
+    sort = request.GET.get('sort', '-created_at')
+    if sort == 'created_at':
+        base_qs = base_qs.order_by('created_at')
+    else:
+        base_qs = base_qs.order_by('-created_at')
+
+    # ---------- Pagination ----------
+    paginator = Paginator(base_qs, 10)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    # ---------- Notification type choices for filter ----------
+    type_choices = Notification.NotificationType.choices
+
+    # ---------- Context ----------
+    context = {
+        'page_obj': page_obj,
+        'notifications': page_obj,
+        'total': total,
+        'unread': unread,
+        'read': read,
+        'today': today,
+        'search': search,
+        'status_filter': status_filter,
+        'type_filter': type_filter,
+        'sort': sort,
+        'type_choices': type_choices,
+        'user': user,
+        'current_date': timezone.now(),
+    }
+    return render(request, 'notifications/patient/notification_list.html', context)
+
+@login_required
+@role_required(['patient'])
+def patient_notification_detail(request, pk):
+    """
+    Detail view for a single notification.
+    Automatically marks the notification as read when viewed.
+    """
+    notification = get_object_or_404(
+        Notification.objects.select_related('sender'),
+        pk=pk,
+        recipient=request.user
+    )
+
+    # Auto-mark as read
+    if not notification.is_read:
+        notification.mark_as_read()
+
+    context = {
+        'notification': notification,
+        'current_date': timezone.now(),
+    }
+    return render(request, 'notifications/patient/notification_detail.html', context)
+
+
+@login_required
+@role_required(['patient'])
+def patient_notification_mark_read(request, pk):
+    """Mark a notification as read (AJAX or POST)."""
+    notification = get_object_or_404(Notification, pk=pk, recipient=request.user)
+    if request.method == 'POST':
+        notification.mark_as_read()
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({'success': True, 'is_read': True})
+        messages.success(request, 'Notification marked as read.')
+    return redirect('notifications:patient_notification_detail', pk=pk)
+
+
+@login_required
+@role_required(['patient'])
+def patient_notification_mark_unread(request, pk):
+    """Mark a notification as unread (AJAX or POST)."""
+    notification = get_object_or_404(Notification, pk=pk, recipient=request.user)
+    if request.method == 'POST':
+        notification.is_read = False
+        notification.save(update_fields=['is_read'])
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({'success': True, 'is_read': False})
+        messages.success(request, 'Notification marked as unread.')
+    return redirect('notifications:patient_notification_detail', pk=pk)
+
+
+@login_required
+@role_required(['patient'])
+def patient_notification_delete(request, pk):
+    """Delete a notification (POST only)."""
+    notification = get_object_or_404(Notification, pk=pk, recipient=request.user)
+    if request.method == 'POST':
+        notification.delete()
+        messages.success(request, 'Notification deleted.')
+        return redirect('notifications:patient_notification_list')
+    return redirect('notifications:patient_notification_detail', pk=pk)
