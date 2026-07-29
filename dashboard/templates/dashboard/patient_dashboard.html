@@ -42,46 +42,42 @@
             <a href="{% url 'dashboard:patient_dashboard' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition {% if request.resolver_match.url_name == 'patient_dashboard' %}bg-blue-600/30 text-blue-300{% else %}text-gray-300 hover:bg-white/5 hover:text-white{% endif %}">
                 <i class="fas fa-th-large w-5 text-center"></i> Dashboard
             </a>
-            <!-- Updated: Appointments -> patient_list -->
             <a href="{% url 'appointments:patient_appointment_list' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
                 <i class="fas fa-calendar-check w-5 text-center"></i> Appointments
             </a>
             <a href="{% url 'prescriptions:patient_my_prescriptions' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
-             <i class="fas fa-prescription-bottle w-5 text-center"></i> Prescriptions
+                <i class="fas fa-prescription-bottle w-5 text-center"></i> Prescriptions
             </a>
             <a href="{% url 'medical_records:patient_medical_record_list' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
-    <i class="fas fa-file-medical w-5 text-center"></i> Medical Records
-</a>
-           <a href="{% url 'laboratory:patient_lab_report_list' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
-             <i class="fas fa-flask w-5 text-center"></i> Laboratory
+                <i class="fas fa-file-medical w-5 text-center"></i> Medical Records
+            </a>
+            <a href="{% url 'laboratory:patient_lab_report_list' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
+                <i class="fas fa-flask w-5 text-center"></i> Laboratory
             </a>
             <a href="{% url 'laboratory:patient_lab_history' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
-    <i class="fas fa-history w-5 text-center"></i> Lab History
-</a>
-            
+                <i class="fas fa-history w-5 text-center"></i> Lab History
+            </a>
             <hr class="border-white/10 my-3">
             <a href="{% url 'patients:profile' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
-            <i class="fas fa-user-circle w-5 text-center"></i> Profile
+                <i class="fas fa-user-circle w-5 text-center"></i> Profile
             </a>
             <a href="{% url 'patients:profile_completion' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
-              <i class="fas fa-tasks w-5 text-center"></i> Profile Completion
-           </a>
-          <a href="{% url 'notifications:patient_notification_list' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
-                 <i class="fas fa-bell w-5 text-center"></i> Notifications
-               </a>
-            <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
+                <i class="fas fa-tasks w-5 text-center"></i> Profile Completion
+            </a>
+            <a href="{% url 'notifications:patient_notification_list' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
+                <i class="fas fa-bell w-5 text-center"></i> Notifications
+            </a>
+            <a href="{% url 'patients:patient_settings' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
                 <i class="fas fa-cog w-5 text-center"></i> Settings
             </a>
-            {% url 'logout' as logout_url %}
-            {% if logout_url %}
-                <a href="{{ logout_url }}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-red-400 hover:bg-red-500/10 hover:text-red-300">
-                    <i class="fas fa-sign-out-alt w-5 text-center"></i> Logout
-                </a>
-            {% else %}
-                <a href="{% url 'accounts:logout' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-red-400 hover:bg-red-500/10 hover:text-red-300">
-                    <i class="fas fa-sign-out-alt w-5 text-center"></i> Logout
-                </a>
-            {% endif %}
+
+            <!-- ========== REPLACED LOGOUT LINK WITH BUTTON ========== -->
+            <button type="button"
+                    class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-red-400 hover:bg-red-500/10 hover:text-red-300 w-full text-left"
+                    onclick="openLogoutModal()">
+                <i class="fas fa-sign-out-alt w-5 text-center"></i> Logout
+            </button>
+            <!-- ========== END REPLACEMENT ========== -->
         </nav>
         <div class="absolute bottom-4 left-4 right-4 text-center text-gray-500 text-xs">
             NHIMS v2.0
@@ -163,33 +159,30 @@
                     <i class="fas fa-calendar-plus text-blue-400 text-2xl block mb-2 group-hover:scale-110 transition"></i>
                     <span class="text-gray-300 text-sm">Book Appointment</span>
                 </a>
-                <!-- Updated: View Appointments -> patient_list -->
                 <a href="{% url 'appointments:patient_appointment_list' %}" class="bg-white/5 hover:bg-white/10 rounded-xl p-4 text-center transition group">
                     <i class="fas fa-calendar-check text-cyan-400 text-2xl block mb-2 group-hover:scale-110 transition"></i>
                     <span class="text-gray-300 text-sm">View Appointments</span>
                 </a>
                 <a href="{% url 'appointments:patient_appointment_history' %}" class="bg-white/5 hover:bg-white/10 rounded-xl p-4 text-center transition group">
-    <i class="fas fa-history text-purple-400 text-2xl block mb-2 group-hover:scale-110 transition"></i>
-    <span class="text-gray-300 text-sm">Appointment History</span>
-</a>
+                    <i class="fas fa-history text-purple-400 text-2xl block mb-2 group-hover:scale-110 transition"></i>
+                    <span class="text-gray-300 text-sm">Appointment History</span>
+                </a>
                 <a href="#prescriptions-section" class="bg-white/5 hover:bg-white/10 rounded-xl p-4 text-center transition group">
                     <i class="fas fa-prescription-bottle text-amber-400 text-2xl block mb-2 group-hover:scale-110 transition"></i>
                     <span class="text-gray-300 text-sm">My Prescriptions</span>
                 </a>
-                 <a href="{% url 'medical_records:patient_medical_record_list' %}" class="bg-white/5 hover:bg-white/10 rounded-xl p-4 text-center transition group">
-    <i class="fas fa-file-medical text-emerald-400 text-2xl block mb-2 group-hover:scale-110 transition"></i>
-    <span class="text-gray-300 text-sm">Medical Records</span>
-</a>
+                <a href="{% url 'medical_records:patient_medical_record_list' %}" class="bg-white/5 hover:bg-white/10 rounded-xl p-4 text-center transition group">
+                    <i class="fas fa-file-medical text-emerald-400 text-2xl block mb-2 group-hover:scale-110 transition"></i>
+                    <span class="text-gray-300 text-sm">Medical Records</span>
+                </a>
                 <a href="{% url 'laboratory:patient_lab_report_list' %}" class="bg-white/5 hover:bg-white/10 rounded-xl p-4 text-center transition group">
-    <i class="fas fa-flask text-rose-400 text-2xl block mb-2 group-hover:scale-110 transition"></i>
-    <span class="text-gray-300 text-sm">Lab Reports</span>
-
-</a>
-<a href="{% url 'laboratory:patient_lab_history' %}" class="bg-white/5 hover:bg-white/10 rounded-xl p-4 text-center transition group">
-        <i class="fas fa-flask text-rose-400 text-2xl block mb-2 group-hover:scale-110 transition"></i>
-
-    <i class="fas fa-history w-5 text-center"></i> Lab History
-</a>
+                    <i class="fas fa-flask text-rose-400 text-2xl block mb-2 group-hover:scale-110 transition"></i>
+                    <span class="text-gray-300 text-sm">Lab Reports</span>
+                </a>
+                <a href="{% url 'laboratory:patient_lab_history' %}" class="bg-white/5 hover:bg-white/10 rounded-xl p-4 text-center transition group">
+                    <i class="fas fa-history text-rose-400 text-2xl block mb-2 group-hover:scale-110 transition"></i>
+                    <span class="text-gray-300 text-sm">Lab History</span>
+                </a>
             </div>
         </div>
 
@@ -469,6 +462,45 @@
     </main>
 </div>
 
+<!-- ====================== LOGOUT CONFIRMATION MODAL ====================== -->
+<div id="logoutModal"
+     class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm transition-opacity duration-300 opacity-0 pointer-events-none"
+     role="dialog" aria-modal="true" aria-labelledby="logoutModalTitle">
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full mx-4 p-6 transform transition-all duration-300 scale-95">
+        <!-- Header -->
+        <div class="flex items-center justify-between mb-4">
+            <h3 id="logoutModalTitle" class="text-xl font-semibold text-gray-900 dark:text-white">Logout</h3>
+            <button type="button"
+                    class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition"
+                    onclick="closeLogoutModal()">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+                <span class="sr-only">Close</span>
+            </button>
+        </div>
+        <!-- Message -->
+        <p class="text-gray-600 dark:text-gray-300 mb-6">
+            Are you sure you want to logout from your NHIMS account?
+        </p>
+        <!-- Actions -->
+        <div class="flex flex-col sm:flex-row gap-3 justify-end">
+            <button type="button"
+                    class="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition"
+                    onclick="closeLogoutModal()">
+                Cancel
+            </button>
+            <form action="{% url 'patients:logout' %}" method="post" class="inline">
+                {% csrf_token %}
+                <button type="submit"
+                        class="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white font-medium transition shadow-md w-full sm:w-auto">
+                    Logout
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
 <!-- ====================== SIDEBAR TOGGLE SCRIPT ====================== -->
 <script>
     document.addEventListener('DOMContentLoaded', function () {
@@ -492,6 +524,35 @@
                     sidebar.classList.add('-translate-x-full');
                 }
             });
+        }
+    });
+
+    // ====================== LOGOUT MODAL SCRIPTS ======================
+    const modal = document.getElementById('logoutModal');
+
+    function openLogoutModal() {
+        modal.classList.remove('opacity-0', 'pointer-events-none');
+        modal.querySelector('div').classList.remove('scale-95');
+        modal.querySelector('div').classList.add('scale-100');
+    }
+
+    function closeLogoutModal() {
+        modal.classList.add('opacity-0', 'pointer-events-none');
+        modal.querySelector('div').classList.remove('scale-100');
+        modal.querySelector('div').classList.add('scale-95');
+    }
+
+    // Close on Escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && !modal.classList.contains('pointer-events-none')) {
+            closeLogoutModal();
+        }
+    });
+
+    // Close on backdrop click
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) {
+            closeLogoutModal();
         }
     });
 </script>

@@ -19,6 +19,9 @@ from django.utils.translation import gettext_lazy as _
 from django.views.generic import (
     ListView, DetailView, CreateView, UpdateView, DeleteView, TemplateView, View
 )
+from datetime import datetime, timedelta
+from django.utils.decorators import method_decorator
+
 
 import io
 import qrcode
@@ -1244,3 +1247,118 @@ def get_available_slots_ajax(request):
     available_slots = [slot for slot in slots if slot not in booked_str]
 
     return JsonResponse({'slots': available_slots})
+
+@method_decorator([login_required, role_required(['doctor'])], name='dispatch')
+class DoctorAppointmentListView(View):
+    """
+    Display appointments assigned to the logged‑in doctor.
+    Supports search, filters, sorting, and pagination.
+    """
+    template_name = 'appointments/doctor_appointments.html'
+
+    def get(self, request, *args, **kwargs):
+        # Ensure the logged‑in user is a doctor
+        try:
+            doctor = Doctor.objects.get(user=request.user)
+        except Doctor.DoesNotExist:
+            messages.error(request, "You are not registered as a doctor.")
+            return redirect('dashboard:doctor_dashboard')
+
+        # Base queryset – only this doctor's appointments
+        appointments = Appointment.objects.filter(
+            doctor=doctor
+        ).select_related('patient', 'patient__user', 'doctor', 'department')
+
+        # ========== SUMMARY STATS ==========
+        total = appointments.count()
+        pending = appointments.filter(status='pending').count()
+        approved = appointments.filter(status='confirmed').count()
+        completed = appointments.filter(status='completed').count()
+        cancelled = appointments.filter(status='cancelled').count()
+        today = appointments.filter(
+            appointment_date=timezone.now().date()
+        ).count()
+        upcoming = appointments.filter(
+            appointment_date__gte=timezone.now().date(),
+            status__in=['pending', 'confirmed']
+        ).count()
+
+        # ========== SEARCH ==========
+        search_query = request.GET.get('search', '').strip()
+        if search_query:
+            appointments = appointments.filter(
+                Q(patient__full_name__icontains=search_query) |
+                Q(patient__health_id__icontains=search_query) |
+                Q(id__icontains=search_query) |
+                Q(reason__icontains=search_query)
+            )
+
+        # ========== FILTERS ==========
+        status_filter = request.GET.get('status')
+        if status_filter and status_filter != 'all':
+            appointments = appointments.filter(status=status_filter)
+
+        date_filter = request.GET.get('date_filter')
+        if date_filter == 'today':
+            appointments = appointments.filter(appointment_date=timezone.now().date())
+        elif date_filter == 'tomorrow':
+            tomorrow = timezone.now().date() + timedelta(days=1)
+            appointments = appointments.filter(appointment_date=tomorrow)
+        elif date_filter == 'this_week':
+            start = timezone.now().date() - timedelta(days=timezone.now().weekday())
+            end = start + timedelta(days=6)
+            appointments = appointments.filter(appointment_date__range=[start, end])
+        elif date_filter == 'custom':
+            start_date = request.GET.get('start_date')
+            end_date = request.GET.get('end_date')
+            if start_date and end_date:
+                try:
+                    start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
+                    end_date = datetime.strptime(end_date, '%Y-%m-%d').date()
+                    appointments = appointments.filter(appointment_date__range=[start_date, end_date])
+                except ValueError:
+                    pass
+
+        appointment_type = request.GET.get('type')
+        if appointment_type and appointment_type != 'all':
+            appointments = appointments.filter(appointment_type=appointment_type)
+
+        # ========== SORTING ==========
+        sort_by = request.GET.get('sort', '-created_at')
+        allowed_sorts = {
+            'newest': '-created_at',
+            'oldest': 'created_at',
+            'appointment_date': 'appointment_date',
+            '-appointment_date': '-appointment_date',
+            'patient__full_name': 'patient__full_name',
+            '-patient__full_name': '-patient__full_name',
+        }
+        if sort_by in allowed_sorts:
+            appointments = appointments.order_by(allowed_sorts[sort_by])
+        else:
+            appointments = appointments.order_by('-created_at')
+
+        # ========== PAGINATION ==========
+        paginator = Paginator(appointments, 10)
+        page_number = request.GET.get('page')
+        page_obj = paginator.get_page(page_number)
+
+        # ========== CONTEXT ==========
+        context = {
+            'doctor': doctor,
+            'appointments': page_obj,
+            'total': total,
+            'pending': pending,
+            'approved': approved,
+            'completed': completed,
+            'cancelled': cancelled,
+            'today_count': today,
+            'upcoming_count': upcoming,
+            'search_query': search_query,
+            'status_filter': status_filter,
+            'date_filter': date_filter,
+            'appointment_type': appointment_type,
+            'sort_by': sort_by,
+            'page_obj': page_obj,
+        }
+        return render(request, self.template_name, context)

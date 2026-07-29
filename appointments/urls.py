@@ -53,4 +53,5 @@ urlpatterns = [
     path('api/doctors/', views.get_doctors_ajax, name='get_doctors_ajax'),
     path('api/available-dates/', views.get_available_dates_ajax, name='get_available_dates_ajax'),
     path('api/available-slots/', views.get_available_slots_ajax, name='get_available_slots_ajax'),
+    path('doctor/appointments/', views.DoctorAppointmentListView.as_view(), name='doctor_appointments'),
 ]

@@ -1,5 +1,5 @@
 from django import forms
-from .models import Patient
+from .models import Patient, PatientSettings
 
 
 class PatientForm(forms.ModelForm):
@@ -84,3 +84,42 @@ class PatientForm(forms.ModelForm):
         else:
             cleaned_data['bmi'] = None
         return cleaned_data
+    
+class PatientSettingsForm(forms.ModelForm):
+    class Meta:
+        model = PatientSettings
+        exclude = ['patient', 'updated_at']
+        widgets = {
+            'appearance': forms.RadioSelect(choices=PatientSettings.APPEARANCE_CHOICES),
+            'language': forms.Select(choices=PatientSettings.LANGUAGE_CHOICES),
+            'notify_appointments': forms.CheckboxInput(attrs={'class': 'toggle-checkbox sr-only'}),
+            'notify_prescriptions': forms.CheckboxInput(attrs={'class': 'toggle-checkbox sr-only'}),
+            'notify_laboratory': forms.CheckboxInput(attrs={'class': 'toggle-checkbox sr-only'}),
+            'notify_system': forms.CheckboxInput(attrs={'class': 'toggle-checkbox sr-only'}),
+            'show_mobile': forms.CheckboxInput(attrs={'class': 'toggle-checkbox sr-only'}),
+            'show_email': forms.CheckboxInput(attrs={'class': 'toggle-checkbox sr-only'}),
+            'hide_personal_info': forms.CheckboxInput(attrs={'class': 'toggle-checkbox sr-only'}),
+            'large_font': forms.CheckboxInput(attrs={'class': 'toggle-checkbox sr-only'}),
+            'high_contrast': forms.CheckboxInput(attrs={'class': 'toggle-checkbox sr-only'}),
+            'reduced_motion': forms.CheckboxInput(attrs={'class': 'toggle-checkbox sr-only'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        instance = kwargs.get('instance')
+        # If we have an instance and this is a GET (no POST data), set initial from instance
+        if instance and not kwargs.get('data'):
+            kwargs['initial'] = {
+                'appearance': instance.appearance,
+                'language': instance.language,
+                'notify_appointments': instance.notify_appointments,
+                'notify_prescriptions': instance.notify_prescriptions,
+                'notify_laboratory': instance.notify_laboratory,
+                'notify_system': instance.notify_system,
+                'show_mobile': instance.show_mobile,
+                'show_email': instance.show_email,
+                'hide_personal_info': instance.hide_personal_info,
+                'large_font': instance.large_font,
+                'high_contrast': instance.high_contrast,
+                'reduced_motion': instance.reduced_motion,
+            }
+        super().__init__(*args, **kwargs)

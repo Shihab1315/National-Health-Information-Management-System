@@ -235,3 +235,4 @@ class Appointment(models.Model):
 
     def is_completed(self):
         return self.status == self.Status.COMPLETED
+    

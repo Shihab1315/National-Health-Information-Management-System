@@ -13,6 +13,12 @@
         overflow: hidden;
         backdrop-filter: blur(8px);
     }
+
+    /* Fix dropdown options visibility in dark theme */
+    .filter-bar select option {
+    background: #0d2137;
+    color: #e2e8f0;
+    }
     .stat-card:hover {
         transform: translateY(-4px);
         box-shadow: 0 12px 30px rgba(0,0,0,0.3);
@@ -390,6 +396,7 @@
                         <span>{{ notification.created_at|time:"h:i A" }}</span>
                         <span class="text-gray-500">{{ notification.created_at|timesince }} ago</span>
                         <a href="{% url 'notifications:patient_notification_detail' notification.pk %}" class="text-blue-400 hover:text-blue-300 text-xs font-medium transition">View Details →</a>
+                        
                     </div>
                 </div>
             </div>

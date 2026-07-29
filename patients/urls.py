@@ -18,4 +18,8 @@ urlpatterns = [
     path('profile/patient-card/', views.download_patient_card, name='patient_card'),
     path('profile/patient-card/print/', views.print_patient_card, name='patient_card_print'),
     path('profile/completion/', views.profile_completion_dashboard, name='profile_completion'),
+    path('settings/', views.patient_settings, name='patient_settings'),
+    path('logout/', views.logout_view, name='logout'),
+
+
 ]

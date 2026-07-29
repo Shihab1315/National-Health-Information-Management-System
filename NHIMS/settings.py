@@ -80,6 +80,7 @@ TEMPLATES = [
                 'dashboard.context.dashboard_context',
                 'accounts.context_processors.user_role',
                 'laboratory.context_processors.laboratory_context',
+                'notifications.context_processors.unread_notification_count',
 
             ],
         },

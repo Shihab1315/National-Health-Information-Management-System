@@ -288,3 +288,57 @@ class Patient(models.Model):
 
     def get_absolute_url(self):
         return reverse('patients:detail', kwargs={'pk': self.pk})
+
+class PatientSettings(models.Model):
+    """
+    Stores patient preferences for appearance, notifications, privacy, accessibility.
+    One-to-one with Patient to avoid duplicating user data.
+    """
+    APPEARANCE_CHOICES = (
+        ('light', 'Light'),
+        ('dark', 'Dark'),
+        ('system', 'System Default'),
+    )
+    LANGUAGE_CHOICES = (
+        ('en', 'English'),
+        ('bn', 'বাংলা'),
+    )
+
+    patient = models.OneToOneField(
+        'Patient',
+        on_delete=models.CASCADE,
+        related_name='settings'
+    )
+
+    # Appearance
+    appearance = models.CharField(
+        max_length=10,
+        choices=APPEARANCE_CHOICES,
+        default='system'
+    )
+    language = models.CharField(
+        max_length=2,
+        choices=LANGUAGE_CHOICES,
+        default='en'
+    )
+
+    # Notification preferences
+    notify_appointments = models.BooleanField(default=True)
+    notify_prescriptions = models.BooleanField(default=True)
+    notify_laboratory = models.BooleanField(default=True)
+    notify_system = models.BooleanField(default=True)
+
+    # Privacy
+    show_mobile = models.BooleanField(default=True)
+    show_email = models.BooleanField(default=True)
+    hide_personal_info = models.BooleanField(default=False)
+
+    # Accessibility
+    large_font = models.BooleanField(default=False)
+    high_contrast = models.BooleanField(default=False)
+    reduced_motion = models.BooleanField(default=False)
+
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Settings for {self.patient.user.get_full_name()}"

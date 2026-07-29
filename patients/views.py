@@ -3,9 +3,11 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.core.paginator import Paginator
 from django.db.models import Q
-from .models import Patient  # MedicalRecord আর নেই
-from .forms import PatientForm
+from .models import Patient,PatientSettings  # MedicalRecord আর নেই
+from .forms import PatientForm, PatientSettingsForm
 from accounts.decorators import role_required
+from django.contrib.auth import logout
+
 from django.shortcuts import render, get_object_or_404
 from django.db.models import Count, Q
 from django.utils import timezone
@@ -15,7 +17,7 @@ from prescriptions.models import Prescription
 from laboratory.models import LabResult
 from medical_records.models import MedicalRecord
 from django.contrib.auth.views import PasswordChangeView
-from django.urls import reverse_lazy
+from django.urls import reverse_lazy, reverse
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from accounts.decorators import role_required
@@ -800,3 +802,84 @@ def profile_completion_dashboard(request):
     }
 
     return render(request, 'patients/profile_completion_dashboard.html', context)
+
+import logging
+logger = logging.getLogger(__name__)
+
+@login_required
+@role_required(['patient'])
+def patient_settings(request):
+    try:
+        patient = Patient.objects.get(user=request.user)
+    except Patient.DoesNotExist:
+        messages.error(request, "You are not registered as a patient.")
+        return redirect('patient_dashboard')
+
+    settings, created = PatientSettings.objects.get_or_create(patient=patient)
+
+    if request.method == 'POST':
+        # Handle special actions
+        if 'logout' in request.POST:
+            logout(request)
+            return redirect('home')
+        if 'deactivate' in request.POST:
+            user = request.user
+            user.is_active = False
+            user.save()
+            logout(request)
+            return redirect('home')
+        if 'delete' in request.POST:
+            messages.error(request, "Account deletion is not available.")
+            return redirect('patients:patient_settings')
+
+        form = PatientSettingsForm(request.POST, instance=settings)
+        if form.is_valid():
+            # Save the form but don't commit yet
+            updated_settings = form.save(commit=False)
+            # For all boolean fields, if missing from POST, set to False
+            boolean_fields = [
+                'notify_appointments', 'notify_prescriptions', 'notify_laboratory', 'notify_system',
+                'show_mobile', 'show_email', 'hide_personal_info',
+                'large_font', 'high_contrast', 'reduced_motion'
+            ]
+            for field in boolean_fields:
+                if field not in request.POST:
+                    setattr(updated_settings, field, False)
+            updated_settings.save()
+            print("Appearance:", updated_settings.appearance)
+            print("Language:", updated_settings.language)
+            print("Appointments:", updated_settings.notify_appointments)
+            print("Prescription:", updated_settings.notify_prescriptions)
+            messages.success(request, "Settings updated successfully.")
+            return redirect('patients:patient_settings')
+        else:
+            messages.error(request, "Please correct the errors below.")
+    else:
+        if request.GET.get('reset'):
+            for field in settings._meta.fields:
+                if field.name not in ['id', 'patient', 'updated_at']:
+                    setattr(settings, field.name, field.default)
+            settings.save()
+            messages.success(request, "Settings reset to defaults.")
+            return redirect('patients:patient_settings')
+        form = PatientSettingsForm(instance=settings)
+
+    return render(request, 'patients/settings.html', {
+        'form': form,
+        'settings': settings,
+        'patient': patient,
+        'active_sessions': 1,
+    })
+    
+def logout_view(request):
+    """
+    Secure logout via POST only.
+    Clears session, logs out the user, and redirects to login with a success flag.
+    """
+    if request.method != 'POST':
+        # Only POST allowed – redirect to dashboard or home
+        return redirect('patient_dashboard')
+    
+    logout(request)
+    # Redirect to login page with a query parameter to show success message
+    return redirect(reverse('accounts:login') + '?logged_out=true')
