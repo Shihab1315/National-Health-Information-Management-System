@@ -1,0 +1,440 @@
+<!-- appointments/templates/appointments/doctor/appointment_detail.html -->
+{% extends "doctor/base.html" %}
+{% load static %}
+
+{% block title %}Appointment Details | NHIMS{% endblock %}
+
+{% block extra_css %}
+<style>
+    .detail-card {
+        transition: all 0.2s ease;
+    }
+    .detail-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+    }
+    .status-badge-lg {
+        padding: 0.375rem 1rem;
+        font-size: 0.875rem;
+        border-radius: 9999px;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .timeline-item {
+        position: relative;
+        padding-left: 2rem;
+        padding-bottom: 1.5rem;
+        border-left: 2px solid #e5e7eb;
+    }
+    .dark .timeline-item {
+        border-left-color: #374151;
+    }
+    .timeline-item:last-child {
+        border-left-color: transparent;
+        padding-bottom: 0;
+    }
+    .timeline-item .timeline-dot {
+        position: absolute;
+        left: -0.5rem;
+        top: 0.25rem;
+        width: 1rem;
+        height: 1rem;
+        border-radius: 50%;
+        border: 2px solid #e5e7eb;
+        background: white;
+    }
+    .dark .timeline-item .timeline-dot {
+        border-color: #374151;
+        background: #1f2937;
+    }
+    .timeline-item .timeline-dot.completed {
+        background: #22c55e;
+        border-color: #22c55e;
+    }
+    .timeline-item .timeline-dot.active {
+        background: #3b82f6;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2);
+    }
+    .timeline-item .timeline-dot.cancelled {
+        background: #ef4444;
+        border-color: #ef4444;
+    }
+    .action-btn {
+        padding: 0.625rem 1.25rem;
+        border-radius: 0.5rem;
+        font-weight: 500;
+        font-size: 0.875rem;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        width: 100%;
+    }
+    .action-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+    .action-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none !important;
+    }
+</style>
+{% endblock %}
+
+{% block doctor_content %}
+<div class="container mx-auto px-4 py-6">
+    
+    <!-- ===== BREADCRUMB ===== -->
+    <nav class="text-sm text-gray-500 dark:text-gray-400 mb-6" aria-label="Breadcrumb">
+        <ol class="flex flex-wrap items-center gap-2">
+            <li><a href="{% url 'dashboard:doctor_dashboard' %}" class="hover:text-blue-600 dark:hover:text-blue-400 transition">Dashboard</a></li>
+            <li><span class="mx-2">/</span></li>
+            <li><a href="{% url 'appointments:doctor_appointments' %}" class="hover:text-blue-600 dark:hover:text-blue-400 transition">Appointments</a></li>
+            <li><span class="mx-2">/</span></li>
+            <li class="text-gray-700 dark:text-gray-300 font-medium">Appointment #{{ appointment.appointment_number }}</li>
+        </ol>
+    </nav>
+
+    <!-- ===== HEADER ===== -->
+    <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+        <div class="flex items-center gap-4">
+            <a href="{% url 'appointments:doctor_appointments' %}" 
+               class="p-2 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                </svg>
+            </a>
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
+                    Appointment #{{ appointment.appointment_number }}
+                </h1>
+                <p class="text-sm text-gray-500 dark:text-gray-400">
+                    {{ appointment.appointment_date|date:"l, F d, Y" }} at {{ appointment.appointment_time|time:"h:i A" }}
+                </p>
+            </div>
+        </div>
+        <div>
+            <span class="status-badge-lg 
+                {% if appointment.status == 'pending' %}bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300
+                {% elif appointment.status == 'confirmed' %}bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300
+                {% elif appointment.status == 'completed' %}bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300
+                {% elif appointment.status == 'cancelled' %}bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300
+                {% else %}bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300{% endif %}">
+                <span class="w-2 h-2 rounded-full inline-block 
+                    {% if appointment.status == 'pending' %}bg-yellow-500
+                    {% elif appointment.status == 'confirmed' %}bg-blue-500
+                    {% elif appointment.status == 'completed' %}bg-green-500
+                    {% elif appointment.status == 'cancelled' %}bg-red-500
+                    {% else %}bg-gray-500{% endif %}"></span>
+                {{ appointment.get_status_display|default:appointment.status }}
+            </span>
+        </div>
+    </div>
+
+    <!-- ===== MAIN CONTENT ===== -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- ===== LEFT COLUMN ===== -->
+        <div class="lg:col-span-2 space-y-6">
+            
+            <!-- Patient Information -->
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 detail-card">
+                <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                    </svg>
+                    Patient Information
+                </h2>
+                <div class="flex flex-col sm:flex-row gap-4">
+                    <div class="flex-shrink-0">
+                        {% if patient.profile_photo %}
+                            <img src="{{ patient.profile_photo.url }}" alt="{{ patient.full_name }}" 
+                                 class="w-20 h-20 rounded-full object-cover border-2 border-blue-500/30">
+                        {% else %}
+                            <div class="w-20 h-20 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-blue-600 dark:text-blue-300 text-2xl font-bold border-2 border-blue-500/30">
+                                {{ patient.full_name|slice:":1"|upper }}
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2 text-sm">
+                        <div>
+                            <p class="text-gray-500 dark:text-gray-400 text-xs">Full Name</p>
+                            <p class="font-medium text-gray-900 dark:text-white">{{ patient.full_name }}</p>
+                        </div>
+                        <div>
+                            <p class="text-gray-500 dark:text-gray-400 text-xs">Health ID</p>
+                            <p class="font-medium text-gray-900 dark:text-white">{{ patient.health_id|default:"N/A" }}</p>
+                        </div>
+                        <div>
+                            <p class="text-gray-500 dark:text-gray-400 text-xs">Gender</p>
+                            <p class="font-medium text-gray-900 dark:text-white">{{ patient.get_gender_display|default:"N/A" }}</p>
+                        </div>
+                        <div>
+                            <p class="text-gray-500 dark:text-gray-400 text-xs">Age</p>
+                            <p class="font-medium text-gray-900 dark:text-white">
+                                {% if patient.date_of_birth %}
+                                    {{ patient.date_of_birth|timesince }}
+                                {% else %}
+                                    N/A
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div>
+                            <p class="text-gray-500 dark:text-gray-400 text-xs">Phone</p>
+                            <p class="font-medium text-gray-900 dark:text-white">{{ patient.phone|default:"N/A" }}</p>
+                        </div>
+                        <div>
+                            <p class="text-gray-500 dark:text-gray-400 text-xs">Email</p>
+                            <p class="font-medium text-gray-900 dark:text-white">{{ patient.email|default:"N/A" }}</p>
+                        </div>
+                        <div>
+                            <p class="text-gray-500 dark:text-gray-400 text-xs">Blood Group</p>
+                            <p class="font-medium text-gray-900 dark:text-white">{{ patient.blood_group|default:"N/A" }}</p>
+                        </div>
+                        <div class="sm:col-span-2">
+                            <p class="text-gray-500 dark:text-gray-400 text-xs">Emergency Contact</p>
+                            <p class="font-medium text-gray-900 dark:text-white">
+                                {{ emergency_contact.name }} ({{ emergency_contact.relationship }}) - {{ emergency_contact.phone }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Appointment Information - READ ONLY -->
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 detail-card">
+                <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                    Appointment Information
+                </h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 text-sm">
+                    <div>
+                        <p class="text-gray-500 dark:text-gray-400 text-xs">Appointment ID</p>
+                        <p class="font-medium text-gray-900 dark:text-white">#{{ appointment.id }}</p>
+                    </div>
+                    <div>
+                        <p class="text-gray-500 dark:text-gray-400 text-xs">Appointment Number</p>
+                        <p class="font-medium text-gray-900 dark:text-white">{{ appointment.appointment_number }}</p>
+                    </div>
+                    <div>
+                        <p class="text-gray-500 dark:text-gray-400 text-xs">Hospital</p>
+                        <p class="font-medium text-gray-900 dark:text-white">{{ hospital.name|default:"N/A" }}</p>
+                    </div>
+                    <div>
+                        <p class="text-gray-500 dark:text-gray-400 text-xs">Doctor</p>
+                        <p class="font-medium text-gray-900 dark:text-white">Dr. {{ doctor.full_name }}</p>
+                    </div>
+                    <div>
+                        <p class="text-gray-500 dark:text-gray-400 text-xs">Patient</p>
+                        <p class="font-medium text-gray-900 dark:text-white">{{ patient.full_name }}</p>
+                    </div>
+                    <div>
+                        <p class="text-gray-500 dark:text-gray-400 text-xs">Health ID</p>
+                        <p class="font-medium text-gray-900 dark:text-white">{{ patient.health_id|default:"N/A" }}</p>
+                    </div>
+                    <div>
+                        <p class="text-gray-500 dark:text-gray-400 text-xs">Appointment Date</p>
+                        <p class="font-medium text-gray-900 dark:text-white">{{ appointment.appointment_date|date:"l, F d, Y" }}</p>
+                    </div>
+                    <div>
+                        <p class="text-gray-500 dark:text-gray-400 text-xs">Appointment Time</p>
+                        <p class="font-medium text-gray-900 dark:text-white">{{ appointment.appointment_time|time:"h:i A" }}</p>
+                    </div>
+                    <div>
+                        <p class="text-gray-500 dark:text-gray-400 text-xs">Token</p>
+                        <p class="font-medium text-gray-900 dark:text-white">{{ appointment.token|default:"N/A" }}</p>
+                    </div>
+                    <div>
+                        <p class="text-gray-500 dark:text-gray-400 text-xs">Appointment Type</p>
+                        <p class="font-medium text-gray-900 dark:text-white">Regular</p>
+                    </div>
+                    <div class="sm:col-span-2">
+                        <p class="text-gray-500 dark:text-gray-400 text-xs">Reason for Visit</p>
+                        <p class="font-medium text-gray-900 dark:text-white">{{ appointment.reason|default:"N/A" }}</p>
+                    </div>
+                    <div>
+                        <p class="text-gray-500 dark:text-gray-400 text-xs">Created</p>
+                        <p class="font-medium text-gray-900 dark:text-white">{{ appointment.created_at|date:"M d, Y h:i A" }}</p>
+                    </div>
+                    <div>
+                        <p class="text-gray-500 dark:text-gray-400 text-xs">Last Updated</p>
+                        <p class="font-medium text-gray-900 dark:text-white">{{ appointment.updated_at|date:"M d, Y h:i A" }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Status Timeline -->
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 detail-card">
+                <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    Status Timeline
+                </h2>
+                <div class="space-y-0">
+                    {% for item in timeline %}
+                    <div class="timeline-item">
+                        <div class="timeline-dot {% if item.is_completed %}completed{% else %}active{% endif %}"></div>
+                        <div>
+                            <p class="font-medium text-gray-900 dark:text-white">{{ item.status }}</p>
+                            <div class="flex flex-wrap items-center gap-3 text-sm text-gray-500 dark:text-gray-400">
+                                {% if item.date %}
+                                    <span>{{ item.date|date:"M d, Y h:i A" }}</span>
+                                {% endif %}
+                                {% if item.user %}
+                                    <span>by {{ item.user.get_full_name|default:item.user.username }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ===== RIGHT COLUMN ===== -->
+        <div class="lg:col-span-1 space-y-6">
+            
+            <!-- Quick Actions -->
+<div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 detail-card">
+    <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+        <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+        </svg>
+        Quick Actions
+    </h2>
+    <div class="space-y-3">
+        
+        {% if appointment.status == 'pending' %}
+            <!-- Approve -->
+            <form method="post" action="{% url 'appointments:doctor_appointment_approve' appointment.id %}" class="w-full">
+                {% csrf_token %}
+                <button type="submit" class="action-btn bg-green-600 hover:bg-green-700 text-white w-full"
+                        onclick="return confirm('Are you sure you want to approve this appointment?')">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                    </svg>
+                    Approve Appointment
+                </button>
+            </form>
+            
+            <!-- Reject -->
+            <form method="post" action="{% url 'appointments:doctor_appointment_reject' appointment.id %}" class="w-full">
+                {% csrf_token %}
+                <button type="submit" class="action-btn bg-red-600 hover:bg-red-700 text-white w-full"
+                        onclick="return confirm('Are you sure you want to reject this appointment?')">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                    Reject Appointment
+                </button>
+            </form>
+            
+        {% elif appointment.status == 'confirmed' %}
+            <!-- Complete -->
+            <form method="post" action="{% url 'appointments:doctor_appointment_complete' appointment.id %}" class="w-full">
+                {% csrf_token %}
+                <button type="submit" class="action-btn bg-purple-600 hover:bg-purple-700 text-white w-full"
+                        onclick="return confirm('Mark this appointment as completed?')">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    Complete Consultation
+                </button>
+            </form>
+            
+            <!-- Reschedule (GET - goes to reschedule page) -->
+            <a href="{% url 'appointments:doctor_appointment_reschedule' appointment.id %}" 
+               class="action-btn bg-yellow-600 hover:bg-yellow-700 text-white w-full text-center">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                </svg>
+                Reschedule Appointment
+            </a>
+            
+            <!-- Cancel -->
+            <form method="post" action="{% url 'appointments:doctor_appointment_cancel' appointment.id %}" class="w-full">
+                {% csrf_token %}
+                <button type="submit" class="action-btn bg-red-600 hover:bg-red-700 text-white w-full"
+                        onclick="return confirm('Are you sure you want to cancel this appointment?')">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                    Cancel Appointment
+                </button>
+            </form>
+            
+        {% elif appointment.status == 'completed' %}
+            <a href="#" class="action-btn bg-blue-600 hover:bg-blue-700 text-white w-full text-center">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                View Prescription
+            </a>
+            <a href="#" class="action-btn bg-indigo-600 hover:bg-indigo-700 text-white w-full text-center">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+                View Medical Record
+            </a>
+            
+        {% elif appointment.status == 'cancelled' %}
+            <a href="{% url 'appointments:doctor_appointments' %}" 
+               class="action-btn bg-gray-600 hover:bg-gray-700 text-white w-full text-center">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                </svg>
+                Back to Appointments
+            </a>
+        {% endif %}
+        
+    </div>
+</div>
+
+            <!-- Quick Info -->
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 detail-card">
+                <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    Quick Info
+                </h2>
+                <div class="space-y-3 text-sm">
+                    <div class="flex justify-between">
+                        <span class="text-gray-500 dark:text-gray-400">Appointment ID</span>
+                        <span class="font-medium text-gray-900 dark:text-white">#{{ appointment.id }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-500 dark:text-gray-400">Status</span>
+                        <span class="font-medium text-gray-900 dark:text-white">
+                            {{ appointment.get_status_display|default:appointment.status }}
+                        </span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-500 dark:text-gray-400">Token</span>
+                        <span class="font-medium text-gray-900 dark:text-white">{{ appointment.token|default:"N/A" }}</span>
+                    </div>
+                    <hr class="border-gray-200 dark:border-gray-700">
+                    <div class="flex justify-between">
+                        <span class="text-gray-500 dark:text-gray-400">Created</span>
+                        <span class="font-medium text-gray-900 dark:text-white">{{ appointment.created_at|date:"M d, Y" }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-500 dark:text-gray-400">Today</span>
+                        <span class="font-medium text-gray-900 dark:text-white">{{ today|date:"M d, Y" }}</span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}

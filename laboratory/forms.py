@@ -17,6 +17,7 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 from django.forms import inlineformset_factory
+from patients.models import Patient
 
 from .models import TestCategory, LaboratoryTest, LabOrder, LabOrderItem, LabResult
 from prescriptions.models import Prescription
@@ -393,3 +394,93 @@ class LabResultForm(forms.ModelForm):
             if file.size > 10 * 1024 * 1024:
                 raise ValidationError(_('File size must be under 10 MB.'))
         return file
+    
+class DoctorLabRequestForm(forms.ModelForm):
+    """Form for doctors to create laboratory requests."""
+    
+    # ✅ শুধু tests এবং notes ফিল্ড রাখুন
+    # বাকি সব ফিল্ড auto-populated হবে
+    
+    tests = forms.ModelMultipleChoiceField(
+        queryset=LaboratoryTest.objects.filter(is_active=True),
+        widget=forms.CheckboxSelectMultiple(attrs={
+            'class': 'test-checkbox-grid',
+        }),
+        label='Requested Laboratory Tests',
+        help_text='Select at least one test'
+    )
+    
+    priority = forms.ChoiceField(
+        choices=[
+            ('normal', 'Normal'),
+            ('urgent', 'Urgent'),
+            ('emergency', 'Emergency'),
+        ],
+        initial='normal',
+        widget=forms.Select(attrs={
+            'class': 'form-input',
+        }),
+        label='Priority'
+    )
+    
+    diagnosis = forms.CharField(
+        widget=forms.Textarea(attrs={
+            'class': 'form-input',
+            'rows': 3,
+            'placeholder': 'Enter the clinical diagnosis...',
+        }),
+        label='Clinical Diagnosis',
+        help_text='Required. Provide the diagnosis for this lab request'
+    )
+    
+    clinical_notes = forms.CharField(
+        widget=forms.Textarea(attrs={
+            'class': 'form-input',
+            'rows': 3,
+            'placeholder': 'Enter any clinical notes (optional)...',
+        }),
+        label='Clinical Notes',
+        required=False,
+        help_text='Optional additional clinical information'
+    )
+    
+    instructions = forms.CharField(
+        widget=forms.Textarea(attrs={
+            'class': 'form-input',
+            'rows': 2,
+            'placeholder': 'Any special instructions for sample collection (optional)...',
+        }),
+        label='Additional Instructions',
+        required=False,
+        help_text='Optional instructions for laboratory staff'
+    )
+    
+    class Meta:
+        model = LabOrder
+        # ✅ শুধু notes ফিল্ড রাখুন (বাকি সব auto-populated)
+        fields = ['tests', 'priority', 'diagnosis', 'clinical_notes', 'instructions', 'notes']
+        widgets = {
+            'notes': forms.HiddenInput(),  # Hidden field, will be set in view
+        }
+    
+    def __init__(self, doctor, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.doctor = doctor
+    
+    def clean(self):
+        cleaned_data = super().clean()
+        tests = cleaned_data.get('tests')
+        diagnosis = cleaned_data.get('diagnosis', '').strip()
+        
+        # Validate diagnosis
+        if not diagnosis:
+            raise ValidationError("Clinical Diagnosis is required.")
+        
+        if len(diagnosis) < 5:
+            raise ValidationError("Diagnosis must be at least 5 characters.")
+        
+        # Validate at least one test selected
+        if not tests:
+            raise ValidationError("At least one laboratory test must be selected.")
+        
+        return cleaned_data

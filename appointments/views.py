@@ -13,13 +13,16 @@ from django.http import JsonResponse, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy
 from django.utils import timezone
+from django.db import transaction
+
 from django.utils.timesince import timesince
 from django.utils.dateparse import parse_date
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import (
     ListView, DetailView, CreateView, UpdateView, DeleteView, TemplateView, View
 )
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta,time
+
 from django.utils.decorators import method_decorator
 
 
@@ -1249,26 +1252,309 @@ def get_available_slots_ajax(request):
     return JsonResponse({'slots': available_slots})
 
 @method_decorator([login_required, role_required(['doctor'])], name='dispatch')
-class DoctorAppointmentListView(View):
-    """
-    Display appointments assigned to the logged‑in doctor.
-    Supports search, filters, sorting, and pagination.
-    """
-    template_name = 'appointments/doctor_appointments.html'
-
-    def get(self, request, *args, **kwargs):
-        # Ensure the logged‑in user is a doctor
+class DoctorAppointmentDetailView(View):
+    """Doctor Appointment Detail View - Read Only."""
+    template_name = 'appointments/doctor/appointment_detail.html'
+    
+    def get(self, request, pk):
         try:
             doctor = Doctor.objects.get(user=request.user)
         except Doctor.DoesNotExist:
             messages.error(request, "You are not registered as a doctor.")
             return redirect('dashboard:doctor_dashboard')
+        
+        appointment = get_object_or_404(
+            Appointment.objects.select_related(
+                'patient',
+                'patient__user',
+                'doctor',
+                'doctor__user',
+                'hospital',
+                'created_by',
+                'confirmed_by',
+                'cancelled_by',
+                'completed_by',
+                'rescheduled_by'
+            ),
+            pk=pk,
+            doctor=doctor,
+            deleted_at__isnull=True
+        )
+        
+        patient = appointment.patient
+        
+        emergency_contact = {
+            'name': getattr(patient, 'emergency_contact_name', 'N/A'),
+            'phone': getattr(patient, 'emergency_contact_phone', 'N/A'),
+            'relationship': getattr(patient, 'emergency_relationship', 'N/A'),
+        }
+        
+        timeline = self._build_timeline(appointment)
+        
+        context = {
+            'appointment': appointment,
+            'doctor': doctor,
+            'patient': patient,
+            'hospital': appointment.hospital,
+            'emergency_contact': emergency_contact,
+            'timeline': timeline,
+            'today': timezone.now().date(),
+        }
+        
+        return render(request, self.template_name, context)
+    
+    def _build_timeline(self, appointment):
+        timeline = []
+        
+        timeline.append({
+            'status': 'Created',
+            'date': appointment.created_at,
+            'user': appointment.created_by,
+            'is_completed': True
+        })
+        
+        timeline.append({
+            'status': 'Pending',
+            'date': appointment.created_at,
+            'user': None,
+            'is_completed': appointment.status != 'pending'
+        })
+        
+        if appointment.status in ['confirmed', 'completed']:
+            timeline.append({
+                'status': 'Confirmed',
+                'date': appointment.confirmed_at or appointment.updated_at,
+                'user': appointment.confirmed_by,
+                'is_completed': appointment.status in ['confirmed', 'completed']
+            })
+        
+        if appointment.status == 'completed':
+            timeline.append({
+                'status': 'Completed',
+                'date': appointment.completed_at or appointment.updated_at,
+                'user': appointment.completed_by,
+                'is_completed': True
+            })
+        
+        if appointment.status == 'cancelled':
+            timeline.append({
+                'status': 'Cancelled',
+                'date': appointment.cancelled_at or appointment.updated_at,
+                'user': appointment.cancelled_by,
+                'is_completed': True
+            })
+        
+        return timeline
 
-        # Base queryset – only this doctor's appointments
+
+@method_decorator([login_required, role_required(['doctor'])], name='dispatch')
+class DoctorAppointmentApproveView(View):
+    """Approve a pending appointment."""
+    
+    def post(self, request, pk):
+        appointment = get_object_or_404(
+            Appointment.objects.select_related('patient', 'doctor'),
+            pk=pk,
+            doctor__user=request.user,
+            status='pending',
+            deleted_at__isnull=True
+        )
+        
+        appointment.status = 'confirmed'
+        appointment.confirmed_at = timezone.now()
+        appointment.confirmed_by = request.user
+        appointment.save()
+        
+        messages.success(request, f"✅ Appointment #{appointment.appointment_number} has been approved.")
+        return redirect('appointments:doctor_appointment_detail', pk=appointment.pk)
+
+
+@method_decorator([login_required, role_required(['doctor'])], name='dispatch')
+class DoctorAppointmentRejectView(View):
+    """Reject a pending appointment."""
+    
+    def post(self, request, pk):
+        appointment = get_object_or_404(
+            Appointment.objects.select_related('patient', 'doctor'),
+            pk=pk,
+            doctor__user=request.user,
+            status='pending',
+            deleted_at__isnull=True
+        )
+        
+        appointment.status = 'cancelled'
+        appointment.cancelled_at = timezone.now()
+        appointment.cancelled_by = request.user
+        appointment.save()
+        
+        messages.success(request, f"❌ Appointment #{appointment.appointment_number} has been rejected.")
+        return redirect('appointments:doctor_appointment_detail', pk=appointment.pk)
+
+
+
+
+@method_decorator([login_required, role_required(['doctor'])], name='dispatch')
+class DoctorAppointmentRescheduleView(View):
+    """
+    Doctor Reschedule Appointment View.
+    Only allows changing appointment date and time.
+    All other fields are read-only.
+    """
+    template_name = 'appointments/doctor/reschedule_appointment.html'
+    
+    def get(self, request, pk):
+        # Get the logged-in doctor
+        try:
+            doctor = Doctor.objects.get(user=request.user)
+        except Doctor.DoesNotExist:
+            messages.error(request, "You are not registered as a doctor.")
+            return redirect('dashboard:doctor_dashboard')
+        
+        # Get the appointment - only if it belongs to this doctor
+        appointment = get_object_or_404(
+            Appointment.objects.select_related(
+                'patient',
+                'patient__user',
+                'doctor',
+                'doctor__user',
+                'hospital',
+                'created_by',
+                'confirmed_by',
+                'cancelled_by',
+                'completed_by',
+                'rescheduled_by'
+            ),
+            pk=pk,
+            doctor=doctor,
+            deleted_at__isnull=True
+        )
+        
+        # Only confirmed appointments can be rescheduled
+        if appointment.status not in ['pending', 'confirmed']:
+            messages.warning(request, "Only pending or confirmed appointments can be rescheduled.")
+            return redirect('appointments:doctor_appointment_detail', pk=appointment.pk)
+        
+        context = {
+            'appointment': appointment,
+            'doctor': doctor,
+            'patient': appointment.patient,
+            'hospital': appointment.hospital,
+            'today': timezone.now().date(),
+            'current_date': appointment.appointment_date,
+            'current_time': appointment.appointment_time,
+        }
+        
+        return render(request, self.template_name, context)
+    
+    def post(self, request, pk):
+        # Get the logged-in doctor
+        try:
+            doctor = Doctor.objects.get(user=request.user)
+        except Doctor.DoesNotExist:
+            messages.error(request, "You are not registered as a doctor.")
+            return redirect('dashboard:doctor_dashboard')
+        
+        # Get the appointment
+        appointment = get_object_or_404(
+            Appointment.objects.select_related(
+                'patient',
+                'doctor',
+                'hospital'
+            ),
+            pk=pk,
+            doctor=doctor,
+            deleted_at__isnull=True
+        )
+        
+        # Only confirmed appointments can be rescheduled
+        if appointment.status not in ['pending', 'confirmed']:
+            messages.warning(request, "Only pending or confirmed appointments can be rescheduled.")
+            return redirect('appointments:doctor_appointment_detail', pk=appointment.pk)
+        
+        # Get new date and time from POST
+        new_date_str = request.POST.get('appointment_date')
+        new_time_str = request.POST.get('appointment_time')
+        
+        if not new_date_str or not new_time_str:
+            messages.error(request, "Please select both date and time.")
+            return redirect('appointments:doctor_appointment_reschedule', pk=appointment.pk)
+        
+        try:
+            # Parse the date and time
+            new_date = datetime.strptime(new_date_str, '%Y-%m-%d').date()
+            new_time = datetime.strptime(new_time_str, '%H:%M').time()
+        except ValueError:
+            messages.error(request, "Invalid date or time format.")
+            return redirect('appointments:doctor_appointment_reschedule', pk=appointment.pk)
+        
+        # Validation: Date cannot be in the past (allow today)
+        if new_date < timezone.now().date():
+            messages.error(request, "Appointment date cannot be in the past.")
+            return redirect('appointments:doctor_appointment_reschedule', pk=appointment.pk)
+        
+        # Validation: Check if the slot is already booked
+        overlapping = Appointment.objects.filter(
+            doctor=doctor,
+            appointment_date=new_date,
+            appointment_time=new_time,
+            deleted_at__isnull=True
+        ).exclude(pk=appointment.pk)
+        
+        if overlapping.exists():
+            messages.error(request, "This time slot is already booked. Please choose a different time.")
+            return redirect('appointments:doctor_appointment_reschedule', pk=appointment.pk)
+
+        # Validation: Working hours (9 AM - 5 PM)
+        working_start = time(9, 0)
+        working_end = time(17, 0)
+        if new_time < working_start or new_time > working_end:
+            messages.error(request, "Appointments must be between 9:00 AM and 5:00 PM.")
+            return redirect('appointments:doctor_appointment_reschedule', pk=appointment.pk)
+        
+        # Save the changes
+        old_date = appointment.appointment_date
+        old_time = appointment.appointment_time
+        
+        appointment.appointment_date = new_date
+        appointment.appointment_time = new_time
+        appointment.rescheduled_at = timezone.now()
+        appointment.rescheduled_by = request.user
+        appointment.save()
+        
+        # Success message
+        messages.success(
+            request, 
+            f"✅ Appointment #{appointment.appointment_number} has been rescheduled from "
+            f"{old_date|date:'M d, Y'} at {old_time|time:'h:i A'} to "
+            f"{new_date|date:'M d, Y'} at {new_time|time:'h:i A'}."
+        )
+        
+        # Redirect to appointment detail
+        return redirect('appointments:doctor_appointment_detail', pk=appointment.pk)
+
+
+
+@method_decorator([login_required, role_required(['doctor'])], name='dispatch')
+class DoctorAppointmentListView(View):
+    """
+    Doctor's appointment list - only own appointments.
+    """
+    template_name = 'appointments/doctor/doctor_appointments.html'
+    
+    def get(self, request):
+        # Get the logged-in doctor
+        try:
+            doctor = Doctor.objects.get(user=request.user)
+        except Doctor.DoesNotExist:
+            messages.error(request, "You are not registered as a doctor.")
+            return redirect('dashboard:doctor_dashboard')
+        
+        # Only this doctor's appointments
         appointments = Appointment.objects.filter(
-            doctor=doctor
-        ).select_related('patient', 'patient__user', 'doctor', 'department')
-
+            doctor=doctor,
+            deleted_at__isnull=True
+        ).select_related('patient', 'doctor')
+        
         # ========== SUMMARY STATS ==========
         total = appointments.count()
         pending = appointments.filter(status='pending').count()
@@ -1282,7 +1568,7 @@ class DoctorAppointmentListView(View):
             appointment_date__gte=timezone.now().date(),
             status__in=['pending', 'confirmed']
         ).count()
-
+        
         # ========== SEARCH ==========
         search_query = request.GET.get('search', '').strip()
         if search_query:
@@ -1292,12 +1578,12 @@ class DoctorAppointmentListView(View):
                 Q(id__icontains=search_query) |
                 Q(reason__icontains=search_query)
             )
-
+        
         # ========== FILTERS ==========
         status_filter = request.GET.get('status')
         if status_filter and status_filter != 'all':
             appointments = appointments.filter(status=status_filter)
-
+        
         date_filter = request.GET.get('date_filter')
         if date_filter == 'today':
             appointments = appointments.filter(appointment_date=timezone.now().date())
@@ -1318,14 +1604,14 @@ class DoctorAppointmentListView(View):
                     appointments = appointments.filter(appointment_date__range=[start_date, end_date])
                 except ValueError:
                     pass
-
+        
         appointment_type = request.GET.get('type')
         if appointment_type and appointment_type != 'all':
             appointments = appointments.filter(appointment_type=appointment_type)
-
+        
         # ========== SORTING ==========
-        sort_by = request.GET.get('sort', '-created_at')
-        allowed_sorts = {
+        sort_by = request.GET.get('sort', 'newest')
+        sort_mapping = {
             'newest': '-created_at',
             'oldest': 'created_at',
             'appointment_date': 'appointment_date',
@@ -1333,19 +1619,17 @@ class DoctorAppointmentListView(View):
             'patient__full_name': 'patient__full_name',
             '-patient__full_name': '-patient__full_name',
         }
-        if sort_by in allowed_sorts:
-            appointments = appointments.order_by(allowed_sorts[sort_by])
-        else:
-            appointments = appointments.order_by('-created_at')
-
+        order_by = sort_mapping.get(sort_by, '-created_at')
+        appointments = appointments.order_by(order_by)
+        
         # ========== PAGINATION ==========
         paginator = Paginator(appointments, 10)
         page_number = request.GET.get('page')
         page_obj = paginator.get_page(page_number)
-
-        # ========== CONTEXT ==========
+        
         context = {
             'doctor': doctor,
+            'page_obj': page_obj,
             'appointments': page_obj,
             'total': total,
             'pending': pending,
@@ -1359,6 +1643,271 @@ class DoctorAppointmentListView(View):
             'date_filter': date_filter,
             'appointment_type': appointment_type,
             'sort_by': sort_by,
-            'page_obj': page_obj,
         }
         return render(request, self.template_name, context)
+
+
+@method_decorator([login_required, role_required(['doctor'])], name='dispatch')
+class DoctorAppointmentDetailView(View):
+    """Doctor Appointment Detail View - Read Only."""
+    template_name = 'appointments/doctor/appointment_detail.html'
+    
+    def get(self, request, pk):
+        try:
+            doctor = Doctor.objects.get(user=request.user)
+        except Doctor.DoesNotExist:
+            messages.error(request, "You are not registered as a doctor.")
+            return redirect('dashboard:doctor_dashboard')
+        
+        appointment = get_object_or_404(
+            Appointment.objects.select_related(
+                'patient',
+                'patient__user',
+                'doctor',
+                'doctor__user',
+                'hospital',
+                'created_by',
+                'confirmed_by',
+                'cancelled_by',
+                'completed_by',
+                'rescheduled_by'
+            ),
+            pk=pk,
+            doctor=doctor,
+            deleted_at__isnull=True
+        )
+        
+        patient = appointment.patient
+        
+        emergency_contact = {
+            'name': getattr(patient, 'emergency_contact_name', 'N/A'),
+            'phone': getattr(patient, 'emergency_contact_phone', 'N/A'),
+            'relationship': getattr(patient, 'emergency_relationship', 'N/A'),
+        }
+        
+        timeline = self._build_timeline(appointment)
+        
+        context = {
+            'appointment': appointment,
+            'doctor': doctor,
+            'patient': patient,
+            'hospital': appointment.hospital,
+            'emergency_contact': emergency_contact,
+            'timeline': timeline,
+            'today': timezone.now().date(),
+        }
+        
+        return render(request, self.template_name, context)
+    
+    def _build_timeline(self, appointment):
+        timeline = []
+        
+        timeline.append({
+            'status': 'Created',
+            'date': appointment.created_at,
+            'user': appointment.created_by,
+            'is_completed': True
+        })
+        
+        timeline.append({
+            'status': 'Pending',
+            'date': appointment.created_at,
+            'user': None,
+            'is_completed': appointment.status != 'pending'
+        })
+        
+        if appointment.status in ['confirmed', 'completed']:
+            timeline.append({
+                'status': 'Confirmed',
+                'date': appointment.confirmed_at or appointment.updated_at,
+                'user': appointment.confirmed_by,
+                'is_completed': appointment.status in ['confirmed', 'completed']
+            })
+        
+        if appointment.status == 'completed':
+            timeline.append({
+                'status': 'Completed',
+                'date': appointment.completed_at or appointment.updated_at,
+                'user': appointment.completed_by,
+                'is_completed': True
+            })
+        
+        if appointment.status == 'cancelled':
+            timeline.append({
+                'status': 'Cancelled',
+                'date': appointment.cancelled_at or appointment.updated_at,
+                'user': appointment.cancelled_by,
+                'is_completed': True
+            })
+        
+        return timeline
+
+
+@method_decorator([login_required, role_required(['doctor'])], name='dispatch')
+class DoctorAppointmentApproveView(View):
+    """Approve a pending appointment."""
+    
+    def post(self, request, pk):
+        appointment = get_object_or_404(
+            Appointment.objects.select_related('patient', 'doctor'),
+            pk=pk,
+            doctor__user=request.user,
+            status='pending',
+            deleted_at__isnull=True
+        )
+        
+        appointment.status = 'confirmed'
+        appointment.confirmed_at = timezone.now()
+        appointment.confirmed_by = request.user
+        appointment.save()
+        
+        messages.success(request, f"✅ Appointment #{appointment.appointment_number} has been approved.")
+        return redirect('appointments:doctor_appointment_detail', pk=appointment.pk)
+
+
+@method_decorator([login_required, role_required(['doctor'])], name='dispatch')
+class DoctorAppointmentRejectView(View):
+    """Reject a pending appointment."""
+    
+    def post(self, request, pk):
+        appointment = get_object_or_404(
+            Appointment.objects.select_related('patient', 'doctor'),
+            pk=pk,
+            doctor__user=request.user,
+            status='pending',
+            deleted_at__isnull=True
+        )
+        
+        appointment.status = 'cancelled'
+        appointment.cancelled_at = timezone.now()
+        appointment.cancelled_by = request.user
+        appointment.save()
+        
+        messages.success(request, f"❌ Appointment #{appointment.appointment_number} has been rejected.")
+        return redirect('appointments:doctor_appointment_detail', pk=appointment.pk)
+
+
+@method_decorator([login_required, role_required(['doctor'])], name='dispatch')
+class DoctorAppointmentCompleteView(View):
+    """
+    Doctor Complete Consultation View.
+    Marks a confirmed appointment as completed.
+    """
+    template_name = 'appointments/doctor/complete_consultation.html'
+    
+    def get(self, request, pk):
+        try:
+            doctor = Doctor.objects.get(user=request.user)
+        except Doctor.DoesNotExist:
+            messages.error(request, "You are not registered as a doctor.")
+            return redirect('dashboard:doctor_dashboard')
+        
+        appointment = get_object_or_404(
+            Appointment.objects.select_related(
+                'patient',
+                'patient__user',
+                'doctor',
+                'doctor__user',
+                'hospital',
+                'created_by',
+                'confirmed_by',
+                'cancelled_by',
+                'completed_by',
+                'rescheduled_by'
+            ),
+            pk=pk,
+            doctor=doctor,
+            deleted_at__isnull=True
+        )
+        
+        if appointment.status == 'completed':
+            messages.warning(request, "This appointment is already completed.")
+            return redirect('appointments:doctor_appointment_detail', pk=appointment.pk)
+        
+        if appointment.status != 'confirmed':
+            messages.warning(request, "Only confirmed appointments can be completed.")
+            return redirect('appointments:doctor_appointment_detail', pk=appointment.pk)
+        
+        context = {
+            'appointment': appointment,
+            'doctor': doctor,
+            'patient': appointment.patient,
+            'hospital': appointment.hospital,
+            'today': timezone.now().date(),
+        }
+        
+        return render(request, self.template_name, context)
+    
+    def post(self, request, pk):
+        try:
+            doctor = Doctor.objects.get(user=request.user)
+        except Doctor.DoesNotExist:
+            messages.error(request, "You are not registered as a doctor.")
+            return redirect('dashboard:doctor_dashboard')
+        
+        appointment = get_object_or_404(
+            Appointment.objects.select_related(
+                'patient',
+                'doctor',
+                'hospital'
+            ),
+            pk=pk,
+            doctor=doctor,
+            deleted_at__isnull=True
+        )
+        
+        if appointment.status == 'completed':
+            messages.warning(request, "This appointment is already completed.")
+            return redirect('appointments:doctor_appointment_detail', pk=appointment.pk)
+        
+        if appointment.status != 'confirmed':
+            messages.warning(request, "Only confirmed appointments can be completed.")
+            return redirect('appointments:doctor_appointment_detail', pk=appointment.pk)
+        
+        # Get consultation data (optional - for future use)
+        consultation_notes = request.POST.get('consultation_notes', '').strip()
+        diagnosis = request.POST.get('diagnosis', '').strip()
+        advice = request.POST.get('advice', '').strip()
+        follow_up_instructions = request.POST.get('follow_up_instructions', '').strip()
+        follow_up_date = request.POST.get('follow_up_date', '')
+        next_visit_recommended = request.POST.get('next_visit_recommended') == 'on'
+        
+        # ✅ FIX: Use update() to bypass full_clean() validation
+        updated = Appointment.objects.filter(pk=appointment.pk).update(
+            status='completed',
+            completed_at=timezone.now(),
+            completed_by=request.user,
+            updated_at=timezone.now()
+        )
+        
+        if updated:
+            messages.success(
+                request, 
+                f"✅ Consultation for appointment #{appointment.appointment_number} has been completed successfully."
+            )
+        else:
+            messages.error(request, "Failed to complete the consultation. Please try again.")
+        
+        return redirect('appointments:doctor_appointment_detail', pk=appointment.pk)
+
+
+@method_decorator([login_required, role_required(['doctor'])], name='dispatch')
+class DoctorAppointmentCancelView(View):
+    """Cancel a confirmed appointment."""
+    
+    def post(self, request, pk):
+        appointment = get_object_or_404(
+            Appointment.objects.select_related('patient', 'doctor'),
+            pk=pk,
+            doctor__user=request.user,
+            status='confirmed',
+            deleted_at__isnull=True
+        )
+        
+        appointment.status = 'cancelled'
+        appointment.cancelled_at = timezone.now()
+        appointment.cancelled_by = request.user
+        appointment.save()
+        
+        messages.success(request, f"❌ Appointment #{appointment.appointment_number} has been cancelled.")
+        return redirect('appointments:doctor_appointment_detail', pk=appointment.pk)

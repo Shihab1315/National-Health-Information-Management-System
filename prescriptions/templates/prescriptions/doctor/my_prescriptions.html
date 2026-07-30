@@ -1,0 +1,505 @@
+<!-- prescriptions/templates/prescriptions/doctor/my_prescriptions.html -->
+{% extends "doctor/base.html" %}
+{% load static %}
+
+{% block title %}My Prescriptions | NHIMS{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stat-card {
+        transition: all 0.2s ease;
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(8px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .stat-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px -5px rgba(0, 0, 0, 0.2);
+        border-color: rgba(59, 130, 246, 0.3);
+    }
+    .status-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.375rem;
+    }
+    .status-draft {
+        background: #f3f4f6;
+        color: #6b7280;
+    }
+    .dark .status-draft {
+        background: #374151;
+        color: #9ca3af;
+    }
+    .status-issued {
+        background: #dbeafe;
+        color: #1d4ed8;
+    }
+    .dark .status-issued {
+        background: #1e3a5f;
+        color: #60a5fa;
+    }
+    .status-completed {
+        background: #d1fae5;
+        color: #065f46;
+    }
+    .dark .status-completed {
+        background: #064e3b;
+        color: #34d399;
+    }
+    .status-cancelled {
+        background: #fecaca;
+        color: #991b1b;
+    }
+    .dark .status-cancelled {
+        background: #7f1d1d;
+        color: #fca5a5;
+    }
+    .table-container {
+        overflow-x: auto;
+    }
+    .table-container table {
+        min-width: 800px;
+    }
+    .table-row-hover:hover {
+        background: rgba(255, 255, 255, 0.05);
+    }
+    .action-btn-sm {
+        padding: 0.25rem 0.625rem;
+        border-radius: 0.375rem;
+        font-size: 0.75rem;
+        font-weight: 500;
+        transition: all 0.15s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        border: 1px solid transparent;
+    }
+    .action-btn-sm:hover {
+        transform: scale(1.05);
+    }
+    .btn-view {
+        color: #3b82f6;
+        border-color: #3b82f6;
+    }
+    .btn-view:hover {
+        background: #dbeafe;
+    }
+    .dark .btn-view:hover {
+        background: #1e3a5f;
+    }
+    .btn-edit {
+        color: #8b5cf6;
+        border-color: #8b5cf6;
+    }
+    .btn-edit:hover {
+        background: #ede9fe;
+    }
+    .dark .btn-edit:hover {
+        background: #2e1a4a;
+    }
+    .btn-print {
+        color: #6b7280;
+        border-color: #6b7280;
+    }
+    .btn-print:hover {
+        background: #f3f4f6;
+    }
+    .dark .btn-print:hover {
+        background: #374151;
+    }
+    .btn-delete {
+        color: #ef4444;
+        border-color: #ef4444;
+    }
+    .btn-delete:hover {
+        background: #fecaca;
+    }
+    .dark .btn-delete:hover {
+        background: #7f1d1d;
+    }
+    .filter-chip {
+        padding: 0.375rem 1rem;
+        border-radius: 9999px;
+        font-size: 0.8125rem;
+        font-weight: 500;
+        transition: all 0.15s ease;
+        cursor: pointer;
+        border: 2px solid transparent;
+        background: #f3f4f6;
+        color: #4b5563;
+    }
+    .dark .filter-chip {
+        background: #374151;
+        color: #d1d5db;
+    }
+    .filter-chip:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    .filter-chip.active {
+        border-color: #3b82f6;
+        background: #3b82f6;
+        color: white;
+    }
+    .dark .filter-chip.active {
+        background: #2563eb;
+        border-color: #2563eb;
+        color: white;
+    }
+    .empty-state-icon {
+        font-size: 4rem;
+        opacity: 0.5;
+    }
+</style>
+{% endblock %}
+
+{% block doctor_content %}
+<div class="container mx-auto px-4 py-6">
+    
+    <!-- ===== BREADCRUMB ===== -->
+    <nav class="text-sm text-gray-500 dark:text-gray-400 mb-6" aria-label="Breadcrumb">
+        <ol class="flex flex-wrap items-center gap-2">
+            <li><a href="{% url 'dashboard:doctor_dashboard' %}" class="hover:text-blue-600 dark:hover:text-blue-400 transition">Dashboard</a></li>
+            <li><span class="mx-2">/</span></li>
+            <li class="text-gray-700 dark:text-gray-300 font-medium">My Prescriptions</li>
+        </ol>
+    </nav>
+
+    <!-- ===== PAGE HEADER ===== -->
+    <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900 dark:text-white">My Prescriptions</h1>
+            <p class="text-gray-600 dark:text-gray-300">Manage all prescriptions created by you</p>
+        </div>
+        <a href="{% url 'prescriptions:doctor_prescription_create' appointment_id=0 %}" 
+           class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg shadow transition flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+            </svg>
+            New Prescription
+        </a>
+    </div>
+
+    <!-- ===== SUMMARY CARDS ===== -->
+    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-4 mb-6">
+        <div class="stat-card rounded-xl p-4">
+            <p class="text-gray-400 text-xs uppercase tracking-wider">Total</p>
+            <p class="text-2xl font-bold text-white mt-1">{{ total }}</p>
+        </div>
+        <div class="stat-card rounded-xl p-4 border-gray-300/20">
+            <p class="text-gray-400 text-xs uppercase tracking-wider">Draft</p>
+            <p class="text-2xl font-bold text-gray-400 mt-1">{{ draft }}</p>
+        </div>
+        <div class="stat-card rounded-xl p-4 border-blue-500/20">
+            <p class="text-blue-400 text-xs uppercase tracking-wider">Issued</p>
+            <p class="text-2xl font-bold text-blue-400 mt-1">{{ issued }}</p>
+        </div>
+        <div class="stat-card rounded-xl p-4 border-green-500/20">
+            <p class="text-green-400 text-xs uppercase tracking-wider">Completed</p>
+            <p class="text-2xl font-bold text-green-400 mt-1">{{ completed }}</p>
+        </div>
+        <div class="stat-card rounded-xl p-4 border-red-500/20">
+            <p class="text-red-400 text-xs uppercase tracking-wider">Cancelled</p>
+            <p class="text-2xl font-bold text-red-400 mt-1">{{ cancelled }}</p>
+        </div>
+        <div class="stat-card rounded-xl p-4 border-indigo-500/20">
+            <p class="text-indigo-400 text-xs uppercase tracking-wider">Today</p>
+            <p class="text-2xl font-bold text-indigo-400 mt-1">{{ today_count }}</p>
+        </div>
+        <div class="stat-card rounded-xl p-4 border-purple-500/20">
+            <p class="text-purple-400 text-xs uppercase tracking-wider">Last 7 Days</p>
+            <p class="text-2xl font-bold text-purple-400 mt-1">{{ recent_count }}</p>
+        </div>
+    </div>
+
+    <!-- ===== FILTER CHIPS ===== -->
+    <div class="flex flex-wrap gap-2 mb-4">
+        <a href="?{% if search_query %}search={{ search_query }}&{% endif %}{% if date_filter %}date_filter={{ date_filter }}&{% endif %}{% if sort_by %}sort={{ sort_by }}{% endif %}" 
+           class="filter-chip {% if not status_filter or status_filter == 'all' %}active{% endif %}">
+            All
+        </a>
+        <a href="?status=draft&{% if search_query %}search={{ search_query }}&{% endif %}{% if date_filter %}date_filter={{ date_filter }}&{% endif %}{% if sort_by %}sort={{ sort_by }}{% endif %}" 
+           class="filter-chip {% if status_filter == 'draft' %}active{% endif %}">
+            Draft
+        </a>
+        <a href="?status=issued&{% if search_query %}search={{ search_query }}&{% endif %}{% if date_filter %}date_filter={{ date_filter }}&{% endif %}{% if sort_by %}sort={{ sort_by }}{% endif %}" 
+           class="filter-chip {% if status_filter == 'issued' %}active{% endif %}">
+            Issued
+        </a>
+        <a href="?status=completed&{% if search_query %}search={{ search_query }}&{% endif %}{% if date_filter %}date_filter={{ date_filter }}&{% endif %}{% if sort_by %}sort={{ sort_by }}{% endif %}" 
+           class="filter-chip {% if status_filter == 'completed' %}active{% endif %}">
+            Completed
+        </a>
+        <a href="?status=cancelled&{% if search_query %}search={{ search_query }}&{% endif %}{% if date_filter %}date_filter={{ date_filter }}&{% endif %}{% if sort_by %}sort={{ sort_by }}{% endif %}" 
+           class="filter-chip {% if status_filter == 'cancelled' %}active{% endif %}">
+            Cancelled
+        </a>
+    </div>
+
+    <!-- ===== SEARCH & FILTERS ===== -->
+    <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
+        <form method="get" class="flex flex-wrap gap-3 items-end">
+            <!-- Search -->
+            <div class="flex-1 min-w-[200px]">
+                <label for="search" class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Search</label>
+                <div class="relative">
+                    <input type="text" name="search" id="search" value="{{ search_query }}"
+                           placeholder="Prescription #, Patient, Diagnosis..."
+                           class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:focus:ring-blue-500/30 text-sm pl-10">
+                    <svg class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                </div>
+            </div>
+
+            <!-- Status Filter -->
+            <div>
+                <label for="status" class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Status</label>
+                <select name="status" id="status" class="rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-blue-500 text-sm">
+                    <option value="all" {% if not status_filter or status_filter == 'all' %}selected{% endif %}>All</option>
+                    <option value="draft" {% if status_filter == 'draft' %}selected{% endif %}>Draft</option>
+                    <option value="issued" {% if status_filter == 'issued' %}selected{% endif %}>Issued</option>
+                    <option value="completed" {% if status_filter == 'completed' %}selected{% endif %}>Completed</option>
+                    <option value="cancelled" {% if status_filter == 'cancelled' %}selected{% endif %}>Cancelled</option>
+                </select>
+            </div>
+
+            <!-- Date Filter -->
+            <div>
+                <label for="date_filter" class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Date</label>
+                <select name="date_filter" id="date_filter" class="rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-blue-500 text-sm">
+                    <option value="">All Dates</option>
+                    <option value="today" {% if date_filter == 'today' %}selected{% endif %}>Today</option>
+                    <option value="this_week" {% if date_filter == 'this_week' %}selected{% endif %}>This Week</option>
+                    <option value="this_month" {% if date_filter == 'this_month' %}selected{% endif %}>This Month</option>
+                    <option value="custom" {% if date_filter == 'custom' %}selected{% endif %}>Custom Range</option>
+                </select>
+            </div>
+
+            <!-- Custom date range -->
+            <div id="custom-date-range" class="flex gap-2 {% if date_filter != 'custom' %}hidden{% endif %}">
+                <div>
+                    <label for="start_date" class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">From</label>
+                    <input type="date" name="start_date" id="start_date" value="{{ request.GET.start_date }}"
+                           class="rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-blue-500 text-sm">
+                </div>
+                <div>
+                    <label for="end_date" class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">To</label>
+                    <input type="date" name="end_date" id="end_date" value="{{ request.GET.end_date }}"
+                           class="rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-blue-500 text-sm">
+                </div>
+            </div>
+
+            <!-- Sort -->
+            <div>
+                <label for="sort" class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Sort</label>
+                <select name="sort" id="sort" class="rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-blue-500 text-sm">
+                    <option value="newest" {% if sort_by == 'newest' %}selected{% endif %}>Newest First</option>
+                    <option value="oldest" {% if sort_by == 'oldest' %}selected{% endif %}>Oldest First</option>
+                    <option value="prescription_date" {% if sort_by == 'prescription_date' %}selected{% endif %}>Date (Asc)</option>
+                    <option value="-prescription_date" {% if sort_by == '-prescription_date' %}selected{% endif %}>Date (Desc)</option>
+                    <option value="patient__full_name" {% if sort_by == 'patient__full_name' %}selected{% endif %}>Patient (A-Z)</option>
+                    <option value="-patient__full_name" {% if sort_by == '-patient__full_name' %}selected{% endif %}>Patient (Z-A)</option>
+                </select>
+            </div>
+
+            <div class="flex gap-2">
+                <button type="submit" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg shadow transition flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
+                    </svg>
+                    Apply
+                </button>
+                <a href="{% url 'prescriptions:doctor_prescription_list' %}" 
+                   class="px-4 py-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-white text-sm font-medium rounded-lg transition flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                    </svg>
+                    Reset
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- ===== PRESCRIPTIONS TABLE ===== -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div class="table-container">
+            <table class="w-full text-sm text-left text-gray-700 dark:text-gray-300">
+                <thead class="text-xs uppercase bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-400 sticky top-0">
+                    <tr>
+                        <th scope="col" class="px-4 py-3">Prescription #</th>
+                        <th scope="col" class="px-4 py-3">Patient</th>
+                        <th scope="col" class="px-4 py-3">Health ID</th>
+                        <th scope="col" class="px-4 py-3">Date</th>
+                        <th scope="col" class="px-4 py-3">Diagnosis</th>
+                        <th scope="col" class="px-4 py-3">Status</th>
+                        <th scope="col" class="px-4 py-3 text-center">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for prescription in page_obj %}
+                    <tr class="border-b border-gray-200 dark:border-gray-700 table-row-hover transition">
+                        <td class="px-4 py-3 font-medium text-gray-900 dark:text-white">
+                            <span class="font-mono text-xs">{{ prescription.prescription_number }}</span>
+                        </td>
+                        <td class="px-4 py-3">
+                            <div class="flex items-center gap-2">
+                                {% if prescription.patient.profile_photo %}
+                                    <img src="{{ prescription.patient.profile_photo.url }}" alt="{{ prescription.patient.full_name }}" class="w-6 h-6 rounded-full object-cover">
+                                {% else %}
+                                    <div class="w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-blue-600 dark:text-blue-300 text-xs font-bold">
+                                        {{ prescription.patient.full_name|slice:":1"|upper }}
+                                    </div>
+                                {% endif %}
+                                <span>{{ prescription.patient.full_name }}</span>
+                            </div>
+                        </td>
+                        <td class="px-4 py-3 text-gray-500 dark:text-gray-400">
+                            {{ prescription.patient.health_id|default:"N/A" }}
+                        </td>
+                        <td class="px-4 py-3">
+                            {{ prescription.created_at|date:"M d, Y" }}
+                            <br>
+                            <span class="text-xs text-gray-400">{{ prescription.created_at|time:"h:i A" }}</span>
+                        </td>
+                        <td class="px-4 py-3 max-w-37.5 truncate" title="{{ prescription.diagnosis }}">
+                            {{ prescription.diagnosis|default:"N/A"|truncatechars:30 }}
+                        </td>
+                        <td class="px-4 py-3">
+                            <span class="status-badge 
+                                {% if prescription.status == 'draft' %}status-draft
+                                {% elif prescription.status == 'issued' %}status-issued
+                                {% elif prescription.status == 'completed' %}status-completed
+                                {% elif prescription.status == 'cancelled' %}status-cancelled
+                                {% else %}status-draft{% endif %}">
+                                <span class="w-1.5 h-1.5 rounded-full inline-block 
+                                    {% if prescription.status == 'draft' %}bg-gray-400
+                                    {% elif prescription.status == 'issued' %}bg-blue-500
+                                    {% elif prescription.status == 'completed' %}bg-green-500
+                                    {% elif prescription.status == 'cancelled' %}bg-red-500
+                                    {% else %}bg-gray-400{% endif %}"></span>
+                                {{ prescription.get_status_display|default:prescription.status }}
+                            </span>
+                        </td>
+                        <td class="px-4 py-3">
+                            <div class="flex flex-wrap items-center justify-center gap-1.5">
+                                <a href="{% url 'prescriptions:doctor_prescription_detail' prescription.id %}" 
+                                   class="action-btn-sm btn-view" title="View">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                    </svg>
+                                </a>
+                                <a href="{% url 'prescriptions:doctor_prescription_edit' prescription.id %}" 
+                                   class="action-btn-sm btn-edit" title="Edit">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                    </svg>
+                                </a>
+                                <a href="#" class="action-btn-sm btn-print" title="Print">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+                                    </svg>
+                                </a>
+                                <a href="#" class="action-btn-sm btn-delete" title="Delete" onclick="return confirm('Are you sure you want to delete this prescription?')">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                    </svg>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="px-4 py-12 text-center">
+                            <div class="flex flex-col items-center justify-center text-gray-500 dark:text-gray-400">
+                                <div class="text-6xl mb-4">📋</div>
+                                <p class="text-lg font-semibold">No prescriptions found</p>
+                                <p class="text-sm text-gray-400 dark:text-gray-500 mt-2">
+                                    {% if search_query or status_filter or date_filter %}
+                                        Try adjusting your filters
+                                    {% else %}
+                                        Create your first prescription
+                                    {% endif %}
+                                </p>
+                                {% if not search_query and not status_filter and not date_filter %}
+                                <a href="{% url 'prescriptions:create' %}" 
+                                   class="mt-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg shadow transition inline-flex items-center gap-2">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                                    </svg>
+                                    Create Prescription
+                                </a>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ===== PAGINATION ===== -->
+    {% if page_obj.paginator.num_pages > 1 %}
+    <div class="flex flex-wrap items-center justify-between gap-4 mt-6">
+        <div class="text-sm text-gray-700 dark:text-gray-300">
+            Showing <span class="font-medium">{{ page_obj.start_index }}</span> to 
+            <span class="font-medium">{{ page_obj.end_index }}</span> of 
+            <span class="font-medium">{{ page_obj.paginator.count }}</span> prescriptions
+        </div>
+        <div class="flex gap-1">
+            {% if page_obj.has_previous %}
+                <a href="?page=1{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" 
+                   class="px-3 py-1 rounded border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm transition" aria-label="First page">&laquo;</a>
+                <a href="?page={{ page_obj.previous_page_number }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" 
+                   class="px-3 py-1 rounded border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm transition" aria-label="Previous page">‹</a>
+            {% endif %}
+
+            {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}
+                    <span class="px-3 py-1 rounded bg-blue-600 text-white text-sm">{{ num }}</span>
+                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                    <a href="?page={{ num }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" 
+                       class="px-3 py-1 rounded border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm transition">{{ num }}</a>
+                {% endif %}
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" 
+                   class="px-3 py-1 rounded border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm transition" aria-label="Next page">›</a>
+                <a href="?page={{ page_obj.paginator.num_pages }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" 
+                   class="px-3 py-1 rounded border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm transition" aria-label="Last page">&raquo;</a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- ===== DATE FILTER TOGGLE ===== -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const dateFilter = document.getElementById('date_filter');
+        const customRange = document.getElementById('custom-date-range');
+        
+        if (dateFilter) {
+            dateFilter.addEventListener('change', function() {
+                if (this.value === 'custom') {
+                    customRange.classList.remove('hidden');
+                } else {
+                    customRange.classList.add('hidden');
+                }
+            });
+            
+            // Initial state
+            if (dateFilter.value === 'custom') {
+                customRange.classList.remove('hidden');
+            }
+        }
+    });
+</script>
+{% endblock %}

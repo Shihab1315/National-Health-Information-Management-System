@@ -7,6 +7,7 @@ Handles validation, auto‑population from appointment, and Tailwind‑ready wid
 """
 
 from typing import cast
+from django.forms import inlineformset_factory
 
 from django import forms
 from django.core.exceptions import ValidationError
@@ -211,126 +212,231 @@ class PrescriptionForm(forms.ModelForm):
         return instance
 
 
-class PrescriptionMedicineForm(forms.ModelForm):
-    """
-    Form for individual medicine items within a prescription.
-    Used as an inline formset.
-    """
 
+    
+class PrescriptionMedicineForm(forms.ModelForm):
+    """Form for individual prescription medicines with validation."""
+    
     class Meta:
         model = PrescriptionMedicine
         fields = [
-            'medicine_name',
-            'dosage',
-            'frequency',
-            'duration',
-            'route',
-            'instruction',
-            'before_food',
-            'after_food',
-            'morning',
-            'afternoon',
-            'night',
-            'notes',
+            'medicine_name', 'dosage', 'frequency', 'duration',
+            'route', 'instruction', 'notes',
+            'before_food', 'after_food', 'morning', 'afternoon', 'night'
         ]
         widgets = {
             'medicine_name': forms.TextInput(attrs={
-                'class': 'w-full rounded-xl border border-slate-600 bg-slate-700/50 '
-                         'focus:bg-slate-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 '
-                         'transition duration-200 py-2 px-3 text-slate-200 placeholder-slate-400 '
-                         'shadow-sm',
-                'placeholder': _('Medicine name...'),
+                'class': 'form-input medicine-input',
+                'placeholder': 'Enter medicine name *',
             }),
             'dosage': forms.TextInput(attrs={
-                'class': 'w-full rounded-xl border border-slate-600 bg-slate-700/50 '
-                         'focus:bg-slate-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 '
-                         'transition duration-200 py-2 px-3 text-slate-200 placeholder-slate-400 '
-                         'shadow-sm',
-                'placeholder': _('e.g., 500 mg'),
+                'class': 'form-input medicine-input',
+                'placeholder': 'e.g., 500mg *',
             }),
             'frequency': forms.Select(attrs={
-                'class': 'w-full rounded-xl border border-slate-600 bg-slate-700/50 '
-                         'focus:bg-slate-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 '
-                         'transition duration-200 py-2 px-3 text-slate-200 placeholder-slate-400 '
-                         'shadow-sm appearance-none',
+                'class': 'form-input medicine-input',
             }),
             'duration': forms.TextInput(attrs={
-                'class': 'w-full rounded-xl border border-slate-600 bg-slate-700/50 '
-                         'focus:bg-slate-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 '
-                         'transition duration-200 py-2 px-3 text-slate-200 placeholder-slate-400 '
-                         'shadow-sm',
-                'placeholder': _('e.g., 7 days'),
+                'class': 'form-input medicine-input',
+                'placeholder': 'e.g., 7 days *',
             }),
             'route': forms.Select(attrs={
-                'class': 'w-full rounded-xl border border-slate-600 bg-slate-700/50 '
-                         'focus:bg-slate-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 '
-                         'transition duration-200 py-2 px-3 text-slate-200 placeholder-slate-400 '
-                         'shadow-sm appearance-none',
+                'class': 'form-input medicine-input',
             }),
             'instruction': forms.Textarea(attrs={
+                'class': 'form-input',
                 'rows': 2,
-                'class': 'w-full rounded-xl border border-slate-600 bg-slate-700/50 '
-                         'focus:bg-slate-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 '
-                         'transition duration-200 py-2 px-3 text-slate-200 placeholder-slate-400 '
-                         'shadow-sm resize-none',
-                'placeholder': _('Special instructions for the patient...'),
+                'placeholder': 'Special instructions (optional)',
             }),
             'notes': forms.Textarea(attrs={
+                'class': 'form-input',
                 'rows': 2,
-                'class': 'w-full rounded-xl border border-slate-600 bg-slate-700/50 '
-                         'focus:bg-slate-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 '
-                         'transition duration-200 py-2 px-3 text-slate-200 placeholder-slate-400 '
-                         'shadow-sm resize-none',
-                'placeholder': _('Internal notes (not printed)...'),
+                'placeholder': 'Additional notes (optional)',
             }),
-            # Checkbox widgets with Tailwind styling
             'before_food': forms.CheckboxInput(attrs={
-                'class': 'h-4 w-4 rounded border-slate-600 text-blue-600 focus:ring-blue-500 '
-                         'bg-slate-700',
+                'class': 'form-checkbox',
             }),
             'after_food': forms.CheckboxInput(attrs={
-                'class': 'h-4 w-4 rounded border-slate-600 text-blue-600 focus:ring-blue-500 '
-                         'bg-slate-700',
+                'class': 'form-checkbox',
             }),
             'morning': forms.CheckboxInput(attrs={
-                'class': 'h-4 w-4 rounded border-slate-600 text-blue-600 focus:ring-blue-500 '
-                         'bg-slate-700',
+                'class': 'form-checkbox',
             }),
             'afternoon': forms.CheckboxInput(attrs={
-                'class': 'h-4 w-4 rounded border-slate-600 text-blue-600 focus:ring-blue-500 '
-                         'bg-slate-700',
+                'class': 'form-checkbox',
             }),
             'night': forms.CheckboxInput(attrs={
-                'class': 'h-4 w-4 rounded border-slate-600 text-blue-600 focus:ring-blue-500 '
-                         'bg-slate-700',
+                'class': 'form-checkbox',
             }),
         }
-        labels = {
-            'medicine_name': _('Medicine Name'),
-            'dosage': _('Dosage'),
-            'frequency': _('Frequency'),
-            'duration': _('Duration'),
-            'route': _('Route'),
-            'instruction': _('Instruction'),
-            'before_food': _('Before Food'),
-            'after_food': _('After Food'),
-            'morning': _('Morning'),
-            'afternoon': _('Afternoon'),
-            'night': _('Night'),
-            'notes': _('Notes'),
-        }
+    
+    def clean_medicine_name(self):
+        medicine_name = self.cleaned_data.get('medicine_name', '').strip()
+        if not medicine_name:
+            raise ValidationError("Medicine name is required.")
+        if len(medicine_name) < 2:
+            raise ValidationError("Medicine name must be at least 2 characters.")
+        return medicine_name
+    
+    def clean_dosage(self):
+        dosage = self.cleaned_data.get('dosage', '').strip()
+        if not dosage:
+            raise ValidationError("Dosage is required.")
+        return dosage
+    
+    def clean_duration(self):
+        duration = self.cleaned_data.get('duration', '').strip()
+        if not duration:
+            raise ValidationError("Duration is required.")
+        return duration
 
+
+class PrescriptionEditForm(forms.ModelForm):
+    """Form for editing prescriptions with validation."""
+    
+    class Meta:
+        model = Prescription
+        fields = [
+            'diagnosis', 'symptoms', 'clinical_notes',
+            'advice', 'follow_up_date'
+        ]
+        widgets = {
+            'diagnosis': forms.Textarea(attrs={
+                'class': 'form-input',
+                'rows': 3,
+                'placeholder': 'Enter the diagnosis...',
+            }),
+            'symptoms': forms.Textarea(attrs={
+                'class': 'form-input',
+                'rows': 2,
+                'placeholder': 'Enter the symptoms reported...',
+            }),
+            'clinical_notes': forms.Textarea(attrs={
+                'class': 'form-input',
+                'rows': 3,
+                'placeholder': 'Enter clinical notes...',
+            }),
+            'advice': forms.Textarea(attrs={
+                'class': 'form-input',
+                'rows': 2,
+                'placeholder': 'Provide advice and recommendations...',
+            }),
+            'follow_up_date': forms.DateInput(attrs={
+                'type': 'date',
+                'class': 'form-input',
+            }),
+        }
+    
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        # Make fields required
+        self.fields['diagnosis'].required = True
+    
+    def clean_diagnosis(self):
+        diagnosis = self.cleaned_data.get('diagnosis', '').strip()
+        if not diagnosis:
+            raise ValidationError("Diagnosis is required.")
+        if len(diagnosis) < 10:
+            raise ValidationError("Diagnosis must be at least 10 characters.")
+        if len(diagnosis) > 3000:
+            raise ValidationError("Diagnosis cannot exceed 3000 characters.")
+        return diagnosis
+    
+    def clean_advice(self):
+        advice = self.cleaned_data.get('advice', '').strip()
+        if len(advice) > 2000:
+            raise ValidationError("Advice cannot exceed 2000 characters.")
+        return advice
+    
+    def clean_follow_up_date(self):
+        follow_up_date = self.cleaned_data.get('follow_up_date')
+        if follow_up_date and follow_up_date < timezone.now().date():
+            raise ValidationError("Follow-up date cannot be in the past.")
+        return follow_up_date
+    
+    def clean_symptoms(self):
+        symptoms = self.cleaned_data.get('symptoms', '').strip()
+        if symptoms:
+            lines = [line.strip() for line in symptoms.split('\n') if line.strip()]
+            return '\n'.join(lines)
+        return ''
 
-    def clean_medicine_name(self):
-        name = self.cleaned_data.get('medicine_name')
-        if name and len(name.strip()) < 2:
-            raise ValidationError(_('Medicine name must be at least 2 characters.'))
-        return name
 
-    def clean_dosage(self):
-        dosage = self.cleaned_data.get('dosage')
-        if dosage and len(dosage.strip()) < 1:
-            raise ValidationError(_('Please specify the dosage.'))
-        return dosage
+# Create inline formset for medicines
+PrescriptionMedicineFormSet = inlineformset_factory(
+    Prescription,
+    PrescriptionMedicine,
+    form=PrescriptionMedicineForm,
+    extra=1,
+    can_delete=True,
+    min_num=1,
+    validate_min=True,
+    max_num=20,
+    validate_max=True,
+)
+
+
+class PrescriptionCreateForm(forms.ModelForm):
+    """Form for creating prescriptions with validation."""
+    
+    class Meta:
+        model = Prescription
+        fields = [
+            'diagnosis', 'symptoms', 'clinical_notes',
+            'advice', 'follow_up_date'
+        ]
+        widgets = {
+            'diagnosis': forms.Textarea(attrs={
+                'class': 'form-input',
+                'rows': 3,
+                'placeholder': 'Enter the diagnosis...',
+            }),
+            'symptoms': forms.Textarea(attrs={
+                'class': 'form-input',
+                'rows': 2,
+                'placeholder': 'Enter the symptoms reported...',
+            }),
+            'clinical_notes': forms.Textarea(attrs={
+                'class': 'form-input',
+                'rows': 3,
+                'placeholder': 'Enter clinical notes...',
+            }),
+            'advice': forms.Textarea(attrs={
+                'class': 'form-input',
+                'rows': 2,
+                'placeholder': 'Provide advice and recommendations...',
+            }),
+            'follow_up_date': forms.DateInput(attrs={
+                'type': 'date',
+                'class': 'form-input',
+            }),
+        }
+    
+    def clean_diagnosis(self):
+        diagnosis = self.cleaned_data.get('diagnosis', '').strip()
+        if not diagnosis:
+            raise ValidationError("Diagnosis is required.")
+        if len(diagnosis) < 10:
+            raise ValidationError("Diagnosis must be at least 10 characters.")
+        if len(diagnosis) > 3000:
+            raise ValidationError("Diagnosis cannot exceed 3000 characters.")
+        return diagnosis
+    
+    def clean_advice(self):
+        advice = self.cleaned_data.get('advice', '').strip()
+        if len(advice) > 2000:
+            raise ValidationError("Advice cannot exceed 2000 characters.")
+        return advice
+    
+    def clean_follow_up_date(self):
+        follow_up_date = self.cleaned_data.get('follow_up_date')
+        if follow_up_date and follow_up_date < timezone.now().date():
+            raise ValidationError("Follow-up date cannot be in the past.")
+        return follow_up_date
+    
+    def clean_symptoms(self):
+        symptoms = self.cleaned_data.get('symptoms', '').strip()
+        if symptoms:
+            lines = [line.strip() for line in symptoms.split('\n') if line.strip()]
+            return '\n'.join(lines)
+        return ''

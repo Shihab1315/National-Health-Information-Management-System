@@ -243,102 +243,51 @@ def admin_dashboard(request):
 @login_required
 @role_required(['doctor'])
 def doctor_dashboard(request):
-    """
-    Doctor Dashboard – overview for a logged-in doctor.
-    """
-    today = timezone.now().date()
-    now = timezone.now()
-
-    # Get the Doctor profile associated with the logged-in user
-    try:
-        doctor = request.user.doctor_profile
-    except Doctor.DoesNotExist:
-        messages.error(request, 'Doctor profile not found.')
-        return redirect('dashboard:homepage')
-
-    # ---------- Statistics ----------
-    # Today's appointments
-    today_appointments = Appointment.objects.filter(
-        doctor=doctor,
-        appointment_date=today
-    ).select_related('patient')
-
-    # Upcoming appointments (from tomorrow onwards)
-    upcoming_appointments = Appointment.objects.filter(
-        doctor=doctor,
-        appointment_date__gt=today
-    ).select_related('patient').order_by('appointment_date')[:10]
-
-    # Total patients (distinct patients who have had appointments with this doctor)
-    total_patients = Patient.objects.filter(
-        appointments__doctor=doctor
-    ).distinct().count()
-
-    # Pending prescriptions (prescriptions created by this doctor that are not completed/cancelled)
-    pending_prescriptions = Prescription.objects.filter(
-        doctor=doctor,
-        status__in=['draft', 'issued']
-    ).count()
-
-    # Completed prescriptions
-    completed_prescriptions = Prescription.objects.filter(
-        doctor=doctor,
-        status='completed'
-    ).count()
-
-    # Pending lab reports – safely handle if status field exists
-    if hasattr(LabResult, 'objects') and hasattr(LabResult, 'status'):
-        pending_lab_reports = LabResult.objects.filter(
-            lab_order__doctor=doctor,
-            status='pending'
-        ).count()
-    else:
-        pending_lab_reports = 0
-
-    # ---------- Recent Patients ----------
-    recent_patients = Patient.objects.filter(
-        appointments__doctor=doctor
-    ).distinct().order_by('-appointments__appointment_date')[:5]
-
-    # ---------- Recent Prescriptions ----------
-    recent_prescriptions = Prescription.objects.filter(
+    """Doctor dashboard - always uses request.user to get doctor."""
+    
+    # Get the logged-in doctor
+    doctor = Doctor.objects.get_by_user(request.user)
+    
+    if not doctor:
+        # This is a critical state - doctor exists but User link is broken
+        messages.error(request, 
+            "Your account is not properly configured as a doctor. "
+            "Please contact system administrator."
+        )
+        return redirect('dashboard:home')
+    
+    # Now use the doctor instance for all queries
+    appointments = Appointment.objects.filter(
         doctor=doctor
-    ).select_related('patient').order_by('-created_at')[:5]
-
-    # ---------- Laboratory Requests (pending) ----------
-    if hasattr(LabResult, 'objects') and hasattr(LabResult, 'status'):
-        pending_lab_orders = LabResult.objects.filter(
-            lab_order__doctor=doctor,
-            status='pending'
-        ).select_related('lab_order__patient')[:5]
-    else:
-        pending_lab_orders = []
-
-    # ---------- Notifications – filter by recipient, not user ----------
-    if hasattr(Notification, 'objects'):
-        doctor_notifications = Notification.objects.filter(
-            recipient=request.user
-        ).order_by('-created_at')[:10]
-    else:
-        doctor_notifications = []
-
-    # ---------- Context ----------
+    ).select_related('patient')
+    
+    total_appointments = appointments.count()
+    pending = appointments.filter(status='pending').count()
+    confirmed = appointments.filter(status='confirmed').count()
+    completed = appointments.filter(status='completed').count()
+    
+    # Upcoming appointments
+    today = timezone.now().date()
+    upcoming = appointments.filter(
+        appointment_date__gte=today,
+        status__in=['pending', 'confirmed']
+    ).order_by('appointment_date', 'appointment_time')[:5]
+    
+    # Prescriptions
+    prescriptions = Prescription.objects.filter(
+        doctor=doctor
+    ).order_by('-created_at')[:5]
+    
     context = {
         'doctor': doctor,
-        'today_appointments': today_appointments,
-        'upcoming_appointments': upcoming_appointments,
-        'total_patients': total_patients,
-        'pending_prescriptions': pending_prescriptions,
-        'completed_prescriptions': completed_prescriptions,
-        'pending_lab_reports': pending_lab_reports,
-        'recent_patients': recent_patients,
-        'recent_prescriptions': recent_prescriptions,
-        'pending_lab_orders': pending_lab_orders,
-        'notifications': doctor_notifications,
-        'current_date': timezone.now(),
-        'greeting': get_greeting(),
+        'total_appointments': total_appointments,
+        'pending': pending,
+        'confirmed': confirmed,
+        'completed': completed,
+        'upcoming': upcoming,
+        'prescriptions': prescriptions,
     }
-
+    
     return render(request, 'dashboard/doctor_dashboard.html', context)
 
 
@@ -467,3 +416,4 @@ def patient_dashboard(request):
     }
 
     return render(request, 'dashboard/patient_dashboard.html', context)
+

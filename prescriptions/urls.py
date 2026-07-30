@@ -41,4 +41,14 @@ urlpatterns = [
 
     # AJAX endpoints
     path('api/appointment-data/', views.AppointmentDataView.as_view(), name='appointment_data'),
+    
+    path('doctor/', views.DoctorPrescriptionListView.as_view(), name='doctor_prescription_list'),
+    # Doctor's prescription detail
+    path('doctor/<int:pk>/', views.DoctorPrescriptionDetailView.as_view(), name='doctor_prescription_detail'),
+    # Doctor's prescription create
+    path('doctor/create/<int:appointment_id>/', views.DoctorPrescriptionCreateView.as_view(), name='doctor_prescription_create'),
+    # Doctor's prescription edit
+    path('doctor/<int:pk>/edit/', views.DoctorPrescriptionEditView.as_view(), name='doctor_prescription_edit'),
+    # Doctor's prescription print
+    path('doctor/<int:pk>/print/', views.DoctorPrescriptionPrintView.as_view(), name='doctor_prescription_print'),
 ]

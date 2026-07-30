@@ -16,18 +16,30 @@ from django.core.exceptions import ValidationError, PermissionDenied
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse_lazy
+from django.db import transaction
+
 from accounts.decorators import role_required
 from django.utils.timesince import timesince
 from django.utils import timezone
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.db.models import Q
+from .models import Prescription, PrescriptionMedicine
+from .forms import PrescriptionCreateForm, PrescriptionEditForm, PrescriptionMedicineForm
+logger = logging.getLogger(__name__)
+from django.core.exceptions import PermissionDenied, ValidationError
+
+
 from django.shortcuts import render
 from django.utils.dateparse import parse_date
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import (
     ListView, DetailView, CreateView, UpdateView, DeleteView, TemplateView, View
 )
+from datetime import datetime, timedelta
+from django.utils.decorators import method_decorator
+from doctors.models import Doctor
+
 import base64
 from io import BytesIO
 from django.forms import inlineformset_factory
@@ -1027,25 +1039,6 @@ def patient_prescription_print(request, pk):
         raise PermissionDenied(_("You do not have permission to view this prescription."))
 
     # Generate QR code as base64 (reuse logic)
-@login_required
-@role_required(['patient'])
-def patient_prescription_print(request, pk):
-    """
-    Dedicated print view that automatically triggers the browser print dialog.
-    After printing or cancelling, redirects back to the detail page.
-    """
-    prescription = get_object_or_404(
-        Prescription.objects.select_related(
-            'patient', 'doctor', 'hospital'
-        ).prefetch_related('medicines'),
-        pk=pk
-    )
-
-    patient = request.user.patient_profile
-    if prescription.patient != patient:
-        raise PermissionDenied(_("You do not have permission to view this prescription."))
-
-    # Generate QR code as base64 (reuse logic)
     
     qr_data = f"NHIMS:RX:{prescription.prescription_number}:{prescription.patient.id}"
     qr_img = qrcode.make(qr_data)
@@ -1073,3 +1066,729 @@ def patient_prescription_print(request, pk):
         'current_date': timezone.now(),
     }
     return render(request, 'prescriptions/patient/prescription_print.html', context)
+
+@method_decorator([login_required, role_required(['doctor'])], name='dispatch')
+class DoctorPrescriptionListView(View):
+    """
+    Doctor Prescription List View.
+    Displays all prescriptions created by the logged-in doctor.
+    """
+    template_name = 'prescriptions/doctor/my_prescriptions.html'
+    
+    def get(self, request):
+        # Get the logged-in doctor
+        try:
+            doctor = Doctor.objects.get(user=request.user)
+        except Doctor.DoesNotExist:
+            messages.error(request, "You are not registered as a doctor.")
+            return redirect('dashboard:doctor_dashboard')
+        
+        # Base queryset - only this doctor's prescriptions
+        prescriptions = Prescription.objects.filter(
+            doctor=doctor,
+            deleted_at__isnull=True
+        ).select_related('patient', 'doctor', 'hospital')
+        
+        # ========== SUMMARY STATISTICS ==========
+        total = prescriptions.count()
+        draft = prescriptions.filter(status='draft').count()
+        issued = prescriptions.filter(status='issued').count()
+        completed = prescriptions.filter(status='completed').count()
+        cancelled = prescriptions.filter(status='cancelled').count()
+        today = prescriptions.filter(
+            created_at__date=timezone.now().date()
+        ).count()
+        
+        # Last 7 days
+        seven_days_ago = timezone.now().date() - timedelta(days=7)
+        recent = prescriptions.filter(
+            created_at__date__gte=seven_days_ago
+        ).count()
+        
+        # ========== SEARCH ==========
+        search_query = request.GET.get('search', '').strip()
+        if search_query:
+            prescriptions = prescriptions.filter(
+                Q(prescription_number__icontains=search_query) |
+                Q(patient__full_name__icontains=search_query) |
+                Q(patient__health_id__icontains=search_query) |
+                Q(diagnosis__icontains=search_query)
+            )
+        
+        # ========== FILTERS ==========
+        status_filter = request.GET.get('status')
+        if status_filter and status_filter != 'all':
+            prescriptions = prescriptions.filter(status=status_filter)
+        
+        date_filter = request.GET.get('date_filter')
+        if date_filter == 'today':
+            prescriptions = prescriptions.filter(created_at__date=timezone.now().date())
+        elif date_filter == 'this_week':
+            start = timezone.now().date() - timedelta(days=timezone.now().weekday())
+            end = start + timedelta(days=6)
+            prescriptions = prescriptions.filter(created_at__date__range=[start, end])
+        elif date_filter == 'this_month':
+            start = timezone.now().date().replace(day=1)
+            prescriptions = prescriptions.filter(created_at__date__gte=start)
+        elif date_filter == 'custom':
+            start_date = request.GET.get('start_date')
+            end_date = request.GET.get('end_date')
+            if start_date and end_date:
+                try:
+                    start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
+                    end_date = datetime.strptime(end_date, '%Y-%m-%d').date()
+                    prescriptions = prescriptions.filter(created_at__date__range=[start_date, end_date])
+                except ValueError:
+                    pass
+        
+        # ========== SORTING ==========
+        sort_by = request.GET.get('sort', 'newest')
+        sort_mapping = {
+            'newest': '-created_at',
+            'oldest': 'created_at',
+            'prescription_date': '-prescription_date',
+            '-prescription_date': 'prescription_date',
+            'patient__full_name': 'patient__full_name',
+            '-patient__full_name': '-patient__full_name',
+        }
+        order_by = sort_mapping.get(sort_by, '-created_at')
+        prescriptions = prescriptions.order_by(order_by)
+        
+        # ========== PAGINATION ==========
+        paginator = Paginator(prescriptions, 10)
+        page_number = request.GET.get('page')
+        page_obj = paginator.get_page(page_number)
+        
+        context = {
+            'doctor': doctor,
+            'page_obj': page_obj,
+            'prescriptions': page_obj,
+            'total': total,
+            'draft': draft,
+            'issued': issued,
+            'completed': completed,
+            'cancelled': cancelled,
+            'today_count': today,
+            'recent_count': recent,
+            'search_query': search_query,
+            'status_filter': status_filter,
+            'date_filter': date_filter,
+            'sort_by': sort_by,
+            'today': timezone.now().date(),
+        }
+        
+        return render(request, self.template_name, context)
+    
+
+@method_decorator([login_required, role_required(['doctor'])], name='dispatch')
+class DoctorPrescriptionDetailView(View):
+    """
+    Doctor Prescription Detail View.
+    Displays complete information of a single prescription.
+    Only the doctor who created it can view it.
+    """
+    template_name = 'prescriptions/doctor/prescription_detail.html'
+    
+    def get(self, request, pk):
+        # Get the logged-in doctor
+        try:
+            doctor = Doctor.objects.get(user=request.user)
+        except Doctor.DoesNotExist:
+            messages.error(request, "You are not registered as a doctor.")
+            return redirect('dashboard:doctor_dashboard')
+        
+        # Get the prescription - only if it belongs to this doctor
+        # REMOVED: prefetch_related('items', 'investigations') - these relations don't exist
+        prescription = get_object_or_404(
+            Prescription.objects.select_related(
+                'patient',
+                'patient__user',
+                'doctor',
+                'doctor__user',
+                'hospital',
+                'created_by',
+                'updated_by'
+            ),
+            pk=pk,
+            doctor=doctor,
+            deleted_at__isnull=True
+        )
+        
+        # Calculate patient age
+        patient = prescription.patient
+        age = None
+        if patient.date_of_birth:
+            today = timezone.now().date()
+            age = today.year - patient.date_of_birth.year
+            if today.month < patient.date_of_birth.month or \
+               (today.month == patient.date_of_birth.month and today.day < patient.date_of_birth.day):
+                age -= 1
+        
+        # Build timeline
+        timeline = self._build_timeline(prescription)
+        
+        # Get medicine count (if prescription_items relation exists)
+        # Otherwise, use 0
+        total_medicines = 0
+        if hasattr(prescription, 'prescription_items'):
+            total_medicines = prescription.prescription_items.count()
+        elif hasattr(prescription, 'items'):
+            total_medicines = prescription.items.count()
+        
+        # Get investigation count
+        total_investigations = 0
+        if hasattr(prescription, 'investigations'):
+            total_investigations = prescription.investigations.count()
+        
+        context = {
+            'prescription': prescription,
+            'doctor': doctor,
+            'patient': patient,
+            'hospital': prescription.hospital,
+            'age': age,
+            'timeline': timeline,
+            'today': timezone.now().date(),
+            'total_medicines': total_medicines,
+            'total_investigations': total_investigations,
+        }
+        
+        return render(request, self.template_name, context)
+    
+    def _build_timeline(self, prescription):
+        """Build status timeline for the prescription."""
+        timeline = []
+        
+        # Created
+        timeline.append({
+            'status': 'Created',
+            'date': prescription.created_at,
+            'user': prescription.created_by,
+            'is_completed': True
+        })
+        
+        # Updated (if different from created)
+        if prescription.updated_at and prescription.updated_at != prescription.created_at:
+            timeline.append({
+                'status': 'Updated',
+                'date': prescription.updated_at,
+                'user': prescription.updated_by,
+                'is_completed': True
+            })
+        
+        # Issued
+        if prescription.status in ['issued', 'completed']:
+            timeline.append({
+                'status': 'Issued',
+                'date': getattr(prescription, 'issued_at', prescription.updated_at),
+                'user': getattr(prescription, 'issued_by', None),
+                'is_completed': True
+            })
+        
+        # Completed
+        if prescription.status == 'completed':
+            timeline.append({
+                'status': 'Completed',
+                'date': getattr(prescription, 'completed_at', prescription.updated_at),
+                'user': getattr(prescription, 'completed_by', None),
+                'is_completed': True
+            })
+        
+        # Cancelled
+        if prescription.status == 'cancelled':
+            timeline.append({
+                'status': 'Cancelled',
+                'date': getattr(prescription, 'cancelled_at', prescription.updated_at),
+                'user': getattr(prescription, 'cancelled_by', None),
+                'is_completed': True
+            })
+        
+        return timeline
+    
+@method_decorator([login_required, role_required(['doctor'])], name='dispatch')
+class DoctorPrescriptionCreateView(View):
+    """
+    Doctor Prescription Create View.
+    Creates a new prescription only for completed appointments.
+    """
+    template_name = 'prescriptions/doctor/create_prescription.html'
+    
+    def get(self, request, appointment_id=None):
+        try:
+            doctor = Doctor.objects.get(user=request.user)
+        except Doctor.DoesNotExist:
+            messages.error(request, "You are not registered as a doctor.")
+            return redirect('dashboard:doctor_dashboard')
+        
+        # Get completed appointments for this doctor
+        completed_appointments = Appointment.objects.filter(
+            doctor=doctor,
+            status='completed',
+            deleted_at__isnull=True
+        ).select_related('patient', 'doctor', 'hospital').order_by('-appointment_date')
+        
+        # If appointment_id is provided and not 0, get that specific appointment
+        appointment = None
+        if appointment_id and appointment_id != 0:
+            appointment = get_object_or_404(
+                Appointment.objects.select_related('patient', 'doctor', 'hospital'),
+                pk=appointment_id,
+                doctor=doctor,
+                status='completed',
+                deleted_at__isnull=True
+            )
+            
+            # Check if prescription already exists
+            existing_prescription = Prescription.objects.filter(
+                appointment=appointment,
+                deleted_at__isnull=True
+            ).first()
+            
+            if existing_prescription:
+                messages.warning(request, "This appointment already has a prescription.")
+                return redirect('prescriptions:doctor_prescription_detail', pk=existing_prescription.id)
+        
+        form = PrescriptionCreateForm()
+        medicine_form = PrescriptionMedicineForm()
+        
+        context = {
+            'doctor': doctor,
+            'appointment': appointment,
+            'completed_appointments': completed_appointments,
+            'form': form,
+            'medicine_form': medicine_form,
+            'today': timezone.now().date(),
+            'is_edit': False,
+        }
+        
+        return render(request, self.template_name, context)
+    
+    def post(self, request, appointment_id=None):
+        # ========== DEBUG START ==========
+        print("=" * 60)
+        print(f"🔍 POST Request Received")
+        print(f"📌 Appointment ID from URL: {appointment_id}")
+        print("=" * 60)
+        
+        try:
+            doctor = Doctor.objects.get(user=request.user)
+            print(f"✅ Doctor found: {doctor.full_name} (ID: {doctor.id})")
+        except Doctor.DoesNotExist:
+            messages.error(request, "You are not registered as a doctor.")
+            return redirect('dashboard:doctor_dashboard')
+        
+        # Get the appointment
+        print(f"🔍 Looking for appointment with ID: {appointment_id}")
+        appointment = get_object_or_404(
+            Appointment.objects.select_related('patient', 'doctor', 'hospital'),
+            pk=appointment_id,
+            doctor=doctor,
+            status='completed',
+            deleted_at__isnull=True
+        )
+        
+        print(f"✅ Appointment found:")
+        print(f"   ID: {appointment.id}")
+        print(f"   Number: {appointment.appointment_number}")
+        print(f"   Status: {appointment.status}")
+        print(f"   Patient: {appointment.patient.full_name}")
+        print(f"   Doctor: {appointment.doctor.full_name}")
+        print(f"   Hospital: {appointment.hospital.name}")
+        print("=" * 60)
+        
+        # Check if prescription already exists
+        existing_prescription = Prescription.objects.filter(
+            appointment=appointment,
+            deleted_at__isnull=True
+        ).first()
+        
+        if existing_prescription:
+            messages.warning(request, "This appointment already has a prescription.")
+            return redirect('prescriptions:doctor_prescription_detail', pk=existing_prescription.id)
+        
+        # Get action
+        action = request.POST.get('action', 'save_draft')
+        print(f"📝 Action: {action}")
+        print("=" * 60)
+        
+        # Process form
+        form = PrescriptionCreateForm(request.POST, instance=Prescription(appointment=appointment))
+        form.instance.appointment = appointment
+        if form.is_valid():
+            print("✅ Form is valid")
+            print(f"📋 Diagnosis: {form.cleaned_data.get('diagnosis', '')[:50]}...")
+            print("=" * 60)
+            
+            try:
+                with transaction.atomic():
+                    # Validate diagnosis length
+                    diagnosis = form.cleaned_data.get('diagnosis', '').strip()
+                    if len(diagnosis) < 10:
+                        messages.error(request, "Diagnosis must be at least 10 characters long.")
+                        return self._render_with_errors(request, appointment, form)
+                    
+                    if len(diagnosis) > 3000:
+                        messages.error(request, "Diagnosis cannot exceed 3000 characters.")
+                        return self._render_with_errors(request, appointment, form)
+                    
+                    # Validate advice length
+                    advice = form.cleaned_data.get('advice', '').strip()
+                    if len(advice) > 2000:
+                        messages.error(request, "Advice cannot exceed 2000 characters.")
+                        return self._render_with_errors(request, appointment, form)
+                    
+                    # Validate follow-up date
+                    follow_up_date = form.cleaned_data.get('follow_up_date')
+                    if follow_up_date and follow_up_date < timezone.now().date():
+                        messages.error(request, "Follow-up date cannot be in the past.")
+                        return self._render_with_errors(request, appointment, form)
+                    
+                    # Process medicine items from POST
+                    medicine_names = request.POST.getlist('medicine_name[]')
+                    dosages = request.POST.getlist('dosage[]')
+                    frequencies = request.POST.getlist('frequency[]')
+                    durations = request.POST.getlist('duration[]')
+                    routes = request.POST.getlist('route[]')
+                    instructions = request.POST.getlist('instruction[]')
+                    notes_list = request.POST.getlist('notes[]')
+                    before_foods = request.POST.getlist('before_food[]')
+                    after_foods = request.POST.getlist('after_food[]')
+                    mornings = request.POST.getlist('morning[]')
+                    afternoons = request.POST.getlist('afternoon[]')
+                    nights = request.POST.getlist('night[]')
+                    
+                    print(f"💊 Medicines found: {len([m for m in medicine_names if m.strip()])}")
+                    
+                    # Validate at least one medicine
+                    valid_medicines = []
+                    for i in range(len(medicine_names)):
+                        if medicine_names[i] and medicine_names[i].strip():
+                            if not dosages[i] or not dosages[i].strip():
+                                messages.error(request, f"Dosage is required for medicine '{medicine_names[i]}'.")
+                                return self._render_with_errors(request, appointment, form)
+                            if not durations[i] or not durations[i].strip():
+                                messages.error(request, f"Duration is required for medicine '{medicine_names[i]}'.")
+                                return self._render_with_errors(request, appointment, form)
+                            valid_medicines.append(i)
+                    
+                    if not valid_medicines:
+                        messages.error(request, "At least one medicine with complete information is required.")
+                        return self._render_with_errors(request, appointment, form)
+                    
+                    print(f"✅ {len(valid_medicines)} valid medicines found")
+                    print("=" * 60)
+                    
+                    # Create prescription
+                    print("📦 Creating prescription...")
+                    prescription = Prescription(
+                        appointment=appointment,
+                        hospital=appointment.hospital,
+                        doctor=doctor,
+                        patient=appointment.patient,
+                        diagnosis=diagnosis,
+                        symptoms=form.cleaned_data.get('symptoms', '').strip(),
+                        clinical_notes=form.cleaned_data.get('clinical_notes', '').strip(),
+                        advice=advice,
+                        follow_up_date=follow_up_date,
+                        created_by=request.user,
+                        updated_by=request.user,
+                    )
+                    
+                    print(f"📦 Prescription created with:")
+                    print(f"   appointment_id: {prescription.appointment_id}")
+                    print(f"   hospital_id: {prescription.hospital_id}")
+                    print(f"   doctor_id: {prescription.doctor_id}")
+                    print(f"   patient_id: {prescription.patient_id}")
+                    print("=" * 60)
+                    
+                    # Set status based on action
+                    if action == 'issue':
+                        prescription.status = Prescription.Status.ISSUED
+                    else:
+                        prescription.status = Prescription.Status.DRAFT
+                    
+                    print(f"📊 Status: {prescription.status}")
+                    print("=" * 60)
+                    
+                    # Save prescription
+                    print("💾 Saving prescription...")
+                    prescription.save()
+                    print("✅ Prescription saved successfully!")
+                    print(f"📋 Prescription Number: {prescription.prescription_number}")
+                    print("=" * 60)
+                    
+                    # Create medicine items
+                    print("💊 Creating medicine items...")
+                    for i in valid_medicines:
+                        PrescriptionMedicine.objects.create(
+                            prescription=prescription,
+                            medicine_name=medicine_names[i].strip(),
+                            dosage=dosages[i].strip(),
+                            frequency=frequencies[i] if i < len(frequencies) else 'once',
+                            duration=durations[i].strip(),
+                            route=routes[i] if i < len(routes) else 'oral',
+                            instruction=instructions[i] if i < len(instructions) else '',
+                            notes=notes_list[i] if i < len(notes_list) else '',
+                            before_food=before_foods[i] == 'on' if i < len(before_foods) else False,
+                            after_food=after_foods[i] == 'on' if i < len(after_foods) else False,
+                            morning=mornings[i] == 'on' if i < len(mornings) else False,
+                            afternoon=afternoons[i] == 'on' if i < len(afternoons) else False,
+                            night=nights[i] == 'on' if i < len(nights) else False,
+                        )
+                        print(f"   ✅ Medicine #{i+1}: {medicine_names[i].strip()}")
+                    
+                    print("=" * 60)
+                    
+                    # Send notifications
+                    try:
+                        from notifications.services import create_notification
+                        
+                        create_notification(
+                            recipient=appointment.patient.user,
+                            title="Prescription Created",
+                            message=f"Your prescription #{prescription.prescription_number} has been created.",
+                            notification_type='prescription',
+                            related_id=prescription.id,
+                        )
+                        
+                        create_notification(
+                            recipient=request.user,
+                            title="Prescription Created",
+                            message=f"Prescription #{prescription.prescription_number} created successfully.",
+                            notification_type='prescription',
+                            related_id=prescription.id,
+                        )
+                    except ImportError:
+                        pass
+                    except Exception as e:
+                        print(f"⚠️ Notification failed: {e}")
+                    
+                    # Success message
+                    if action == 'issue':
+                        messages.success(request, f"✅ Prescription #{prescription.prescription_number} has been issued successfully.")
+                    else:
+                        messages.success(request, f"✅ Prescription #{prescription.prescription_number} has been saved as draft.")
+                    
+                    print("🎉 Redirecting to prescription detail...")
+                    print("=" * 60)
+                    
+                    return redirect('prescriptions:doctor_prescription_detail', pk=prescription.id)
+                    
+            except Exception as e:
+                print(f"❌ ERROR in transaction: {e}")
+                import traceback
+                traceback.print_exc()
+                print("=" * 60)
+                logger.error(f"Error creating prescription: {e}", exc_info=True)
+                messages.error(request, "An error occurred while creating the prescription. Please try again.")
+                return self._render_with_errors(request, appointment, form)
+        else:
+            print("❌ Form is invalid:")
+            for field, errors in form.errors.items():
+                for error in errors:
+                    print(f"   {field}: {error}")
+                    messages.error(request, f"{field}: {error}")
+            print("=" * 60)
+        
+        return self._render_with_errors(request, appointment, form)
+    
+    def _render_with_errors(self, request, appointment, form):
+        """Helper method to render form with errors."""
+        try:
+            doctor = Doctor.objects.get(user=request.user)
+        except Doctor.DoesNotExist:
+            return redirect('dashboard:doctor_dashboard')
+        
+        completed_appointments = Appointment.objects.filter(
+            doctor=doctor,
+            status='completed',
+            deleted_at__isnull=True
+        ).select_related('patient', 'doctor', 'hospital').order_by('-appointment_date')
+        
+        context = {
+            'doctor': doctor,
+            'appointment': appointment,
+            'completed_appointments': completed_appointments,
+            'form': form,
+            'medicine_form': PrescriptionMedicineForm(),
+            'today': timezone.now().date(),
+            'is_edit': False,
+        }
+        
+        return render(request, self.template_name, context)
+    
+@method_decorator([login_required, role_required(['doctor'])], name='dispatch')
+class DoctorPrescriptionEditView(View):
+    """
+    Doctor Prescription Edit View.
+    Allows doctor to edit only their own draft prescriptions.
+    """
+    template_name = 'prescriptions/doctor/edit_prescription.html'
+    
+    def get(self, request, pk):
+        try:
+            doctor = Doctor.objects.get(user=request.user)
+        except Doctor.DoesNotExist:
+            messages.error(request, "You are not registered as a doctor.")
+            return redirect('dashboard:doctor_dashboard')
+        
+        # Get the prescription - only if it belongs to this doctor
+        prescription = get_object_or_404(
+            Prescription.objects.select_related(
+                'patient', 'doctor', 'hospital', 'appointment'
+            ),
+            pk=pk,
+            doctor=doctor,
+            deleted_at__isnull=True
+        )
+        
+        # Check if prescription can be edited (only draft)
+        if prescription.status != Prescription.Status.DRAFT:
+            messages.warning(request, "This prescription has already been issued and can no longer be edited.")
+            return redirect('prescriptions:doctor_prescription_detail', pk=prescription.pk)
+        
+        # Initialize forms
+        form = PrescriptionEditForm(instance=prescription)
+        formset = PrescriptionMedicineFormSet(instance=prescription)
+        
+        context = {
+            'prescription': prescription,
+            'doctor': doctor,
+            'patient': prescription.patient,
+            'hospital': prescription.hospital,
+            'form': form,
+            'formset': formset,
+            'today': timezone.now().date(),
+            'is_edit': True,
+        }
+        
+        return render(request, self.template_name, context)
+    
+    def post(self, request, pk):
+        try:
+            doctor = Doctor.objects.get(user=request.user)
+        except Doctor.DoesNotExist:
+            messages.error(request, "You are not registered as a doctor.")
+            return redirect('dashboard:doctor_dashboard')
+        
+        # Get the prescription
+        prescription = get_object_or_404(
+            Prescription.objects.select_related(
+                'patient', 'doctor', 'hospital', 'appointment'
+            ),
+            pk=pk,
+            doctor=doctor,
+            deleted_at__isnull=True
+        )
+        
+        # Check if prescription can be edited
+        if prescription.status != Prescription.Status.DRAFT:
+            messages.warning(request, "This prescription has already been issued and can no longer be edited.")
+            return redirect('prescriptions:doctor_prescription_detail', pk=prescription.pk)
+        
+        # Process forms
+        form = PrescriptionEditForm(request.POST, instance=prescription)
+        formset = PrescriptionMedicineFormSet(request.POST, instance=prescription)
+        
+        if form.is_valid() and formset.is_valid():
+            try:
+                with transaction.atomic():
+                    # Save prescription
+                    prescription = form.save(commit=False)
+                    prescription.updated_by = request.user
+                    prescription.save()
+                    
+                    # Save medicines
+                    formset.save()
+                    
+                    messages.success(request, f"✅ Prescription #{prescription.prescription_number} has been updated successfully.")
+                    return redirect('prescriptions:doctor_prescription_detail', pk=prescription.pk)
+                    
+            except Exception as e:
+                messages.error(request, f"Error updating prescription: {str(e)}")
+        else:
+            # Form errors
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f"{field}: {error}")
+            
+            for form_error in formset.errors:
+                if form_error:
+                    for field, errors in form_error.items():
+                        for error in errors:
+                            messages.error(request, f"Medicine: {error}")
+        
+        # If form invalid, re-render with errors
+        context = {
+            'prescription': prescription,
+            'doctor': doctor,
+            'patient': prescription.patient,
+            'hospital': prescription.hospital,
+            'form': form,
+            'formset': formset,
+            'today': timezone.now().date(),
+            'is_edit': True,
+        }
+        
+        return render(request, self.template_name, context)
+    
+@method_decorator([login_required, role_required(['doctor'])], name='dispatch')
+class DoctorPrescriptionPrintView(View):
+    """
+    Doctor Prescription Print View.
+    Allows doctor to print only their own issued or completed prescriptions.
+    """
+    template_name = 'prescriptions/doctor/print_prescription.html'
+    
+    def get(self, request, pk):
+        # Get the logged-in doctor
+        try:
+            doctor = Doctor.objects.get(user=request.user)
+        except Doctor.DoesNotExist:
+            messages.error(request, "You are not registered as a doctor.")
+            return redirect('dashboard:doctor_dashboard')
+        
+        # Get the prescription - only if it belongs to this doctor
+        prescription = get_object_or_404(
+            Prescription.objects.select_related(
+                'patient',
+                'doctor',
+                'hospital',
+                'appointment',
+                'created_by',
+                'updated_by'
+            ).prefetch_related(
+                'medicines'
+            ),
+            pk=pk,
+            doctor=doctor,
+            deleted_at__isnull=True
+        )
+        
+        # Check if prescription can be printed (only issued or completed)
+        if prescription.status not in [Prescription.Status.ISSUED, Prescription.Status.COMPLETED]:
+            messages.warning(request, "Only issued or completed prescriptions can be printed.")
+            return redirect('prescriptions:doctor_prescription_detail', pk=prescription.pk)
+        
+        # Calculate patient age
+        patient = prescription.patient
+        age = None
+        if patient.date_of_birth:
+            today = timezone.now().date()
+            age = today.year - patient.date_of_birth.year
+            if today.month < patient.date_of_birth.month or \
+               (today.month == patient.date_of_birth.month and today.day < patient.date_of_birth.day):
+                age -= 1
+        
+        context = {
+            'prescription': prescription,
+            'doctor': doctor,
+            'patient': patient,
+            'hospital': prescription.hospital,
+            'age': age,
+            'medicines': prescription.medicines.all(),
+            'today': timezone.now().date(),
+            'now': timezone.now(),
+        }
+        
+        return render(request, self.template_name, context)
+    

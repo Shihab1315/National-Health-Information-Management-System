@@ -8,6 +8,16 @@
     .top-navbar {
         display: none !important;
     }
+    .glass-card {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        transition: all 0.2s ease;
+    }
+    .glass-card:hover {
+        border-color: rgba(59, 130, 246, 0.3);
+    }
 </style>
 {% endblock %}
 
@@ -42,18 +52,36 @@
             <a href="{% url 'dashboard:doctor_dashboard' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition {% if request.resolver_match.url_name == 'doctor_dashboard' %}bg-blue-600/30 text-blue-300{% else %}text-gray-300 hover:bg-white/5 hover:text-white{% endif %}">
                 <i class="fas fa-th-large w-5 text-center"></i> Dashboard
             </a>
-            <a href="{% url 'appointments:list' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
+            <a href="{% url 'appointments:doctor_appointments' %}" 
+               class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition 
+                      {% if request.resolver_match.url_name == 'doctor_appointments' or request.resolver_match.url_name == 'doctor_appointment_detail' %}
+                         bg-blue-600/30 text-blue-300
+                      {% else %}
+                         text-gray-300 hover:bg-white/5 hover:text-white
+                      {% endif %}">
                 <i class="fas fa-calendar-check w-5 text-center"></i> Appointments
             </a>
             <a href="{% url 'patients:list' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
                 <i class="fas fa-user-injured w-5 text-center"></i> Patients
             </a>
-            <a href="{% url 'prescriptions:list' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
-                <i class="fas fa-prescription-bottle w-5 text-center"></i> Prescriptions
-            </a>
-            <a href="{% url 'laboratory:order_list' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
-                <i class="fas fa-flask w-5 text-center"></i> Laboratory
-            </a>
+            <a href="{% url 'prescriptions:doctor_prescription_list' %}" 
+         class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition 
+          {% if request.resolver_match.url_name == 'doctor_prescription_list' %}
+             bg-blue-600/30 text-blue-300
+          {% else %}
+             text-gray-300 hover:bg-white/5 hover:text-white
+          {% endif %}">
+         <i class="fas fa-prescription-bottle w-5 text-center"></i> Prescriptions
+          </a>
+            <a href="{% url 'laboratory:doctor_lab_requests' %}" 
+   class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition 
+          {% if request.resolver_match.url_name == 'doctor_lab_requests' %}
+             bg-blue-600/30 text-blue-300
+          {% else %}
+             text-gray-300 hover:bg-white/5 hover:text-white
+          {% endif %}">
+    <i class="fas fa-flask w-5 text-center"></i> Laboratory
+          </a>
             <a href="{% url 'notifications:center' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
                 <i class="fas fa-bell w-5 text-center"></i> Notifications
             </a>
@@ -64,18 +92,12 @@
             <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
                 <i class="fas fa-cog w-5 text-center"></i> Settings
             </a>
-            <!-- LOGOUT – FIXED -->
-            {% url 'logout' as logout_url %}
-            {% if logout_url %}
-                <a href="{{ logout_url }}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-red-400 hover:bg-red-500/10 hover:text-red-300">
-                    <i class="fas fa-sign-out-alt w-5 text-center"></i> Logout
-                </a>
-            {% else %}
-                <!-- If 'logout' is not defined, use your custom logout URL (e.g., 'accounts:logout') -->
-                <a href="{% url 'accounts:logout' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-red-400 hover:bg-red-500/10 hover:text-red-300">
-                    <i class="fas fa-sign-out-alt w-5 text-center"></i> Logout
-                </a>
-            {% endif %}
+            <!-- LOGOUT -->
+            <button type="button"
+                    class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-red-400 hover:bg-red-500/10 hover:text-red-300 w-full text-left"
+                    onclick="openLogoutModal()">
+                <i class="fas fa-sign-out-alt w-5 text-center"></i> Logout
+            </button>
         </nav>
         <div class="absolute bottom-4 left-4 right-4 text-center text-gray-500 text-xs">
             NHIMS v2.0
@@ -87,7 +109,7 @@
         <!-- ====================== WELCOME + DOCTOR INFO CARD ====================== -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <!-- Welcome Section -->
-            <div class="lg:col-span-2 relative overflow-hidden rounded-2xl bg-gradient-to-r from-blue-600/30 to-cyan-600/30 border border-white/10 p-6 backdrop-blur-sm">
+            <div class="lg:col-span-2 relative overflow-hidden rounded-2xl bg-linear-to-r from-blue-600/30 to-cyan-600/30 border border-white/10 p-6 backdrop-blur-sm">
                 <div class="relative z-10">
                     <h1 class="text-2xl md:text-3xl font-bold text-white">
                         {{ greeting }}, <span class="text-blue-300">Dr. {{ doctor.full_name|default:user.get_full_name }}</span> 👋
@@ -104,7 +126,7 @@
 
             <!-- Doctor Information Card -->
             <div class="glass-card rounded-2xl border border-white/10 p-5 backdrop-blur-sm flex items-start gap-4 hover:border-blue-400/30 transition">
-                <div class="flex-shrink-0">
+                <div class="shrink-0">
                     <div class="w-16 h-16 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 text-3xl font-bold border-2 border-blue-400/30">
                         {{ doctor.full_name|slice:":1"|upper|default:user.get_full_name|slice:":1"|upper }}
                     </div>
@@ -221,7 +243,7 @@
                     <i class="fas fa-prescription-bottle text-purple-400 text-2xl block mb-2 group-hover:scale-110 transition"></i>
                     <span class="text-gray-300 text-sm">New Prescription</span>
                 </a>
-                <a href="{% url 'appointments:list' %}" class="bg-white/5 hover:bg-white/10 rounded-xl p-4 text-center transition group">
+                <a href="{% url 'appointments:doctor_appointments' %}" class="bg-white/5 hover:bg-white/10 rounded-xl p-4 text-center transition group">
                     <i class="fas fa-calendar-check text-blue-400 text-2xl block mb-2 group-hover:scale-110 transition"></i>
                     <span class="text-gray-300 text-sm">View Appointments</span>
                 </a>
@@ -244,7 +266,7 @@
         <div class="glass-card rounded-2xl border border-white/10 p-5">
             <h3 class="text-white font-medium mb-3 flex items-center justify-between">
                 Today's Appointments
-                <a href="{% url 'appointments:today' %}" class="text-xs text-blue-400 hover:text-blue-300">View All</a>
+                <a href="{% url 'appointments:doctor_appointments' %}" class="text-xs text-blue-400 hover:text-blue-300">View All</a>
             </h3>
             <div class="overflow-x-auto">
                 <table class="w-full text-sm">
@@ -273,7 +295,7 @@
                                 </span>
                             </td>
                             <td class="px-4 py-2 text-center">
-                                <a href="{% url 'appointments:detail' apt.pk %}" class="text-blue-400 hover:text-blue-300 text-xs">View</a>
+                                <a href="{% url 'appointments:doctor_appointment_detail' apt.pk %}" class="text-blue-400 hover:text-blue-300 text-xs">View</a>
                             </td>
                         </tr>
                         {% empty %}
@@ -290,7 +312,7 @@
         <div class="glass-card rounded-2xl border border-white/10 p-5">
             <h3 class="text-white font-medium mb-3 flex items-center justify-between">
                 Upcoming Appointments
-                <a href="{% url 'appointments:upcoming' %}" class="text-xs text-blue-400 hover:text-blue-300">View All</a>
+                <a href="{% url 'appointments:doctor_appointments' %}" class="text-xs text-blue-400 hover:text-blue-300">View All</a>
             </h3>
             <div class="space-y-2">
                 {% for apt in upcoming_appointments %}
@@ -299,7 +321,7 @@
                         <span class="text-white">{{ apt.patient.full_name }}</span>
                         <span class="text-gray-400 text-xs ml-2">{{ apt.appointment_date|date:"M d" }} at {{ apt.appointment_time|time:"h:i A" }}</span>
                     </div>
-                    <a href="{% url 'appointments:detail' apt.pk %}" class="text-blue-400 hover:text-blue-300 text-xs">View</a>
+                    <a href="{% url 'appointments:doctor_appointment_detail' apt.pk %}" class="text-blue-400 hover:text-blue-300 text-xs">View</a>
                 </div>
                 {% empty %}
                 <p class="text-gray-400 text-sm">No upcoming appointments.</p>
@@ -413,7 +435,32 @@
     </main>
 </div>
 
-<!-- ====================== SIDEBAR TOGGLE SCRIPT ====================== -->
+<!-- ====================== LOGOUT CONFIRMATION MODAL ====================== -->
+<div id="logoutModal"
+     class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm transition-opacity duration-300 opacity-0 pointer-events-none"
+     role="dialog" aria-modal="true" aria-labelledby="logoutModalTitle">
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full mx-4 p-6 transform transition-all duration-300 scale-95">
+        <div class="flex items-center justify-between mb-4">
+            <h3 id="logoutModalTitle" class="text-xl font-semibold text-gray-900 dark:text-white">Logout</h3>
+            <button type="button" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition" onclick="closeLogoutModal()">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+                <span class="sr-only">Close</span>
+            </button>
+        </div>
+        <p class="text-gray-600 dark:text-gray-300 mb-6">Are you sure you want to logout from your NHIMS account?</p>
+        <div class="flex flex-col sm:flex-row gap-3 justify-end">
+            <button type="button" class="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition" onclick="closeLogoutModal()">Cancel</button>
+            <form action="{% url 'patients:logout' %}" method="post" class="inline">
+                {% csrf_token %}
+                <button type="submit" class="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white font-medium transition shadow-md w-full sm:w-auto">Logout</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ====================== SCRIPTS ====================== -->
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const sidebar = document.getElementById('sidebar');
@@ -436,6 +483,33 @@
                     sidebar.classList.add('-translate-x-full');
                 }
             });
+        }
+    });
+
+    // Logout Modal Scripts
+    const modal = document.getElementById('logoutModal');
+
+    function openLogoutModal() {
+        modal.classList.remove('opacity-0', 'pointer-events-none');
+        modal.querySelector('div').classList.remove('scale-95');
+        modal.querySelector('div').classList.add('scale-100');
+    }
+
+    function closeLogoutModal() {
+        modal.classList.add('opacity-0', 'pointer-events-none');
+        modal.querySelector('div').classList.remove('scale-100');
+        modal.querySelector('div').classList.add('scale-95');
+    }
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && !modal.classList.contains('pointer-events-none')) {
+            closeLogoutModal();
+        }
+    });
+
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) {
+            closeLogoutModal();
         }
     });
 </script>

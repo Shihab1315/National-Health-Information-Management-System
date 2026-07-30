@@ -1,0 +1,404 @@
+<!-- appointments/templates/appointments/doctor/complete_consultation.html -->
+{% extends "doctor/base.html" %}
+{% load static %}
+
+{% block title %}Complete Consultation | NHIMS{% endblock %}
+
+{% block extra_css %}
+<style>
+    .consultation-card {
+        transition: all 0.2s ease;
+    }
+    .consultation-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+    }
+    .status-badge-lg {
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .readonly-field {
+        background-color: #f3f4f6;
+        padding: 0.5rem 0.75rem;
+        border-radius: 0.5rem;
+        color: #1f2937;
+        font-weight: 500;
+        cursor: default;
+    }
+    .dark .readonly-field {
+        background-color: #374151;
+        color: #e5e7eb;
+    }
+    .consultation-textarea {
+        width: 100%;
+        padding: 0.625rem 0.875rem;
+        border-radius: 0.5rem;
+        border: 1px solid #d1d5db;
+        background-color: white;
+        color: #1f2937;
+        transition: all 0.2s ease;
+        min-height: 100px;
+        resize: vertical;
+    }
+    .dark .consultation-textarea {
+        background-color: #1f2937;
+        border-color: #4b5563;
+        color: #e5e7eb;
+    }
+    .consultation-textarea:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+    }
+    .dark .consultation-textarea:focus {
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+    }
+    .action-btn {
+        padding: 0.625rem 1.25rem;
+        border-radius: 0.5rem;
+        font-weight: 500;
+        font-size: 0.875rem;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+    .action-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+    .btn-primary {
+        background-color: #3b82f6;
+        color: white;
+    }
+    .btn-primary:hover {
+        background-color: #2563eb;
+    }
+    .btn-success {
+        background-color: #22c55e;
+        color: white;
+    }
+    .btn-success:hover {
+        background-color: #16a34a;
+    }
+    .btn-secondary {
+        background-color: #6b7280;
+        color: white;
+    }
+    .btn-secondary:hover {
+        background-color: #4b5563;
+    }
+    .warning-box {
+        background-color: #fef3c7;
+        border: 1px solid #f59e0b;
+        border-radius: 0.5rem;
+        padding: 1rem;
+        color: #92400e;
+    }
+    .dark .warning-box {
+        background-color: #78350f;
+        border-color: #d97706;
+        color: #fcd34d;
+    }
+    .quick-action-btn {
+        padding: 0.75rem 1rem;
+        border-radius: 0.5rem;
+        font-weight: 500;
+        font-size: 0.875rem;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        text-align: center;
+        border: 1px solid #e5e7eb;
+        background-color: #f9fafb;
+        color: #374151;
+    }
+    .dark .quick-action-btn {
+        border-color: #4b5563;
+        background-color: #1f2937;
+        color: #e5e7eb;
+    }
+    .quick-action-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        background-color: #f3f4f6;
+        border-color: #3b82f6;
+    }
+    .dark .quick-action-btn:hover {
+        background-color: #374151;
+    }
+    .checkbox-custom {
+        width: 1.25rem;
+        height: 1.25rem;
+        border-radius: 0.25rem;
+        border: 2px solid #d1d5db;
+        accent-color: #3b82f6;
+        cursor: pointer;
+    }
+    .dark .checkbox-custom {
+        border-color: #4b5563;
+    }
+</style>
+{% endblock %}
+
+{% block doctor_content %}
+<div class="container mx-auto px-4 py-6">
+    
+    <!-- ===== BREADCRUMB ===== -->
+    <nav class="text-sm text-gray-500 dark:text-gray-400 mb-6" aria-label="Breadcrumb">
+        <ol class="flex flex-wrap items-center gap-2">
+            <li><a href="{% url 'dashboard:doctor_dashboard' %}" class="hover:text-blue-600 dark:hover:text-blue-400 transition">Dashboard</a></li>
+            <li><span class="mx-2">/</span></li>
+            <li><a href="{% url 'appointments:doctor_appointments' %}" class="hover:text-blue-600 dark:hover:text-blue-400 transition">My Appointments</a></li>
+            <li><span class="mx-2">/</span></li>
+            <li><a href="{% url 'appointments:doctor_appointment_detail' appointment.id %}" class="hover:text-blue-600 dark:hover:text-blue-400 transition">Appointment #{{ appointment.appointment_number }}</a></li>
+            <li><span class="mx-2">/</span></li>
+            <li class="text-gray-700 dark:text-gray-300 font-medium">Complete Consultation</li>
+        </ol>
+    </nav>
+
+    <!-- ===== PAGE HEADER ===== -->
+    <div class="mb-6">
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Complete Consultation</h1>
+        <p class="text-gray-600 dark:text-gray-300">Record the consultation details and mark the appointment as completed</p>
+    </div>
+
+    <!-- ===== MAIN CONTENT ===== -->
+    <form method="post" id="completeForm">
+        {% csrf_token %}
+        
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            <!-- ===== LEFT COLUMN - CONSULTATION FORM ===== -->
+            <div class="lg:col-span-2 space-y-6">
+                
+                <!-- Consultation Notes -->
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 consultation-card">
+                    <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                        <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                        </svg>
+                        Consultation Details
+                    </h2>
+                    <div class="space-y-4">
+                        <div>
+                            <label for="consultation_notes" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                Consultation Notes
+                            </label>
+                            <textarea name="consultation_notes" id="consultation_notes" 
+                                      class="consultation-textarea" 
+                                      placeholder="Enter detailed consultation notes..."></textarea>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Record the key points from the consultation</p>
+                        </div>
+                        
+                        <div>
+                            <label for="diagnosis" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                Diagnosis
+                            </label>
+                            <textarea name="diagnosis" id="diagnosis" 
+                                      class="consultation-textarea" 
+                                      style="min-height: 80px;"
+                                      placeholder="Enter the diagnosis..."></textarea>
+                        </div>
+                        
+                        <div>
+                            <label for="advice" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                Advice / Recommendations
+                            </label>
+                            <textarea name="advice" id="advice" 
+                                      class="consultation-textarea" 
+                                      style="min-height: 80px;"
+                                      placeholder="Provide advice and recommendations..."></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Follow-up Section -->
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 consultation-card">
+                    <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                        <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        Follow-up & Next Steps
+                    </h2>
+                    <div class="space-y-4">
+                        <div>
+                            <label for="follow_up_instructions" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                Follow-up Instructions
+                            </label>
+                            <textarea name="follow_up_instructions" id="follow_up_instructions" 
+                                      class="consultation-textarea" 
+                                      style="min-height: 80px;"
+                                      placeholder="Enter follow-up instructions for the patient..."></textarea>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label for="follow_up_date" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                    Follow-up Date
+                                </label>
+                                <input type="date" 
+                                       name="follow_up_date" 
+                                       id="follow_up_date" 
+                                       class="date-time-input w-full"
+                                       min="{{ today|date:'Y-m-d' }}">
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Optional - suggest a follow-up date</p>
+                            </div>
+                            <div class="flex items-end">
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" 
+                                           name="next_visit_recommended" 
+                                           id="next_visit_recommended" 
+                                           class="checkbox-custom">
+                                    <span class="text-sm text-gray-700 dark:text-gray-300">Next Visit Recommended</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Completion Confirmation -->
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 consultation-card">
+                    <div class="warning-box flex items-start gap-3">
+                        <svg class="w-5 h-5 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                        </svg>
+                        <div>
+                            <p class="font-medium">You are about to complete this consultation</p>
+                            <p class="text-sm mt-1">Once completed, this appointment will be marked as finished and cannot be reopened.</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- ===== RIGHT COLUMN - APPOINTMENT INFO ===== -->
+            <div class="lg:col-span-1 space-y-6">
+                
+                <!-- Appointment Information - READ ONLY -->
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 consultation-card">
+                    <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                        <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        Appointment Details
+                    </h2>
+                    <div class="space-y-3 text-sm">
+                        <div>
+                            <p class="text-gray-500 dark:text-gray-400 text-xs">Appointment Number</p>
+                            <p class="font-medium text-gray-900 dark:text-white">{{ appointment.appointment_number }}</p>
+                        </div>
+                        <div>
+                            <p class="text-gray-500 dark:text-gray-400 text-xs">Appointment ID</p>
+                            <p class="font-medium text-gray-900 dark:text-white">#{{ appointment.id }}</p>
+                        </div>
+                        <div>
+                            <p class="text-gray-500 dark:text-gray-400 text-xs">Status</p>
+                            <span class="status-badge-lg bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
+                                <span class="w-2 h-2 rounded-full inline-block bg-blue-500"></span>
+                                Confirmed
+                            </span>
+                        </div>
+                        <hr class="border-gray-200 dark:border-gray-700">
+                        <div>
+                            <p class="text-gray-500 dark:text-gray-400 text-xs">Patient</p>
+                            <p class="font-medium text-gray-900 dark:text-white">{{ patient.full_name }}</p>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">ID: {{ patient.health_id|default:"N/A" }}</p>
+                        </div>
+                        <div>
+                            <p class="text-gray-500 dark:text-gray-400 text-xs">Doctor</p>
+                            <p class="font-medium text-gray-900 dark:text-white">Dr. {{ doctor.full_name }}</p>
+                        </div>
+                        <div>
+                            <p class="text-gray-500 dark:text-gray-400 text-xs">Hospital</p>
+                            <p class="font-medium text-gray-900 dark:text-white">{{ hospital.name|default:"N/A" }}</p>
+                        </div>
+                        <hr class="border-gray-200 dark:border-gray-700">
+                        <div>
+                            <p class="text-gray-500 dark:text-gray-400 text-xs">Appointment Date</p>
+                            <p class="font-medium text-gray-900 dark:text-white">{{ appointment.appointment_date|date:"l, F d, Y" }}</p>
+                        </div>
+                        <div>
+                            <p class="text-gray-500 dark:text-gray-400 text-xs">Appointment Time</p>
+                            <p class="font-medium text-gray-900 dark:text-white">{{ appointment.appointment_time|time:"h:i A" }}</p>
+                        </div>
+                        <div>
+                            <p class="text-gray-500 dark:text-gray-400 text-xs">Type</p>
+                            <p class="font-medium text-gray-900 dark:text-white">Regular</p>
+                        </div>
+                        <div>
+                            <p class="text-gray-500 dark:text-gray-400 text-xs">Reason</p>
+                            <p class="font-medium text-gray-900 dark:text-white">{{ appointment.reason|default:"N/A" }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 consultation-card">
+                    <div class="space-y-3">
+                        <button type="submit" class="action-btn btn-success w-full">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            Complete Consultation
+                        </button>
+                        <a href="{% url 'appointments:doctor_appointment_detail' appointment.id %}" 
+                           class="action-btn btn-secondary w-full text-center">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                            </svg>
+                            Back to Appointment
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Future Ready: Quick Actions -->
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 consultation-card">
+                    <h2 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
+                        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                        </svg>
+                        After Completion (Coming Soon)
+                    </h2>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div class="quick-action-btn opacity-50 cursor-not-allowed">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                            </svg>
+                            Prescription
+                        </div>
+                        <div class="quick-action-btn opacity-50 cursor-not-allowed">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                            </svg>
+                            Medical Record
+                        </div>
+                        <div class="quick-action-btn opacity-50 cursor-not-allowed">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/>
+                            </svg>
+                            Lab Request
+                        </div>
+                        <div class="quick-action-btn opacity-50 cursor-not-allowed">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+                            </svg>
+                            Invoice
+                        </div>
+                    </div>
+                    <p class="text-xs text-gray-400 dark:text-gray-500 mt-2 text-center">These features will be available soon</p>
+                </div>
+
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}

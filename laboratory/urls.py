@@ -45,4 +45,8 @@ urlpatterns = [
     path('categories/create/', views.TestCategoryCreateView.as_view(), name='category_create'),
     path('categories/<int:pk>/edit/', views.TestCategoryUpdateView.as_view(), name='category_update'),
     path('categories/<int:pk>/delete/', views.TestCategoryDeleteView.as_view(), name='category_delete'),
+     # Doctor - My Lab Requests
+     path('my-lab-requests/', views.DoctorLabRequestListView.as_view(), name='doctor_lab_requests'),
+     path('doctor/requests/<int:pk>/', views.DoctorLabRequestDetailView.as_view(), name='doctor_lab_request_detail'),
+      path('doctor/create/', views.DoctorLabRequestCreateView.as_view(), name='doctor_lab_request_create'),
 ]

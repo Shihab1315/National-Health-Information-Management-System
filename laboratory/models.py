@@ -218,6 +218,8 @@ class LabOrder(models.Model):
         on_delete=models.CASCADE,
         related_name='lab_order',
         verbose_name=_('Prescription'),
+        null=True,      # ✅ যোগ করুন
+        blank=True,     # ✅ যোগ করুন
         help_text=_('The prescription that generated this lab order.'),
     )
     appointment = models.ForeignKey(
@@ -226,6 +228,8 @@ class LabOrder(models.Model):
         related_name='lab_orders',
         verbose_name=_('Appointment'),
         editable=False,
+        null=True,      # ✅ এই লাইনটি যোগ করুন
+        blank=True, 
         help_text=_('Auto‑populated from the prescription.'),
     )
     patient = models.ForeignKey(

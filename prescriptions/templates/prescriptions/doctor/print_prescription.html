@@ -1,0 +1,590 @@
+<!-- prescriptions/templates/prescriptions/doctor/print_prescription.html -->
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prescription - {{ prescription.prescription_number }}</title>
+    <style>
+        /* ===== BASE STYLES ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Times New Roman', Times, serif;
+            background: #f0f0f0;
+            padding: 20px;
+        }
+        
+        .print-container {
+            max-width: 210mm;
+            margin: 0 auto;
+            background: #ffffff;
+            padding: 40px 45px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            border-radius: 8px;
+        }
+        
+        /* ===== HEADER ===== */
+        .header {
+            text-align: center;
+            border-bottom: 3px double #1a3a5c;
+            padding-bottom: 20px;
+            margin-bottom: 25px;
+        }
+        
+        .hospital-name {
+            font-size: 26px;
+            font-weight: 700;
+            color: #1a3a5c;
+            letter-spacing: 2px;
+        }
+        
+        .hospital-details {
+            font-size: 13px;
+            color: #4a5568;
+            margin-top: 5px;
+            line-height: 1.6;
+        }
+        
+        .hospital-details span {
+            margin: 0 10px;
+        }
+        
+        /* ===== PRESCRIPTION HEADER ===== */
+        .prescription-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .prescription-number {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1a3a5c;
+        }
+        
+        .issue-date {
+            font-size: 14px;
+            color: #4a5568;
+        }
+        
+        /* ===== INFO GRID ===== */
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px 30px;
+            margin-bottom: 25px;
+            padding: 15px;
+            background: #f8fafc;
+            border-radius: 6px;
+            border: 1px solid #e2e8f0;
+        }
+        
+        .info-item {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .info-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: #718096;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .info-value {
+            font-size: 15px;
+            color: #1a202c;
+            font-weight: 500;
+            margin-top: 2px;
+        }
+        
+        /* ===== SECTION TITLES ===== */
+        .section-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: #1a3a5c;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin: 20px 0 10px 0;
+            padding-bottom: 5px;
+            border-bottom: 2px solid #1a3a5c;
+        }
+        
+        /* ===== CLINICAL INFO ===== */
+        .clinical-info {
+            margin-bottom: 20px;
+        }
+        
+        .clinical-item {
+            display: flex;
+            margin-bottom: 6px;
+        }
+        
+        .clinical-label {
+            font-weight: 600;
+            color: #2d3748;
+            min-width: 120px;
+            font-size: 14px;
+        }
+        
+        .clinical-value {
+            font-size: 14px;
+            color: #1a202c;
+        }
+        
+        /* ===== MEDICINE TABLE ===== */
+        .medicine-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0 25px 0;
+            font-size: 13px;
+        }
+        
+        .medicine-table th {
+            background: #1a3a5c;
+            color: #ffffff;
+            padding: 8px 10px;
+            text-align: left;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 11px;
+            letter-spacing: 0.5px;
+        }
+        
+        .medicine-table td {
+            padding: 8px 10px;
+            border-bottom: 1px solid #e2e8f0;
+            vertical-align: top;
+        }
+        
+        .medicine-table tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .medicine-table tr:hover {
+            background: #f7fafc;
+        }
+        
+        /* ===== ADVICE ===== */
+        .advice-section {
+            margin: 20px 0;
+            padding: 15px;
+            background: #f8fafc;
+            border-radius: 6px;
+            border-left: 4px solid #1a3a5c;
+        }
+        
+        .advice-section p {
+            font-size: 14px;
+            line-height: 1.7;
+            color: #2d3748;
+            margin-bottom: 5px;
+        }
+        
+        /* ===== FOLLOW UP ===== */
+        .follow-up {
+            margin: 15px 0 25px 0;
+            padding: 12px 15px;
+            background: #ebf8ff;
+            border-radius: 6px;
+            border: 1px solid #bee3f8;
+        }
+        
+        .follow-up strong {
+            color: #2b6cb0;
+        }
+        
+        /* ===== SIGNATURE SECTION ===== */
+        .signature-section {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 35px;
+            padding-top: 20px;
+            border-top: 2px solid #e2e8f0;
+        }
+        
+        .signature-box {
+            text-align: center;
+            flex: 1;
+        }
+        
+        .signature-line {
+            width: 200px;
+            border-bottom: 2px solid #1a202c;
+            margin: 40px auto 5px auto;
+        }
+        
+        .signature-label {
+            font-size: 13px;
+            color: #4a5568;
+        }
+        
+        .signature-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: #1a202c;
+            margin-top: 5px;
+        }
+        
+        .signature-reg {
+            font-size: 12px;
+            color: #718096;
+        }
+        
+        .seal-placeholder {
+            width: 80px;
+            height: 80px;
+            border: 2px dashed #1a3a5c;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto;
+            font-size: 10px;
+            color: #1a3a5c;
+            text-align: center;
+        }
+        
+        /* ===== FOOTER ===== */
+        .footer {
+            margin-top: 30px;
+            padding-top: 15px;
+            border-top: 2px solid #e2e8f0;
+            text-align: center;
+            font-size: 11px;
+            color: #a0aec0;
+            line-height: 1.6;
+        }
+        
+        .footer .confidential {
+            color: #e53e3e;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        /* ===== PRINT BUTTON ===== */
+        .print-btn-container {
+            text-align: center;
+            margin: 20px auto;
+            max-width: 210mm;
+        }
+        
+        .print-btn {
+            padding: 12px 30px;
+            background: #1a3a5c;
+            color: #ffffff;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .print-btn:hover {
+            background: #2c5282;
+        }
+        
+        .print-btn i {
+            margin-right: 10px;
+        }
+        
+        /* ===== PRINT STYLES ===== */
+        @media print {
+            body {
+                background: #ffffff !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+            
+            .print-container {
+                max-width: 100% !important;
+                padding: 25px 30px !important;
+                box-shadow: none !important;
+                border-radius: 0 !important;
+                margin: 0 !important;
+            }
+            
+            .print-btn-container {
+                display: none !important;
+            }
+            
+            .no-print {
+                display: none !important;
+            }
+            
+            .medicine-table th {
+                background: #1a3a5c !important;
+                color: #ffffff !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+            
+            .info-grid {
+                background: #f8fafc !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+            
+            .advice-section {
+                background: #f8fafc !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+            
+            .follow-up {
+                background: #ebf8ff !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+            
+            .seal-placeholder {
+                border-color: #1a3a5c !important;
+            }
+            
+            .signature-line {
+                border-bottom-color: #1a202c !important;
+            }
+            
+            /* Prevent page breaks inside tables */
+            .medicine-table tr {
+                page-break-inside: avoid;
+            }
+            
+            .medicine-table {
+                page-break-after: auto;
+            }
+            
+            .section-title {
+                page-break-after: avoid;
+            }
+        }
+    </style>
+</head>
+<body>
+    
+    <!-- ===== PRINT BUTTON (Outside Printable Area) ===== -->
+    <div class="print-btn-container no-print">
+        <button onclick="window.print()" class="print-btn">
+            <i class="fas fa-print"></i> Print Prescription
+        </button>
+        <br>
+        <a href="{% url 'prescriptions:doctor_prescription_detail' prescription.pk %}" 
+           style="display: inline-block; margin-top: 10px; color: #1a3a5c; font-family: 'Segoe UI', sans-serif; font-size: 14px;">
+            ← Back to Prescription
+        </a>
+    </div>
+    
+    <!-- ===== PRINTABLE AREA ===== -->
+    <div class="print-container" id="printArea">
+        
+        <!-- Header -->
+        <div class="header">
+            <div class="hospital-name">
+                {{ hospital.name|default:"NHIMS Hospital" }}
+            </div>
+            <div class="hospital-details">
+                {{ hospital.address|default:"Dhaka, Bangladesh" }}
+                <span>|</span>
+                Phone: {{ hospital.phone|default:"+880 1234 567890" }}
+                <span>|</span>
+                Email: {{ hospital.email|default:"info@nhims.com" }}
+            </div>
+        </div>
+        
+        <!-- Prescription Header -->
+        <div class="prescription-header">
+            <div>
+                <div class="prescription-number">
+                    Prescription: {{ prescription.prescription_number }}
+                </div>
+                <div style="font-size: 13px; color: #4a5568; margin-top: 3px;">
+                    Appointment: {{ prescription.appointment.appointment_number|default:"N/A" }}
+                </div>
+            </div>
+            <div class="issue-date">
+                Issued: {{ prescription.issued_at|date:"d M Y"|default:prescription.created_at|date:"d M Y" }}
+            </div>
+        </div>
+        
+        <!-- Patient & Doctor Info -->
+        <div class="info-grid">
+            <div class="info-item">
+                <span class="info-label">Patient Name</span>
+                <span class="info-value">{{ patient.full_name }}</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Patient ID</span>
+                <span class="info-value">{{ patient.health_id|default:"N/A" }}</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Age / Gender</span>
+                <span class="info-value">
+                    {% if age %}{{ age }} years{% else %}N/A{% endif %}
+                    {% if patient.gender %} / {{ patient.get_gender_display }}{% endif %}
+                </span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Phone</span>
+                <span class="info-value">{{ patient.phone|default:"N/A" }}</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Blood Group</span>
+                <span class="info-value">{{ patient.blood_group|default:"N/A" }}</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Doctor</span>
+                <span class="info-value">Dr. {{ doctor.full_name }}</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Registration No.</span>
+                <span class="info-value">{{ doctor.registration_number|default:"N/A" }}</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Department</span>
+                <span class="info-value">
+                    {% for specialty in doctor.specialties.all %}
+                        {{ specialty.name }}{% if not forloop.last %}, {% endif %}
+                    {% empty %}
+                        N/A
+                    {% endfor %}
+                </span>
+            </div>
+        </div>
+        
+        <!-- Clinical Information -->
+        <div class="clinical-info">
+            <div class="section-title">Clinical Information</div>
+            
+            <div class="clinical-item">
+                <span class="clinical-label">Diagnosis:</span>
+                <span class="clinical-value">{{ prescription.diagnosis|default:"N/A" }}</span>
+            </div>
+            
+            {% if prescription.symptoms %}
+            <div class="clinical-item">
+                <span class="clinical-label">Symptoms:</span>
+                <span class="clinical-value">{{ prescription.symptoms }}</span>
+            </div>
+            {% endif %}
+            
+            {% if prescription.clinical_notes %}
+            <div class="clinical-item">
+                <span class="clinical-label">Clinical Notes:</span>
+                <span class="clinical-value">{{ prescription.clinical_notes }}</span>
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- Medicines -->
+        <div class="section-title">Prescribed Medicines</div>
+        
+        {% if medicines %}
+            <table class="medicine-table">
+                <thead>
+                    <tr>
+                        <th style="width: 25%;">Medicine</th>
+                        <th style="width: 12%;">Dosage</th>
+                        <th style="width: 15%;">Frequency</th>
+                        <th style="width: 12%;">Duration</th>
+                        <th style="width: 12%;">Route</th>
+                        <th style="width: 24%;">Instruction</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for med in medicines %}
+                    <tr>
+                        <td><strong>{{ med.medicine_name }}</strong></td>
+                        <td>{{ med.dosage }}</td>
+                        <td>{{ med.get_frequency_display }}</td>
+                        <td>{{ med.duration }}</td>
+                        <td>{{ med.get_route_display }}</td>
+                        <td>
+                            {% if med.instruction %}{{ med.instruction }}{% endif %}
+                            {% if med.before_food %} <span style="color:#2b6cb0;">(Before food)</span>{% endif %}
+                            {% if med.after_food %} <span style="color:#2b6cb0;">(After food)</span>{% endif %}
+                            {% if med.morning %} <span style="color:#2b6cb0;">Morning</span>{% endif %}
+                            {% if med.afternoon %} <span style="color:#2b6cb0;">Afternoon</span>{% endif %}
+                            {% if med.night %} <span style="color:#2b6cb0;">Night</span>{% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p style="color: #718096; font-style: italic; margin: 10px 0;">No medicines prescribed.</p>
+        {% endif %}
+        
+        <!-- Advice -->
+        {% if prescription.advice %}
+        <div class="advice-section">
+            <div style="font-weight: 700; color: #1a3a5c; margin-bottom: 5px;">Medical Advice</div>
+            <p>{{ prescription.advice }}</p>
+        </div>
+        {% endif %}
+        
+        <!-- Follow Up -->
+        {% if prescription.follow_up_date %}
+        <div class="follow-up">
+            <strong>Follow-up Date:</strong>
+            {{ prescription.follow_up_date|date:"l, d M Y" }}
+            {% if prescription.follow_up_instructions %}
+                <br>
+                <strong>Instructions:</strong> {{ prescription.follow_up_instructions }}
+            {% endif %}
+        </div>
+        {% else %}
+        <div class="follow-up" style="background: #f8fafc; border-color: #e2e8f0;">
+            <span style="color: #4a5568;">No follow-up scheduled.</span>
+        </div>
+        {% endif %}
+        
+        <!-- Signature Section -->
+        <div class="signature-section">
+            <div class="signature-box">
+                <div class="seal-placeholder">
+                    Hospital<br>Seal
+                </div>
+            </div>
+            <div class="signature-box">
+                <div class="signature-line"></div>
+                <div class="signature-label">Doctor's Signature</div>
+                <div class="signature-name">Dr. {{ doctor.full_name }}</div>
+                <div class="signature-reg">Reg. No: {{ doctor.registration_number|default:"N/A" }}</div>
+            </div>
+            <div class="signature-box">
+                <div style="font-size: 12px; color: #4a5568; margin-top: 30px;">
+                    <span style="display: block;">Date: {{ now|date:"d M Y" }}</span>
+                    <span style="display: block; margin-top: 5px;">Time: {{ now|time:"h:i A" }}</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Footer -->
+        <div class="footer">
+            <span class="confidential">⚕️ Confidential Medical Document</span>
+            <br>
+            Generated by NHIMS Bangladesh • {{ now|date:"d M Y h:i A" }}
+            <br>
+            This prescription is valid only with doctor's signature and hospital seal.
+        </div>
+        
+    </div>
+    
+    <!-- Font Awesome (optional, for print icon) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+</body>
+</html>

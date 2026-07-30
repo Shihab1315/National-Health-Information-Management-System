@@ -12,12 +12,12 @@ All views use services.py for business logic and RoleRequiredMixin for RBAC.
 """
 
 import logging
-from datetime import datetime, time
+from datetime import datetime, time, timedelta
 from typing import Any, cast
-
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
 from django.core.exceptions import ValidationError, PermissionDenied
+from django.db import transaction
 from django.db.models import Q
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -30,7 +30,14 @@ from django.views.generic import (
 from django.core.paginator import Paginator
 from django.contrib.auth.decorators import login_required
 from accounts.decorators import role_required
+from django.utils.decorators import method_decorator
+from .forms import DoctorLabRequestForm
+from doctors.models import Doctor
+from appointments.models import Appointment
 
+from doctors.models import Doctor
+from patients.models import Patient
+from hospitals.models import Hospital
 
 from django.views.generic import TemplateView
 
@@ -1184,3 +1191,502 @@ def patient_lab_history(request):
         'current_date': timezone.now(),
     }
     return render(request, 'laboratory/patient/lab_history.html', context)
+
+@method_decorator([login_required, role_required(['doctor'])], name='dispatch')
+class DoctorLabRequestListView(View):
+    """
+    Doctor Lab Request List View.
+    Displays all laboratory requests created by the logged-in doctor.
+    """
+    template_name = 'laboratory/doctor/my_lab_requests.html'
+    
+    def get(self, request):
+        # Get the logged-in doctor
+        try:
+            doctor = Doctor.objects.get(user=request.user)
+        except Doctor.DoesNotExist:
+            messages.error(request, "You are not registered as a doctor.")
+            return redirect('dashboard:doctor_dashboard')
+        
+        # Base queryset - only this doctor's lab orders
+        lab_orders = LabOrder.objects.filter(
+            doctor=doctor,
+            deleted_at__isnull=True
+        ).select_related(
+            'patient',
+            'doctor',
+            'hospital',
+            'appointment',
+            'prescription',
+            'created_by'
+        ).prefetch_related(
+            'items',
+            'items__test'
+        )
+        
+        # ========== SUMMARY STATISTICS ==========
+        total = lab_orders.count()
+        pending = lab_orders.filter(status='ordered').count()
+        processing = lab_orders.filter(status__in=['collected', 'processing']).count()
+        completed = lab_orders.filter(status='completed').count()
+        cancelled = lab_orders.filter(status='cancelled').count()
+        today = lab_orders.filter(
+            ordered_date__date=timezone.now().date()
+        ).count()
+        
+        # This week
+        start_of_week = timezone.now().date() - timedelta(days=timezone.now().weekday())
+        week_count = lab_orders.filter(
+            ordered_date__date__gte=start_of_week
+        ).count()
+        
+        # Reports ready (completed with results)
+        reports_ready = lab_orders.filter(
+            status='completed',
+            items__result__isnull=False
+        ).distinct().count()
+        
+        # ========== SEARCH ==========
+        search_query = request.GET.get('search', '').strip()
+        if search_query:
+            lab_orders = lab_orders.filter(
+                Q(order_number__icontains=search_query) |
+                Q(patient__full_name__icontains=search_query) |
+                Q(patient__health_id__icontains=search_query) |
+                Q(appointment__appointment_number__icontains=search_query) |
+                Q(patient__phone__icontains=search_query) |
+                Q(items__test__name__icontains=search_query)
+            ).distinct()
+        
+        # ========== FILTERS ==========
+        status_filter = request.GET.get('status')
+        if status_filter and status_filter != 'all':
+            lab_orders = lab_orders.filter(status=status_filter)
+        
+        date_filter = request.GET.get('date_filter')
+        if date_filter == 'today':
+            lab_orders = lab_orders.filter(ordered_date__date=timezone.now().date())
+        elif date_filter == 'tomorrow':
+            tomorrow = timezone.now().date() + timedelta(days=1)
+            lab_orders = lab_orders.filter(ordered_date__date=tomorrow)
+        elif date_filter == 'this_week':
+            start = timezone.now().date() - timedelta(days=timezone.now().weekday())
+            end = start + timedelta(days=6)
+            lab_orders = lab_orders.filter(ordered_date__date__range=[start, end])
+        elif date_filter == 'custom':
+            start_date = request.GET.get('start_date')
+            end_date = request.GET.get('end_date')
+            if start_date and end_date:
+                try:
+                    start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
+                    end_date = datetime.strptime(end_date, '%Y-%m-%d').date()
+                    lab_orders = lab_orders.filter(ordered_date__date__range=[start_date, end_date])
+                except ValueError:
+                    pass
+        
+        priority_filter = request.GET.get('priority')
+        if priority_filter and priority_filter != 'all':
+            # Priority not in LabOrder model, skip
+            pass
+        
+        hospital_filter = request.GET.get('hospital')
+        if hospital_filter and hospital_filter != 'all':
+            lab_orders = lab_orders.filter(hospital_id=hospital_filter)
+        
+        # ========== SORTING ==========
+        sort_by = request.GET.get('sort', 'newest')
+        sort_mapping = {
+            'newest': '-ordered_date',
+            'oldest': 'ordered_date',
+            'patient_name': 'patient__full_name',
+            '-patient_name': '-patient__full_name',
+            'status': 'status',
+            '-status': '-status',
+        }
+        order_by = sort_mapping.get(sort_by, '-ordered_date')
+        lab_orders = lab_orders.order_by(order_by)
+        
+        # ========== PAGINATION ==========
+        paginator = Paginator(lab_orders, 10)
+        page_number = request.GET.get('page')
+        page_obj = paginator.get_page(page_number)
+        
+        # ========== FILTER DATA ==========
+        hospitals = Hospital.objects.filter(active=True).order_by('name')
+        
+        context = {
+            'doctor': doctor,
+            'page_obj': page_obj,
+            'lab_orders': page_obj,
+            'total': total,
+            'pending': pending,
+            'processing': processing,
+            'completed': completed,
+            'cancelled': cancelled,
+            'today_count': today,
+            'week_count': week_count,
+            'reports_ready': reports_ready,
+            'search_query': search_query,
+            'status_filter': status_filter,
+            'date_filter': date_filter,
+            'priority_filter': priority_filter,
+            'hospital_filter': hospital_filter,
+            'sort_by': sort_by,
+            'hospitals': hospitals,
+            'today': timezone.now().date(),
+        }
+        
+        return render(request, self.template_name, context)
+    
+@method_decorator([login_required, role_required(['doctor'])], name='dispatch')
+class DoctorLabRequestDetailView(View):
+    """
+    Doctor Lab Request Detail View.
+    Read-only view for doctors to monitor their lab requests.
+    """
+    template_name = 'laboratory/doctor/lab_request_detail.html'
+    
+    def get(self, request, pk):
+        # Get the logged-in doctor
+        try:
+            doctor = Doctor.objects.get(user=request.user)
+        except Doctor.DoesNotExist:
+            messages.error(request, "You are not registered as a doctor.")
+            return redirect('dashboard:doctor_dashboard')
+        
+        # Get the lab order - only if it belongs to this doctor
+        lab_order = get_object_or_404(
+            LabOrder.objects.select_related(
+                'patient',
+                'doctor',
+                'hospital',
+                'appointment',
+                'prescription',
+                'created_by'
+            ).prefetch_related(
+                'items',
+                'items__test',
+                'items__result'
+            ),
+            pk=pk,
+            doctor=doctor,
+            deleted_at__isnull=True
+        )
+        
+        # Get requested tests
+        requested_tests = lab_order.items.all()
+        
+        # Build timeline
+        timeline = self._build_timeline(lab_order)
+        
+        # Check if report is ready
+        report_ready = lab_order.status == 'completed'
+        
+        context = {
+            'doctor': doctor,
+            'lab_order': lab_order,
+            'patient': lab_order.patient,
+            'hospital': lab_order.hospital,
+            'requested_tests': requested_tests,
+            'timeline': timeline,
+            'report_ready': report_ready,
+            'today': timezone.now().date(),
+        }
+        
+        return render(request, self.template_name, context)
+    
+    def _build_timeline(self, lab_order):
+        """Build status timeline for the lab order."""
+        timeline = []
+        
+        # 1. Request Submitted (Created)
+        timeline.append({
+            'status': 'Request Submitted',
+            'date': lab_order.created_at,
+            'user': lab_order.created_by,
+            'is_completed': True,
+            'icon': '📋'
+        })
+        
+        # 2. Received by Laboratory (if status is not 'ordered')
+        if lab_order.status != 'ordered':
+            timeline.append({
+                'status': 'Received by Laboratory',
+                'date': lab_order.updated_at,
+                'user': None,
+                'is_completed': True,
+                'icon': '📥'
+            })
+        else:
+            timeline.append({
+                'status': 'Received by Laboratory',
+                'date': None,
+                'user': None,
+                'is_completed': False,
+                'icon': '⏳'
+            })
+        
+        # 3. Sample Collected
+        if lab_order.status in ['collected', 'processing', 'completed']:
+            timeline.append({
+                'status': 'Sample Collected',
+                'date': lab_order.updated_at,
+                'user': None,
+                'is_completed': True,
+                'icon': '🧪'
+            })
+        elif lab_order.status == 'ordered':
+            timeline.append({
+                'status': 'Sample Collection',
+                'date': None,
+                'user': None,
+                'is_completed': False,
+                'icon': '⏳'
+            })
+        
+        # 4. Testing Started
+        if lab_order.status in ['processing', 'completed']:
+            timeline.append({
+                'status': 'Testing Started',
+                'date': lab_order.updated_at,
+                'user': None,
+                'is_completed': True,
+                'icon': '🔬'
+            })
+        elif lab_order.status in ['ordered', 'collected']:
+            timeline.append({
+                'status': 'Testing',
+                'date': None,
+                'user': None,
+                'is_completed': False,
+                'icon': '⏳'
+            })
+        
+        # 5. Report Generated
+        if lab_order.status == 'completed':
+            timeline.append({
+                'status': 'Report Generated',
+                'date': lab_order.updated_at,
+                'user': None,
+                'is_completed': True,
+                'icon': '📊'
+            })
+        elif lab_order.status != 'completed':
+            timeline.append({
+                'status': 'Report Generation',
+                'date': None,
+                'user': None,
+                'is_completed': False,
+                'icon': '⏳'
+            })
+        
+        # 6. Completed
+        if lab_order.status == 'completed':
+            timeline.append({
+                'status': 'Completed',
+                'date': lab_order.updated_at,
+                'user': None,
+                'is_completed': True,
+                'icon': '✅'
+            })
+        else:
+            timeline.append({
+                'status': 'Completion',
+                'date': None,
+                'user': None,
+                'is_completed': False,
+                'icon': '⏳'
+            })
+        
+        return timeline
+    
+@method_decorator([login_required, role_required(['doctor'])], name='dispatch')
+class DoctorLabRequestCreateView(View):
+    """
+    Doctor Lab Request Create View.
+    Allows doctors to create laboratory requests for their patients.
+    """
+    template_name = 'laboratory/doctor/create_lab_request.html'
+    
+    def get(self, request):
+        try:
+            doctor = Doctor.objects.get(user=request.user)
+        except Doctor.DoesNotExist:
+            messages.error(request, "You are not registered as a doctor.")
+            return redirect('dashboard:doctor_dashboard')
+        
+        # ===== DEBUG =====
+        print("=" * 60)
+        print(f"🔍 Doctor: {doctor.full_name} (ID: {doctor.id})")
+        print("=" * 60)
+        
+        # ডাক্তারের সব রোগী (completed/confirmed appointments থেকে)
+        patients = Patient.objects.filter(
+            appointments__doctor=doctor,
+            appointments__status__in=['completed', 'confirmed'],
+            appointments__deleted_at__isnull=True
+        ).distinct().order_by('full_name')
+        
+        # ===== DEBUG =====
+        print(f"📋 Patients found: {patients.count()}")
+        for p in patients:
+            print(f"   - ID: {p.id}, Name: {p.full_name}")
+        print("=" * 60)
+        
+        # ডাক্তারের সব Completed/Confirmed Appointment
+        appointments = Appointment.objects.filter(
+            doctor=doctor,
+            status__in=['completed', 'confirmed'],
+            deleted_at__isnull=True
+        ).select_related('patient').order_by('-appointment_date')
+        
+        # ===== DEBUG =====
+        print(f"📋 Appointments found: {appointments.count()}")
+        for apt in appointments:
+            print(f"   - #{apt.id}: {apt.patient.full_name} - {apt.status}")
+        print("=" * 60)
+        
+        form = DoctorLabRequestForm(doctor=doctor)
+        
+        context = {
+            'doctor': doctor,
+            'patients': patients,
+            'appointments': appointments,
+            'form': form,
+            'today': timezone.now().date(),
+        }
+        
+        return render(request, self.template_name, context)
+    
+    def post(self, request):
+        try:
+            doctor = Doctor.objects.get(user=request.user)
+        except Doctor.DoesNotExist:
+            messages.error(request, "You are not registered as a doctor.")
+            return redirect('dashboard:doctor_dashboard')
+        
+        # ===== DEBUG =====
+        print("=" * 60)
+        print(f"🔍 POST Request - Doctor: {doctor.full_name} (ID: {doctor.id})")
+        print(f"📋 POST Data: {request.POST}")
+        print("=" * 60)
+        
+        patient_id = request.POST.get('patient')
+        appointment_id = request.POST.get('appointment')
+        
+        if not patient_id:
+            messages.error(request, "Please select a patient.")
+            return self._render_with_errors(request, None)
+        
+        try:
+            patient = Patient.objects.get(id=patient_id, is_active=True)
+            print(f"✅ Patient found: {patient.full_name} (ID: {patient.id})")
+        except Patient.DoesNotExist:
+            messages.error(request, "Selected patient does not exist.")
+            return self._render_with_errors(request, None)
+        
+        form = DoctorLabRequestForm(doctor, request.POST)
+        
+        if form.is_valid():
+            print("✅ Form is valid")
+            try:
+                with transaction.atomic():
+                    tests = form.cleaned_data['tests']
+                    priority = form.cleaned_data['priority']
+                    diagnosis = form.cleaned_data['diagnosis'].strip()
+                    clinical_notes = form.cleaned_data.get('clinical_notes', '').strip()
+                    instructions = form.cleaned_data.get('instructions', '').strip()
+                    
+                    print(f"📋 Tests: {[t.name for t in tests]}")
+                    print(f"📋 Priority: {priority}")
+                    print(f"📋 Diagnosis: {diagnosis[:50]}...")
+                    print("=" * 60)
+                    
+                    lab_order = LabOrder(
+                        patient=patient,
+                        doctor=doctor,
+                        hospital=doctor.hospital,
+                        created_by=request.user,
+                    )
+                    
+                    if appointment_id:
+                        try:
+                            appointment = Appointment.objects.get(
+                                id=appointment_id,
+                                doctor=doctor,
+                                status__in=['completed', 'confirmed']
+                            )
+                            lab_order.appointment = appointment
+                            print(f"✅ Appointment linked: #{appointment.id} - {appointment.patient.full_name}")
+                        except Appointment.DoesNotExist:
+                            print("⚠️ Appointment not found, continuing without appointment")
+                    
+                    lab_order.notes = f"Priority: {priority}\n\nDiagnosis: {diagnosis}\n\nClinical Notes: {clinical_notes}\n\nInstructions: {instructions}"
+                    lab_order.save()
+                    print(f"✅ Lab Order saved: #{lab_order.order_number}")
+                    
+                    for test in tests:
+                        LabOrderItem.objects.create(
+                            lab_order=lab_order,
+                            test=test,
+                            notes=''
+                        )
+                        print(f"   ✅ Test added: {test.name}")
+                    
+                    print("=" * 60)
+                    print(f"✅ Laboratory Request #{lab_order.order_number} created successfully!")
+                    print("=" * 60)
+                    
+                    messages.success(
+                        request, 
+                        f"✅ Laboratory Request #{lab_order.order_number} has been created successfully."
+                    )
+                    
+                    return redirect('laboratory:doctor_lab_request_detail', pk=lab_order.id)
+                    
+            except Exception as e:
+                print(f"❌ ERROR: {e}")
+                import traceback
+                traceback.print_exc()
+                messages.error(request, f"Error creating lab request: {str(e)}")
+                return self._render_with_errors(request, form)
+        else:
+            print("❌ Form is invalid:")
+            for field, errors in form.errors.items():
+                for error in errors:
+                    print(f"   {field}: {error}")
+                    messages.error(request, f"{field}: {error}")
+        
+        return self._render_with_errors(request, form)
+    
+    def _render_with_errors(self, request, form):
+        """Helper method to render form with errors."""
+        try:
+            doctor = Doctor.objects.get(user=request.user)
+        except Doctor.DoesNotExist:
+            return redirect('dashboard:doctor_dashboard')
+        
+        patients = Patient.objects.filter(
+            appointments__doctor=doctor,
+            appointments__status__in=['completed', 'confirmed'],
+            appointments__deleted_at__isnull=True
+        ).distinct().order_by('full_name')
+        
+        appointments = Appointment.objects.filter(
+            doctor=doctor,
+            status__in=['completed', 'confirmed'],
+            deleted_at__isnull=True
+        ).select_related('patient').order_by('-appointment_date')
+        
+        if form is None:
+            form = DoctorLabRequestForm(doctor=doctor)
+        
+        context = {
+            'doctor': doctor,
+            'patients': patients,
+            'appointments': appointments,
+            'form': form,
+            'today': timezone.now().date(),
+        }
+        
+        return render(request, self.template_name, context)

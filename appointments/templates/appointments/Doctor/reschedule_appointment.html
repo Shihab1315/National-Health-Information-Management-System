@@ -1,0 +1,357 @@
+<!-- appointments/templates/appointments/doctor/reschedule_appointment.html -->
+{% extends "doctor/base.html" %}
+{% load static %}
+
+{% block title %}Reschedule Appointment | NHIMS{% endblock %}
+
+{% block extra_css %}
+<style>
+    .reschedule-card {
+        transition: all 0.2s ease;
+    }
+    .reschedule-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+    }
+    .arrow-down {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 0.5rem 0;
+        color: #3b82f6;
+    }
+    .readonly-field {
+        background-color: #f3f4f6;
+        padding: 0.5rem 0.75rem;
+        border-radius: 0.5rem;
+        color: #1f2937;
+        font-weight: 500;
+        cursor: default;
+    }
+    .dark .readonly-field {
+        background-color: #374151;
+        color: #e5e7eb;
+    }
+    .date-time-input {
+        width: 100%;
+        padding: 0.625rem 0.875rem;
+        border-radius: 0.5rem;
+        border: 1px solid #d1d5db;
+        background-color: white;
+        color: #1f2937;
+        transition: all 0.2s ease;
+    }
+    .dark .date-time-input {
+        background-color: #1f2937;
+        border-color: #4b5563;
+        color: #e5e7eb;
+    }
+    .date-time-input:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+    }
+    .dark .date-time-input:focus {
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+    }
+    .action-btn {
+        padding: 0.625rem 1.25rem;
+        border-radius: 0.5rem;
+        font-weight: 500;
+        font-size: 0.875rem;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+    .action-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+    .btn-primary {
+        background-color: #3b82f6;
+        color: white;
+    }
+    .btn-primary:hover {
+        background-color: #2563eb;
+    }
+    .btn-secondary {
+        background-color: #6b7280;
+        color: white;
+    }
+    .btn-secondary:hover {
+        background-color: #4b5563;
+    }
+</style>
+{% endblock %}
+
+{% block doctor_content %}
+<div class="container mx-auto px-4 py-6">
+    
+    <!-- ===== BREADCRUMB ===== -->
+    <nav class="text-sm text-gray-500 dark:text-gray-400 mb-6" aria-label="Breadcrumb">
+        <ol class="flex flex-wrap items-center gap-2">
+            <li><a href="{% url 'dashboard:doctor_dashboard' %}" class="hover:text-blue-600 dark:hover:text-blue-400 transition">Dashboard</a></li>
+            <li><span class="mx-2">/</span></li>
+            <li><a href="{% url 'appointments:doctor_appointments' %}" class="hover:text-blue-600 dark:hover:text-blue-400 transition">My Appointments</a></li>
+            <li><span class="mx-2">/</span></li>
+            <li><a href="{% url 'appointments:doctor_appointment_detail' appointment.id %}" class="hover:text-blue-600 dark:hover:text-blue-400 transition">Appointment #{{ appointment.appointment_number }}</a></li>
+            <li><span class="mx-2">/</span></li>
+            <li class="text-gray-700 dark:text-gray-300 font-medium">Reschedule</li>
+        </ol>
+    </nav>
+
+    <!-- ===== PAGE HEADER ===== -->
+    <div class="mb-6">
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Reschedule Appointment</h1>
+        <p class="text-gray-600 dark:text-gray-300">Change the date and time of this appointment</p>
+    </div>
+
+    <!-- ===== MAIN CONTENT ===== -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- ===== LEFT COLUMN - APPOINTMENT INFO ===== -->
+        <div class="lg:col-span-2 space-y-6">
+            
+            <!-- Appointment Information - READ ONLY -->
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 reschedule-card">
+                <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    Current Appointment Information
+                </h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 text-sm">
+                    <div>
+                        <p class="text-gray-500 dark:text-gray-400 text-xs">Appointment Number</p>
+                        <p class="font-medium text-gray-900 dark:text-white">{{ appointment.appointment_number }}</p>
+                    </div>
+                    <div>
+                        <p class="text-gray-500 dark:text-gray-400 text-xs">Status</p>
+                        <span class="status-badge-lg 
+                            {% if appointment.status == 'pending' %}bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300
+                            {% elif appointment.status == 'confirmed' %}bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300
+                            {% elif appointment.status == 'completed' %}bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300
+                            {% elif appointment.status == 'cancelled' %}bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300
+                            {% else %}bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300{% endif %}">
+                            {{ appointment.get_status_display|default:appointment.status }}
+                        </span>
+                    </div>
+                    <div>
+                        <p class="text-gray-500 dark:text-gray-400 text-xs">Patient</p>
+                        <p class="font-medium text-gray-900 dark:text-white">{{ patient.full_name }}</p>
+                    </div>
+                    <div>
+                        <p class="text-gray-500 dark:text-gray-400 text-xs">Health ID</p>
+                        <p class="font-medium text-gray-900 dark:text-white">{{ patient.health_id|default:"N/A" }}</p>
+                    </div>
+                    <div>
+                        <p class="text-gray-500 dark:text-gray-400 text-xs">Doctor</p>
+                        <p class="font-medium text-gray-900 dark:text-white">Dr. {{ doctor.full_name }}</p>
+                    </div>
+                    <div>
+                        <p class="text-gray-500 dark:text-gray-400 text-xs">Hospital</p>
+                        <p class="font-medium text-gray-900 dark:text-white">{{ hospital.name|default:"N/A" }}</p>
+                    </div>
+                    <div>
+                        <p class="text-gray-500 dark:text-gray-400 text-xs">Current Date</p>
+                        <p class="font-medium text-gray-900 dark:text-white">{{ appointment.appointment_date|date:"l, F d, Y" }}</p>
+                    </div>
+                    <div>
+                        <p class="text-gray-500 dark:text-gray-400 text-xs">Current Time</p>
+                        <p class="font-medium text-gray-900 dark:text-white">{{ appointment.appointment_time|time:"h:i A" }}</p>
+                    </div>
+                    <div>
+                        <p class="text-gray-500 dark:text-gray-400 text-xs">Appointment Type</p>
+                        <p class="font-medium text-gray-900 dark:text-white">Regular</p>
+                    </div>
+                    <div>
+                        <p class="text-gray-500 dark:text-gray-400 text-xs">Reason</p>
+                        <p class="font-medium text-gray-900 dark:text-white">{{ appointment.reason|default:"N/A" }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Summary - Current vs New -->
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 reschedule-card">
+                <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                    Appointment Summary
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+                    <!-- Current -->
+                    <div class="text-center p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                        <p class="text-xs text-gray-500 dark:text-gray-400">Current</p>
+                        <p class="text-lg font-semibold text-gray-900 dark:text-white">{{ appointment.appointment_date|date:"M d, Y" }}</p>
+                        <p class="text-md text-gray-600 dark:text-gray-300">{{ appointment.appointment_time|time:"h:i A" }}</p>
+                    </div>
+                    
+                    <!-- Arrow -->
+                    <div class="flex justify-center items-center">
+                        <svg class="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"/>
+                        </svg>
+                    </div>
+                    
+                    <!-- New (will be filled by JavaScript or form) -->
+                    <div class="text-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border-2 border-dashed border-blue-300 dark:border-blue-700" id="newSummary">
+                        <p class="text-xs text-blue-600 dark:text-blue-400">New</p>
+                        <p class="text-lg font-semibold text-blue-600 dark:text-blue-400" id="newDateDisplay">Select Date</p>
+                        <p class="text-md text-blue-500 dark:text-blue-300" id="newTimeDisplay">Select Time</p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ===== RIGHT COLUMN - RESCHEDULE FORM ===== -->
+        <div class="lg:col-span-1 space-y-6">
+            
+            <!-- Reschedule Form -->
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 reschedule-card">
+                <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                    </svg>
+                    Select New Date & Time
+                </h2>
+                
+                <form method="post" id="rescheduleForm" class="space-y-4">
+                    {% csrf_token %}
+                    
+                    <!-- Date Picker -->
+                    <div>
+                        <label for="appointment_date" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Appointment Date
+                        </label>
+                        <input type="date" 
+                               name="appointment_date" 
+                               id="appointment_date" 
+                               class="date-time-input"
+                               min="{{ today|date:'Y-m-d' }}"
+                               required>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                            Select a date for the appointment (cannot be in the past)
+                        </p>
+                    </div>
+                    
+                    <!-- Time Picker -->
+                    <div>
+                        <label for="appointment_time" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Appointment Time
+                        </label>
+                        <input type="time" 
+                               name="appointment_time" 
+                               id="appointment_time" 
+                               class="date-time-input"
+                               min="09:00" 
+                               max="17:00"
+                               step="1800"
+                               required>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                            Working hours: 9:00 AM - 5:00 PM (30-minute slots)
+                        </p>
+                    </div>
+                    
+                    <!-- Action Buttons -->
+                    <div class="space-y-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+                        <button type="submit" class="action-btn btn-primary w-full">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                            </svg>
+                            Reschedule Appointment
+                        </button>
+                        <a href="{% url 'appointments:doctor_appointment_detail' appointment.id %}" 
+                           class="action-btn btn-secondary w-full text-center">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                            </svg>
+                            Cancel & Return
+                        </a>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Quick Info -->
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 reschedule-card">
+                <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    Quick Info
+                </h2>
+                <div class="space-y-3 text-sm">
+                    <div class="flex justify-between">
+                        <span class="text-gray-500 dark:text-gray-400">Appointment</span>
+                        <span class="font-medium text-gray-900 dark:text-white">#{{ appointment.id }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-500 dark:text-gray-400">Status</span>
+                        <span class="font-medium text-gray-900 dark:text-white">{{ appointment.get_status_display|default:appointment.status }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-500 dark:text-gray-400">Token</span>
+                        <span class="font-medium text-gray-900 dark:text-white">{{ appointment.token|default:"N/A" }}</span>
+                    </div>
+                    <hr class="border-gray-200 dark:border-gray-700">
+                    <div class="flex justify-between">
+                        <span class="text-gray-500 dark:text-gray-400">Created</span>
+                        <span class="font-medium text-gray-900 dark:text-white">{{ appointment.created_at|date:"M d, Y" }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-500 dark:text-gray-400">Today</span>
+                        <span class="font-medium text-gray-900 dark:text-white">{{ today|date:"M d, Y" }}</span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- ===== JAVASCRIPT FOR LIVE PREVIEW ===== -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const dateInput = document.getElementById('appointment_date');
+        const timeInput = document.getElementById('appointment_time');
+        const newDateDisplay = document.getElementById('newDateDisplay');
+        const newTimeDisplay = document.getElementById('newTimeDisplay');
+        
+        function updatePreview() {
+            // Update date
+            if (dateInput.value) {
+                const date = new Date(dateInput.value);
+                const options = { month: 'short', day: 'numeric', year: 'numeric' };
+                newDateDisplay.textContent = date.toLocaleDateString('en-US', options);
+                newDateDisplay.style.color = '';
+            } else {
+                newDateDisplay.textContent = 'Select Date';
+                newDateDisplay.style.color = '#6b7280';
+            }
+            
+            // Update time
+            if (timeInput.value) {
+                const timeParts = timeInput.value.split(':');
+                const hours = parseInt(timeParts[0]);
+                const minutes = parseInt(timeParts[1]);
+                const ampm = hours >= 12 ? 'PM' : 'AM';
+                const hour12 = hours % 12 || 12;
+                newTimeDisplay.textContent = `${hour12}:${minutes.toString().padStart(2, '0')} ${ampm}`;
+                newTimeDisplay.style.color = '';
+            } else {
+                newTimeDisplay.textContent = 'Select Time';
+                newTimeDisplay.style.color = '#6b7280';
+            }
+        }
+        
+        dateInput.addEventListener('change', updatePreview);
+        timeInput.addEventListener('change', updatePreview);
+        
+        // Initial preview
+        updatePreview();
+    });
+</script>
+{% endblock %}

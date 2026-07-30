@@ -21,11 +21,8 @@ urlpatterns = [
     path('cancelled/', views.CancelledAppointmentsView.as_view(), name='cancelled'),
 
     # ---------- Patient‑specific URLs ----------
-    # List of patient's own appointments
     path('my-appointments/', views.patient_appointment_list, name='patient_appointment_list'),
-    # Detail of a single appointment (patient only)
     path('my-appointments/<int:pk>/', views.patient_appointment_detail, name='patient_appointment_detail'),
-    # Booking wizard (patient only)
     path('book/', views.patient_book_appointment, name='patient_book_appointment'),
     path('my-appointments/<int:pk>/cancel/', views.patient_cancel_appointment, name='patient_cancel_appointment'),
     path('my-appointments/<int:pk>/reschedule/', views.patient_reschedule_appointment, name='patient_reschedule_appointment'),
@@ -33,6 +30,7 @@ urlpatterns = [
     path('my-appointments/<int:pk>/slip/', views.patient_appointment_slip_preview, name='patient_appointment_slip_preview'),
     path('my-appointments/<int:pk>/slip/download/', views.patient_appointment_slip_pdf, name='patient_appointment_slip_pdf'),
     path('my-appointments/<int:pk>/slip/print/', views.patient_appointment_slip_print, name='patient_appointment_slip_print'),
+    
     # ---------- CRUD (staff/admin) ----------
     path('create/', views.AppointmentCreateView.as_view(), name='create'),
     path('<int:pk>/', views.AppointmentDetailView.as_view(), name='detail'),
@@ -45,13 +43,23 @@ urlpatterns = [
     path('<int:pk>/complete/', views.AppointmentCompleteView.as_view(), name='complete'),
 
     # ---------- AJAX endpoints ----------
-    # Existing (staff/admin)
     path('check-availability/', views.DoctorAvailabilityView.as_view(), name='check_availability'),
     path('api/doctors-by-hospital/', views.doctors_by_hospital, name='doctors_by_hospital'),
-
-    # New (patient booking wizard)
     path('api/doctors/', views.get_doctors_ajax, name='get_doctors_ajax'),
     path('api/available-dates/', views.get_available_dates_ajax, name='get_available_dates_ajax'),
     path('api/available-slots/', views.get_available_slots_ajax, name='get_available_slots_ajax'),
+    
+    # ---------- DOCTOR APPOINTMENT URLS ----------
+    # Doctor's appointment list
     path('doctor/appointments/', views.DoctorAppointmentListView.as_view(), name='doctor_appointments'),
-]
+    
+    # ✅ Doctor appointment detail - USING DoctorAppointmentDetailView
+    path('doctor/appointments/<int:pk>/', views.DoctorAppointmentDetailView.as_view(), name='doctor_appointment_detail'),
+    
+    # Doctor action URLs - using doctor-specific views
+    path('doctor/appointments/<int:pk>/approve/', views.DoctorAppointmentApproveView.as_view(), name='doctor_appointment_approve'),
+    path('doctor/appointments/<int:pk>/reject/', views.DoctorAppointmentRejectView.as_view(), name='doctor_appointment_reject'),
+    path('doctor/appointments/<int:pk>/complete/', views.DoctorAppointmentCompleteView.as_view(), name='doctor_appointment_complete'),
+    path('doctor/appointments/<int:pk>/cancel/', views.DoctorAppointmentCancelView.as_view(), name='doctor_appointment_cancel'),
+   # ✅ Doctor appointment reschedule
+    path('doctor/appointments/<int:pk>/reschedule/', views.DoctorAppointmentRescheduleView.as_view(), name='doctor_appointment_reschedule'),]

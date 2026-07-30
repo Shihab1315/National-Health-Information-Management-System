@@ -1,0 +1,720 @@
+<!-- appointments/templates/appointments/doctor/doctor_appointments.html -->
+{% extends "doctor/base.html" %}
+{% load static %}
+
+{% block title %}My Appointments | NHIMS{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Custom animations and hover effects */
+    .card-hover {
+        transition: all 0.2s ease-in-out;
+    }
+    .card-hover:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2);
+    }
+    
+    .table-row-hover {
+        transition: background-color 0.15s ease;
+    }
+    
+    .btn-action {
+        transition: all 0.15s ease;
+        font-weight: 500;
+        padding: 0.25rem 0.75rem;
+        border-radius: 0.5rem;
+        font-size: 0.75rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        line-height: 1.4;
+        border: 1px solid transparent;
+    }
+    .btn-action:focus {
+        outline: 2px solid #3b82f6;
+        outline-offset: 2px;
+    }
+    
+    .btn-view {
+        background: transparent;
+        color: #2563eb;
+        border-color: #2563eb;
+    }
+    .btn-view:hover {
+        background: #dbeafe;
+        border-color: #1d4ed8;
+        transform: scale(1.05);
+    }
+    
+    .btn-approve {
+        background: #22c55e;
+        color: white;
+        border-color: #22c55e;
+    }
+    .btn-approve:hover {
+        background: #16a34a;
+        border-color: #16a34a;
+        transform: scale(1.05);
+        box-shadow: 0 4px 12px rgba(34, 197, 94, 0.4);
+    }
+    
+    .btn-reject {
+        background: #ef4444;
+        color: white;
+        border-color: #ef4444;
+    }
+    .btn-reject:hover {
+        background: #dc2626;
+        border-color: #dc2626;
+        transform: scale(1.05);
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+    }
+    
+    .btn-reschedule {
+        background: #f59e0b;
+        color: white;
+        border-color: #f59e0b;
+    }
+    .btn-reschedule:hover {
+        background: #d97706;
+        border-color: #d97706;
+        transform: scale(1.05);
+        box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+    }
+    
+    .btn-complete {
+        background: #6366f1;
+        color: white;
+        border-color: #6366f1;
+    }
+    .btn-complete:hover {
+        background: #4f46e5;
+        border-color: #4f46e5;
+        transform: scale(1.05);
+        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+    }
+    
+    .btn-action:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none !important;
+        box-shadow: none !important;
+    }
+    
+    /* Status badge improvements */
+    .status-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    }
+    
+    /* Filter chips */
+    .filter-chip {
+        padding: 0.375rem 1rem;
+        border-radius: 9999px;
+        font-size: 0.8125rem;
+        font-weight: 500;
+        transition: all 0.15s ease;
+        cursor: pointer;
+        border: 2px solid transparent;
+        background: #f3f4f6;
+        color: #4b5563;
+    }
+    .dark .filter-chip {
+        background: #374151;
+        color: #d1d5db;
+    }
+    .filter-chip:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    .filter-chip.active {
+        border-color: #3b82f6;
+        background: #3b82f6;
+        color: white;
+    }
+    .dark .filter-chip.active {
+        background: #2563eb;
+        border-color: #2563eb;
+        color: white;
+    }
+    
+    /* Tooltip */
+    .tooltip-trigger {
+        position: relative;
+        cursor: help;
+    }
+    .tooltip-trigger .tooltip-text {
+        visibility: hidden;
+        opacity: 0;
+        position: absolute;
+        bottom: calc(100% + 8px);
+        left: 50%;
+        transform: translateX(-50%);
+        background: #1f2937;
+        color: white;
+        padding: 0.5rem 0.75rem;
+        border-radius: 0.5rem;
+        font-size: 0.75rem;
+        white-space: nowrap;
+        max-width: 300px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        transition: all 0.2s ease;
+        z-index: 50;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+    .dark .tooltip-trigger .tooltip-text {
+        background: #374151;
+    }
+    .tooltip-trigger:hover .tooltip-text {
+        visibility: visible;
+        opacity: 1;
+    }
+    
+    /* Bulk action toolbar */
+    .bulk-toolbar {
+        transition: all 0.3s ease;
+        max-height: 0;
+        overflow: hidden;
+        opacity: 0;
+    }
+    .bulk-toolbar.visible {
+        max-height: 200px;
+        opacity: 1;
+        padding: 0.75rem 0;
+    }
+    
+    /* Sticky header */
+    .table-header {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+    
+    /* Table scroll */
+    .table-container {
+        max-height: 600px;
+        overflow-y: auto;
+    }
+    .table-container table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+    .table-container thead th {
+        position: sticky;
+        top: 0;
+        z-index: 11;
+    }
+    
+    /* Avatar */
+    .patient-avatar {
+        width: 2.5rem;
+        height: 2.5rem;
+        border-radius: 9999px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 0.875rem;
+        flex-shrink: 0;
+    }
+    
+    /* Next appointment card */
+    .next-appointment-card {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.08), rgba(99, 102, 241, 0.08));
+        border: 1px solid rgba(59, 130, 246, 0.2);
+    }
+    .dark .next-appointment-card {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(99, 102, 241, 0.15));
+        border-color: rgba(59, 130, 246, 0.3);
+    }
+</style>
+{% endblock %}
+
+{% block doctor_content %}
+<div class="container mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <!-- Page Header -->
+    <div class="mb-6">
+        <h1 class="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">My Appointments</h1>
+        <p class="text-gray-600 dark:text-gray-300 mt-1">Manage all appointments assigned to you</p>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-3 sm:gap-4 mb-6">
+        <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 card-hover">
+            <p class="text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wider">Total</p>
+            <p class="text-2xl font-bold text-gray-900 dark:text-white mt-1">{{ total }}</p>
+        </div>
+        <div class="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-xl shadow-sm border border-yellow-200 dark:border-yellow-700 card-hover">
+            <p class="text-yellow-700 dark:text-yellow-400 text-xs uppercase tracking-wider">Pending</p>
+            <p class="text-2xl font-bold text-yellow-800 dark:text-yellow-200 mt-1">{{ pending }}</p>
+        </div>
+        <div class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl shadow-sm border border-blue-200 dark:border-blue-700 card-hover">
+            <p class="text-blue-700 dark:text-blue-400 text-xs uppercase tracking-wider">Confirmed</p>
+            <p class="text-2xl font-bold text-blue-800 dark:text-blue-200 mt-1">{{ approved }}</p>
+        </div>
+        <div class="bg-green-50 dark:bg-green-900/20 p-4 rounded-xl shadow-sm border border-green-200 dark:border-green-700 card-hover">
+            <p class="text-green-700 dark:text-green-400 text-xs uppercase tracking-wider">Completed</p>
+            <p class="text-2xl font-bold text-green-800 dark:text-green-200 mt-1">{{ completed }}</p>
+        </div>
+        <div class="bg-red-50 dark:bg-red-900/20 p-4 rounded-xl shadow-sm border border-red-200 dark:border-red-700 card-hover">
+            <p class="text-red-700 dark:text-red-400 text-xs uppercase tracking-wider">Cancelled</p>
+            <p class="text-2xl font-bold text-red-800 dark:text-red-200 mt-1">{{ cancelled }}</p>
+        </div>
+        <div class="bg-indigo-50 dark:bg-indigo-900/20 p-4 rounded-xl shadow-sm border border-indigo-200 dark:border-indigo-700 card-hover">
+            <p class="text-indigo-700 dark:text-indigo-400 text-xs uppercase tracking-wider">Today</p>
+            <p class="text-2xl font-bold text-indigo-800 dark:text-indigo-200 mt-1">{{ today_count }}</p>
+        </div>
+        <div class="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-xl shadow-sm border border-purple-200 dark:border-purple-700 card-hover">
+            <p class="text-purple-700 dark:text-purple-400 text-xs uppercase tracking-wider">Upcoming</p>
+            <p class="text-2xl font-bold text-purple-800 dark:text-purple-200 mt-1">{{ upcoming_count }}</p>
+        </div>
+    </div>
+
+    <!-- Next Appointment Card -->
+    {% if page_obj.0 %}
+    <div class="next-appointment-card rounded-xl p-4 mb-6 card-hover">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-500">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                </div>
+                <div>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">Next Appointment</p>
+                    <p class="text-base font-semibold text-gray-900 dark:text-white">
+                        {{ page_obj.0.patient.full_name }}
+                    </p>
+                </div>
+            </div>
+            <div class="flex flex-wrap items-center gap-4 text-sm">
+                <span class="text-gray-600 dark:text-gray-300">
+                    <i class="far fa-calendar-alt mr-1"></i>
+                    {{ page_obj.0.appointment_date|date:"M d, Y" }}
+                </span>
+                <span class="text-gray-600 dark:text-gray-300">
+                    <i class="far fa-clock mr-1"></i>
+                    {{ page_obj.0.appointment_time|time:"h:i A" }}
+                </span>
+                <span class="status-badge 
+                    {% if page_obj.0.status == 'pending' %}bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300
+                    {% elif page_obj.0.status == 'confirmed' %}bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300
+                    {% elif page_obj.0.status == 'completed' %}bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300
+                    {% elif page_obj.0.status == 'cancelled' %}bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300
+                    {% elif page_obj.0.status == 'rejected' %}bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300
+                    {% else %}bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300{% endif %}">
+                    {{ page_obj.0.get_status_display|default:page_obj.0.status }}
+                </span>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Filter Chips -->
+    <div class="flex flex-wrap gap-2 mb-4">
+        <a href="?{% if search_query %}search={{ search_query }}&{% endif %}{% if date_filter %}date_filter={{ date_filter }}&{% endif %}{% if appointment_type %}type={{ appointment_type }}&{% endif %}{% if sort_by %}sort={{ sort_by }}{% endif %}" 
+           class="filter-chip {% if not status_filter or status_filter == 'all' %}active{% endif %}">
+            All
+        </a>
+        <a href="?status=pending&{% if search_query %}search={{ search_query }}&{% endif %}{% if date_filter %}date_filter={{ date_filter }}&{% endif %}{% if appointment_type %}type={{ appointment_type }}&{% endif %}{% if sort_by %}sort={{ sort_by }}{% endif %}" 
+           class="filter-chip {% if status_filter == 'pending' %}active{% endif %}">
+            Pending
+        </a>
+        <a href="?status=confirmed&{% if search_query %}search={{ search_query }}&{% endif %}{% if date_filter %}date_filter={{ date_filter }}&{% endif %}{% if appointment_type %}type={{ appointment_type }}&{% endif %}{% if sort_by %}sort={{ sort_by }}{% endif %}" 
+           class="filter-chip {% if status_filter == 'confirmed' %}active{% endif %}">
+            Confirmed
+        </a>
+        <a href="?status=completed&{% if search_query %}search={{ search_query }}&{% endif %}{% if date_filter %}date_filter={{ date_filter }}&{% endif %}{% if appointment_type %}type={{ appointment_type }}&{% endif %}{% if sort_by %}sort={{ sort_by }}{% endif %}" 
+           class="filter-chip {% if status_filter == 'completed' %}active{% endif %}">
+            Completed
+        </a>
+        <a href="?status=cancelled&{% if search_query %}search={{ search_query }}&{% endif %}{% if date_filter %}date_filter={{ date_filter }}&{% endif %}{% if appointment_type %}type={{ appointment_type }}&{% endif %}{% if sort_by %}sort={{ sort_by }}{% endif %}" 
+           class="filter-chip {% if status_filter == 'cancelled' %}active{% endif %}">
+            Cancelled
+        </a>
+        <a href="?status=rejected&{% if search_query %}search={{ search_query }}&{% endif %}{% if date_filter %}date_filter={{ date_filter }}&{% endif %}{% if appointment_type %}type={{ appointment_type }}&{% endif %}{% if sort_by %}sort={{ sort_by }}{% endif %}" 
+           class="filter-chip {% if status_filter == 'rejected' %}active{% endif %}">
+            Rejected
+        </a>
+    </div>
+
+    <!-- Search & Filters -->
+    <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
+        <form method="get" class="flex flex-wrap gap-3 items-end">
+            <!-- Search -->
+            <div class="flex-1 min-w-[180px]">
+                <label for="search" class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Search</label>
+                <div class="relative">
+                    <input type="text" name="search" id="search" value="{{ search_query }}"
+                           placeholder="Patient name, ID, reason..."
+                           class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:focus:ring-blue-500/30 text-sm pl-10">
+                    <svg class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                </div>
+            </div>
+
+            <!-- Status Filter -->
+            <div>
+                <label for="status" class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Status</label>
+                <select name="status" id="status" class="rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-blue-500 text-sm">
+                    <option value="all" {% if not status_filter or status_filter == 'all' %}selected{% endif %}>All</option>
+                    <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>Pending</option>
+                    <option value="confirmed" {% if status_filter == 'confirmed' %}selected{% endif %}>Confirmed</option>
+                    <option value="completed" {% if status_filter == 'completed' %}selected{% endif %}>Completed</option>
+                    <option value="cancelled" {% if status_filter == 'cancelled' %}selected{% endif %}>Cancelled</option>
+                    <option value="rejected" {% if status_filter == 'rejected' %}selected{% endif %}>Rejected</option>
+                </select>
+            </div>
+
+            <!-- Date Filter -->
+            <div>
+                <label for="date_filter" class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Date</label>
+                <select name="date_filter" id="date_filter" class="rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-blue-500 text-sm">
+                    <option value="">All Dates</option>
+                    <option value="today" {% if date_filter == 'today' %}selected{% endif %}>Today</option>
+                    <option value="tomorrow" {% if date_filter == 'tomorrow' %}selected{% endif %}>Tomorrow</option>
+                    <option value="this_week" {% if date_filter == 'this_week' %}selected{% endif %}>This Week</option>
+                    <option value="custom" {% if date_filter == 'custom' %}selected{% endif %}>Custom</option>
+                </select>
+            </div>
+
+            <!-- Custom date range -->
+            <div id="custom-date-range" class="flex gap-2 {% if date_filter != 'custom' %}hidden{% endif %}">
+                <div>
+                    <label for="start_date" class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">From</label>
+                    <input type="date" name="start_date" id="start_date" value="{{ request.GET.start_date }}"
+                           class="rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-blue-500 text-sm">
+                </div>
+                <div>
+                    <label for="end_date" class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">To</label>
+                    <input type="date" name="end_date" id="end_date" value="{{ request.GET.end_date }}"
+                           class="rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-blue-500 text-sm">
+                </div>
+            </div>
+
+            <!-- Appointment Type -->
+            <div>
+                <label for="type" class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Type</label>
+                <select name="type" id="type" class="rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-blue-500 text-sm">
+                    <option value="all" {% if not appointment_type or appointment_type == 'all' %}selected{% endif %}>All Types</option>
+                    <option value="regular" {% if appointment_type == 'regular' %}selected{% endif %}>Regular</option>
+                    <option value="emergency" {% if appointment_type == 'emergency' %}selected{% endif %}>Emergency</option>
+                    <option value="follow_up" {% if appointment_type == 'follow_up' %}selected{% endif %}>Follow Up</option>
+                    <option value="consultation" {% if appointment_type == 'consultation' %}selected{% endif %}>Consultation</option>
+                </select>
+            </div>
+
+            <!-- Sort -->
+            <div>
+                <label for="sort" class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Sort</label>
+                <select name="sort" id="sort" class="rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-blue-500 text-sm">
+                    <option value="newest" {% if sort_by == 'newest' %}selected{% endif %}>Newest First</option>
+                    <option value="oldest" {% if sort_by == 'oldest' %}selected{% endif %}>Oldest First</option>
+                    <option value="appointment_date" {% if sort_by == 'appointment_date' %}selected{% endif %}>Date (Asc)</option>
+                    <option value="-appointment_date" {% if sort_by == '-appointment_date' %}selected{% endif %}>Date (Desc)</option>
+                    <option value="patient__full_name" {% if sort_by == 'patient__full_name' %}selected{% endif %}>Name (A-Z)</option>
+                    <option value="-patient__full_name" {% if sort_by == '-patient__full_name' %}selected{% endif %}>Name (Z-A)</option>
+                </select>
+            </div>
+
+            <div class="flex gap-2">
+                <button type="submit" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg shadow transition hover:shadow-lg flex items-center gap-2 focus:ring-2 focus:ring-blue-500/50">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
+                    </svg>
+                    Apply
+                </button>
+                <a href="{% url 'appointments:doctor_appointments' %}" class="px-4 py-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-white text-sm font-medium rounded-lg transition flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                    </svg>
+                    Reset
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Bulk Action Toolbar -->
+    <div class="bulk-toolbar" id="bulkToolbar">
+        <div class="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-3 border border-blue-200 dark:border-blue-700 flex flex-wrap items-center gap-3">
+            <span class="text-sm text-blue-700 dark:text-blue-300 font-medium">
+                <span id="selectedCount">0</span> selected
+            </span>
+            <div class="flex flex-wrap gap-2">
+                <button class="btn-action btn-approve" onclick="alert('Bulk approve selected appointments')">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                    </svg>
+                    Approve Selected
+                </button>
+                <button class="btn-action btn-reject" onclick="alert('Bulk reject selected appointments')">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                    Reject Selected
+                </button>
+                <button class="btn-action btn-view" onclick="clearSelections()">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                    Cancel Selection
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Appointments Table -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div class="table-container">
+            <table class="w-full text-sm text-left text-gray-700 dark:text-gray-300">
+                <thead class="text-xs uppercase bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-400 table-header">
+                    <tr>
+                        <th scope="col" class="px-4 py-3 w-10">
+                            <input type="checkbox" id="selectAll" onchange="toggleAllCheckboxes()" class="rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-2 focus:ring-blue-500/50">
+                        </th>
+                        <th scope="col" class="px-4 py-3">ID</th>
+                        <th scope="col" class="px-4 py-3">Patient</th>
+                        <th scope="col" class="px-4 py-3">Date & Time</th>
+                        <th scope="col" class="px-4 py-3">Type</th>
+                        <th scope="col" class="px-4 py-3 max-w-[120px]">Reason</th>
+                        <th scope="col" class="px-4 py-3">Status</th>
+                        <th scope="col" class="px-4 py-3 text-center">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for appointment in page_obj %}
+                    <tr class="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 table-row-hover">
+                        <td class="px-4 py-3">
+                            <input type="checkbox" class="row-checkbox rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-2 focus:ring-blue-500/50" onchange="updateBulkToolbar()">
+                        </td>
+                        <td class="px-4 py-3 font-medium text-gray-900 dark:text-white">
+                            #{{ appointment.id }}
+                        </td>
+                        <td class="px-4 py-3">
+                            <div class="flex items-center gap-3">
+                                <div class="patient-avatar {% if appointment.patient.profile_photo %}p-0{% else %}bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300{% endif %}">
+                                    {% if appointment.patient.profile_photo %}
+                                        <img src="{{ appointment.patient.profile_photo.url }}" alt="{{ appointment.patient.full_name }}" class="w-10 h-10 rounded-full object-cover">
+                                    {% else %}
+                                        {{ appointment.patient.full_name|slice:":1"|upper }}
+                                    {% endif %}
+                                </div>
+                                <div>
+                                    <p class="font-medium text-gray-900 dark:text-white">{{ appointment.patient.full_name }}</p>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">ID: {{ appointment.patient.health_id|default:"N/A" }}</p>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">
+                                        {{ appointment.patient.date_of_birth|timesince }} • {{ appointment.patient.get_gender_display|default:"N/A" }}
+                                    </p>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-4 py-3">
+                            <p>{{ appointment.appointment_date|date:"M d, Y" }}</p>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">{{ appointment.appointment_time|time:"h:i A" }}</p>
+                        </td>
+                        <td class="px-4 py-3">
+                            <span class="px-2 py-1 text-xs font-medium rounded-full 
+                                {% if appointment.appointment_type == 'emergency' %}bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300
+                                {% elif appointment.appointment_type == 'consultation' %}bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300
+                                {% elif appointment.appointment_type == 'follow_up' %}bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300
+                                {% else %}bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300{% endif %}">
+                                {{ appointment.get_appointment_type_display|default:"Regular" }}
+                            </span>
+                        </td>
+                        <td class="px-4 py-3 max-w-[120px]">
+                            {% if appointment.reason %}
+                            <div class="tooltip-trigger">
+                                <span class="text-gray-700 dark:text-gray-300">{{ appointment.reason|truncatechars:30 }}</span>
+                                <span class="tooltip-text">{{ appointment.reason }}</span>
+                            </div>
+                            {% else %}
+                            <span class="text-gray-400 dark:text-gray-500">N/A</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-3">
+                            <span class="status-badge 
+                                {% if appointment.status == 'pending' %}bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300
+                                {% elif appointment.status == 'confirmed' %}bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300
+                                {% elif appointment.status == 'completed' %}bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300
+                                {% elif appointment.status == 'cancelled' %}bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300
+                                {% elif appointment.status == 'rejected' %}bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300
+                                {% else %}bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300{% endif %}">
+                                {% if appointment.status == 'confirmed' %}Confirmed
+                                {% else %}{{ appointment.get_status_display|default:appointment.status }}{% endif %}
+                            </span>
+                        </td>
+                        <td class="px-4 py-3">
+                            <div class="flex flex-wrap items-center justify-center gap-1.5">
+                                <!-- View Details -->
+                                <a href="{% url 'appointments:doctor_appointment_detail' appointment.id %}" 
+                                   class="btn-action btn-view" aria-label="View appointment details">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                    </svg>
+                                    View
+                                </a>
+
+                                <!-- Action buttons based on status -->
+                                {% if appointment.status == 'pending' %}
+                                    <form method="post" action="{% url 'appointments:doctor_appointment_approve' appointment.id %}" class="inline">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn-action btn-approve" aria-label="Approve appointment">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                            </svg>
+                                            Approve
+                                        </button>
+                                    </form>
+                                    <form method="post" action="{% url 'appointments:doctor_appointment_reject' appointment.id %}" class="inline">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn-action btn-reject" aria-label="Reject appointment">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                            </svg>
+                                            Reject
+                                        </button>
+                                    </form>
+                                {% elif appointment.status == 'confirmed' %}
+                                    <a href="{% url 'appointments:doctor_appointment_detail' appointment.id %}?action=reschedule" 
+                                       class="btn-action btn-reschedule" aria-label="Reschedule appointment">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                        </svg>
+                                        Reschedule
+                                    </a>
+                                    <form method="post" action="{% url 'appointments:doctor_appointment_complete' appointment.id %}" class="inline">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn-action btn-complete" aria-label="Complete appointment">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                            </svg>
+                                            Complete
+                                        </button>
+                                    </form>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="px-4 py-12 text-center">
+                            <div class="flex flex-col items-center justify-center text-gray-500 dark:text-gray-400">
+                                <!-- Empty State Illustration -->
+                                <div class="w-32 h-32 mb-6 relative">
+                                    <svg class="w-full h-full text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 3v4h4"/>
+                                    </svg>
+                                    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-6xl">📋</div>
+                                </div>
+                                <p class="text-xl font-semibold text-gray-700 dark:text-gray-300">No Appointments Found</p>
+                                <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">Appointments assigned to you will appear here</p>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    {% if page_obj.paginator.num_pages > 1 %}
+    <div class="flex flex-wrap items-center justify-between gap-4 mt-6">
+        <div class="text-sm text-gray-700 dark:text-gray-300">
+            Showing <span class="font-medium">{{ page_obj.start_index }}</span> to 
+            <span class="font-medium">{{ page_obj.end_index }}</span> of 
+            <span class="font-medium">{{ page_obj.paginator.count }}</span> appointments
+        </div>
+        <div class="flex gap-1">
+            {% if page_obj.has_previous %}
+                <a href="?page=1{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" 
+                   class="px-3 py-1 rounded border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm transition" aria-label="First page">&laquo;</a>
+                <a href="?page={{ page_obj.previous_page_number }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" 
+                   class="px-3 py-1 rounded border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm transition" aria-label="Previous page">‹</a>
+            {% endif %}
+
+            {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}
+                    <span class="px-3 py-1 rounded bg-blue-600 text-white text-sm">{{ num }}</span>
+                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                    <a href="?page={{ num }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" 
+                       class="px-3 py-1 rounded border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm transition">{{ num }}</a>
+                {% endif %}
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" 
+                   class="px-3 py-1 rounded border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm transition" aria-label="Next page">›</a>
+                <a href="?page={{ page_obj.paginator.num_pages }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" 
+                   class="px-3 py-1 rounded border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm transition" aria-label="Last page">&raquo;</a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Bulk Actions JavaScript -->
+<script>
+    function toggleAllCheckboxes() {
+        const selectAll = document.getElementById('selectAll');
+        const checkboxes = document.querySelectorAll('.row-checkbox');
+        checkboxes.forEach(cb => cb.checked = selectAll.checked);
+        updateBulkToolbar();
+    }
+
+    function updateBulkToolbar() {
+        const checkboxes = document.querySelectorAll('.row-checkbox:checked');
+        const count = checkboxes.length;
+        const toolbar = document.getElementById('bulkToolbar');
+        const countDisplay = document.getElementById('selectedCount');
+        
+        if (count > 0) {
+            toolbar.classList.add('visible');
+            countDisplay.textContent = count;
+        } else {
+            toolbar.classList.remove('visible');
+        }
+    }
+
+    function clearSelections() {
+        document.querySelectorAll('.row-checkbox').forEach(cb => cb.checked = false);
+        document.getElementById('selectAll').checked = false;
+        updateBulkToolbar();
+    }
+
+    // Initialize toolbar on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        updateBulkToolbar();
+    });
+</script>
+
+<!-- Date filter toggle script -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const dateFilter = document.getElementById('date_filter');
+        const customRange = document.getElementById('custom-date-range');
+        dateFilter.addEventListener('change', function() {
+            if (this.value === 'custom') {
+                customRange.classList.remove('hidden');
+            } else {
+                customRange.classList.add('hidden');
+            }
+        });
+        if (dateFilter.value === 'custom') {
+            customRange.classList.remove('hidden');
+        }
+    });
+</script>
+{% endblock %}
