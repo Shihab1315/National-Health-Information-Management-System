@@ -18,4 +18,9 @@ urlpatterns = [
     path('my-notifications/<int:pk>/mark-read/', views.patient_notification_mark_read, name='patient_notification_mark_read'),
     path('my-notifications/<int:pk>/mark-unread/', views.patient_notification_mark_unread, name='patient_notification_mark_unread'),
     path('my-notifications/<int:pk>/delete/', views.patient_notification_delete, name='patient_notification_delete'),
+     # Doctor - Notifications
+    path('doctor/', views.DoctorNotificationListView.as_view(), name='doctor_notifications'),
+    path('doctor/<int:pk>/', views.DoctorNotificationDetailView.as_view(), name='doctor_notification_detail'),
+    path('doctor/<int:pk>/mark-read/', views.DoctorNotificationMarkReadView.as_view(), name='doctor_notification_mark_read'),
+     path('doctor/mark-all-read/', views.DoctorMarkAllNotificationsReadView.as_view(), name='doctor_mark_all_notifications_read'),
 ]

@@ -2,6 +2,7 @@ from django.contrib.auth.models import AbstractUser
 from django.db import models
 
 class User(AbstractUser):
+    phone = models.CharField(max_length=15, blank=True, null=True)
     class Role(models.TextChoices):
         SUPER_ADMIN = 'super_admin', 'Super Admin'
         HOSPITAL_ADMIN = 'hospital_admin', 'Hospital Admin'

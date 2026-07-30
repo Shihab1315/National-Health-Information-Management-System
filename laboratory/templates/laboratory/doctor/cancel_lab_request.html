@@ -1,0 +1,399 @@
+<!-- templates/laboratory/doctor/cancel_lab_request.html -->
+{% extends "doctor/base.html" %}
+{% load static %}
+
+{% block title %}Cancel Lab Request | NHIMS{% endblock %}
+
+{% block extra_css %}
+<style>
+    .cancel-card {
+        transition: all 0.2s ease;
+    }
+    .cancel-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+    }
+    .warning-box {
+        background: #fef2f2;
+        border: 1px solid #fca5a5;
+        border-radius: 0.75rem;
+        padding: 1.25rem;
+        color: #991b1b;
+    }
+    .dark .warning-box {
+        background: #7f1d1d;
+        border-color: #ef4444;
+        color: #fca5a5;
+    }
+    .warning-icon {
+        font-size: 2.5rem;
+        text-align: center;
+    }
+    .action-btn {
+        padding: 0.625rem 1.25rem;
+        border-radius: 0.5rem;
+        font-weight: 500;
+        font-size: 0.875rem;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        width: 100%;
+        border: none;
+        cursor: pointer;
+        text-decoration: none;
+    }
+    .action-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+    .btn-danger {
+        background-color: #dc2626;
+        color: white;
+    }
+    .btn-danger:hover {
+        background-color: #b91c1c;
+    }
+    .btn-secondary {
+        background-color: #6b7280;
+        color: white;
+    }
+    .btn-secondary:hover {
+        background-color: #4b5563;
+    }
+    .btn-outline {
+        background: transparent;
+        color: #6b7280;
+        border: 1px solid #d1d5db;
+    }
+    .btn-outline:hover {
+        background: #f3f4f6;
+    }
+    .dark .btn-outline {
+        color: #e5e7eb;
+        border-color: #4b5563;
+    }
+    .dark .btn-outline:hover {
+        background: #374151;
+    }
+    .form-input {
+        width: 100%;
+        padding: 0.625rem 0.875rem;
+        border-radius: 0.5rem;
+        border: 1px solid #d1d5db;
+        background-color: white;
+        color: #1f2937;
+        transition: all 0.2s ease;
+    }
+    .dark .form-input {
+        background-color: #1f2937;
+        border-color: #4b5563;
+        color: #e5e7eb;
+    }
+    .form-input:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+    }
+    .dark .form-input:focus {
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+    }
+    .status-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.375rem;
+    }
+    .status-ordered { background: #fef3c7; color: #92400e; }
+    .dark .status-ordered { background: #78350f; color: #fcd34d; }
+    .info-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.5rem 0;
+        border-bottom: 1px solid #e5e7eb;
+    }
+    .dark .info-row {
+        border-bottom-color: #374151;
+    }
+    .info-label {
+        color: #6b7280;
+        font-size: 0.875rem;
+    }
+    .dark .info-label {
+        color: #9ca3af;
+    }
+    .info-value {
+        font-weight: 500;
+        color: #1f2937;
+        text-align: right;
+    }
+    .dark .info-value {
+        color: #e5e7eb;
+    }
+    .test-badge {
+        padding: 0.125rem 0.5rem;
+        border-radius: 9999px;
+        font-size: 0.675rem;
+        font-weight: 500;
+        background: #e5e7eb;
+        color: #374151;
+        display: inline-block;
+        margin: 0.125rem;
+    }
+    .dark .test-badge {
+        background: #374151;
+        color: #d1d5db;
+    }
+</style>
+{% endblock %}
+
+{% block doctor_content %}
+<div class="container mx-auto px-4 py-6">
+    
+    <!-- ===== BREADCRUMB ===== -->
+    <nav class="text-sm text-gray-500 dark:text-gray-400 mb-6">
+        <ol class="flex flex-wrap items-center gap-2">
+            <li><a href="{% url 'dashboard:doctor_dashboard' %}" class="hover:text-blue-600 transition">Dashboard</a></li>
+            <li><span class="mx-2">/</span></li>
+            <li><a href="{% url 'laboratory:doctor_lab_requests' %}" class="hover:text-blue-600 transition">My Lab Requests</a></li>
+            <li><span class="mx-2">/</span></li>
+            <li><a href="{% url 'laboratory:doctor_lab_request_detail' lab_order.id %}" class="hover:text-blue-600 transition">#{{ lab_order.order_number }}</a></li>
+            <li><span class="mx-2">/</span></li>
+            <li class="text-red-600 dark:text-red-400 font-medium">Cancel</li>
+        </ol>
+    </nav>
+
+    <!-- ===== PAGE HEADER ===== -->
+    <div class="mb-6">
+        <h1 class="text-2xl font-bold text-red-600 dark:text-red-400 flex items-center gap-2">
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+            Cancel Laboratory Request
+        </h1>
+        <p class="text-gray-600 dark:text-gray-300">Please confirm cancellation of this laboratory request</p>
+    </div>
+
+    <!-- ===== WARNING BOX ===== -->
+    <div class="warning-box mb-6">
+        <div class="flex items-start gap-4">
+            <div class="flex-shrink-0">
+                <svg class="w-8 h-8 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                </svg>
+            </div>
+            <div>
+                <p class="font-semibold text-red-800 dark:text-red-200 text-lg">⚠️ Warning: This action cannot be undone!</p>
+                <p class="text-red-700 dark:text-red-300 mt-1">
+                    You are about to cancel this laboratory request. Once cancelled, it cannot be recovered.
+                    The patient will be notified about this cancellation.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== MAIN CONTENT ===== -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- ===== LEFT COLUMN ===== -->
+        <div class="lg:col-span-2 space-y-6">
+            
+            <!-- Request Information -->
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 cancel-card">
+                <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    Request Details
+                </h2>
+                
+                <div class="space-y-1">
+                    <div class="info-row">
+                        <span class="info-label">Request Number</span>
+                        <span class="info-value">{{ lab_order.order_number }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Patient</span>
+                        <span class="info-value">{{ patient.full_name }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Health ID</span>
+                        <span class="info-value">{{ patient.health_id|default:"N/A" }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Hospital</span>
+                        <span class="info-value">{{ hospital.name|default:"N/A" }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Requested Date</span>
+                        <span class="info-value">{{ lab_order.ordered_date|date:"M d, Y h:i A" }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Current Status</span>
+                        <span class="info-value">
+                            <span class="status-badge status-ordered">
+                                {{ lab_order.get_status_display|default:lab_order.status }}
+                            </span>
+                        </span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Requested Tests</span>
+                        <span class="info-value">
+                            <div class="flex flex-wrap gap-1 justify-end">
+                                {% for item in lab_order.items.all %}
+                                    <span class="test-badge">{{ item.test.name }}</span>
+                                {% endfor %}
+                            </div>
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cancellation Reason (Optional) -->
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 cancel-card">
+                <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                    </svg>
+                    Cancellation Reason (Optional)
+                </h2>
+                <div>
+                    <label for="cancel_reason" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Reason for cancellation
+                    </label>
+                    <textarea name="cancel_reason" id="cancel_reason" rows="3" 
+                              class="form-input" 
+                              placeholder="Please provide a reason for cancelling this request (optional)..."></textarea>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">This will be recorded for audit purposes</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== RIGHT COLUMN ===== -->
+        <div class="lg:col-span-1 space-y-6">
+            
+            <!-- Doctor Information -->
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 cancel-card">
+                <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                    </svg>
+                    Doctor Information
+                </h2>
+                <div class="space-y-2 text-sm">
+                    <div>
+                        <p class="text-gray-500 text-xs">Doctor Name</p>
+                        <p class="font-medium text-gray-900 dark:text-white">Dr. {{ doctor.full_name }}</p>
+                    </div>
+                    <div>
+                        <p class="text-gray-500 text-xs">Registration Number</p>
+                        <p class="font-medium text-gray-900 dark:text-white">{{ doctor.registration_number|default:"N/A" }}</p>
+                    </div>
+                    <div>
+                        <p class="text-gray-500 text-xs">Department</p>
+                        <p class="font-medium text-gray-900 dark:text-white">
+                            {% for specialty in doctor.specialties.all %}
+                                {{ specialty.name }}{% if not forloop.last %}, {% endif %}
+                            {% empty %}
+                                N/A
+                            {% endfor %}
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Summary -->
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 cancel-card">
+                <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    Quick Summary
+                </h2>
+                <div class="space-y-3 text-sm">
+                    <div class="flex justify-between">
+                        <span class="text-gray-500">Request #</span>
+                        <span class="font-medium text-gray-900 dark:text-white">{{ lab_order.order_number }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-500">Status</span>
+                        <span class="font-medium text-gray-900 dark:text-white">
+                            <span class="status-badge status-ordered">{{ lab_order.get_status_display|default:lab_order.status }}</span>
+                        </span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-500">Patient</span>
+                        <span class="font-medium text-gray-900 dark:text-white">{{ patient.full_name }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-500">Tests</span>
+                        <span class="font-medium text-gray-900 dark:text-white">{{ lab_order.items.count }}</span>
+                    </div>
+                    <hr class="border-gray-200 dark:border-gray-700">
+                    <div class="flex justify-between">
+                        <span class="text-gray-500">Created</span>
+                        <span class="font-medium text-gray-900 dark:text-white">{{ lab_order.created_at|date:"M d, Y" }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 cancel-card">
+                <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                    </svg>
+                    Actions
+                </h2>
+                <div class="space-y-3">
+                    <form method="post" id="cancelForm">
+                        {% csrf_token %}
+                        <input type="hidden" name="cancel_reason" id="cancel_reason_hidden">
+                        <button type="submit" class="action-btn btn-danger" id="cancelBtn">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                            Yes, Cancel Request
+                        </button>
+                    </form>
+                    <a href="{% url 'laboratory:doctor_lab_request_detail' lab_order.id %}" 
+                       class="action-btn btn-secondary">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                        </svg>
+                        No, Go Back
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== JAVASCRIPT ===== -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('cancelForm');
+        const cancelBtn = document.getElementById('cancelBtn');
+        const cancelReason = document.getElementById('cancel_reason');
+        const cancelReasonHidden = document.getElementById('cancel_reason_hidden');
+        
+        if (form && cancelBtn) {
+            form.addEventListener('submit', function(e) {
+                // Copy reason to hidden field before submit
+                if (cancelReason) {
+                    cancelReasonHidden.value = cancelReason.value;
+                }
+                cancelBtn.disabled = true;
+                cancelBtn.innerHTML = `
+                    <span class="spinner active"></span>
+                    Cancelling...
+                `;
+            });
+        }
+    });
+</script>
+{% endblock %}

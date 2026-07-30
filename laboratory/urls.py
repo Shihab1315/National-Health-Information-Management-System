@@ -48,5 +48,8 @@ urlpatterns = [
      # Doctor - My Lab Requests
      path('my-lab-requests/', views.DoctorLabRequestListView.as_view(), name='doctor_lab_requests'),
      path('doctor/requests/<int:pk>/', views.DoctorLabRequestDetailView.as_view(), name='doctor_lab_request_detail'),
-      path('doctor/create/', views.DoctorLabRequestCreateView.as_view(), name='doctor_lab_request_create'),
+     path('doctor/create/', views.DoctorLabRequestCreateView.as_view(), name='doctor_lab_request_create'),
+     path('doctor/<int:pk>/edit/', views.DoctorLabRequestUpdateView.as_view(), name='doctor_lab_request_edit'),
+    path('doctor/<int:pk>/cancel/', views.DoctorLabRequestCancelView.as_view(), name='doctor_lab_request_cancel'),
+    path('doctor/<int:pk>/progress/', views.DoctorLabProgressView.as_view(), name='doctor_lab_progress'),
 ]

@@ -1,0 +1,399 @@
+<!-- templates/doctors/doctor/general_settings.html -->
+{% extends "doctor/base.html" %}
+{% load static %}
+
+{% block title %}General Settings | NHIMS{% endblock %}
+
+{% block extra_css %}
+<style>
+    .settings-card {
+        transition: all 0.2s ease;
+    }
+    .settings-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+    }
+    .form-input {
+        width: 100%;
+        padding: 0.625rem 0.875rem;
+        border-radius: 0.5rem;
+        border: 1px solid #d1d5db;
+        background-color: white;
+        color: #1f2937;
+        transition: all 0.2s ease;
+    }
+    .dark .form-input {
+        background-color: #1f2937;
+        border-color: #4b5563;
+        color: #e5e7eb;
+    }
+    .form-input:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+    }
+    .dark .form-input:focus {
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+    }
+    .form-input:disabled {
+        background-color: #f3f4f6;
+        cursor: not-allowed;
+        opacity: 0.7;
+    }
+    .dark .form-input:disabled {
+        background-color: #374151;
+    }
+    .errorlist {
+        color: #ef4444;
+        font-size: 0.75rem;
+        list-style: none;
+        padding: 0;
+        margin: 0.25rem 0 0 0;
+    }
+    .action-btn {
+        padding: 0.625rem 1.25rem;
+        border-radius: 0.5rem;
+        font-weight: 500;
+        font-size: 0.875rem;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        width: 100%;
+        border: none;
+        cursor: pointer;
+    }
+    .action-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+    .action-btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none !important;
+        box-shadow: none !important;
+    }
+    .btn-primary {
+        background-color: #3b82f6;
+        color: white;
+    }
+    .btn-primary:hover {
+        background-color: #2563eb;
+    }
+    .btn-secondary {
+        background-color: #6b7280;
+        color: white;
+    }
+    .btn-secondary:hover {
+        background-color: #4b5563;
+    }
+    .btn-danger {
+        background-color: #ef4444;
+        color: white;
+    }
+    .btn-danger:hover {
+        background-color: #dc2626;
+    }
+    .spinner {
+        display: none;
+        width: 1.25rem;
+        height: 1.25rem;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        border-top-color: white;
+        animation: spin 0.8s linear infinite;
+    }
+    .spinner.active {
+        display: inline-block;
+    }
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+    .settings-icon {
+        color: #3b82f6;
+    }
+    .dark .settings-icon {
+        color: #60a5fa;
+    }
+</style>
+{% endblock %}
+
+{% block doctor_content %}
+<div class="container mx-auto px-4 py-6">
+    
+    <!-- ===== BREADCRUMB ===== -->
+    <nav class="text-sm text-gray-500 dark:text-gray-400 mb-6">
+        <ol class="flex flex-wrap items-center gap-2">
+            <li><a href="{% url 'dashboard:doctor_dashboard' %}" class="hover:text-blue-600 transition">Dashboard</a></li>
+            <li><span class="mx-2">/</span></li>
+            <li><a href="{% url 'doctors:doctor_profile' %}" class="hover:text-blue-600 transition">Profile</a></li>
+            <li><span class="mx-2">/</span></li>
+            <li class="text-gray-700 dark:text-gray-300 font-medium">Settings</li>
+        </ol>
+    </nav>
+
+    <!-- ===== PAGE HEADER ===== -->
+    <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900 dark:text-white">General Settings</h1>
+            <p class="text-gray-600 dark:text-gray-300">Manage your personal application preferences</p>
+        </div>
+        
+        <!-- ===== Notification Settings Button (Small - Right Corner) ===== -->
+        <a href="{% url 'doctors:doctor_notification_settings' %}" 
+           class="notification-btn" title="Configure notification preferences">
+            <i class="fas fa-bell"></i>
+            <span>Notifications</span>
+            <span class="badge">Settings</span>
+        </a>
+    </div>
+    
+
+    <!-- ===== MAIN FORM ===== -->
+    <form method="post" id="settingsForm">
+        {% csrf_token %}
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            
+            <!-- ===== LEFT COLUMN ===== -->
+            <div class="space-y-6">
+                
+                <!-- Display Preferences -->
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 settings-card">
+                    <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                        <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
+                        </svg>
+                        Display Preferences
+                    </h2>
+                    <div class="space-y-4">
+                        <!-- Theme -->
+                        <div>
+                            <label for="{{ form.theme.id_for_label }}" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                Theme
+                            </label>
+                            {{ form.theme }}
+                            {% if form.theme.errors %}
+                                <ul class="errorlist">
+                                    {% for error in form.theme.errors %}
+                                        <li>{{ error }}</li>
+                                    {% endfor %}
+                                </ul>
+                            {% endif %}
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Choose your preferred color theme</p>
+                        </div>
+                        
+                        <!-- Language -->
+                        <div>
+                            <label for="{{ form.language.id_for_label }}" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                Language
+                            </label>
+                            {{ form.language }}
+                            {% if form.language.errors %}
+                                <ul class="errorlist">
+                                    {% for error in form.language.errors %}
+                                        <li>{{ error }}</li>
+                                    {% endfor %}
+                                </ul>
+                            {% endif %}
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Select your preferred language</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Regional Preferences -->
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 settings-card">
+                    <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                        <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        Regional Preferences
+                    </h2>
+                    <div class="space-y-4">
+                        <!-- Time Zone -->
+                        <div>
+                            <label for="{{ form.timezone.id_for_label }}" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                Time Zone
+                            </label>
+                            {{ form.timezone }}
+                            {% if form.timezone.errors %}
+                                <ul class="errorlist">
+                                    {% for error in form.timezone.errors %}
+                                        <li>{{ error }}</li>
+                                    {% endfor %}
+                                </ul>
+                            {% endif %}
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Set your local time zone</p>
+                        </div>
+                        
+                        <!-- Date Format -->
+                        <div>
+                            <label for="{{ form.date_format.id_for_label }}" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                Date Format
+                            </label>
+                            {{ form.date_format }}
+                            {% if form.date_format.errors %}
+                                <ul class="errorlist">
+                                    {% for error in form.date_format.errors %}
+                                        <li>{{ error }}</li>
+                                    {% endfor %}
+                                </ul>
+                            {% endif %}
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Choose how dates are displayed</p>
+                        </div>
+                        
+                        <!-- Time Format -->
+                        <div>
+                            <label for="{{ form.time_format.id_for_label }}" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                Time Format
+                            </label>
+                            {{ form.time_format }}
+                            {% if form.time_format.errors %}
+                                <ul class="errorlist">
+                                    {% for error in form.time_format.errors %}
+                                        <li>{{ error }}</li>
+                                    {% endfor %}
+                                </ul>
+                            {% endif %}
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Choose 12-hour or 24-hour time format</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== RIGHT COLUMN ===== -->
+            <div class="space-y-6">
+                
+                <!-- Dashboard Preferences -->
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 settings-card">
+                    <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                        <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"/>
+                        </svg>
+                        Dashboard Preferences
+                    </h2>
+                    <div class="space-y-4">
+                        <!-- Landing Page -->
+                        <div>
+                            <label for="{{ form.landing_page.id_for_label }}" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                Landing Page
+                            </label>
+                            {{ form.landing_page }}
+                            {% if form.landing_page.errors %}
+                                <ul class="errorlist">
+                                    {% for error in form.landing_page.errors %}
+                                        <li>{{ error }}</li>
+                                    {% endfor %}
+                                </ul>
+                            {% endif %}
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Page you see after logging in</p>
+                        </div>
+                        
+                        <!-- Items Per Page -->
+                        <div>
+                            <label for="{{ form.items_per_page.id_for_label }}" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                Items Per Page
+                            </label>
+                            {{ form.items_per_page }}
+                            {% if form.items_per_page.errors %}
+                                <ul class="errorlist">
+                                    {% for error in form.items_per_page.errors %}
+                                        <li>{{ error }}</li>
+                                    {% endfor %}
+                                </ul>
+                            {% endif %}
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Number of items shown in lists (Appointments, Prescriptions, etc.)</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 settings-card">
+                    <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                        <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                        </svg>
+                        Actions
+                    </h2>
+                    <div class="space-y-3">
+                        <button type="submit" class="action-btn btn-primary" id="saveBtn">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            Save Settings
+                            <span class="spinner" id="saveSpinner"></span>
+                        </button>
+                        
+                        <button type="button" class="action-btn btn-secondary" id="resetBtn" onclick="resetToDefault()">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                            </svg>
+                            Reset to Default
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Quick Info -->
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 settings-card">
+                    <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                        <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        Quick Info
+                    </h2>
+                    <div class="space-y-3 text-sm">
+                        <div class="flex justify-between">
+                            <span class="text-gray-500">Username</span>
+                            <span class="font-medium text-gray-900 dark:text-white">{{ request.user.username }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-500">Settings Last Updated</span>
+                            <span class="font-medium text-gray-900 dark:text-white">{{ settings.updated_at|date:"M d, Y h:i A" }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-500">Settings Created</span>
+                            <span class="font-medium text-gray-900 dark:text-white">{{ settings.created_at|date:"M d, Y" }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- ===== JAVASCRIPT ===== -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('settingsForm');
+        const saveBtn = document.getElementById('saveBtn');
+        const saveSpinner = document.getElementById('saveSpinner');
+        
+        // Form submit handler
+        form.addEventListener('submit', function(e) {
+            saveBtn.disabled = true;
+            saveBtn.innerHTML = `
+                Saving...
+                <span class="spinner active"></span>
+            `;
+        });
+        
+        // Reset to default
+        window.resetToDefault = function() {
+            if (confirm('Are you sure you want to reset all settings to default values?')) {
+                // Set form fields to default values
+                document.getElementById('id_theme').value = 'system';
+                document.getElementById('id_language').value = 'en';
+                document.getElementById('id_timezone').value = 'Asia/Dhaka';
+                document.getElementById('id_date_format').value = 'DD/MM/YYYY';
+                document.getElementById('id_time_format').value = '12';
+                document.getElementById('id_landing_page').value = 'dashboard';
+                document.getElementById('id_items_per_page').value = '10';
+                
+                // Submit the form
+                form.submit();
+            }
+        };
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,486 @@
+<!-- templates/notifications/doctor/notification_detail.html -->
+{% extends "doctor/base.html" %}
+{% load static %}
+
+{% block title %}{{ notification.title }} | NHIMS{% endblock %}
+
+{% block extra_css %}
+<style>
+    .detail-card {
+        transition: all 0.2s ease;
+    }
+    .detail-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+    }
+    .category-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .category-appointment { background: #dbeafe; color: #1e40af; }
+    .dark .category-appointment { background: #1e3a5f; color: #60a5fa; }
+    .category-prescription { background: #d1fae5; color: #065f46; }
+    .dark .category-prescription { background: #064e3b; color: #34d399; }
+    .category-laboratory { background: #e0e7ff; color: #3730a3; }
+    .dark .category-laboratory { background: #312e81; color: #818cf8; }
+    .category-system { background: #fef3c7; color: #92400e; }
+    .dark .category-system { background: #78350f; color: #fcd34d; }
+    .category-reminder { background: #fce4ec; color: #b71c1c; }
+    .dark .category-reminder { background: #7f1d1d; color: #fca5a5; }
+    
+    .priority-low { background: #f3f4f6; color: #6b7280; }
+    .dark .priority-low { background: #374151; color: #9ca3af; }
+    .priority-medium { background: #dbeafe; color: #1e40af; }
+    .dark .priority-medium { background: #1e3a5f; color: #60a5fa; }
+    .priority-high { background: #fef3c7; color: #92400e; }
+    .dark .priority-high { background: #78350f; color: #fcd34d; }
+    .priority-critical { background: #fecaca; color: #991b1b; }
+    .dark .priority-critical { background: #7f1d1d; color: #fca5a5; }
+    
+    .status-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.375rem;
+    }
+    .status-read { background: #d1fae5; color: #065f46; }
+    .dark .status-read { background: #064e3b; color: #34d399; }
+    .status-unread { background: #dbeafe; color: #1e40af; }
+    .dark .status-unread { background: #1e3a5f; color: #60a5fa; }
+    
+    .timeline-item {
+        position: relative;
+        padding-left: 2rem;
+        padding-bottom: 1.5rem;
+        border-left: 2px solid #e5e7eb;
+    }
+    .dark .timeline-item {
+        border-left-color: #374151;
+    }
+    .timeline-item:last-child {
+        border-left-color: transparent;
+        padding-bottom: 0;
+    }
+    .timeline-item .timeline-dot {
+        position: absolute;
+        left: -0.5rem;
+        top: 0.25rem;
+        width: 1rem;
+        height: 1rem;
+        border-radius: 50%;
+        border: 2px solid #e5e7eb;
+        background: white;
+    }
+    .dark .timeline-item .timeline-dot {
+        border-color: #374151;
+        background: #1f2937;
+    }
+    .timeline-item .timeline-dot.completed {
+        background: #22c55e;
+        border-color: #22c55e;
+    }
+    .timeline-item .timeline-dot.current {
+        background: #3b82f6;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2);
+    }
+    .timeline-item .timeline-dot.pending {
+        background: #9ca3af;
+        border-color: #9ca3af;
+    }
+    
+    .action-btn {
+        padding: 0.625rem 1.25rem;
+        border-radius: 0.5rem;
+        font-weight: 500;
+        font-size: 0.875rem;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        width: 100%;
+        border: none;
+        cursor: pointer;
+        text-decoration: none;
+    }
+    .action-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+    .btn-primary {
+        background-color: #3b82f6;
+        color: white;
+    }
+    .btn-primary:hover {
+        background-color: #2563eb;
+    }
+    .btn-secondary {
+        background-color: #6b7280;
+        color: white;
+    }
+    .btn-secondary:hover {
+        background-color: #4b5563;
+    }
+    .btn-success {
+        background-color: #22c55e;
+        color: white;
+    }
+    .btn-success:hover {
+        background-color: #16a34a;
+    }
+    .btn-outline {
+        background: transparent;
+        color: #3b82f6;
+        border: 1px solid #3b82f6;
+    }
+    .btn-outline:hover {
+        background: #dbeafe;
+    }
+    .dark .btn-outline:hover {
+        background: #1e3a5f;
+    }
+    .nav-btn {
+        padding: 0.5rem 1rem;
+        border-radius: 0.5rem;
+        font-weight: 500;
+        font-size: 0.875rem;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        border: 1px solid #d1d5db;
+        color: #374151;
+        text-decoration: none;
+    }
+    .dark .nav-btn {
+        border-color: #4b5563;
+        color: #e5e7eb;
+    }
+    .nav-btn:hover {
+        background: #f3f4f6;
+        transform: translateX(-2px);
+    }
+    .dark .nav-btn:hover {
+        background: #374151;
+    }
+    .nav-btn.next:hover {
+        transform: translateX(2px);
+    }
+</style>
+{% endblock %}
+
+{% block doctor_content %}
+<div class="container mx-auto px-4 py-6">
+    
+    <!-- ===== BREADCRUMB ===== -->
+    <nav class="text-sm text-gray-500 dark:text-gray-400 mb-6">
+        <ol class="flex flex-wrap items-center gap-2">
+            <li><a href="{% url 'dashboard:doctor_dashboard' %}" class="hover:text-blue-600 transition">Dashboard</a></li>
+            <li><span class="mx-2">/</span></li>
+            <li><a href="{% url 'notifications:doctor_notifications' %}" class="hover:text-blue-600 transition">Notifications</a></li>
+            <li><span class="mx-2">/</span></li>
+            <li class="text-gray-700 dark:text-gray-300 font-medium truncate">{{ notification.title|truncatechars:30 }}</li>
+        </ol>
+    </nav>
+
+    <!-- ===== HEADER ===== -->
+    <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+        <div class="flex items-center gap-4">
+            <a href="{% url 'notifications:doctor_notifications' %}" 
+               class="p-2 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                </svg>
+            </a>
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900 dark:text-white">{{ notification.title }}</h1>
+                <p class="text-sm text-gray-500 dark:text-gray-400">
+                    {{ notification.created_at|date:"l, F d, Y" }} at {{ notification.created_at|time:"h:i A" }}
+                </p>
+            </div>
+        </div>
+        <div class="flex flex-wrap gap-2">
+            <span class="category-badge 
+                {% if notification.notification_type == 'appointment_booked' or notification.notification_type == 'appointment_approved' or notification.notification_type == 'appointment_cancelled' or notification.notification_type == 'appointment_completed' %}category-appointment
+                {% elif notification.notification_type == 'prescription_generated' %}category-prescription
+                {% elif notification.notification_type == 'lab_test_requested' or notification.notification_type == 'lab_report_ready' %}category-laboratory
+                {% elif notification.notification_type == 'system_notification' or notification.notification_type == 'account_notification' %}category-system
+                {% elif notification.notification_type == 'medicine_dispensed' or notification.notification_type == 'medicine_low_stock' %}category-reminder
+                {% else %}category-system{% endif %}">
+                {{ notification.get_notification_type_display|default:notification.notification_type }}
+            </span>
+            <span class="status-badge {% if notification.is_read %}status-read{% else %}status-unread{% endif %}">
+                <span class="w-1.5 h-1.5 rounded-full inline-block 
+                    {% if notification.is_read %}bg-green-500{% else %}bg-blue-500{% endif %}"></span>
+                {{ notification.is_read|yesno:"Read,Unread" }}
+            </span>
+            {% if notification.priority %}
+            <span class="status-badge 
+                {% if notification.priority == 'low' %}priority-low
+                {% elif notification.priority == 'medium' %}priority-medium
+                {% elif notification.priority == 'high' %}priority-high
+                {% elif notification.priority == 'critical' %}priority-critical
+                {% endif %}">
+                {{ notification.get_priority_display|default:notification.priority }}
+            </span>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- ===== MAIN CONTENT ===== -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- ===== LEFT COLUMN ===== -->
+        <div class="lg:col-span-2 space-y-6">
+            
+            <!-- Notification Message -->
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 detail-card">
+                <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                    </svg>
+                    Message
+                </h2>
+                <div class="prose prose-sm dark:prose-invert max-w-none">
+                    <p class="text-gray-700 dark:text-gray-300 whitespace-pre-wrap leading-relaxed">
+                        {{ notification.message }}
+                    </p>
+                </div>
+                
+                {% if notification.url %}
+                <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                    <a href="{{ notification.url }}" class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 9l3 3m0 0l-3 3m3-3H8m13 0a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        Open related link
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Related Record -->
+            {% if related_url and related_label %}
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 detail-card">
+                <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    Related Record
+                </h2>
+                <div class="flex flex-wrap gap-3">
+                    <a href="{{ related_url }}" class="action-btn btn-primary w-auto px-6">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                        </svg>
+                        {{ related_label }}
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Navigation (Previous/Next) -->
+            <div class="flex flex-wrap items-center justify-between gap-4">
+                {% if previous %}
+                <a href="{% url 'notifications:doctor_notification_detail' previous.id %}" 
+                   class="nav-btn">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                    </svg>
+                    Previous
+                </a>
+                {% else %}
+                <div></div>
+                {% endif %}
+                
+                {% if next_notification %}
+                <a href="{% url 'notifications:doctor_notification_detail' next_notification.id %}" 
+                   class="nav-btn next">
+                    Next
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
+                    </svg>
+                </a>
+                {% endif %}
+            </div>
+
+        </div>
+
+        <!-- ===== RIGHT COLUMN ===== -->
+        <div class="lg:col-span-1 space-y-6">
+            
+            <!-- Notification Summary -->
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 detail-card">
+                <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    Summary
+                </h2>
+                <div class="space-y-3 text-sm">
+                    <div class="flex justify-between">
+                        <span class="text-gray-500">Notification ID</span>
+                        <span class="font-medium text-gray-900 dark:text-white">#{{ notification.id }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-500">Category</span>
+                        <span class="font-medium text-gray-900 dark:text-white">
+                            {{ notification.get_notification_type_display|default:notification.notification_type }}
+                        </span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-500">Priority</span>
+                        <span class="font-medium text-gray-900 dark:text-white">
+                            <span class="status-badge 
+                                {% if notification.priority == 'low' %}priority-low
+                                {% elif notification.priority == 'medium' %}priority-medium
+                                {% elif notification.priority == 'high' %}priority-high
+                                {% elif notification.priority == 'critical' %}priority-critical
+                                {% endif %}">
+                                {{ notification.get_priority_display|default:notification.priority }}
+                            </span>
+                        </span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-500">Status</span>
+                        <span class="font-medium text-gray-900 dark:text-white">
+                            <span class="status-badge {% if notification.is_read %}status-read{% else %}status-unread{% endif %}">
+                                {{ notification.is_read|yesno:"Read,Unread" }}
+                            </span>
+                        </span>
+                    </div>
+                    <hr class="border-gray-200 dark:border-gray-700">
+                    <div class="flex justify-between">
+                        <span class="text-gray-500">Created</span>
+                        <span class="font-medium text-gray-900 dark:text-white">{{ notification.created_at|date:"M d, Y h:i A" }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-500">Sender</span>
+                        <span class="font-medium text-gray-900 dark:text-white">
+                            {% if notification.sender %}
+                                {{ notification.sender.get_full_name|default:notification.sender.username }}
+                            {% else %}
+                                System
+                            {% endif %}
+                        </span>
+                    </div>
+                    {% if notification.is_read and notification.read_at %}
+                    <div class="flex justify-between">
+                        <span class="text-gray-500">Read At</span>
+                        <span class="font-medium text-gray-900 dark:text-white">{{ notification.read_at|date:"M d, Y h:i A" }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Timeline -->
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 detail-card">
+                <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    Timeline
+                </h2>
+                <div class="space-y-0">
+                    <!-- Created -->
+                    <div class="timeline-item">
+                        <div class="timeline-dot completed"></div>
+                        <div>
+                            <p class="font-medium text-gray-900 dark:text-white">Created</p>
+                            <div class="flex flex-wrap items-center gap-3 text-sm text-gray-500 dark:text-gray-400">
+                                <span>{{ notification.created_at|date:"M d, Y h:i A" }}</span>
+                                {% if notification.sender %}
+                                    <span>by {{ notification.sender.get_full_name|default:notification.sender.username }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Read -->
+                    <div class="timeline-item">
+                        <div class="timeline-dot {% if notification.is_read %}completed{% else %}pending{% endif %}"></div>
+                        <div>
+                            <p class="font-medium text-gray-900 dark:text-white">
+                                {% if notification.is_read %}Read{% else %}Unread{% endif %}
+                            </p>
+                            <div class="flex flex-wrap items-center gap-3 text-sm text-gray-500 dark:text-gray-400">
+                                {% if notification.is_read and notification.read_at %}
+                                    <span>{{ notification.read_at|date:"M d, Y h:i A" }}</span>
+                                {% else %}
+                                    <span class="text-yellow-500">Waiting to be read</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 detail-card">
+                <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                    </svg>
+                    Actions
+                </h2>
+                <div class="space-y-3">
+                    <a href="{% url 'notifications:doctor_notifications' %}" 
+                       class="action-btn btn-secondary">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                        </svg>
+                        Back to Notifications
+                    </a>
+                    
+                   {% if not notification.is_read %}
+    <form method="post" action="{% url 'notifications:doctor_notification_mark_read' notification.id %}" 
+          class="mark-read-form">
+        {% csrf_token %}
+        <button type="submit" class="action-btn btn-success">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+            </svg>
+            Mark as Read
+        </button>
+    </form>
+{% endif %}
+                </div>
+            </div>
+
+            <!-- Quick Info -->
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 detail-card">
+                <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    Quick Info
+                </h2>
+                <div class="space-y-3 text-sm">
+                    <div class="flex justify-between">
+                        <span class="text-gray-500">Today</span>
+                        <span class="font-medium text-gray-900 dark:text-white">{{ today|date:"M d, Y" }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-500">Time</span>
+                        <span class="font-medium text-gray-900 dark:text-white">{{ today|time:"h:i A" }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-500">Notification</span>
+                        <span class="font-medium text-gray-900 dark:text-white">#{{ notification.id }}</span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}

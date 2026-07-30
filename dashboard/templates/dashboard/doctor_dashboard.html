@@ -81,17 +81,48 @@
              text-gray-300 hover:bg-white/5 hover:text-white
           {% endif %}">
     <i class="fas fa-flask w-5 text-center"></i> Laboratory
+           <a href="{% url 'notifications:doctor_notifications' %}" 
+           class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition 
+          {% if request.resolver_match.url_name == 'doctor_notifications' or request.resolver_match.url_name == 'doctor_notification_detail' %}
+             bg-blue-600/30 text-blue-300
+          {% else %}
+             text-gray-300 hover:bg-white/5 hover:text-white
+          {% endif %}">
+    <i class="fas fa-bell w-5 text-center"></i> Notifications
+    {% if unread_notifications > 0 %}
+        <span class="ml-auto bg-red-500 text-white text-xs rounded-full px-2 py-0.5">{{ unread_notifications }}</span>
+    {% endif %}
           </a>
-            <a href="{% url 'notifications:center' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
-                <i class="fas fa-bell w-5 text-center"></i> Notifications
-            </a>
             <hr class="border-white/10 my-3">
-            <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
-                <i class="fas fa-user-circle w-5 text-center"></i> Profile
-            </a>
-            <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
-                <i class="fas fa-cog w-5 text-center"></i> Settings
-            </a>
+            <a href="{% url 'doctors:doctor_profile' %}" 
+   class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition 
+          {% if request.resolver_match.url_name == 'doctor_profile' %}
+             bg-blue-600/30 text-blue-300
+          {% else %}
+             text-gray-300 hover:bg-white/5 hover:text-white
+          {% endif %}">
+    <i class="fas fa-user-circle w-5 text-center"></i> Profile
+</a>
+            <a href="{% url 'doctors:doctor_general_settings' %}" 
+   class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition 
+          {% if request.resolver_match.url_name == 'doctor_general_settings' %}
+             bg-blue-600/30 text-blue-300
+          {% else %}
+             text-gray-300 hover:bg-white/5 hover:text-white
+          {% endif %}">
+    <i class="fas fa-cog w-5 text-center"></i> Settings
+</a>
+
+
+{% comment %} <a href="{% url 'doctors:doctor_notification_settings' %}" 
+   class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition 
+          {% if request.resolver_match.url_name == 'doctor_notification_settings' %}
+             bg-blue-600/30 text-blue-300
+          {% else %}
+             text-gray-300 hover:bg-white/5 hover:text-white
+          {% endif %}">
+    <i class="fas fa-bell w-5 text-center"></i> Notification Settings
+</a> {% endcomment %}
             <!-- LOGOUT -->
             <button type="button"
                     class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-red-400 hover:bg-red-500/10 hover:text-red-300 w-full text-left"
@@ -239,7 +270,7 @@
                 <i class="fas fa-bolt text-blue-400"></i> Quick Actions
             </h2>
             <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-                <a href="{% url 'prescriptions:create' %}" class="bg-white/5 hover:bg-white/10 rounded-xl p-4 text-center transition group">
+                <a href="{% url 'prescriptions:doctor_prescription_list' %}" class="bg-white/5 hover:bg-white/10 rounded-xl p-4 text-center transition group">
                     <i class="fas fa-prescription-bottle text-purple-400 text-2xl block mb-2 group-hover:scale-110 transition"></i>
                     <span class="text-gray-300 text-sm">New Prescription</span>
                 </a>
@@ -251,11 +282,11 @@
                     <i class="fas fa-user-injured text-amber-400 text-2xl block mb-2 group-hover:scale-110 transition"></i>
                     <span class="text-gray-300 text-sm">Patient Records</span>
                 </a>
-                <a href="{% url 'laboratory:order_create' %}" class="bg-white/5 hover:bg-white/10 rounded-xl p-4 text-center transition group">
+                <a href="{% url 'laboratory:doctor_lab_request_create' %}" class="bg-white/5 hover:bg-white/10 rounded-xl p-4 text-center transition group">
                     <i class="fas fa-flask text-rose-400 text-2xl block mb-2 group-hover:scale-110 transition"></i>
                     <span class="text-gray-300 text-sm">Lab Request</span>
                 </a>
-                <a href="{% url 'notifications:center' %}" class="bg-white/5 hover:bg-white/10 rounded-xl p-4 text-center transition group">
+                <a href="{% url 'notifications:doctor_notifications' %}" class="bg-white/5 hover:bg-white/10 rounded-xl p-4 text-center transition group">
                     <i class="fas fa-bell text-amber-400 text-2xl block mb-2 group-hover:scale-110 transition"></i>
                     <span class="text-gray-300 text-sm">Notifications</span>
                 </a>

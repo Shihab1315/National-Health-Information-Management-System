@@ -27,6 +27,8 @@ from django.utils.translation import gettext_lazy as _
 from django.views.generic import (
     ListView, DetailView, CreateView, UpdateView, DeleteView, View
 )
+from .forms import DoctorLabRequestEditForm
+
 from django.core.paginator import Paginator
 from django.contrib.auth.decorators import login_required
 from accounts.decorators import role_required
@@ -1690,3 +1692,404 @@ class DoctorLabRequestCreateView(View):
         }
         
         return render(request, self.template_name, context)
+    
+@method_decorator([login_required, role_required(['doctor'])], name='dispatch')
+class DoctorLabRequestUpdateView(View):
+    """
+    Doctor Lab Request Update View.
+    Allows doctors to edit only their own Draft/Pending lab requests.
+    """
+    template_name = 'laboratory/doctor/edit_lab_request.html'
+    
+    def get(self, request, pk):
+        try:
+            doctor = Doctor.objects.get(user=request.user)
+        except Doctor.DoesNotExist:
+            messages.error(request, "You are not registered as a doctor.")
+            return redirect('dashboard:doctor_dashboard')
+        
+        # Get the lab order - only if it belongs to this doctor
+        lab_order = get_object_or_404(
+            LabOrder.objects.select_related(
+                'patient',
+                'doctor',
+                'hospital',
+                'appointment',
+                'created_by'
+            ).prefetch_related(
+                'items',
+                'items__test'
+            ),
+            pk=pk,
+            doctor=doctor,
+            deleted_at__isnull=True
+        )
+        
+        # Check if editable (only Draft or Pending/Ordered)
+        if lab_order.status not in ['ordered']:
+            messages.warning(
+                request, 
+                "This laboratory request has already entered the laboratory workflow and can no longer be edited."
+            )
+            return redirect('laboratory:doctor_lab_request_detail', pk=lab_order.pk)
+        
+        form = DoctorLabRequestEditForm(doctor=doctor, instance=lab_order)
+        
+        context = {
+            'doctor': doctor,
+            'lab_order': lab_order,
+            'patient': lab_order.patient,
+            'hospital': lab_order.hospital,
+            'form': form,
+            'today': timezone.now().date(),
+            'is_editable': True,
+        }
+        
+        return render(request, self.template_name, context)
+    
+    def post(self, request, pk):
+        try:
+            doctor = Doctor.objects.get(user=request.user)
+        except Doctor.DoesNotExist:
+            messages.error(request, "You are not registered as a doctor.")
+            return redirect('dashboard:doctor_dashboard')
+        
+        # Get the lab order
+        lab_order = get_object_or_404(
+            LabOrder.objects.select_related(
+                'patient',
+                'doctor',
+                'hospital',
+                'appointment',
+                'created_by'
+            ),
+            pk=pk,
+            doctor=doctor,
+            deleted_at__isnull=True
+        )
+        
+        # Check if editable
+        if lab_order.status not in ['ordered']:
+            messages.warning(
+                request, 
+                "This laboratory request has already entered the laboratory workflow and can no longer be edited."
+            )
+            return redirect('laboratory:doctor_lab_request_detail', pk=lab_order.pk)
+        
+        form = DoctorLabRequestEditForm(doctor, request.POST)
+        
+        if form.is_valid():
+            try:
+                with transaction.atomic():
+                    # Get cleaned data
+                    tests = form.cleaned_data['tests']
+                    priority = form.cleaned_data['priority']
+                    diagnosis = form.cleaned_data['diagnosis'].strip()
+                    clinical_notes = form.cleaned_data.get('clinical_notes', '').strip()
+                    instructions = form.cleaned_data.get('instructions', '').strip()
+                    
+                    # Update lab order notes
+                    lab_order.notes = f"Priority: {priority}\n\nDiagnosis: {diagnosis}\n\nClinical Notes: {clinical_notes}\n\nInstructions: {instructions}"
+                    lab_order.updated_by = request.user
+                    lab_order.save()
+                    
+                    # Update tests - remove all existing and add new ones
+                    lab_order.items.all().delete()
+                    for test in tests:
+                        LabOrderItem.objects.create(
+                            lab_order=lab_order,
+                            test=test,
+                            notes=''
+                        )
+                    
+                    messages.success(
+                        request, 
+                        f"✅ Laboratory Request #{lab_order.order_number} has been updated successfully."
+                    )
+                    
+                    return redirect('laboratory:doctor_lab_request_detail', pk=lab_order.id)
+                    
+            except Exception as e:
+                messages.error(request, f"Error updating lab request: {str(e)}")
+                return self._render_with_errors(request, lab_order, form)
+        else:
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f"{field}: {error}")
+        
+        return self._render_with_errors(request, lab_order, form)
+    
+    def _render_with_errors(self, request, lab_order, form):
+        """Helper method to render form with errors."""
+        try:
+            doctor = Doctor.objects.get(user=request.user)
+        except Doctor.DoesNotExist:
+            return redirect('dashboard:doctor_dashboard')
+        
+        context = {
+            'doctor': doctor,
+            'lab_order': lab_order,
+            'patient': lab_order.patient,
+            'hospital': lab_order.hospital,
+            'form': form,
+            'today': timezone.now().date(),
+            'is_editable': True,
+        }
+        
+        return render(request, self.template_name, context)
+    
+@method_decorator([login_required, role_required(['doctor'])], name='dispatch')
+class DoctorLabRequestCancelView(View):
+    """
+    Doctor Lab Request Cancel View.
+    Allows doctors to cancel only their own pending lab requests.
+    """
+    template_name = 'laboratory/doctor/cancel_lab_request.html'
+    
+    def get(self, request, pk):
+        # Show confirmation page
+        try:
+            doctor = Doctor.objects.get(user=request.user)
+        except Doctor.DoesNotExist:
+            messages.error(request, "You are not registered as a doctor.")
+            return redirect('dashboard:doctor_dashboard')
+        
+        # Get the lab order - only if it belongs to this doctor
+        lab_order = get_object_or_404(
+            LabOrder.objects.select_related(
+                'patient',
+                'doctor',
+                'hospital',
+                'appointment',
+                'created_by'
+            ).prefetch_related(
+                'items',
+                'items__test'
+            ),
+            pk=pk,
+            doctor=doctor,
+            deleted_at__isnull=True
+        )
+        
+        # Check if cancellable (only ordered/pending)
+        if lab_order.status != 'ordered':
+            messages.error(
+                request, 
+                "This laboratory request can no longer be cancelled."
+            )
+            return redirect('laboratory:doctor_lab_request_detail', pk=lab_order.pk)
+        
+        context = {
+            'lab_order': lab_order,
+            'doctor': doctor,
+            'patient': lab_order.patient,
+            'hospital': lab_order.hospital,
+        }
+        
+        return render(request, self.template_name, context)
+    
+    def post(self, request, pk):
+        try:
+            doctor = Doctor.objects.get(user=request.user)
+        except Doctor.DoesNotExist:
+            messages.error(request, "You are not registered as a doctor.")
+            return redirect('dashboard:doctor_dashboard')
+        
+        # Get the lab order
+        lab_order = get_object_or_404(
+            LabOrder.objects.select_related(
+                'patient',
+                'doctor',
+                'hospital',
+                'appointment',
+                'created_by'
+            ),
+            pk=pk,
+            doctor=doctor,
+            deleted_at__isnull=True
+        )
+        
+        # Check if cancellable
+        if lab_order.status != 'ordered':
+            messages.error(
+                request, 
+                "This laboratory request can no longer be cancelled."
+            )
+            return redirect('laboratory:doctor_lab_request_detail', pk=lab_order.pk)
+        
+        # Get cancellation reason (optional)
+        cancel_reason = request.POST.get('cancel_reason', '').strip()
+        
+        try:
+            with transaction.atomic():
+                # Update status to cancelled
+                lab_order.status = 'cancelled'
+                lab_order.updated_by = request.user
+                
+                # Add cancellation reason to notes
+                if cancel_reason:
+                    lab_order.notes = lab_order.notes + f"\n\nCancellation Reason: {cancel_reason}"
+                else:
+                    lab_order.notes = lab_order.notes + "\n\nCancelled by doctor."
+                
+                lab_order.save()
+                
+                # Optional: Create cancellation log
+                # You can add audit logging here if your project has an audit system
+                
+                messages.success(
+                    request, 
+                    f"✅ Laboratory Request #{lab_order.order_number} has been cancelled successfully."
+                )
+                
+                return redirect('laboratory:doctor_lab_request_detail', pk=lab_order.pk)
+                
+        except Exception as e:
+            messages.error(request, f"Error cancelling lab request: {str(e)}")
+            return redirect('laboratory:doctor_lab_request_detail', pk=lab_order.pk)
+
+@method_decorator([login_required, role_required(['doctor'])], name='dispatch')
+class DoctorLabProgressView(View):
+    """
+    Doctor Lab Progress View.
+    Read-only view for doctors to monitor laboratory request progress.
+    """
+    template_name = 'laboratory/doctor/lab_progress.html'
+    
+    def get(self, request, pk):
+        try:
+            doctor = Doctor.objects.get(user=request.user)
+        except Doctor.DoesNotExist:
+            messages.error(request, "You are not registered as a doctor.")
+            return redirect('dashboard:doctor_dashboard')
+        
+        # Get the lab order - only if it belongs to this doctor
+        lab_order = get_object_or_404(
+            LabOrder.objects.select_related(
+                'patient',
+                'doctor',
+                'hospital',
+                'appointment',
+                'created_by'
+            ).prefetch_related(
+                'items',
+                'items__test'
+            ),
+            pk=pk,
+            doctor=doctor,
+            deleted_at__isnull=True
+        )
+        
+        # Calculate patient age
+        patient = lab_order.patient
+        age = None
+        if patient.date_of_birth:
+            today = timezone.now().date()
+            age = today.year - patient.date_of_birth.year
+            if today.month < patient.date_of_birth.month or \
+               (today.month == patient.date_of_birth.month and today.day < patient.date_of_birth.day):
+                age -= 1
+        
+        # Build timeline
+        timeline = self._build_timeline(lab_order)
+        
+        # Calculate progress percentage
+        progress_percentage = self._calculate_progress(lab_order)
+        
+        context = {
+            'doctor': doctor,
+            'lab_order': lab_order,
+            'patient': patient,
+            'age': age,
+            'hospital': lab_order.hospital,
+            'requested_tests': lab_order.items.all(),
+            'timeline': timeline,
+            'progress_percentage': progress_percentage,
+            'today': timezone.now().date(),
+            'is_cancelled': lab_order.status == 'cancelled',
+        }
+        
+        return render(request, self.template_name, context)
+    
+    def _build_timeline(self, lab_order):
+        """Build status timeline for the lab order."""
+        timeline = []
+        
+        # Define workflow stages with their statuses
+        stages = [
+            {'status': 'ordered', 'label': 'Pending', 'icon': '📋'},
+            {'status': 'collected', 'label': 'Sample Collected', 'icon': '🧪'},
+            {'status': 'processing', 'label': 'Testing', 'icon': '🔬'},
+            {'status': 'completed', 'label': 'Completed', 'icon': '✅'},
+        ]
+        
+        # For cancelled requests
+        if lab_order.status == 'cancelled':
+            timeline.append({
+                'status': 'ordered',
+                'label': 'Pending',
+                'date': lab_order.created_at,
+                'user': lab_order.created_by,
+                'is_completed': True,
+                'icon': '📋',
+                'is_cancelled': False
+            })
+            timeline.append({
+                'status': 'cancelled',
+                'label': 'Cancelled',
+                'date': lab_order.updated_at,
+                'user': lab_order.updated_by,
+                'is_completed': True,
+                'icon': '❌',
+                'is_cancelled': True
+            })
+            return timeline
+        
+        # Build normal timeline
+        status_order = ['ordered', 'collected', 'processing', 'completed']
+        current_index = status_order.index(lab_order.status) if lab_order.status in status_order else 0
+        
+        for i, stage in enumerate(stages):
+            is_completed = i <= current_index
+            is_current = i == current_index
+            
+            # Get date for this stage
+            date = None
+            user = None
+            if is_completed:
+                if stage['status'] == 'ordered':
+                    date = lab_order.created_at
+                    user = lab_order.created_by
+                elif stage['status'] == 'collected':
+                    date = lab_order.updated_at if lab_order.status in ['collected', 'processing', 'completed'] else None
+                elif stage['status'] == 'processing':
+                    date = lab_order.updated_at if lab_order.status in ['processing', 'completed'] else None
+                elif stage['status'] == 'completed':
+                    date = lab_order.updated_at if lab_order.status == 'completed' else None
+            
+            timeline.append({
+                'status': stage['status'],
+                'label': stage['label'],
+                'date': date,
+                'user': user,
+                'is_completed': is_completed,
+                'is_current': is_current,
+                'icon': stage['icon'],
+                'is_cancelled': False
+            })
+        
+        return timeline
+    
+    def _calculate_progress(self, lab_order):
+        """Calculate progress percentage based on current status."""
+        if lab_order.status == 'cancelled':
+            return 0
+        
+        status_mapping = {
+            'ordered': 20,
+            'collected': 40,
+            'processing': 60,
+            'completed': 100,
+        }
+        
+        return status_mapping.get(lab_order.status, 0)

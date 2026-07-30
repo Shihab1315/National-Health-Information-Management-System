@@ -484,3 +484,110 @@ class DoctorLabRequestForm(forms.ModelForm):
             raise ValidationError("At least one laboratory test must be selected.")
         
         return cleaned_data
+    
+class DoctorLabRequestEditForm(forms.ModelForm):
+    """Form for doctors to edit laboratory requests (Draft/Pending only)."""
+    
+    tests = forms.ModelMultipleChoiceField(
+        queryset=LaboratoryTest.objects.filter(is_active=True),
+        widget=forms.CheckboxSelectMultiple(attrs={
+            'class': 'test-checkbox-grid',
+        }),
+        label='Requested Laboratory Tests',
+        help_text='Select at least one test'
+    )
+    
+    priority = forms.ChoiceField(
+        choices=[
+            ('normal', 'Normal'),
+            ('urgent', 'Urgent'),
+            ('emergency', 'Emergency'),
+        ],
+        widget=forms.Select(attrs={
+            'class': 'form-input',
+        }),
+        label='Priority'
+    )
+    
+    diagnosis = forms.CharField(
+        widget=forms.Textarea(attrs={
+            'class': 'form-input',
+            'rows': 3,
+            'placeholder': 'Enter the clinical diagnosis...',
+        }),
+        label='Clinical Diagnosis',
+        help_text='Required. Provide the diagnosis for this lab request'
+    )
+    
+    clinical_notes = forms.CharField(
+        widget=forms.Textarea(attrs={
+            'class': 'form-input',
+            'rows': 3,
+            'placeholder': 'Enter any clinical notes (optional)...',
+        }),
+        label='Clinical Notes',
+        required=False,
+        help_text='Optional additional clinical information'
+    )
+    
+    instructions = forms.CharField(
+        widget=forms.Textarea(attrs={
+            'class': 'form-input',
+            'rows': 2,
+            'placeholder': 'Any special instructions for sample collection (optional)...',
+        }),
+        label='Additional Instructions',
+        required=False,
+        help_text='Optional instructions for laboratory staff'
+    )
+    
+    class Meta:
+        model = LabOrder
+        fields = [
+            'tests', 'priority', 'diagnosis', 'clinical_notes', 'instructions'
+        ]
+    
+    def __init__(self, doctor, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.doctor = doctor
+        
+        # If editing existing instance, populate tests from instance
+        instance = kwargs.get('instance')
+        if instance:
+            self.fields['tests'].initial = instance.items.values_list('test_id', flat=True)
+            # Extract diagnosis from notes
+            self._extract_fields_from_notes(instance)
+    
+    def _extract_fields_from_notes(self, instance):
+        """Extract diagnosis, clinical_notes, instructions from notes field."""
+        if instance.notes:
+            lines = instance.notes.split('\n')
+            for line in lines:
+                if line.startswith('Priority:'):
+                    priority = line.replace('Priority:', '').strip().lower()
+                    if priority in ['normal', 'urgent', 'emergency']:
+                        self.fields['priority'].initial = priority
+                elif line.startswith('Diagnosis:'):
+                    self.fields['diagnosis'].initial = line.replace('Diagnosis:', '').strip()
+                elif line.startswith('Clinical Notes:'):
+                    self.fields['clinical_notes'].initial = line.replace('Clinical Notes:', '').strip()
+                elif line.startswith('Instructions:'):
+                    self.fields['instructions'].initial = line.replace('Instructions:', '').strip()
+    
+    def clean(self):
+        cleaned_data = super().clean()
+        tests = cleaned_data.get('tests')
+        diagnosis = cleaned_data.get('diagnosis', '').strip()
+        
+        # Validate diagnosis
+        if not diagnosis:
+            raise ValidationError("Clinical Diagnosis is required.")
+        
+        if len(diagnosis) < 5:
+            raise ValidationError("Diagnosis must be at least 5 characters.")
+        
+        # Validate at least one test selected
+        if not tests:
+            raise ValidationError("At least one laboratory test must be selected.")
+        
+        return cleaned_data
