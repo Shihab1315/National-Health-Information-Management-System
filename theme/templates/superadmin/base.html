@@ -1,0 +1,693 @@
+<!-- templates/superadmin/base.html -->
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Super Admin | NHIMS{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    {% block extra_css %}{% endblock %}
+    
+    <style>
+        /* ===== BASE ===== */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #0a1628;
+            color: #e5e7eb;
+            min-height: 100vh;
+            display: flex;
+        }
+        
+        /* ===== SIDEBAR ===== */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 260px;
+            height: 100vh;
+            background: #0d1f3c;
+            border-right: 1px solid rgba(255, 255, 255, 0.06);
+            z-index: 1000;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow-y: auto;
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .sidebar::-webkit-scrollbar { width: 4px; }
+        .sidebar::-webkit-scrollbar-track { background: transparent; }
+        .sidebar::-webkit-scrollbar-thumb { background: rgba(59, 130, 246, 0.3); border-radius: 4px; }
+        
+        .sidebar-brand {
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            flex-shrink: 0;
+        }
+        
+        .sidebar-nav {
+            padding: 0.75rem 0.75rem 6rem;
+            flex: 1;
+        }
+        
+        .sidebar-nav .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.625rem 1rem;
+            border-radius: 0.5rem;
+            color: rgba(255, 255, 255, 0.6);
+            text-decoration: none;
+            transition: all 0.15s ease;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            position: relative;
+            width: 100%;
+            border: none;
+            background: none;
+            text-align: left;
+        }
+        
+        .sidebar-nav .nav-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: #ffffff;
+        }
+        
+        .sidebar-nav .nav-item.active {
+            background: rgba(59, 130, 246, 0.15);
+            color: #60a5fa;
+        }
+        
+        .sidebar-nav .nav-item.active::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0.25rem;
+            bottom: 0.25rem;
+            width: 3px;
+            background: #3b82f6;
+            border-radius: 0 4px 4px 0;
+        }
+        
+        .sidebar-nav .nav-item i {
+            width: 1.25rem;
+            text-align: center;
+            font-size: 1rem;
+            flex-shrink: 0;
+        }
+        
+        .sidebar-nav .nav-divider {
+            height: 1px;
+            background: rgba(255, 255, 255, 0.06);
+            margin: 0.5rem 1rem;
+        }
+        
+        .sidebar-nav .nav-item .badge {
+            margin-left: auto;
+            background: #ef4444;
+            color: white;
+            font-size: 0.6rem;
+            padding: 0.125rem 0.5rem;
+            border-radius: 9999px;
+            font-weight: 600;
+        }
+        
+        /* ===== DROPDOWN / SUB-MENU ===== */
+        .sidebar-nav .nav-item.has-dropdown {
+            cursor: pointer;
+        }
+        
+        .sidebar-nav .nav-item.has-dropdown .chevron-icon {
+            margin-left: auto;
+            transition: transform 0.3s ease;
+            font-size: 0.7rem;
+        }
+        
+        .sidebar-nav .nav-item.has-dropdown.open .chevron-icon {
+            transform: rotate(180deg);
+        }
+        
+        .sidebar-nav .sub-menu {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+            padding-left: 0.5rem;
+        }
+        
+        .sidebar-nav .sub-menu.open {
+            max-height: 500px;
+        }
+        
+        .sidebar-nav .sub-menu .nav-item {
+            padding-left: 2.5rem;
+            font-size: 0.8rem;
+        }
+        
+        .sidebar-nav .sub-menu .nav-item i {
+            font-size: 0.7rem;
+            width: 1rem;
+        }
+        
+        .sidebar-nav .sub-menu .nav-item .badge {
+            font-size: 0.5rem;
+            padding: 0.1rem 0.4rem;
+        }
+        
+        .sidebar-footer {
+            padding: 1rem 1.5rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
+            font-size: 0.7rem;
+            color: rgba(255, 255, 255, 0.3);
+            text-align: center;
+            flex-shrink: 0;
+        }
+        
+        /* ===== MAIN CONTENT ===== */
+        .main-wrapper {
+            margin-left: 260px;
+            min-height: 100vh;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* ===== TOP NAVBAR ===== */
+        .top-navbar {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(10, 22, 40, 0.85);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            padding: 0.75rem 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            min-height: 64px;
+        }
+        
+        .top-navbar .left-section {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .top-navbar .left-section .sidebar-toggle {
+            display: none;
+            background: none;
+            border: none;
+            color: #9ca3af;
+            font-size: 1.25rem;
+            cursor: pointer;
+            padding: 0.25rem;
+        }
+        
+        .top-navbar .left-section .sidebar-toggle:hover { color: #ffffff; }
+        
+        .top-navbar .page-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: #ffffff;
+        }
+        
+        .top-navbar .page-title .breadcrumb {
+            font-size: 0.75rem;
+            font-weight: 400;
+            color: #9ca3af;
+        }
+        
+        .top-navbar .right-section {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        .top-navbar .right-section .search-box {
+            position: relative;
+        }
+        
+        .top-navbar .right-section .search-box input {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 0.5rem;
+            padding: 0.4rem 0.75rem 0.4rem 2.25rem;
+            color: #e5e7eb;
+            font-size: 0.8125rem;
+            width: 200px;
+            transition: all 0.2s ease;
+        }
+        
+        .top-navbar .right-section .search-box input::placeholder { color: #6b7280; }
+        .top-navbar .right-section .search-box input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            width: 240px;
+        }
+        
+        .top-navbar .right-section .search-box i {
+            position: absolute;
+            left: 0.75rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6b7280;
+            font-size: 0.875rem;
+        }
+        
+        .top-navbar .right-section .notif-btn {
+            background: none;
+            border: none;
+            color: #9ca3af;
+            font-size: 1.125rem;
+            cursor: pointer;
+            padding: 0.375rem;
+            border-radius: 0.5rem;
+            transition: all 0.15s ease;
+            position: relative;
+        }
+        
+        .top-navbar .right-section .notif-btn:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: #ffffff;
+        }
+        
+        .top-navbar .right-section .notif-btn .notif-dot {
+            position: absolute;
+            top: 0.25rem;
+            right: 0.25rem;
+            width: 0.5rem;
+            height: 0.5rem;
+            background: #ef4444;
+            border-radius: 50%;
+            border: 2px solid #0a1628;
+        }
+        
+        /* ===== PROFILE DROPDOWN ===== */
+        .profile-dropdown { position: relative; }
+        
+        .profile-dropdown .profile-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: none;
+            border: none;
+            color: #e5e7eb;
+            cursor: pointer;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.5rem;
+            transition: all 0.15s ease;
+        }
+        
+        .profile-dropdown .profile-btn:hover { background: rgba(255, 255, 255, 0.05); }
+        
+        .profile-dropdown .profile-btn .avatar {
+            width: 2rem;
+            height: 2rem;
+            border-radius: 50%;
+            background: rgba(59, 130, 246, 0.2);
+            color: #60a5fa;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.75rem;
+        }
+        
+        .profile-dropdown .profile-btn .name { font-size: 0.875rem; font-weight: 500; display: none; }
+        .profile-dropdown .profile-btn .chevron { font-size: 0.625rem; color: #6b7280; }
+        
+        .profile-dropdown .dropdown-menu {
+            display: none;
+            position: absolute;
+            right: 0;
+            top: calc(100% + 0.5rem);
+            min-width: 200px;
+            background: #0d1f3c;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 0.75rem;
+            padding: 0.5rem;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+        }
+        
+        .profile-dropdown .dropdown-menu.show { display: block; }
+        
+        .profile-dropdown .dropdown-menu .menu-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.5rem 0.75rem;
+            border-radius: 0.375rem;
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            font-size: 0.8125rem;
+            transition: all 0.15s ease;
+        }
+        
+        .profile-dropdown .dropdown-menu .menu-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: #ffffff;
+        }
+        
+        .profile-dropdown .dropdown-menu .menu-item i { width: 1.25rem; text-align: center; }
+        .profile-dropdown .dropdown-menu .menu-divider { height: 1px; background: rgba(255, 255, 255, 0.06); margin: 0.25rem 0; }
+        .profile-dropdown .dropdown-menu .menu-item.danger { color: #ef4444; }
+        .profile-dropdown .dropdown-menu .menu-item.danger:hover { background: rgba(239, 68, 68, 0.1); }
+        
+        /* ===== RESPONSIVE ===== */
+        @media (min-width: 768px) {
+            .profile-dropdown .profile-btn .name { display: inline; }
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .main-wrapper { margin-left: 0; }
+            .top-navbar .left-section .sidebar-toggle { display: block; }
+            .top-navbar .right-section .search-box input { width: 140px; }
+            .top-navbar .right-section .search-box input:focus { width: 160px; }
+            .top-navbar .page-title { font-size: 0.9375rem; }
+        }
+        
+        @media (max-width: 480px) {
+            .top-navbar { padding: 0.5rem 0.75rem; }
+            .top-navbar .right-section .search-box { display: none; }
+            .top-navbar .page-title .breadcrumb { display: none; }
+        }
+        
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.02); }
+        ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.2); }
+    </style>
+</head>
+<body>
+
+    <!-- ===== SIDEBAR ===== -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-brand">
+            <div class="flex items-center gap-2">
+                <span class="text-xl font-bold text-white">NHIMS</span>
+                <span class="text-xs font-medium text-blue-400 bg-blue-500/20 px-2 py-0.5 rounded">Super Admin</span>
+            </div>
+            <p class="text-xs text-gray-500 mt-0.5">National Health Information System</p>
+        </div>
+        
+        <nav class="sidebar-nav">
+            <!-- Dashboard -->
+            <a href="/superadmin_d/" class="nav-item {% if request.resolver_match.url_name == 'superadmin_dashboard' %}active{% endif %}">
+                <i class="fas fa-th-large"></i>
+                <span>Dashboard</span>
+            </a>
+            
+            <div class="nav-divider"></div>
+            
+            <!-- Hospital Management with Dropdown -->
+            <div class="nav-item has-dropdown" id="hospitalDropdown">
+                <i class="fas fa-hospital"></i>
+                <span>Hospital Management</span>
+                <span class="badge">{{ pending_applications|default:"0" }}</span>
+                <i class="fas fa-chevron-down chevron-icon"></i>
+            </div>
+            
+            <div class="sub-menu" id="hospitalSubMenu">
+                <a href="/superadmin/hospitals/all/" class="nav-item">
+                    <i class="fas fa-list"></i>
+                    <span>All Hospitals</span>
+                </a>
+                <a href="/superadmin/hospitals/pending/" class="nav-item">
+                    <i class="fas fa-clock"></i>
+                    <span>Pending Applications</span>
+                    <span class="badge">{{ pending_applications|default:"0" }}</span>
+                </a>
+                <a href="/superadmin/hospitals/approved/" class="nav-item">
+                    <i class="fas fa-check-circle"></i>
+                    <span>Approved Hospitals</span>
+                    <span class="badge" style="background: #22c55e;">{{ approved_hospitals|default:"0" }}</span>
+                </a>
+                <a href="/superadmin/hospitals/rejected/" class="nav-item">
+                    <i class="fas fa-times-circle"></i>
+                    <span>Rejected Hospitals</span>
+                    <span class="badge" style="background: #ef4444;">{{ rejected_hospitals|default:"0" }}</span>
+                </a>
+            </div>
+            
+            <div class="nav-divider"></div>
+
+<!-- User Management with Dropdown -->
+<div class="nav-item has-dropdown" id="userDropdown">
+    <i class="fas fa-users"></i>
+    <span>User Management</span>
+    <i class="fas fa-chevron-down chevron-icon"></i>
+</div>
+
+<div class="sub-menu" id="userSubMenu">
+    <a href="{% url 'superadmin:all_users' %}" class="nav-item {% if request.resolver_match.url_name == 'all_users' %}active{% endif %}">
+        <i class="fas fa-list"></i>
+        <span>All Users</span>
+        <span class="badge">{{ total_users|default:"0" }}</span>
+    </a>
+</div>
+
+<div class="nav-divider"></div>
+            
+            <!-- Doctor Monitoring -->
+            <a href="/superadmin/doctors/" class="nav-item">
+                <i class="fas fa-user-md"></i>
+                <span>Doctor Monitoring</span>
+                <span class="badge">{{ total_doctors|default:"0" }}</span>
+            </a>
+            
+            <!-- Appointment Monitoring -->
+            <a href="/superadmin/appointments/" class="nav-item">
+                <i class="fas fa-calendar-check"></i>
+                <span>Appointment Monitoring</span>
+                <span class="badge">{{ total_appointments|default:"0" }}</span>
+            </a>
+            
+            <!-- Laboratory Monitoring -->
+            <a href="/superadmin/lab/" class="nav-item">
+                <i class="fas fa-flask"></i>
+                <span>Laboratory Monitoring</span>
+                <span class="badge">{{ pending_lab_reports|default:"0" }}</span>
+            </a>
+            
+            <!-- Pharmacy Monitoring -->
+            <a href="/superadmin/pharmacy/" class="nav-item">
+                <i class="fas fa-pills"></i>
+                <span>Pharmacy Monitoring</span>
+                <span class="badge">{{ low_stock_medicines|default:"0" }}</span>
+            </a>
+            
+            <div class="nav-divider"></div>
+            
+            <!-- Reports -->
+            <a href="/superadmin/reports/" class="nav-item">
+                <i class="fas fa-chart-bar"></i>
+                <span>Reports</span>
+            </a>
+            
+            <!-- Notifications -->
+            <a href="/superadmin/notifications/" class="nav-item">
+                <i class="fas fa-bell"></i>
+                <span>Notifications</span>
+                <span class="badge">3</span>
+            </a>
+            
+            <!-- System Settings -->
+            <a href="/superadmin/settings/" class="nav-item">
+                <i class="fas fa-cog"></i>
+                <span>System Settings</span>
+            </a>
+            
+            <div class="nav-divider"></div>
+            
+            <!-- Profile -->
+            <a href="/superadmin/profile/" class="nav-item">
+                <i class="fas fa-user-circle"></i>
+                <span>Profile</span>
+            </a>
+            
+            <!-- Logout -->
+            <form method="post" action="{% url 'accounts:logout' %}" class="block">
+                {% csrf_token %}
+                <button type="submit" class="nav-item" style="color: rgba(239, 68, 68, 0.7);">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Logout</span>
+                </button>
+            </form>
+        </nav>
+        
+        <div class="sidebar-footer">
+            NHIMS v2.0 &bull; Super Admin
+        </div>
+    </aside>
+
+    <!-- ===== MAIN WRAPPER ===== -->
+    <div class="main-wrapper">
+        
+        <!-- ===== TOP NAVBAR ===== -->
+        <header class="top-navbar">
+            <div class="left-section">
+                <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <div class="page-title">
+                    {% block page_title %}Dashboard{% endblock %}
+                    <div class="breadcrumb">
+                        {% block breadcrumb %}
+                            <span>Dashboard</span>
+                            <span class="mx-1">/</span>
+                            <span>{% block current_page %}Overview{% endblock %}</span>
+                        {% endblock %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="right-section">
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" placeholder="Search..." id="globalSearch">
+                </div>
+                
+                <button class="notif-btn" title="Notifications">
+                    <i class="fas fa-bell"></i>
+                    <span class="notif-dot"></span>
+                </button>
+                
+                <div class="profile-dropdown" id="profileDropdown">
+                    <button class="profile-btn" id="profileBtn">
+                        <div class="avatar">{{ user.get_full_name|slice:":1"|upper|default:user.username|slice:":1"|upper }}</div>
+                        <span class="name">{{ user.get_full_name|default:user.username }}</span>
+                        <i class="fas fa-chevron-down chevron" id="chevronIcon"></i>
+                    </button>
+                    
+                    <div class="dropdown-menu" id="dropdownMenu">
+                        <a href="/superadmin/profile/" class="menu-item">
+                            <i class="fas fa-user-circle"></i>
+                            <span>My Profile</span>
+                        </a>
+                        <a href="/superadmin/settings/" class="menu-item">
+                            <i class="fas fa-cog"></i>
+                            <span>Settings</span>
+                        </a>
+                        <div class="menu-divider"></div>
+                        <form method="post" action="{% url 'accounts:logout' %}" class="block">
+                            {% csrf_token %}
+                            <button type="submit" class="menu-item danger w-full text-left">
+                                <i class="fas fa-sign-out-alt"></i>
+                                <span>Logout</span>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- ===== CONTENT AREA ===== -->
+        <main class="flex-1 p-6">
+            {% block content %}
+            <!-- Child templates will inject content here -->
+            {% endblock %}
+        </main>
+
+    </div>
+
+    <!-- ===== SCRIPTS ===== -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            
+            // ===== SIDEBAR TOGGLE =====
+            const sidebar = document.getElementById('sidebar');
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            
+            sidebarToggle.addEventListener('click', function() {
+                sidebar.classList.toggle('open');
+            });
+            
+            document.addEventListener('click', function(event) {
+                const isClickInside = sidebar.contains(event.target) || sidebarToggle.contains(event.target);
+                if (!isClickInside && window.innerWidth < 768) {
+                    sidebar.classList.remove('open');
+                }
+            });
+            // ===== USER DROPDOWN TOGGLE =====
+const userDropdown = document.getElementById('userDropdown');
+const userSubMenu = document.getElementById('userSubMenu');
+
+if (userDropdown && userSubMenu) {
+    userDropdown.addEventListener('click', function(e) {
+        e.preventDefault();
+        this.classList.toggle('open');
+        userSubMenu.classList.toggle('open');
+    });
+    
+    // Auto-expand if on user management pages
+    const currentPath = window.location.pathname;
+    if (currentPath.includes('/users/')) {
+        userDropdown.classList.add('open');
+        userSubMenu.classList.add('open');
+    }
+}
+            // ===== HOSPITAL DROPDOWN TOGGLE =====
+            const hospitalDropdown = document.getElementById('hospitalDropdown');
+            const hospitalSubMenu = document.getElementById('hospitalSubMenu');
+            
+            hospitalDropdown.addEventListener('click', function(e) {
+                e.preventDefault();
+                this.classList.toggle('open');
+                hospitalSubMenu.classList.toggle('open');
+            });
+            
+            // Auto-expand if any hospital sub-page is active
+            const currentPath = window.location.pathname;
+            if (currentPath.includes('/hospitals/')) {
+                hospitalDropdown.classList.add('open');
+                hospitalSubMenu.classList.add('open');
+            }
+
+            
+            // ===== PROFILE DROPDOWN =====
+            const profileBtn = document.getElementById('profileBtn');
+            const dropdownMenu = document.getElementById('dropdownMenu');
+            const chevronIcon = document.getElementById('chevronIcon');
+            
+            profileBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                dropdownMenu.classList.toggle('show');
+                chevronIcon.classList.toggle('open');
+            });
+            
+            document.addEventListener('click', function() {
+                dropdownMenu.classList.remove('show');
+                chevronIcon.classList.remove('open');
+            });
+            
+            dropdownMenu.addEventListener('click', function(e) {
+                e.stopPropagation();
+            });
+            
+            // ===== CLOSE ON ESCAPE =====
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    dropdownMenu.classList.remove('show');
+                    chevronIcon.classList.remove('open');
+                    sidebar.classList.remove('open');
+                }
+            });
+            
+            // ===== SEARCH =====
+            const searchInput = document.getElementById('globalSearch');
+            searchInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && this.value.trim()) {
+                    console.log('Searching for:', this.value);
+                }
+            });
+        });
+    </script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

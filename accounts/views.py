@@ -25,7 +25,7 @@ class SignupView(View):
     
     def get(self, request):
         if request.user.is_authenticated:
-            return redirect('dashboard:home')
+            return redirect('dashboard:homepage')
         
         form = SignupForm()
         return render(request, self.template_name, {'form': form})
@@ -103,7 +103,7 @@ def dashboard_redirect(request):
 
     # Super Admin
     if user.role == user.Role.SUPER_ADMIN:
-        return redirect("superadmin:dashboard")
+        return redirect("dashboard:superadmin_dashboard")
 
     # Doctor
     elif user.role == user.Role.DOCTOR:

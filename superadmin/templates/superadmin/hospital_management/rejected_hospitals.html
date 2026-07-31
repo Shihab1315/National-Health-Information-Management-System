@@ -1,0 +1,56 @@
+<!-- templates/superadmin/hospital_management/rejected_hospitals.html -->
+{% extends "superadmin/base.html" %}
+{% load static %}
+
+{% block title %}Rejected Hospitals | Super Admin{% endblock %}
+
+{% block page_title %}Rejected Hospitals{% endblock %}
+{% block current_page %}Hospital Management / Rejected Hospitals{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-2xl font-bold text-white">Rejected Hospitals</h1>
+            <p class="text-gray-400 mt-1">List of rejected hospital applications</p>
+        </div>
+        <div class="flex items-center gap-2 bg-red-500/10 border border-red-500/20 px-4 py-2 rounded-lg">
+            <span class="text-red-400 font-bold">{{ total_rejected }}</span>
+            <span class="text-gray-400 text-sm">Rejected</span>
+        </div>
+    </div>
+
+    {% if applications %}
+        <div class="grid grid-cols-1 gap-4">
+            {% for app in applications %}
+            <div class="bg-white/5 border border-white/10 rounded-xl p-4 hover:border-red-500/30 transition">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="text-white font-semibold">{{ app.hospital_name }}</h3>
+                        <p class="text-gray-400 text-sm">{{ app.application_number }}</p>
+                        <div class="flex items-center gap-3 mt-2 text-xs">
+                            <span class="text-gray-500">Rejected: {{ app.rejected_at|date:"M d, Y" }}</span>
+                            <span class="px-2 py-0.5 rounded-full bg-red-500/20 text-red-300">Rejected</span>
+                        </div>
+                        {% if app.admin_remarks %}
+                            <p class="text-xs text-gray-400 mt-1">Reason: {{ app.admin_remarks|truncatechars:50 }}</p>
+                        {% endif %}
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <a href="#" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg transition">View Details</a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="flex items-center justify-center h-64">
+            <div class="text-center">
+                <i class="fas fa-check-circle text-6xl text-green-400 mb-4"></i>
+                <h2 class="text-2xl font-bold text-white">No Rejected Applications</h2>
+                <p class="text-gray-400 mt-2">No applications have been rejected.</p>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

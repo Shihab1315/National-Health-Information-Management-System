@@ -1,0 +1,87 @@
+<!-- templates/superadmin/hospital_management/all_hospitals.html -->
+{% extends "superadmin/base.html" %}
+{% load static %}
+
+{% block title %}All Hospitals | Super Admin{% endblock %}
+
+{% block page_title %}All Hospitals{% endblock %}
+{% block current_page %}Hospital Management / All Hospitals{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Header -->
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-2xl font-bold text-white">All Hospitals</h1>
+            <p class="text-gray-400 mt-1">Complete list of all hospitals in the system</p>
+        </div>
+        <div class="flex items-center gap-2 bg-blue-500/10 border border-blue-500/20 px-4 py-2 rounded-lg">
+            <span class="text-blue-400 font-bold">{{ total_hospitals }}</span>
+            <span class="text-gray-400 text-sm">Total</span>
+        </div>
+    </div>
+
+    {% if hospitals %}
+        <div class="bg-white/5 border border-white/10 rounded-xl overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead>
+                        <tr class="border-b border-white/10">
+                            <th class="text-left py-3 px-4 text-xs font-medium text-gray-400 uppercase tracking-wider">Hospital</th>
+                            <th class="text-left py-3 px-4 text-xs font-medium text-gray-400 uppercase tracking-wider">Location</th>
+                            <th class="text-left py-3 px-4 text-xs font-medium text-gray-400 uppercase tracking-wider">Status</th>
+                            <th class="text-left py-3 px-4 text-xs font-medium text-gray-400 uppercase tracking-wider">Joined</th>
+                            <th class="text-right py-3 px-4 text-xs font-medium text-gray-400 uppercase tracking-wider">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for hospital in hospitals %}
+                        <tr class="border-b border-white/5 hover:bg-white/5 transition">
+                            <td class="py-3 px-4">
+                                <div>
+                                    <p class="text-white font-medium">{{ hospital.name }}</p>
+                                    <p class="text-gray-500 text-xs">{{ hospital.hospital_code|default:"N/A" }}</p>
+                                </div>
+                            </td>
+                            <td class="py-3 px-4">
+                                <p class="text-gray-300">{{ hospital.city }}, {{ hospital.district|default:"N/A" }}</p>
+                            </td>
+                            <td class="py-3 px-4">
+                                {% if hospital.active %}
+                                    <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-green-500/20 text-green-400">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-green-400"></span>
+                                        Active
+                                    </span>
+                                {% else %}
+                                    <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-red-500/20 text-red-400">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-red-400"></span>
+                                        Inactive
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td class="py-3 px-4 text-gray-300">
+                                {{ hospital.created_at|date:"M d, Y" }}
+                            </td>
+                            <td class="py-3 px-4 text-right">
+                                <a href="{% url 'superadmin:hospital_detail' hospital.id %}" 
+                                   class="text-blue-400 hover:text-blue-300 text-sm transition inline-flex items-center gap-1">
+                                    <i class="fas fa-eye"></i> View Details
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    {% else %}
+        <div class="flex items-center justify-center h-64">
+            <div class="text-center">
+                <i class="fas fa-hospital text-6xl text-gray-600 mb-4"></i>
+                <h2 class="text-2xl font-bold text-white">No Hospitals Found</h2>
+                <p class="text-gray-400 mt-2">No hospitals have been registered yet.</p>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

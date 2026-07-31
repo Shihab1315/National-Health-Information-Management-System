@@ -1,0 +1,53 @@
+<!-- templates/superadmin/hospital_management/approved_hospitals.html -->
+{% extends "superadmin/base.html" %}
+{% load static %}
+
+{% block title %}Approved Hospitals | Super Admin{% endblock %}
+
+{% block page_title %}Approved Hospitals{% endblock %}
+{% block current_page %}Hospital Management / Approved Hospitals{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-2xl font-bold text-white">Approved Hospitals</h1>
+            <p class="text-gray-400 mt-1">List of all approved hospitals</p>
+        </div>
+        <div class="flex items-center gap-2 bg-green-500/10 border border-green-500/20 px-4 py-2 rounded-lg">
+            <span class="text-green-400 font-bold">{{ total_approved }}</span>
+            <span class="text-gray-400 text-sm">Approved</span>
+        </div>
+    </div>
+
+    {% if hospitals %}
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {% for hospital in hospitals %}
+            <div class="bg-white/5 border border-white/10 rounded-xl p-4 hover:border-green-500/30 transition">
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 rounded-lg bg-green-500/20 flex items-center justify-center text-green-400">
+                        <i class="fas fa-hospital text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-white font-semibold">{{ hospital.name }}</h3>
+                        <p class="text-gray-400 text-sm">{{ hospital.city }}, {{ hospital.district }}</p>
+                    </div>
+                </div>
+                <div class="mt-3 pt-3 border-t border-white/10 flex items-center justify-between text-sm">
+                    <span class="text-gray-400">Joined: {{ hospital.created_at|date:"M d, Y" }}</span>
+                    <span class="text-green-400">● Active</span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="flex items-center justify-center h-64">
+            <div class="text-center">
+                <i class="fas fa-building text-6xl text-gray-500 mb-4"></i>
+                <h2 class="text-2xl font-bold text-white">No Approved Hospitals</h2>
+                <p class="text-gray-400 mt-2">No hospitals have been approved yet.</p>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

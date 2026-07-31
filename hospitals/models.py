@@ -5,7 +5,10 @@ from django.urls import reverse
 from django.core.validators import MinValueValidator, MaxValueValidator
 from .validators import validate_phone, validate_email, validate_website, validate_latitude, validate_longitude
 import uuid
+from django.core.validators import RegexValidator
 
+from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 User = get_user_model()
 
 
@@ -273,3 +276,346 @@ class HospitalOperatingHour(BaseModel):
 
     def __str__(self):
         return f"{self.get_day_display()}: {self.open_time} - {self.close_time}"
+    
+class HospitalApplication(models.Model):
+    """
+    Hospital Application Model.
+    Stores hospital registration applications submitted by Hospital Admins.
+    """
+    
+    class Status(models.TextChoices):
+        DRAFT = 'draft', _('Draft')
+        SUBMITTED = 'submitted', _('Submitted')
+        UNDER_REVIEW = 'under_review', _('Under Review')
+        NEED_MORE_INFO = 'need_more_info', _('Need More Information')
+        APPROVED = 'approved', _('Approved')
+        REJECTED = 'rejected', _('Rejected')
+        WITHDRAWN = 'withdrawn', _('Withdrawn')
+    
+    class HospitalType(models.TextChoices):
+        GENERAL = 'general', _('General Hospital')
+        PRIVATE = 'private', _('Private Hospital')
+        GOVERNMENT = 'government', _('Government Hospital')
+        MEDICAL_COLLEGE = 'medical_college', _('Medical College Hospital')
+        CLINIC = 'clinic', _('Clinic')
+        DIAGNOSTIC = 'diagnostic', _('Diagnostic Center')
+        DENTAL = 'dental', _('Dental Clinic')
+        EYE = 'eye', _('Eye Hospital')
+        MENTAL_HEALTH = 'mental_health', _('Mental Health Hospital')
+        NGO = 'ngo', _('NGO Hospital')
+        SPECIALIZED = 'specialized', _('Specialized Hospital')
+    
+    # System Fields
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        verbose_name=_('Application ID')
+    )
+    
+    application_number = models.CharField(
+        max_length=20,
+        unique=True,
+        blank=True,
+        verbose_name=_('Application Number'),
+        db_index=True,
+    )
+    
+    # Relationships
+    hospital_admin = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='hospital_applications',
+        # limit_choices_to={'role': 'hospital_admin'},
+        verbose_name=_('Hospital Admin'),
+    )
+    
+    reviewed_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='reviewed_applications',
+        verbose_name=_('Reviewed By'),
+    )
+    
+    # Basic Information
+    hospital_name = models.CharField(
+        max_length=200,
+        verbose_name=_('Hospital Name'),
+        db_index=True,
+    )
+    
+    hospital_type = models.CharField(
+        max_length=50,
+        choices=HospitalType.choices,
+        default=HospitalType.GENERAL,
+        verbose_name=_('Hospital Type'),
+    )
+    
+    license_number = models.CharField(
+        max_length=50,
+        unique=True,
+        verbose_name=_('License Number'),
+        db_index=True,
+    )
+    
+    registration_number = models.CharField(
+        max_length=50,
+        unique=True,
+        verbose_name=_('Registration Number'),
+    )
+    
+    description = models.TextField(
+        blank=True,
+        verbose_name=_('Hospital Description'),
+    )
+    
+    # Contact Information
+    phone_regex = RegexValidator(
+        regex=r'^01[3-9]\d{8}$',
+        message='Enter a valid Bangladesh phone number (e.g., 017XXXXXXXX)'
+    )
+    
+    hospital_email = models.EmailField(
+        unique=True,
+        verbose_name=_('Hospital Email'),
+    )
+    
+    phone = models.CharField(
+        max_length=15,
+        validators=[phone_regex],
+        verbose_name=_('Phone Number'),
+    )
+    
+    emergency_phone = models.CharField(
+        max_length=15,
+        validators=[phone_regex],
+        blank=True,
+        verbose_name=_('Emergency Phone'),
+    )
+    
+    website = models.URLField(
+        blank=True,
+        verbose_name=_('Website'),
+    )
+    
+    # Address
+    division = models.CharField(
+        max_length=50,
+        verbose_name=_('Division'),
+    )
+    
+    district = models.CharField(
+        max_length=50,
+        verbose_name=_('District'),
+    )
+    
+    upazila = models.CharField(
+        max_length=50,
+        blank=True,
+        verbose_name=_('Upazila'),
+    )
+    
+    area = models.CharField(
+        max_length=100,
+        blank=True,
+        verbose_name=_('Area'),
+    )
+    
+    postal_code = models.CharField(
+        max_length=10,
+        blank=True,
+        verbose_name=_('Postal Code'),
+    )
+    
+    full_address = models.TextField(
+        verbose_name=_('Full Address'),
+    )
+    
+    google_map_link = models.URLField(
+        blank=True,
+        verbose_name=_('Google Map Link'),
+    )
+    
+    latitude = models.DecimalField(
+        max_digits=10,
+        decimal_places=7,
+        blank=True,
+        null=True,
+        verbose_name=_('Latitude'),
+    )
+    
+    longitude = models.DecimalField(
+        max_digits=10,
+        decimal_places=7,
+        blank=True,
+        null=True,
+        verbose_name=_('Longitude'),
+    )
+    
+    # Administrator Information
+    admin_name = models.CharField(
+        max_length=150,
+        verbose_name=_('Administrator Name'),
+    )
+    
+    admin_email = models.EmailField(
+        verbose_name=_('Administrator Email'),
+    )
+    
+    admin_phone = models.CharField(
+        max_length=15,
+        validators=[phone_regex],
+        verbose_name=_('Administrator Phone'),
+    )
+    
+    admin_designation = models.CharField(
+        max_length=100,
+        blank=True,
+        verbose_name=_('Designation'),
+    )
+    
+    # Documents
+    logo = models.ImageField(
+        upload_to='hospital_applications/logos/',
+        blank=True,
+        null=True,
+        verbose_name=_('Hospital Logo'),
+    )
+    
+    trade_license = models.FileField(
+        upload_to='hospital_applications/documents/',
+        blank=True,
+        null=True,
+        verbose_name=_('Trade License'),
+    )
+    
+    hospital_license = models.FileField(
+        upload_to='hospital_applications/documents/',
+        blank=True,
+        null=True,
+        verbose_name=_('Hospital License'),
+    )
+    
+    govt_approval = models.FileField(
+        upload_to='hospital_applications/documents/',
+        blank=True,
+        null=True,
+        verbose_name=_('Government Approval'),
+    )
+    
+    tin_certificate = models.FileField(
+        upload_to='hospital_applications/documents/',
+        blank=True,
+        null=True,
+        verbose_name=_('TIN Certificate'),
+    )
+    
+    other_documents = models.FileField(
+        upload_to='hospital_applications/documents/',
+        blank=True,
+        null=True,
+        verbose_name=_('Other Documents'),
+    )
+    
+    # Status & Remarks
+    status = models.CharField(
+        max_length=20,
+        choices=Status.choices,
+        default=Status.DRAFT,
+        verbose_name=_('Status'),
+        db_index=True,
+    )
+    
+    admin_remarks = models.TextField(
+        blank=True,
+        verbose_name=_('Admin Remarks'),
+    )
+    
+    # Verification Fields
+    terms_accepted = models.BooleanField(
+        default=False,
+        verbose_name=_('Terms Accepted'),
+    )
+    
+    email_verified = models.BooleanField(
+        default=False,
+        verbose_name=_('Email Verified'),
+    )
+    
+    phone_verified = models.BooleanField(
+        default=False,
+        verbose_name=_('Phone Verified'),
+    )
+    
+    hospital_verified = models.BooleanField(
+        default=False,
+        verbose_name=_('Hospital Verified'),
+    )
+    
+    # Timestamps
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name=_('Created At'),
+        db_index=True,
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        verbose_name=_('Updated At'),
+    )
+    
+    submitted_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name=_('Submitted At'),
+    )
+    
+    reviewed_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name=_('Reviewed At'),
+    )
+    
+    approved_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name=_('Approved At'),
+    )
+    
+    rejected_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name=_('Rejected At'),
+    )
+    
+    class Meta:
+        db_table = 'hospitals_hospitalapplication'
+        verbose_name = _('Hospital Application')
+        verbose_name_plural = _('Hospital Applications')
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['status']),
+            models.Index(fields=['hospital_name']),
+            models.Index(fields=['license_number']),
+            models.Index(fields=['application_number']),
+            models.Index(fields=['hospital_admin', 'created_at']),
+        ]
+    
+    def __str__(self):
+        return f"{self.hospital_name} ({self.application_number})"
+    
+    def save(self, *args, **kwargs):
+        if not self.application_number:
+            self.application_number = self.generate_application_number()
+        super().save(*args, **kwargs)
+    
+    def generate_application_number(self) -> str:
+        """Generate unique application number: HAPP-YYYYMMDD-XXXX"""
+        today = timezone.now()
+        date_part = today.strftime('%Y%m%d')
+        count = HospitalApplication.objects.filter(
+            created_at__date=today.date()
+        ).count() + 1
+        seq = str(count).zfill(4)
+        return f"HAPP-{date_part}-{seq}"

@@ -1,80 +1,95 @@
-from django.shortcuts import render, get_object_or_404, redirect
-from django.core.cache import cache
-from django.db import models
+# dashboard/views.py
+from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.db.models import Count, Sum, Q, F
 from django.utils import timezone
-from .services import DashboardService
+from django.db.models import F, Sum, Count
 from django.http import HttpResponseServerError
-
-from .models import Hero, Service, Feature, Statistic, WhyChooseUs, Testimonial, FAQ, Partner, CTA, Footer
 import logging
 
-# Admin dashboard imports
+# ✅ সঠিক ডেকোরেটর ইমপোর্ট
 from accounts.decorators import role_required
+from accounts.models import User
 from appointments.models import Appointment
 from doctors.models import Doctor
-from hospitals.models import Hospital
-from laboratory.models import LabResult   # adjust if different
-from medical_records.models import MedicalRecord
 from patients.models import Patient
-from pharmacy.models import Medicine, Sale, SaleItem
 from prescriptions.models import Prescription
-
-try:
-    from prescriptions.models import PrescriptionMedicine
-except ImportError:
-    PrescriptionMedicine = None
-from notifications.models import Notification   # if exists
-from django.contrib.auth import get_user_model
-
+from hospitals.models import Hospital,HospitalApplication
+from medical_records.models import MedicalRecord
+from laboratory.models import LabResult
+from pharmacy.models import Medicine, Sale, SaleItem
+from notifications.models import Notification
+ 
 logger = logging.getLogger(__name__)
-
-User = get_user_model()
 
 
 def get_greeting():
-    """Return a greeting based on the current local time."""
-    hour = timezone.localtime().hour
-    if hour < 12:
-        return 'Good morning'
-    if hour < 18:
-        return 'Good afternoon'
-    return 'Good evening'
-
-
-class DashboardViewMixin:
-    """Mixin for common context data with caching."""
-    cache_timeout = 60 * 15  # 15 minutes
-
-    def get_home_context(self):
-        # ... (unchanged, keep as is) ...
-        pass
-
-
-def homepage(request):
-    try:
-        mixin = DashboardViewMixin()
-        context = mixin.get_home_context()
-        return render(request, 'dashboard/homepage.html', context)
-    except Exception as e:
-        # Log the error (optional)
-        import logging
-        logger = logging.getLogger(__name__)
-        logger.error(f"Homepage error: {e}")
-        # Return a simple error page (or redirect)
-        return HttpResponseServerError("Something went wrong. Please try again later.")
+    """Return a greeting based on current time."""
+    hour = timezone.now().hour
+    if 5 <= hour < 12:
+        return "Good Morning"
+    elif 12 <= hour < 17:
+        return "Good Afternoon"
+    elif 17 <= hour < 21:
+        return "Good Evening"
+    else:
+        return "Good Night"
 
 
 # ===========================================================================
-# ENHANCED ADMIN DASHBOARD
+# HOMEPAGE
+# ===========================================================================
+def homepage(request):
+    """Homepage for all users."""
+    try:
+        context = {
+            'user': request.user,
+            'is_authenticated': request.user.is_authenticated,
+            'site_name': 'NHIMS Bangladesh',
+            'year': 2026,
+        }
+        
+        if request.user.is_authenticated:
+            context['user_name'] = request.user.get_full_name() or request.user.username
+            if hasattr(request.user, 'get_role_display'):
+                context['user_role'] = request.user.get_role_display()
+            
+            # Role-based dashboard URL
+            if request.user.role == 'super_admin':
+                context['dashboard_url'] = '/superadmin_d/'
+            elif request.user.role == 'doctor':
+                context['dashboard_url'] = '/doctor_d/'
+            elif request.user.role == 'patient':
+                context['dashboard_url'] = '/patient_d/'
+            elif request.user.role == 'hospital_admin':
+                context['dashboard_url'] = '/hospital_admin/'
+            else:
+                context['dashboard_url'] = '#'
+        
+        context['features'] = [
+            {'icon': 'fa-hospital', 'title': 'Hospitals', 'desc': 'Connected nationwide'},
+            {'icon': 'fa-user-md', 'title': 'Doctors', 'desc': 'Registered professionals'},
+            {'icon': 'fa-users', 'title': 'Patients', 'desc': 'Served with care'},
+        ]
+        
+        return render(request, 'dashboard/homepage.html', context)
+        
+    except Exception as e:
+        logger.error(f"Homepage error: {str(e)}", exc_info=True)
+        return render(request, 'dashboard/homepage.html', {
+            'error': 'Something went wrong. Please try again later.',
+            'user': request.user,
+        })
+
+
+# ===========================================================================
+# ADMIN DASHBOARD - Super Admin & Hospital Admin
 # ===========================================================================
 @login_required
-@role_required(["super_admin", "hospital_admin"])
-def admin_dashboard(request):
+@role_required(['super_admin'])
+def superadmin_dashboard(request):
     """
-    Enhanced Admin Dashboard – complete enterprise overview.
+    Super Admin Dashboard - Complete enterprise overview for Super Admin only.
     """
     today = timezone.now().date()
     now = timezone.now()
@@ -87,13 +102,13 @@ def admin_dashboard(request):
 
     total_appointments = Appointment.objects.count()
     today_appointments = Appointment.objects.filter(appointment_date=today).count()
-    pending_appointments = Appointment.objects.filter(status='pending').count() if hasattr(Appointment, 'status') else 0
-    completed_appointments = Appointment.objects.filter(status='completed').count() if hasattr(Appointment, 'status') else 0
+    pending_appointments = Appointment.objects.filter(status='pending').count()
+    completed_appointments = Appointment.objects.filter(status='completed').count()
 
     total_medical_records = MedicalRecord.objects.count()
     total_prescriptions = Prescription.objects.count()
 
-    total_lab_tests = LabResult.objects.count() if hasattr(LabResult, 'objects') else 0
+    total_lab_tests = LabResult.objects.count()
     pending_lab_reports = LabResult.objects.filter(status='pending').count() if hasattr(LabResult, 'status') else 0
 
     total_medicines = Medicine.objects.count()
@@ -148,18 +163,11 @@ def admin_dashboard(request):
     recent_doctors = Doctor.objects.select_related('hospital', 'user').order_by('-created_at')[:5]
     recent_appointments = Appointment.objects.select_related('patient', 'doctor').order_by('-appointment_date')[:5]
     recent_prescriptions = Prescription.objects.select_related('patient', 'doctor').order_by('-created_at')[:5]
-
-    # --- FIX: LabResult uses order_item__patient ---
-    recent_lab_reports = (
-    LabResult.objects
-    .select_related(
+    recent_lab_reports = LabResult.objects.select_related(
         'order_item__lab_order__patient',
         'order_item__lab_order__doctor',
         'order_item__test',
-    )
-    .order_by('-created_at')[:5]
-)
-
+    ).order_by('-created_at')[:5]
     recent_pharmacy_sales = Sale.objects.select_related('patient', 'pharmacist').order_by('-sale_date')[:5]
 
     # ---------- 4. ALERTS ----------
@@ -195,7 +203,13 @@ def admin_dashboard(request):
     # ---------- 6. NOTIFICATIONS ----------
     recent_notifications = Notification.objects.select_related('recipient', 'sender').order_by('-created_at')[:10]
 
-    # ---------- 7. CONTEXT ----------
+    # ---------- 7. PENDING HOSPITAL APPLICATIONS ----------
+    from hospitals.models import HospitalApplication
+    pending_applications = HospitalApplication.objects.filter(
+        status__in=['submitted', 'under_review', 'need_more_info']
+    ).count()
+
+    # ---------- 8. CONTEXT ----------
     context = {
         'total_users': total_users,
         'total_hospitals': total_hospitals,
@@ -231,11 +245,13 @@ def admin_dashboard(request):
         'alerts': alerts,
         'system_health': system_health,
         'recent_notifications': recent_notifications,
+        'pending_applications': pending_applications,
         'user': request.user,
         'current_date': timezone.now(),
     }
 
-    return render(request, 'dashboard/admin_dashboard.html', context)
+    return render(request, 'dashboard/superadmin_dashboard.html', context)
+
 
 # ===========================================================================
 # DOCTOR DASHBOARD
@@ -243,40 +259,31 @@ def admin_dashboard(request):
 @login_required
 @role_required(['doctor'])
 def doctor_dashboard(request):
-    """Doctor dashboard - always uses request.user to get doctor."""
+    """Doctor Dashboard - only doctors."""
     
-    # Get the logged-in doctor
-    doctor = Doctor.objects.get_by_user(request.user)
-    
-    if not doctor:
-        # This is a critical state - doctor exists but User link is broken
+    try:
+        doctor = Doctor.objects.get(user=request.user)
+    except Doctor.DoesNotExist:
         messages.error(request, 
             "Your account is not properly configured as a doctor. "
             "Please contact system administrator."
         )
-        return redirect('dashboard:home')
+        return redirect('dashboard:homepage')
     
-    # Now use the doctor instance for all queries
-    appointments = Appointment.objects.filter(
-        doctor=doctor
-    ).select_related('patient')
+    appointments = Appointment.objects.filter(doctor=doctor).select_related('patient')
     
     total_appointments = appointments.count()
     pending = appointments.filter(status='pending').count()
     confirmed = appointments.filter(status='confirmed').count()
     completed = appointments.filter(status='completed').count()
     
-    # Upcoming appointments
     today = timezone.now().date()
     upcoming = appointments.filter(
         appointment_date__gte=today,
         status__in=['pending', 'confirmed']
     ).order_by('appointment_date', 'appointment_time')[:5]
     
-    # Prescriptions
-    prescriptions = Prescription.objects.filter(
-        doctor=doctor
-    ).order_by('-created_at')[:5]
+    prescriptions = Prescription.objects.filter(doctor=doctor).order_by('-created_at')[:5]
     
     context = {
         'doctor': doctor,
@@ -292,89 +299,62 @@ def doctor_dashboard(request):
 
 
 # ===========================================================================
-# PATIENT DASHBOARD (COMPLETE)
+# PATIENT DASHBOARD
 # ===========================================================================
 @login_required
 @role_required(['patient'])
 def patient_dashboard(request):
-    """
-    Patient Dashboard – overview for a logged-in patient.
-    """
-    today = timezone.now().date()
-    now = timezone.now()
-
-    # Get the Patient profile associated with the logged-in user
+    """Patient Dashboard - only patients."""
+    
     try:
         patient = request.user.patient_profile
     except Patient.DoesNotExist:
         messages.error(request, 'Patient profile not found.')
         return redirect('dashboard:homepage')
-
-    # ---------- Statistics ----------
+    
+    today = timezone.now().date()
+    
     total_appointments = Appointment.objects.filter(patient=patient).count()
-
+    
     upcoming_appointments = Appointment.objects.filter(
         patient=patient,
         appointment_date__gte=today
     ).select_related('doctor', 'hospital').order_by('appointment_date', 'appointment_time')[:5]
-
+    
     appointment_history = Appointment.objects.filter(
         patient=patient,
         appointment_date__lt=today
     ).select_related('doctor', 'hospital').order_by('-appointment_date')[:5]
-
+    
     pending_prescriptions = Prescription.objects.filter(
         patient=patient,
         status__in=['draft', 'issued']
     ).count()
-
+    
     recent_prescriptions = Prescription.objects.filter(
         patient=patient
     ).select_related('doctor').order_by('-created_at')[:5]
-
-    # ---------- Lab Reports ----------
-    if hasattr(LabResult, 'objects'):
-        lab_reports = LabResult.objects.filter(
-            order_item__lab_order__patient=patient
-        ).select_related(
-            'order_item__lab_order__doctor',
-            'order_item'
-        ).order_by('-created_at')[:5]
-    else:
-        lab_reports = []
-
-    # Medical records
+    
+    lab_reports = LabResult.objects.filter(
+        order_item__lab_order__patient=patient
+    ).select_related(
+        'order_item__lab_order__doctor',
+        'order_item'
+    ).order_by('-created_at')[:5] if hasattr(LabResult, 'objects') else []
+    
     medical_records = MedicalRecord.objects.filter(
         patient=patient
     ).order_by('-visit_date')[:5]
-
-    # Medicine reminders
-    if PrescriptionMedicine is not None:
-        medicine_reminders = PrescriptionMedicine.objects.filter(
-            prescription__patient=patient,
-            prescription__status='issued'
-        ).select_related('prescription')[:10]
-    else:
-        medicine_reminders = []
-
-    # Notifications
+    
     notifications = Notification.objects.filter(
         recipient=request.user
     ).order_by('-created_at')[:10] if hasattr(Notification, 'objects') else []
-
-    # ---------- New: Primary Doctor ----------
-    primary_doctor = None
-    latest_appointment = Appointment.objects.filter(patient=patient).order_by('-appointment_date').first()
-    if latest_appointment and latest_appointment.doctor:
-        primary_doctor = latest_appointment.doctor
-
-    # ---------- New: Emergency Contact ----------
+    
     emergency_contact = {
         'name': patient.emergency_contact_name or 'N/A',
         'phone': patient.emergency_contact_phone or 'N/A',
     }
-
-    # ---------- New: Health Metrics ----------
+    
     health_metrics = {
         'height': getattr(patient, 'height', 'N/A'),
         'weight': getattr(patient, 'weight', 'N/A'),
@@ -384,16 +364,14 @@ def patient_dashboard(request):
         'temperature': getattr(patient, 'temperature', 'N/A'),
         'bmi': getattr(patient, 'bmi', 'N/A'),
     }
-
-    # Health tips (static – can be extended)
+    
     health_tips = [
         {'title': 'Stay Hydrated', 'description': 'Drink at least 8 glasses of water daily.'},
         {'title': 'Regular Exercise', 'description': '30 minutes of moderate exercise daily.'},
         {'title': 'Balanced Diet', 'description': 'Include fruits, vegetables, and proteins.'},
         {'title': 'Adequate Sleep', 'description': 'Aim for 7-8 hours of quality sleep.'},
     ]
-
-    # ---------- Build context ----------
+    
     context = {
         'patient': patient,
         'total_appointments': total_appointments,
@@ -403,17 +381,13 @@ def patient_dashboard(request):
         'recent_prescriptions': recent_prescriptions,
         'lab_reports': lab_reports,
         'medical_records': medical_records,
-        'medicine_reminders': medicine_reminders,
         'notifications': notifications,
         'health_tips': health_tips,
         'current_date': timezone.now(),
         'greeting': get_greeting(),
-        # New variables
-        'primary_doctor': primary_doctor,
         'emergency_contact': emergency_contact,
         'health_metrics': health_metrics,
-        'health_score': 85,  # placeholder – can be computed from metrics later
+        'health_score': 85,
     }
-
+    
     return render(request, 'dashboard/patient_dashboard.html', context)
-

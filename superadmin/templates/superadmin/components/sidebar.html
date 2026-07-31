@@ -1,0 +1,597 @@
+<!-- templates/superadmin/components/sidebar.html -->
+{% load static %}
+
+<aside class="superadmin-sidebar" id="superadminSidebar" role="navigation" aria-label="Super Admin Navigation">
+    
+    <!-- ===== SIDEBAR HEADER ===== -->
+    <div class="sidebar-header">
+        <div class="flex items-center gap-2">
+            <span class="text-xl font-bold text-white">NHIMS</span>
+            <span class="text-xs font-medium text-blue-400 bg-blue-500/20 px-2 py-0.5 rounded">SUPER ADMIN</span>
+        </div>
+        <p class="text-xs text-gray-500 mt-0.5">National Health Information System</p>
+    </div>
+
+    <!-- ===== ADMIN PROFILE ===== -->
+    <div class="sidebar-profile">
+        <div class="flex items-center gap-3">
+            <div class="profile-avatar">
+                {{ user.get_full_name|slice:":1"|upper|default:user.username|slice:":1"|upper }}
+            </div>
+            <div class="profile-info">
+                <p class="profile-name">{{ user.get_full_name|default:user.username }}</p>
+                <p class="profile-role">Super Administrator</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== SIDEBAR NAVIGATION ===== -->
+    <nav class="sidebar-nav" aria-label="Main Navigation">
+        
+        <!-- Dashboard -->
+        <a href="{% url 'dashboard:superadmin_dashboard' %}" 
+           class="nav-item {% if request.resolver_match.url_name == 'superadmin_dashboard' %}active{% endif %}">
+            <i class="fas fa-gauge-high nav-icon"></i>
+            <span class="nav-text">Dashboard</span>
+        </a>
+
+        <!-- ===== HOSPITAL MANAGEMENT ===== -->
+        {% if user.role == 'super_admin' %}
+        <div class="nav-group {% if 'hospital' in request.resolver_match.url_name or 'hospitals' in request.resolver_match.url_name %}expanded{% endif %}">
+            <button class="nav-group-toggle {% if 'hospital' in request.resolver_match.url_name or 'hospitals' in request.resolver_match.url_name %}active{% endif %}" 
+                    aria-expanded="{% if 'hospital' in request.resolver_match.url_name or 'hospitals' in request.resolver_match.url_name %}true{% else %}false{% endif %}" 
+                    aria-controls="hospitalMenu"
+                    id="hospitalToggle">
+                <i class="fas fa-hospital nav-icon"></i>
+                <span class="nav-text">Hospital Management</span>
+                <i class="fas fa-chevron-down nav-chevron"></i>
+            </button>
+            
+            <ul class="nav-group-menu {% if 'hospital' in request.resolver_match.url_name or 'hospitals' in request.resolver_match.url_name %}open{% endif %}" 
+                id="hospitalMenu" role="menu">
+                
+                <!-- Pending Applications -->
+                <li role="none">
+                    <a href="{% url 'superadmin:pending_hospital_applications' %}" 
+                       class="nav-item sub-item {% if request.resolver_match.url_name == 'pending_hospital_applications' %}active{% endif %}"
+                       role="menuitem">
+                        <i class="fas fa-clock nav-icon"></i>
+                        <span class="nav-text">Pending Applications</span>
+                        <span class="nav-badge" id="pendingCount">0</span>
+                    </a>
+                </li>
+                
+                <!-- Approved Hospitals -->
+                <li role="none">
+                    <a href="{% url 'superadmin:approved_hospitals' %}" 
+                       class="nav-item sub-item {% if request.resolver_match.url_name == 'approved_hospitals' %}active{% endif %}"
+                       role="menuitem">
+                        <i class="fas fa-circle-check nav-icon"></i>
+                        <span class="nav-text">Approved Hospitals</span>
+                    </a>
+                </li>
+                
+                <!-- Rejected Hospitals -->
+                <li role="none">
+                    <a href="{% url 'superadmin:rejected_hospitals' %}" 
+                       class="nav-item sub-item {% if request.resolver_match.url_name == 'rejected_hospitals' %}active{% endif %}"
+                       role="menuitem">
+                        <i class="fas fa-circle-xmark nav-icon"></i>
+                        <span class="nav-text">Rejected Hospitals</span>
+                    </a>
+                </li>
+                
+                <!-- All Hospitals -->
+                <li role="none">
+                    <a href="{% url 'superadmin:all_hospitals' %}" 
+                       class="nav-item sub-item {% if request.resolver_match.url_name == 'all_hospitals' %}active{% endif %}"
+                       role="menuitem">
+                        <i class="fas fa-building nav-icon"></i>
+                        <span class="nav-text">All Hospitals</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+        {% endif %}
+
+        <!-- User Management -->
+        <div class="nav-group">
+            <button class="nav-group-toggle" aria-expanded="false" aria-controls="userMenu">
+                <i class="fas fa-users nav-icon"></i>
+                <span class="nav-text">User Management</span>
+                <i class="fas fa-chevron-down nav-chevron"></i>
+            </button>
+            <ul class="nav-group-menu" id="userMenu" role="menu">
+                <li role="none">
+                    <a href="#" class="nav-item sub-item" role="menuitem">
+                        <i class="fas fa-users nav-icon"></i>
+                        <span class="nav-text">All Users</span>
+                        <span class="nav-badge">24</span>
+                    </a>
+                </li>
+                <li role="none">
+                    <a href="#" class="nav-item sub-item" role="menuitem">
+                        <i class="fas fa-user-tie nav-icon"></i>
+                        <span class="nav-text">Hospital Admins</span>
+                    </a>
+                </li>
+                <li role="none">
+                    <a href="#" class="nav-item sub-item" role="menuitem">
+                        <i class="fas fa-user-md nav-icon"></i>
+                        <span class="nav-text">Doctors</span>
+                    </a>
+                </li>
+                <li role="none">
+                    <a href="#" class="nav-item sub-item" role="menuitem">
+                        <i class="fas fa-user-injured nav-icon"></i>
+                        <span class="nav-text">Patients</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Doctor Monitoring -->
+        <div class="nav-group">
+            <button class="nav-group-toggle" aria-expanded="false" aria-controls="doctorMenu">
+                <i class="fas fa-user-doctor nav-icon"></i>
+                <span class="nav-text">Doctor Monitoring</span>
+                <i class="fas fa-chevron-down nav-chevron"></i>
+            </button>
+            <ul class="nav-group-menu" id="doctorMenu" role="menu">
+                <li role="none">
+                    <a href="#" class="nav-item sub-item" role="menuitem">
+                        <i class="fas fa-users nav-icon"></i>
+                        <span class="nav-text">All Doctors</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Appointment Monitoring -->
+        <div class="nav-group">
+            <button class="nav-group-toggle" aria-expanded="false" aria-controls="appointmentMenu">
+                <i class="fas fa-calendar-check nav-icon"></i>
+                <span class="nav-text">Appointment Monitoring</span>
+                <i class="fas fa-chevron-down nav-chevron"></i>
+            </button>
+            <ul class="nav-group-menu" id="appointmentMenu" role="menu">
+                <li role="none">
+                    <a href="#" class="nav-item sub-item" role="menuitem">
+                        <i class="fas fa-calendar nav-icon"></i>
+                        <span class="nav-text">All Appointments</span>
+                        <span class="nav-badge">45</span>
+                    </a>
+                </li>
+                <li role="none">
+                    <a href="#" class="nav-item sub-item" role="menuitem">
+                        <i class="fas fa-calendar-day nav-icon"></i>
+                        <span class="nav-text">Today's Appointments</span>
+                        <span class="nav-badge">8</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Laboratory Monitoring -->
+        <div class="nav-group">
+            <button class="nav-group-toggle" aria-expanded="false" aria-controls="labMenu">
+                <i class="fas fa-flask nav-icon"></i>
+                <span class="nav-text">Laboratory Monitoring</span>
+                <i class="fas fa-chevron-down nav-chevron"></i>
+            </button>
+            <ul class="nav-group-menu" id="labMenu" role="menu">
+                <li role="none">
+                    <a href="#" class="nav-item sub-item" role="menuitem">
+                        <i class="fas fa-clock nav-icon"></i>
+                        <span class="nav-text">Pending Reports</span>
+                        <span class="nav-badge">6</span>
+                    </a>
+                </li>
+                <li role="none">
+                    <a href="#" class="nav-item sub-item" role="menuitem">
+                        <i class="fas fa-check-double nav-icon"></i>
+                        <span class="nav-text">Completed Reports</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Pharmacy Monitoring -->
+        <div class="nav-group">
+            <button class="nav-group-toggle" aria-expanded="false" aria-controls="pharmacyMenu">
+                <i class="fas fa-pills nav-icon"></i>
+                <span class="nav-text">Pharmacy Monitoring</span>
+                <i class="fas fa-chevron-down nav-chevron"></i>
+            </button>
+            <ul class="nav-group-menu" id="pharmacyMenu" role="menu">
+                <li role="none">
+                    <a href="#" class="nav-item sub-item" role="menuitem">
+                        <i class="fas fa-capsules nav-icon"></i>
+                        <span class="nav-text">Medicines</span>
+                    </a>
+                </li>
+                <li role="none">
+                    <a href="#" class="nav-item sub-item" role="menuitem">
+                        <i class="fas fa-boxes nav-icon"></i>
+                        <span class="nav-text">Inventory</span>
+                        <span class="nav-badge">3</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Reports -->
+        <a href="#" class="nav-item">
+            <i class="fas fa-chart-line nav-icon"></i>
+            <span class="nav-text">Reports</span>
+        </a>
+
+        <!-- Notifications -->
+        <a href="#" class="nav-item">
+            <i class="fas fa-bell nav-icon"></i>
+            <span class="nav-text">Notifications</span>
+            <span class="nav-badge">5</span>
+        </a>
+
+        <!-- System Settings -->
+        <a href="#" class="nav-item">
+            <i class="fas fa-gear nav-icon"></i>
+            <span class="nav-text">System Settings</span>
+        </a>
+
+        <!-- Profile -->
+        <a href="#" class="nav-item">
+            <i class="fas fa-user-circle nav-icon"></i>
+            <span class="nav-text">My Profile</span>
+        </a>
+
+        <!-- Logout -->
+        <form method="post" action="{% url 'accounts:logout' %}" class="logout-form">
+            {% csrf_token %}
+            <button type="submit" class="nav-item logout-item">
+                <i class="fas fa-right-from-bracket nav-icon"></i>
+                <span class="nav-text">Logout</span>
+            </button>
+        </form>
+
+    </nav>
+</aside>
+
+<!-- ===== SIDEBAR STYLES ===== -->
+<style>
+    .superadmin-sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 280px;
+        height: 100vh;
+        background: #111827;
+        border-right: 1px solid rgba(255, 255, 255, 0.06);
+        z-index: 1000;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .sidebar-header {
+        padding: 1.25rem 1.5rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        flex-shrink: 0;
+        background: linear-gradient(135deg, rgba(37, 99, 235, 0.1), transparent);
+    }
+
+    .sidebar-profile {
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        flex-shrink: 0;
+    }
+    .sidebar-profile .profile-avatar {
+        width: 2.5rem;
+        height: 2.5rem;
+        border-radius: 50%;
+        background: rgba(59, 130, 246, 0.2);
+        color: #60a5fa;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 1rem;
+        flex-shrink: 0;
+        border: 2px solid rgba(59, 130, 246, 0.3);
+    }
+    .sidebar-profile .profile-name {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: #f8fafc;
+    }
+    .sidebar-profile .profile-role {
+        font-size: 0.65rem;
+        color: #94a3b8;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .sidebar-nav {
+        flex: 1;
+        padding: 0.75rem 0.75rem 1rem;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+    .sidebar-nav::-webkit-scrollbar {
+        width: 4px;
+    }
+    .sidebar-nav::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    .sidebar-nav::-webkit-scrollbar-thumb {
+        background: rgba(59, 130, 246, 0.3);
+        border-radius: 4px;
+    }
+
+    .nav-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.625rem 1rem;
+        border-radius: 0.5rem;
+        color: #94a3b8;
+        text-decoration: none;
+        transition: all 0.2s ease;
+        font-size: 0.875rem;
+        font-weight: 500;
+        cursor: pointer;
+        border: none;
+        background: none;
+        width: 100%;
+        text-align: left;
+        position: relative;
+    }
+    .nav-item:hover {
+        background: #1e293b;
+        color: #f8fafc;
+    }
+    .nav-item:focus-visible {
+        outline: 2px solid #2563eb;
+        outline-offset: 2px;
+    }
+    .nav-item.active {
+        background: rgba(37, 99, 235, 0.15);
+        color: #60a5fa;
+    }
+    .nav-item.active::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0.25rem;
+        bottom: 0.25rem;
+        width: 3px;
+        background: #2563eb;
+        border-radius: 0 4px 4px 0;
+    }
+    .nav-item .nav-icon {
+        width: 1.25rem;
+        text-align: center;
+        font-size: 1rem;
+        flex-shrink: 0;
+        transition: transform 0.2s ease;
+    }
+    .nav-item:hover .nav-icon {
+        transform: scale(1.05);
+    }
+    .nav-item .nav-text {
+        flex: 1;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .nav-item .nav-badge {
+        margin-left: auto;
+        background: #ef4444;
+        color: white;
+        font-size: 0.6rem;
+        padding: 0.125rem 0.5rem;
+        border-radius: 9999px;
+        font-weight: 600;
+        flex-shrink: 0;
+    }
+    .nav-item.sub-item {
+        padding-left: 2.75rem;
+        font-size: 0.8125rem;
+    }
+    .nav-item.sub-item .nav-icon {
+        font-size: 0.875rem;
+        width: 1.125rem;
+    }
+    .nav-item.logout-item {
+        color: #ef4444;
+        border-top: 1px solid rgba(255, 255, 255, 0.06);
+        margin-top: 0.5rem;
+        padding-top: 0.75rem;
+    }
+    .nav-item.logout-item:hover {
+        background: rgba(239, 68, 68, 0.1);
+        color: #f87171;
+    }
+
+    .nav-group {
+        margin-bottom: 0.125rem;
+    }
+    .nav-group-toggle {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.625rem 1rem;
+        border-radius: 0.5rem;
+        color: #94a3b8;
+        transition: all 0.2s ease;
+        font-size: 0.875rem;
+        font-weight: 500;
+        cursor: pointer;
+        border: none;
+        background: none;
+        width: 100%;
+        text-align: left;
+        position: relative;
+    }
+    .nav-group-toggle:hover {
+        background: #1e293b;
+        color: #f8fafc;
+    }
+    .nav-group-toggle.active {
+        background: rgba(37, 99, 235, 0.15);
+        color: #60a5fa;
+    }
+    .nav-group-toggle.active::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0.25rem;
+        bottom: 0.25rem;
+        width: 3px;
+        background: #2563eb;
+        border-radius: 0 4px 4px 0;
+    }
+    .nav-group-toggle .nav-chevron {
+        margin-left: auto;
+        font-size: 0.625rem;
+        transition: transform 0.25s ease;
+        flex-shrink: 0;
+    }
+    .nav-group-toggle[aria-expanded="true"] .nav-chevron {
+        transform: rotate(180deg);
+    }
+    .nav-group-menu {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        overflow: hidden;
+        max-height: 0;
+        transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .nav-group-menu.open {
+        max-height: 500px;
+    }
+    .nav-group-menu li {
+        padding: 0.0625rem 0;
+    }
+
+    .sidebar-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 999;
+        backdrop-filter: blur(4px);
+    }
+    .sidebar-overlay.show {
+        display: block;
+    }
+
+    @media (max-width: 768px) {
+        .superadmin-sidebar {
+            transform: translateX(-100%);
+        }
+        .superadmin-sidebar.open {
+            transform: translateX(0);
+        }
+        .sidebar-overlay.show {
+            display: block;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .superadmin-sidebar {
+            width: 100%;
+            max-width: 320px;
+        }
+    }
+</style>
+
+<!-- ===== SIDEBAR OVERLAY ===== -->
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const sidebar = document.getElementById('superadminSidebar');
+        const overlay = document.getElementById('sidebarOverlay');
+        const toggleBtn = document.getElementById('sidebarToggle');
+
+        if (toggleBtn) {
+            toggleBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                sidebar.classList.toggle('open');
+                overlay.classList.toggle('show');
+            });
+        }
+
+        overlay.addEventListener('click', function() {
+            sidebar.classList.remove('open');
+            overlay.classList.remove('show');
+        });
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                sidebar.classList.remove('open');
+                overlay.classList.remove('show');
+            }
+        });
+
+        // ===== NAV GROUP TOGGLES =====
+        const groupToggles = document.querySelectorAll('.nav-group-toggle');
+        groupToggles.forEach(function(toggle) {
+            toggle.addEventListener('click', function() {
+                const isExpanded = this.getAttribute('aria-expanded') === 'true';
+                const menu = document.getElementById(this.getAttribute('aria-controls'));
+                
+                if (!isExpanded) {
+                    document.querySelectorAll('.nav-group-menu.open').forEach(function(m) {
+                        if (m.id !== menu.id) {
+                            m.classList.remove('open');
+                            const parentToggle = m.closest('.nav-group').querySelector('.nav-group-toggle');
+                            if (parentToggle) {
+                                parentToggle.setAttribute('aria-expanded', 'false');
+                            }
+                        }
+                    });
+                }
+                
+                this.setAttribute('aria-expanded', !isExpanded);
+                menu.classList.toggle('open');
+            });
+        });
+
+        // ===== ACTIVE MENU ITEM =====
+        const currentPath = window.location.pathname;
+        document.querySelectorAll('.nav-item').forEach(function(item) {
+            const href = item.getAttribute('href');
+            if (href && href !== '#' && currentPath.includes(href)) {
+                item.classList.add('active');
+                const parentGroup = item.closest('.nav-group');
+                if (parentGroup) {
+                    const toggle = parentGroup.querySelector('.nav-group-toggle');
+                    if (toggle) {
+                        toggle.classList.add('active');
+                        toggle.setAttribute('aria-expanded', 'true');
+                        const menu = document.getElementById(toggle.getAttribute('aria-controls'));
+                        if (menu) {
+                            menu.classList.add('open');
+                        }
+                    }
+                }
+            }
+        });
+
+        // ===== FETCH PENDING COUNT =====
+        fetch('/superadmin/api/pending-count/')
+            .then(response => response.json())
+            .then(data => {
+                const badge = document.getElementById('pendingCount');
+                if (badge && data.count !== undefined) {
+                    badge.textContent = data.count;
+                }
+            })
+            .catch(error => console.error('Error fetching pending count:', error));
+    });
+</script>

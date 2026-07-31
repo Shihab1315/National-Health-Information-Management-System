@@ -21,7 +21,7 @@ urlpatterns = [
       path('medical-records/', include('medical_records.urls')),
       path('analytics/', include('analytics.urls')),
       path('notifications/', include('notifications.urls')),
-
+      path('superadmin/', include('superadmin.urls')),
 
 
 

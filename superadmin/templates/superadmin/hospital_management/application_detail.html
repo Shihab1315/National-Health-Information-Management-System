@@ -1,0 +1,784 @@
+<!-- templates/superadmin/hospital_management/application_detail.html -->
+{% extends "superadmin/base.html" %}
+{% load static %}
+
+{% block title %}Application Details | Super Admin{% endblock %}
+
+{% block extra_css %}
+<style>
+    .status-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.375rem;
+    }
+    .status-badge .dot {
+        width: 0.375rem;
+        height: 0.375rem;
+        border-radius: 50%;
+        display: inline-block;
+    }
+    .status-badge.submitted { background: rgba(59, 130, 246, 0.15); color: #60a5fa; }
+    .status-badge.submitted .dot { background: #3b82f6; }
+    .status-badge.under_review { background: rgba(245, 158, 11, 0.15); color: #fbbf24; }
+    .status-badge.under_review .dot { background: #f59e0b; }
+    .status-badge.need_more_info { background: rgba(139, 92, 246, 0.15); color: #a78bfa; }
+    .status-badge.need_more_info .dot { background: #8b5cf6; }
+    .status-badge.approved { background: rgba(34, 197, 94, 0.15); color: #34d399; }
+    .status-badge.approved .dot { background: #22c55e; }
+    .status-badge.rejected { background: rgba(239, 68, 68, 0.15); color: #f87171; }
+    .status-badge.rejected .dot { background: #ef4444; }
+    
+    .info-card {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 0.75rem;
+        padding: 1rem;
+    }
+    .info-card .label {
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #6b7280;
+        font-weight: 600;
+    }
+    .info-card .value {
+        font-size: 0.875rem;
+        color: #e5e7eb;
+        margin-top: 0.25rem;
+        word-break: break-word;
+    }
+    
+    .timeline-item {
+        position: relative;
+        padding-left: 2rem;
+        padding-bottom: 1.5rem;
+        border-left: 2px solid rgba(255, 255, 255, 0.06);
+    }
+    .timeline-item:last-child {
+        border-left: 2px solid transparent;
+        padding-bottom: 0;
+    }
+    .timeline-item .timeline-icon {
+        position: absolute;
+        left: -0.625rem;
+        top: 0;
+        width: 1.25rem;
+        height: 1.25rem;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.625rem;
+        color: white;
+    }
+    .timeline-item .timeline-icon.blue { background: #3b82f6; }
+    .timeline-item .timeline-icon.yellow { background: #f59e0b; }
+    .timeline-item .timeline-icon.purple { background: #8b5cf6; }
+    .timeline-item .timeline-icon.green { background: #22c55e; }
+    .timeline-item .timeline-icon.red { background: #ef4444; }
+    
+    .action-card {
+        position: sticky;
+        top: 6rem;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 0.75rem;
+        padding: 1.5rem;
+    }
+    
+    .document-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.75rem;
+        background: rgba(255, 255, 255, 0.03);
+        border-radius: 0.5rem;
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        transition: all 0.2s ease;
+    }
+    .document-item:hover {
+        background: rgba(255, 255, 255, 0.06);
+        border-color: rgba(59, 130, 246, 0.3);
+    }
+    .document-item .file-icon {
+        width: 2.5rem;
+        height: 2.5rem;
+        border-radius: 0.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+        flex-shrink: 0;
+    }
+    .document-item .file-icon.pdf { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
+    .document-item .file-icon.image { background: rgba(59, 130, 246, 0.15); color: #60a5fa; }
+    .document-item .file-icon.word { background: rgba(59, 130, 246, 0.15); color: #3b82f6; }
+    .document-item .file-icon.zip { background: rgba(245, 158, 11, 0.15); color: #f59e0b; }
+    .document-item .file-icon.default { background: rgba(255, 255, 255, 0.05); color: #6b7280; }
+    
+    /* Modal Styles */
+    .modal-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.7);
+        backdrop-filter: blur(4px);
+        z-index: 9999;
+        align-items: center;
+        justify-content: center;
+    }
+    .modal-overlay.active {
+        display: flex;
+    }
+    .modal-content {
+        background: #0d1f3c;
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 1rem;
+        padding: 2rem;
+        max-width: 500px;
+        width: 90%;
+        max-height: 90vh;
+        overflow-y: auto;
+        animation: modalSlideIn 0.3s ease;
+    }
+    @keyframes modalSlideIn {
+        from {
+            transform: translateY(-20px);
+            opacity: 0;
+        }
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    
+    <!-- ===== PAGE HEADER ===== -->
+    <div class="bg-gradient-to-r from-blue-600/20 to-purple-600/20 rounded-xl border border-white/10 p-6">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+                <h1 class="text-2xl font-bold text-white">Hospital Application Review</h1>
+                <div class="flex items-center gap-2 text-sm text-gray-400 mt-1">
+                    <span>Dashboard</span>
+                    <i class="fas fa-chevron-right text-xs"></i>
+                    <span>Hospital Management</span>
+                    <i class="fas fa-chevron-right text-xs"></i>
+                    <span>Pending Applications</span>
+                    <i class="fas fa-chevron-right text-xs"></i>
+                    <span class="text-blue-400">Application Details</span>
+                </div>
+            </div>
+            <div>
+                <span class="status-badge {{ application.status|cut:'_' }}">
+                    <span class="dot"></span>
+                    {{ application.get_status_display }}
+                </span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- ===== LEFT COLUMN ===== -->
+        <div class="lg:col-span-2 space-y-6">
+            
+            <!-- SECTION 1: Hospital Information -->
+            <div class="bg-white/5 rounded-xl border border-white/10 p-6">
+                <h2 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                    <i class="fas fa-hospital text-blue-400"></i>
+                    Hospital Information
+                </h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="info-card">
+                        <p class="label">Hospital Name</p>
+                        <p class="value font-medium text-white">{{ application.hospital_name }}</p>
+                    </div>
+                    <div class="info-card">
+                        <p class="label">Application Number</p>
+                        <p class="value">{{ application.application_number|default:"N/A" }}</p>
+                    </div>
+                    <div class="info-card">
+                        <p class="label">Hospital Type</p>
+                        <p class="value">{{ application.get_hospital_type_display|default:"N/A" }}</p>
+                    </div>
+                    <div class="info-card">
+                        <p class="label">License Number</p>
+                        <p class="value">{{ application.license_number|default:"N/A" }}</p>
+                    </div>
+                    <div class="info-card">
+                        <p class="label">Registration Number</p>
+                        <p class="value">{{ application.registration_number|default:"N/A" }}</p>
+                    </div>
+                    <div class="info-card">
+                        <p class="label">Hospital Email</p>
+                        <p class="value">{{ application.hospital_email|default:"N/A" }}</p>
+                    </div>
+                    <div class="info-card">
+                        <p class="label">Phone</p>
+                        <p class="value">{{ application.phone|default:"N/A" }}</p>
+                    </div>
+                    <div class="info-card">
+                        <p class="label">Emergency Phone</p>
+                        <p class="value">{{ application.emergency_phone|default:"N/A" }}</p>
+                    </div>
+                    <div class="info-card">
+                        <p class="label">Website</p>
+                        <p class="value">
+                            {% if application.website %}
+                                <a href="{{ application.website }}" target="_blank" class="text-blue-400 hover:text-blue-300">
+                                    {{ application.website }}
+                                </a>
+                            {% else %}
+                                N/A
+                            {% endif %}
+                        </p>
+                    </div>
+                    <div class="info-card md:col-span-2">
+                        <p class="label">Full Address</p>
+                        <p class="value">{{ application.full_address|default:"N/A" }}</p>
+                    </div>
+                    <div class="info-card">
+                        <p class="label">Division</p>
+                        <p class="value">{{ application.division|default:"N/A" }}</p>
+                    </div>
+                    <div class="info-card">
+                        <p class="label">District</p>
+                        <p class="value">{{ application.district|default:"N/A" }}</p>
+                    </div>
+                    <div class="info-card">
+                        <p class="label">Upazila</p>
+                        <p class="value">{{ application.upazila|default:"N/A" }}</p>
+                    </div>
+                    <div class="info-card">
+                        <p class="label">Area</p>
+                        <p class="value">{{ application.area|default:"N/A" }}</p>
+                    </div>
+                    <div class="info-card">
+                        <p class="label">Postal Code</p>
+                        <p class="value">{{ application.postal_code|default:"N/A" }}</p>
+                    </div>
+                    <div class="info-card">
+                        <p class="label">Country</p>
+                        <p class="value">Bangladesh</p>
+                    </div>
+                    <div class="info-card">
+                        <p class="label">Google Map Link</p>
+                        <p class="value">
+                            {% if application.google_map_link %}
+                                <a href="{{ application.google_map_link }}" target="_blank" class="text-blue-400 hover:text-blue-300">
+                                    View on Map
+                                </a>
+                            {% else %}
+                                N/A
+                            {% endif %}
+                        </p>
+                    </div>
+                    <div class="info-card">
+                        <p class="label">Hospital Logo</p>
+                        <div class="value mt-2">
+                            {% if application.logo %}
+                                <img src="{{ application.logo.url }}" alt="Hospital Logo" class="h-16 w-16 object-cover rounded-lg border border-white/10">
+                            {% else %}
+                                <span class="text-gray-500">No logo uploaded</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="info-card">
+                        <p class="label">Description</p>
+                        <p class="value">{{ application.description|default:"N/A"|truncatewords:30 }}</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- SECTION 2: Hospital Admin Information -->
+            <div class="bg-white/5 rounded-xl border border-white/10 p-6">
+                <h2 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                    <i class="fas fa-user-shield text-purple-400"></i>
+                    Hospital Admin Information
+                </h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="info-card">
+                        <p class="label">Applicant Name</p>
+                        <p class="value font-medium text-white">
+                            {{ application.admin_name|default:application.hospital_admin.get_full_name|default:application.hospital_admin.username }}
+                        </p>
+                    </div>
+                    <div class="info-card">
+                        <p class="label">Applicant Email</p>
+                        <p class="value">{{ application.admin_email|default:application.hospital_admin.email|default:"N/A" }}</p>
+                    </div>
+                    <div class="info-card">
+                        <p class="label">Applicant Phone</p>
+                        <p class="value">{{ application.admin_phone|default:"N/A" }}</p>
+                    </div>
+                    <div class="info-card">
+                        <p class="label">Designation</p>
+                        <p class="value">{{ application.admin_designation|default:"N/A" }}</p>
+                    </div>
+                    <div class="info-card">
+                        <p class="label">Username</p>
+                        <p class="value">{{ application.hospital_admin.username }}</p>
+                    </div>
+                    <div class="info-card">
+                        <p class="label">Submission Date</p>
+                        <p class="value">{{ application.submitted_at|date:"F d, Y h:i A"|default:application.created_at|date:"F d, Y h:i A" }}</p>
+                    </div>
+                    <div class="info-card">
+                        <p class="label">Terms Accepted</p>
+                        <p class="value">
+                            {% if application.terms_accepted %}
+                                <span class="text-green-400"><i class="fas fa-check-circle"></i> Yes</span>
+                            {% else %}
+                                <span class="text-red-400"><i class="fas fa-times-circle"></i> No</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                    <div class="info-card">
+                        <p class="label">Email Verified</p>
+                        <p class="value">
+                            {% if application.email_verified %}
+                                <span class="text-green-400"><i class="fas fa-check-circle"></i> Yes</span>
+                            {% else %}
+                                <span class="text-red-400"><i class="fas fa-times-circle"></i> No</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- SECTION 3: Uploaded Documents -->
+            <div class="bg-white/5 rounded-xl border border-white/10 p-6">
+                <h2 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                    <i class="fas fa-file-alt text-orange-400"></i>
+                    Uploaded Documents
+                </h2>
+                
+                <div class="space-y-3">
+                    {% with documents=application.documents.all %}
+                        {% if documents %}
+                            {% for doc in documents %}
+                                <div class="document-item">
+                                    <div class="file-icon 
+                                        {% if doc.file.name|lower|slice:"-4:" == '.pdf' %}pdf
+                                        {% elif doc.file.name|lower|slice:"-4:" == '.png' or doc.file.name|lower|slice:"-4:" == '.jpg' or doc.file.name|lower|slice:"-5:" == '.jpeg' or doc.file.name|lower|slice:"-4:" == '.gif' %}image
+                                        {% elif doc.file.name|lower|slice:"-4:" == '.doc' or doc.file.name|lower|slice:"-5:" == '.docx' %}word
+                                        {% elif doc.file.name|lower|slice:"-4:" == '.zip' or doc.file.name|lower|slice:"-4:" == '.rar' %}zip
+                                        {% else %}default{% endif %}
+                                    ">
+                                        {% if doc.file.name|lower|slice:"-4:" == '.pdf' %}
+                                            <i class="fas fa-file-pdf"></i>
+                                        {% elif doc.file.name|lower|slice:"-4:" == '.png' or doc.file.name|lower|slice:"-4:" == '.jpg' or doc.file.name|lower|slice:"-5:" == '.jpeg' or doc.file.name|lower|slice:"-4:" == '.gif' %}
+                                            <i class="fas fa-file-image"></i>
+                                        {% elif doc.file.name|lower|slice:"-4:" == '.doc' or doc.file.name|lower|slice:"-5:" == '.docx' %}
+                                            <i class="fas fa-file-word"></i>
+                                        {% elif doc.file.name|lower|slice:"-4:" == '.zip' or doc.file.name|lower|slice:"-4:" == '.rar' %}
+                                            <i class="fas fa-file-archive"></i>
+                                        {% else %}
+                                            <i class="fas fa-file"></i>
+                                        {% endif %}
+                                    </div>
+                                    <div class="flex-1 min-w-0">
+                                        <p class="text-sm font-medium text-white truncate">{{ doc.document_type|default:"Document" }}</p>
+                                        <p class="text-xs text-gray-500">{{ doc.file.name|slice:"15" }}{% if doc.file.name|length > 15 %}...{% endif %}</p>
+                                    </div>
+                                    <div class="flex items-center gap-2 flex-shrink-0">
+                                        <a href="{{ doc.file.url }}" target="_blank" class="text-blue-400 hover:text-blue-300 text-sm" title="View">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{{ doc.file.url }}" download class="text-green-400 hover:text-green-300 text-sm" title="Download">
+                                            <i class="fas fa-download"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            <!-- Direct document fields from HospitalApplication model -->
+                            {% if application.trade_license or application.hospital_license or application.govt_approval or application.tin_certificate or application.other_documents %}
+                                {% if application.trade_license %}
+                                <div class="document-item">
+                                    <div class="file-icon pdf">
+                                        <i class="fas fa-file-pdf"></i>
+                                    </div>
+                                    <div class="flex-1 min-w-0">
+                                        <p class="text-sm font-medium text-white">Trade License</p>
+                                        <p class="text-xs text-gray-500">{{ application.trade_license.name|slice:"30" }}</p>
+                                    </div>
+                                    <div class="flex items-center gap-2 flex-shrink-0">
+                                        <a href="{{ application.trade_license.url }}" target="_blank" class="text-blue-400 hover:text-blue-300 text-sm" title="View">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{{ application.trade_license.url }}" download class="text-green-400 hover:text-green-300 text-sm" title="Download">
+                                            <i class="fas fa-download"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                                {% endif %}
+                                
+                                {% if application.hospital_license %}
+                                <div class="document-item">
+                                    <div class="file-icon pdf">
+                                        <i class="fas fa-file-pdf"></i>
+                                    </div>
+                                    <div class="flex-1 min-w-0">
+                                        <p class="text-sm font-medium text-white">Hospital License</p>
+                                        <p class="text-xs text-gray-500">{{ application.hospital_license.name|slice:"30" }}</p>
+                                    </div>
+                                    <div class="flex items-center gap-2 flex-shrink-0">
+                                        <a href="{{ application.hospital_license.url }}" target="_blank" class="text-blue-400 hover:text-blue-300 text-sm" title="View">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{{ application.hospital_license.url }}" download class="text-green-400 hover:text-green-300 text-sm" title="Download">
+                                            <i class="fas fa-download"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                                {% endif %}
+                                
+                                {% if application.govt_approval %}
+                                <div class="document-item">
+                                    <div class="file-icon pdf">
+                                        <i class="fas fa-file-pdf"></i>
+                                    </div>
+                                    <div class="flex-1 min-w-0">
+                                        <p class="text-sm font-medium text-white">Government Approval</p>
+                                        <p class="text-xs text-gray-500">{{ application.govt_approval.name|slice:"30" }}</p>
+                                    </div>
+                                    <div class="flex items-center gap-2 flex-shrink-0">
+                                        <a href="{{ application.govt_approval.url }}" target="_blank" class="text-blue-400 hover:text-blue-300 text-sm" title="View">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{{ application.govt_approval.url }}" download class="text-green-400 hover:text-green-300 text-sm" title="Download">
+                                            <i class="fas fa-download"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                                {% endif %}
+                                
+                                {% if application.tin_certificate %}
+                                <div class="document-item">
+                                    <div class="file-icon pdf">
+                                        <i class="fas fa-file-pdf"></i>
+                                    </div>
+                                    <div class="flex-1 min-w-0">
+                                        <p class="text-sm font-medium text-white">TIN Certificate</p>
+                                        <p class="text-xs text-gray-500">{{ application.tin_certificate.name|slice:"30" }}</p>
+                                    </div>
+                                    <div class="flex items-center gap-2 flex-shrink-0">
+                                        <a href="{{ application.tin_certificate.url }}" target="_blank" class="text-blue-400 hover:text-blue-300 text-sm" title="View">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{{ application.tin_certificate.url }}" download class="text-green-400 hover:text-green-300 text-sm" title="Download">
+                                            <i class="fas fa-download"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                                {% endif %}
+                                
+                                {% if application.other_documents %}
+                                <div class="document-item">
+                                    <div class="file-icon default">
+                                        <i class="fas fa-file"></i>
+                                    </div>
+                                    <div class="flex-1 min-w-0">
+                                        <p class="text-sm font-medium text-white">Other Documents</p>
+                                        <p class="text-xs text-gray-500">{{ application.other_documents.name|slice:"30" }}</p>
+                                    </div>
+                                    <div class="flex items-center gap-2 flex-shrink-0">
+                                        <a href="{{ application.other_documents.url }}" target="_blank" class="text-blue-400 hover:text-blue-300 text-sm" title="View">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{{ application.other_documents.url }}" download class="text-green-400 hover:text-green-300 text-sm" title="Download">
+                                            <i class="fas fa-download"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                                {% endif %}
+                            {% else %}
+                                <div class="text-center py-8">
+                                    <i class="fas fa-file-alt text-4xl text-gray-600 mb-3"></i>
+                                    <p class="text-gray-400">No documents uploaded</p>
+                                    <p class="text-sm text-gray-500">This application has no attached documents</p>
+                                </div>
+                            {% endif %}
+                        {% endif %}
+                    {% endwith %}
+                </div>
+            </div>
+            
+            <!-- SECTION 4: Remarks -->
+            <div class="bg-white/5 rounded-xl border border-white/10 p-6">
+                <h2 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                    <i class="fas fa-comment-dots text-yellow-400"></i>
+                    Remarks
+                </h2>
+                
+                <div class="info-card">
+                    {% if application.admin_remarks %}
+                        <p class="text-gray-300">{{ application.admin_remarks }}</p>
+                    {% else %}
+                        <p class="text-gray-500">No remarks</p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- TIMELINE -->
+            <div class="bg-white/5 rounded-xl border border-white/10 p-6">
+                <h2 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                    <i class="fas fa-clock text-blue-400"></i>
+                    Timeline
+                </h2>
+                
+                <div class="space-y-0">
+                    {% for event in timeline %}
+                        <div class="timeline-item">
+                            <div class="timeline-icon {{ event.color }}">
+                                <i class="fas {{ event.icon }}"></i>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-white">{{ event.title }}</p>
+                                <p class="text-xs text-gray-400">{{ event.timestamp|date:"F d, Y h:i A" }}</p>
+                                {% if event.description %}
+                                    <p class="text-sm text-gray-300 mt-1">{{ event.description }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% empty %}
+                        <div class="text-center py-4">
+                            <p class="text-gray-400">No timeline events</p>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+            
+        </div>
+        
+        <!-- ===== RIGHT COLUMN - ACTION PANEL ===== -->
+        <div class="lg:col-span-1">
+            <div class="action-card">
+                <h3 class="text-white font-semibold text-base mb-4">Actions</h3>
+                
+                <div class="space-y-3">
+                    <!-- Approve Button -->
+                    <button onclick="openModal('approveModal')" 
+                            class="w-full px-4 py-2.5 bg-green-500 hover:bg-green-600 text-white font-medium rounded-lg transition-colors flex items-center justify-center gap-2">
+                        <i class="fas fa-check-circle"></i>
+                        Approve Hospital
+                    </button>
+                    
+                    <!-- Reject Button -->
+                    <button onclick="openModal('rejectModal')" 
+                            class="w-full px-4 py-2.5 bg-red-500 hover:bg-red-600 text-white font-medium rounded-lg transition-colors flex items-center justify-center gap-2">
+                        <i class="fas fa-times-circle"></i>
+                        Reject Application
+                    </button>
+                    
+                    <!-- Need More Info Button -->
+                    <button onclick="openModal('moreInfoModal')" 
+                            class="w-full px-4 py-2.5 bg-yellow-500 hover:bg-yellow-600 text-white font-medium rounded-lg transition-colors flex items-center justify-center gap-2">
+                        <i class="fas fa-info-circle"></i>
+                        Need More Information
+                    </button>
+                    
+                    <div class="border-t border-white/10 pt-3 mt-3">
+                        <!-- Back Button -->
+                        <a href="{% url 'superadmin:pending_hospital_applications' %}" 
+                           class="w-full px-4 py-2.5 bg-white/5 hover:bg-white/10 text-gray-300 font-medium rounded-lg transition-colors flex items-center justify-center gap-2">
+                            <i class="fas fa-arrow-left"></i>
+                            Back to Pending Applications
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Application Info -->
+                <div class="mt-4 pt-4 border-t border-white/10">
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-400">Application ID</span>
+                        <span class="text-white font-mono">{{ application.application_number }}</span>
+                    </div>
+                    <div class="flex justify-between text-sm mt-1">
+                        <span class="text-gray-400">Submitted</span>
+                        <span class="text-gray-300">{{ application.submitted_at|date:"M d, Y"|default:application.created_at|date:"M d, Y" }}</span>
+                    </div>
+                    <div class="flex justify-between text-sm mt-1">
+                        <span class="text-gray-400">Last Updated</span>
+                        <span class="text-gray-300">{{ application.updated_at|date:"M d, Y" }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+    
+</div>
+
+<!-- ===== MODALS ===== -->
+
+<!-- Approve Modal -->
+<div class="modal-overlay" id="approveModal">
+    <div class="modal-content">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-xl font-bold text-white">Approve Hospital</h3>
+            <button onclick="closeModal('approveModal')" class="text-gray-400 hover:text-white">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <p class="text-gray-300 mb-6">
+            Are you sure you want to approve <strong class="text-white">{{ application.hospital_name }}</strong>?
+            This will create a new hospital in the system.
+        </p>
+        <div class="flex gap-3">
+            <form method="post" action="{% url 'superadmin:approve_application' application.id %}" class="flex-1">
+                {% csrf_token %}
+                <button type="submit" class="w-full px-4 py-2.5 bg-green-500 hover:bg-green-600 text-white font-medium rounded-lg transition-colors">
+                    Approve
+                </button>
+            </form>
+            <button onclick="closeModal('approveModal')" class="flex-1 px-4 py-2.5 bg-white/5 hover:bg-white/10 text-gray-300 font-medium rounded-lg transition-colors">
+                Cancel
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Reject Modal -->
+<div class="modal-overlay" id="rejectModal">
+    <div class="modal-content">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-xl font-bold text-white">Reject Application</h3>
+            <button onclick="closeModal('rejectModal')" class="text-gray-400 hover:text-white">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <p class="text-gray-300 mb-4">
+            Please provide a reason for rejecting <strong class="text-white">{{ application.hospital_name }}</strong>.
+        </p>
+        <form id="rejectForm" method="post" action="{% url 'superadmin:reject_application' application.id %}">
+            {% csrf_token %}
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-300 mb-1">Rejection Reason *</label>
+                <textarea name="reason" id="rejectReason" rows="4" 
+                          class="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:border-red-500 focus:outline-none"
+                          placeholder="Explain why this application is being rejected..."></textarea>
+                <p id="rejectError" class="text-red-400 text-xs mt-1 hidden">Please provide a rejection reason.</p>
+            </div>
+            <div class="flex gap-3">
+                <button type="submit" class="flex-1 px-4 py-2.5 bg-red-500 hover:bg-red-600 text-white font-medium rounded-lg transition-colors">
+                    Reject
+                </button>
+                <button type="button" onclick="closeModal('rejectModal')" class="flex-1 px-4 py-2.5 bg-white/5 hover:bg-white/10 text-gray-300 font-medium rounded-lg transition-colors">
+                    Cancel
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- More Info Modal -->
+<div class="modal-overlay" id="moreInfoModal">
+    <div class="modal-content">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-xl font-bold text-white">Request More Information</h3>
+            <button onclick="closeModal('moreInfoModal')" class="text-gray-400 hover:text-white">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <p class="text-gray-300 mb-4">
+            Send a message to the applicant asking for more information.
+        </p>
+        <form id="moreInfoForm" method="post" action="{% url 'superadmin:request_more_info' application.id %}">
+            {% csrf_token %}
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-300 mb-1">Message *</label>
+                <textarea name="message" id="moreInfoMessage" rows="4" 
+                          class="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:border-yellow-500 focus:outline-none"
+                          placeholder="Please provide additional information about..."></textarea>
+                <p id="moreInfoError" class="text-red-400 text-xs mt-1 hidden">Please enter a message.</p>
+            </div>
+            <div class="flex gap-3">
+                <button type="submit" class="flex-1 px-4 py-2.5 bg-yellow-500 hover:bg-yellow-600 text-white font-medium rounded-lg transition-colors">
+                    Send Request
+                </button>
+                <button type="button" onclick="closeModal('moreInfoModal')" class="flex-1 px-4 py-2.5 bg-white/5 hover:bg-white/10 text-gray-300 font-medium rounded-lg transition-colors">
+                    Cancel
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // ===== MODAL FUNCTIONS =====
+    function openModal(modalId) {
+        document.getElementById(modalId).classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+    
+    function closeModal(modalId) {
+        document.getElementById(modalId).classList.remove('active');
+        document.body.style.overflow = '';
+    }
+    
+    // Close modal on overlay click
+    document.querySelectorAll('.modal-overlay').forEach(modal => {
+        modal.addEventListener('click', function(e) {
+            if (e.target === this) {
+                this.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+        });
+    });
+    
+    // Close modal on Escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            document.querySelectorAll('.modal-overlay.active').forEach(modal => {
+                modal.classList.remove('active');
+                document.body.style.overflow = '';
+            });
+        }
+    });
+    
+    // ===== REJECT FORM VALIDATION =====
+    document.getElementById('rejectForm').addEventListener('submit', function(e) {
+        const reason = document.getElementById('rejectReason').value.trim();
+        if (!reason) {
+            e.preventDefault();
+            document.getElementById('rejectError').classList.remove('hidden');
+        }
+    });
+    
+    document.getElementById('rejectReason').addEventListener('input', function() {
+        if (this.value.trim()) {
+            document.getElementById('rejectError').classList.add('hidden');
+        }
+    });
+    
+    // ===== MORE INFO FORM VALIDATION =====
+    document.getElementById('moreInfoForm').addEventListener('submit', function(e) {
+        const message = document.getElementById('moreInfoMessage').value.trim();
+        if (!message) {
+            e.preventDefault();
+            document.getElementById('moreInfoError').classList.remove('hidden');
+        }
+    });
+    
+    document.getElementById('moreInfoMessage').addEventListener('input', function() {
+        if (this.value.trim()) {
+            document.getElementById('moreInfoError').classList.add('hidden');
+        }
+    });
+</script>
+{% endblock %}
