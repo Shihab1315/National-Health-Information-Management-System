@@ -93,62 +93,34 @@ class CustomLoginView(LoginView):
         return super().form_invalid(form)
 
 
-@login_required
 def dashboard_redirect(request):
     """
-    Redirect logged-in users to their own dashboard based on role.
+    Redirect users to their respective dashboards based on role.
     """
+    if not request.user.is_authenticated:
+        return redirect('accounts:login')
     
     user = request.user
-
-    # Super Admin
-    if user.role == user.Role.SUPER_ADMIN:
-        return redirect("dashboard:superadmin_dashboard")
-
-    # Doctor
-    elif user.role == user.Role.DOCTOR:
-        if hasattr(user, "doctor_profile"):
-            return redirect("dashboard:doctor_dashboard")
-
-        messages.error(
-            request,
-            "Doctor profile not found. Please contact the administrator."
-        )
-        return redirect("dashboard:homepage")
-
-    # Patient
-    elif user.role == user.Role.PATIENT:
-        if hasattr(user, "patient_profile"):
-            return redirect("dashboard:patient_dashboard")
-
-        messages.error(
-            request,
-            "Patient profile not found. Please contact support."
-        )
-        return redirect("dashboard:homepage")
-
-    # Hospital Admin
-    elif user.role == user.Role.HOSPITAL_ADMIN:
-        return redirect("accounts:hospital_admin_dashboard_check")
-
-    # Receptionist
-    elif user.role == user.Role.RECEPTIONIST:
-        return redirect("receptionist:dashboard")
-
-    # Lab Technician
-    elif user.role == user.Role.LAB_TECHNICIAN:
-        return redirect("laboratory:dashboard")
-
-    # Pharmacist
-    elif user.role == user.Role.PHARMACIST:
-        return redirect("pharmacy:dashboard")
-
-    # Unknown Role
-    messages.warning(
-        request,
-        "No dashboard available for your account."
-    )
-    return redirect("dashboard:homepage")
+    
+    # Check role and redirect accordingly
+    if user.role == 'super_admin':
+        return redirect('superadmin:dashboard')
+    elif user.role == 'hospital_admin':
+        # Redirect to hospital admin dashboard
+        return redirect('hospital_admin:dashboard')
+    elif user.role == 'doctor':
+        return redirect('dashboard:doctor_dashboard')
+    elif user.role == 'patient':
+        return redirect('dashboard:patient_dashboard')
+    elif user.role == 'receptionist':
+        return redirect('dashboard:receptionist_dashboard')
+    elif user.role == 'lab_technician':
+        return redirect('dashboard:lab_technician_dashboard')
+    elif user.role == 'pharmacist':
+        return redirect('dashboard:pharmacist_dashboard')
+    else:
+        # Default fallback
+        return redirect('dashboard:homepage')
 
 @login_required
 def hospital_admin_dashboard_check(request):

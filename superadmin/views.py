@@ -10,14 +10,22 @@ from django.utils.decorators import method_decorator
 from hospitals.models import HospitalApplication, Hospital
 from accounts.models import User
 from django.db.models import Sum, Count
+from django.urls import reverse_lazy
 from datetime import datetime, date
 from django.contrib.auth import logout
 from django.core.exceptions import PermissionDenied
 import json
+from django.db import models
 import random  # <-- ADD THIS IMPORT
 from django.utils.text import slugify
 from django.db import IntegrityError
-
+from django.conf import settings
+from django.core.exceptions import ValidationError
+from django.core.validators import validate_email
+from .forms import SuperAdminProfileForm, SuperAdminPasswordChangeForm
+from django.contrib.auth.views import PasswordChangeView
+from django.contrib.auth.forms import PasswordChangeForm
+from django.contrib.auth import update_session_auth_hash
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.db.models import Q
 
@@ -74,11 +82,15 @@ def superadmin_dashboard(request):
     
     # Get appointment counts if model exists
     total_appointments = Appointment.objects.count() if Appointment else 0
+    
+    # Fix: Use appointment_date instead of date
     today_appointments = 0
     if Appointment:
-        today_appointments = Appointment.objects.filter(date=date.today()).count()
+        today_appointments = Appointment.objects.filter(
+            appointment_date=date.today()
+        ).count()
     
-    # Get pending applications (submitted, under_review, need_more_info)
+    # Get pending applications
     pending_applications = HospitalApplication.objects.filter(
         status__in=['submitted', 'under_review', 'need_more_info']
     ).count()
@@ -86,8 +98,12 @@ def superadmin_dashboard(request):
     # Get pending lab reports if model exists
     pending_lab_reports = LabReport.objects.filter(status='pending').count() if LabReport else 0
     
-    # Get low stock medicines if model exists
-    low_stock_medicines = Medicine.objects.filter(quantity__lte=10).count() if Medicine else 0
+    # Fix: Use current_stock instead of quantity, and check if <= minimum_stock
+    low_stock_medicines = 0
+    if Medicine:
+        low_stock_medicines = Medicine.objects.filter(
+            current_stock__lte=models.F('minimum_stock')
+        ).count()
     
     # Get monthly revenue if model exists
     monthly_revenue = 0
@@ -96,16 +112,16 @@ def superadmin_dashboard(request):
             date__month=datetime.now().month
         ).aggregate(Sum('amount'))['amount__sum'] or 0
     
-    # ===== FIX: Count approved and rejected hospitals =====
-    # Approved hospitals: Hospital objects that are active AND verified
+    # Get approved and rejected hospitals counts
     approved_hospitals = Hospital.objects.filter(active=True).count()
-    
-    # Rejected hospitals: HospitalApplication objects with status 'rejected'
     rejected_hospitals = HospitalApplication.objects.filter(status='rejected').count()
     
-    # Also get the actual numbers for display
-    total_active_hospitals = Hospital.objects.filter(active=True).count()
-    total_inactive_hospitals = Hospital.objects.filter(active=False).count()
+    # Fix: Use expiry_date for expired medicines
+    expired_medicines = 0
+    if Medicine:
+        expired_medicines = Medicine.objects.filter(
+            expiry_date__lt=date.today()
+        ).count()
     
     context = {
         'user': request.user,
@@ -120,16 +136,14 @@ def superadmin_dashboard(request):
         'pending_lab_reports': pending_lab_reports,
         'low_stock_medicines': low_stock_medicines,
         'monthly_revenue': monthly_revenue,
-        'approved_hospitals': approved_hospitals,  # Active hospitals
-        'rejected_hospitals': rejected_hospitals,  # Rejected applications
-        'total_active_hospitals': total_active_hospitals,  # For additional info
-        'total_inactive_hospitals': total_inactive_hospitals,  # For additional info
+        'approved_hospitals': approved_hospitals,
+        'rejected_hospitals': rejected_hospitals,
         'alerts': {
             'low_stock': low_stock_medicines,
-            'expired_medicines': Medicine.objects.filter(expiry_date__lt=date.today()).count() if Medicine else 0,
+            'expired_medicines': expired_medicines,
         }
     }
-    return render(request, 'superadmin/dashboard.html', context)
+    return render(request, 'dashboard/superadmin_dashboard.html', context)
 
 
 @login_required
@@ -861,3 +875,90 @@ def toggle_user_status(request, user_id):
         messages.error(request, 'Invalid action.')
     
     return redirect('superadmin:all_users')
+
+# =============================================================================
+# SETTINGS - PROFILE
+# =============================================================================
+@method_decorator([login_required, role_required(['super_admin'])], name='dispatch')
+class SuperAdminProfileView(View):
+    """Super Admin profile settings."""
+    template_name = 'superadmin/settings/profile.html'
+    
+    def get(self, request):
+        form = SuperAdminProfileForm(instance=request.user)
+        context = {
+            'form': form,
+            'user': request.user,
+            'page_title': 'My Profile',
+            'current_page': 'My Profile',
+            'breadcrumb': 'Settings / My Profile',
+        }
+        return render(request, self.template_name, context)
+    
+    def post(self, request):
+        form = SuperAdminProfileForm(request.POST, request.FILES, instance=request.user)
+        
+        if form.is_valid():
+            # Check if email is unique (excluding current user)
+            email = form.cleaned_data.get('email')
+            if email and User.objects.exclude(id=request.user.id).filter(email=email).exists():
+                form.add_error('email', 'This email is already registered.')
+                context = {
+                    'form': form,
+                    'user': request.user,
+                    'page_title': 'My Profile',
+                    'current_page': 'My Profile',
+                    'breadcrumb': 'Settings / My Profile',
+                }
+                return render(request, self.template_name, context)
+            
+            # Save the form
+            user = form.save(commit=False)
+            
+            # Handle profile picture
+            if 'profile_picture' in request.FILES:
+                # Delete old profile picture if exists
+                if user.profile_picture and os.path.isfile(user.profile_picture.path):
+                    os.remove(user.profile_picture.path)
+                user.profile_picture = request.FILES['profile_picture']
+            
+            user.save()
+            
+            messages.success(request, 'Profile updated successfully!')
+            return redirect('superadmin:profile')
+        
+        context = {
+            'form': form,
+            'user': request.user,
+            'page_title': 'My Profile',
+            'current_page': 'My Profile',
+            'breadcrumb': 'Settings / My Profile',
+        }
+        return render(request, self.template_name, context)
+
+
+# =============================================================================
+# SETTINGS - CHANGE PASSWORD
+# =============================================================================
+@method_decorator([login_required, role_required(['super_admin'])], name='dispatch')
+class SuperAdminChangePasswordView(PasswordChangeView):
+    """Super Admin password change view."""
+    template_name = 'superadmin/settings/change_password.html'
+    form_class = SuperAdminPasswordChangeForm
+    success_url = reverse_lazy('superadmin:profile')
+    
+    def form_valid(self, form):
+        """Update session auth hash to keep user logged in."""
+        user = form.save()
+        update_session_auth_hash(self.request, user)
+        messages.success(self.request, 'Password changed successfully!')
+        return super().form_valid(form)
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update({
+            'page_title': 'Change Password',
+            'current_page': 'Change Password',
+            'breadcrumb': 'Settings / Change Password',
+        })
+        return context

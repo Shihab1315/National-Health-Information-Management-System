@@ -1,0 +1,111 @@
+<!-- templates/hospital_admin/verification/submitted.html -->
+{% extends "hospital_admin/base.html" %}
+{% load static %}
+
+{% block title %}Application Submitted | Hospital Admin{% endblock %}
+
+{% block page_title %}Application Submitted{% endblock %}
+{% block current_page %}Verification / Submitted{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    
+    <!-- Header -->
+    <div class="bg-gradient-to-r from-yellow-600/20 to-yellow-500/20 rounded-xl border border-yellow-500/20 p-6">
+        <div class="flex items-center gap-4">
+            <div class="w-16 h-16 rounded-full bg-yellow-500/20 flex items-center justify-center">
+                <i class="fas fa-clock text-3xl text-yellow-400"></i>
+            </div>
+            <div>
+                <h1 class="text-2xl font-bold text-white">Application Submitted</h1>
+                <p class="text-yellow-400 mt-1">Your hospital verification request has been submitted successfully!</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        
+        <!-- Application Details -->
+        <div class="bg-white/5 rounded-xl border border-white/10 p-6">
+            <h2 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                <i class="fas fa-file-alt text-blue-400"></i>
+                Application Details
+            </h2>
+            
+            <div class="space-y-3">
+                <div class="flex justify-between py-2 border-b border-white/5">
+                    <span class="text-gray-400">Application Number</span>
+                    <span class="text-white font-mono font-medium">{{ application.application_number }}</span>
+                </div>
+                <div class="flex justify-between py-2 border-b border-white/5">
+                    <span class="text-gray-400">Hospital Name</span>
+                    <span class="text-white font-medium">{{ application.hospital_name }}</span>
+                </div>
+                <div class="flex justify-between py-2 border-b border-white/5">
+                    <span class="text-gray-400">Submission Date</span>
+                    <span class="text-white">{{ application.submitted_at|date:"F d, Y h:i A" }}</span>
+                </div>
+                <div class="flex justify-between py-2 border-b border-white/5">
+                    <span class="text-gray-400">Current Status</span>
+                    <span class="px-3 py-1 bg-yellow-500/20 text-yellow-400 rounded-full text-sm font-medium">
+                        <i class="fas fa-clock mr-1"></i>
+                        Submitted
+                    </span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- What Happens Next -->
+        <div class="bg-white/5 rounded-xl border border-white/10 p-6">
+            <h2 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                <i class="fas fa-info-circle text-blue-400"></i>
+                What Happens Next?
+            </h2>
+            
+            <div class="space-y-4">
+                <div class="flex items-start gap-3">
+                    <div class="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center flex-shrink-0 text-blue-400">
+                        <i class="fas fa-check text-sm"></i>
+                    </div>
+                    <div>
+                        <p class="text-white font-medium">1. Super Admin Review</p>
+                        <p class="text-gray-400 text-sm">Your application will be reviewed by the Super Admin.</p>
+                    </div>
+                </div>
+                <div class="flex items-start gap-3">
+                    <div class="w-8 h-8 rounded-full bg-yellow-500/20 flex items-center justify-center flex-shrink-0 text-yellow-400">
+                        <i class="fas fa-clock text-sm"></i>
+                    </div>
+                    <div>
+                        <p class="text-white font-medium">2. Verification Process</p>
+                        <p class="text-gray-400 text-sm">The Super Admin will verify all documents and information.</p>
+                    </div>
+                </div>
+                <div class="flex items-start gap-3">
+                    <div class="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0 text-green-400">
+                        <i class="fas fa-check-circle text-sm"></i>
+                    </div>
+                    <div>
+                        <p class="text-white font-medium">3. Approval Notification</p>
+                        <p class="text-gray-400 text-sm">You will be notified once your hospital is verified.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+    
+    <!-- Action Buttons -->
+    <div class="flex flex-wrap items-center gap-3 pt-4">
+        <a href="{% url 'hospital_admin:dashboard' %}" class="px-6 py-2.5 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-lg transition-colors">
+            <i class="fas fa-home mr-2"></i>
+            Go to Dashboard
+        </a>
+        <a href="#" class="px-6 py-2.5 bg-white/5 hover:bg-white/10 text-gray-300 font-medium rounded-lg transition-colors">
+            <i class="fas fa-eye mr-2"></i>
+            View Application
+        </a>
+    </div>
+    
+</div>
+{% endblock %}

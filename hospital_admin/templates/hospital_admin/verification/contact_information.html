@@ -1,0 +1,286 @@
+<!-- templates/hospital_admin/verification/contact_information.html -->
+{% extends "hospital_admin/base.html" %}
+{% load static %}
+
+{% block title %}Contact Information | Hospital Verification{% endblock %}
+
+{% block page_title %}Hospital Verification{% endblock %}
+{% block current_page %}Step 2 of 5: Contact Information{% endblock %}
+
+{% block extra_css %}
+<style>
+    .progress-step {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        position: relative;
+        flex: 1;
+    }
+    .progress-step .step-circle {
+        width: 2.5rem;
+        height: 2.5rem;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 0.875rem;
+        border: 2px solid rgba(255, 255, 255, 0.1);
+        background: rgba(255, 255, 255, 0.05);
+        color: #6b7280;
+        transition: all 0.3s ease;
+        position: relative;
+        z-index: 2;
+    }
+    .progress-step.active .step-circle {
+        border-color: #3b82f6;
+        background: rgba(59, 130, 246, 0.2);
+        color: #60a5fa;
+    }
+    .progress-step.completed .step-circle {
+        border-color: #22c55e;
+        background: rgba(34, 197, 94, 0.2);
+        color: #34d399;
+    }
+    .progress-step .step-label {
+        font-size: 0.65rem;
+        color: #6b7280;
+        margin-top: 0.5rem;
+        text-align: center;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    .progress-step.active .step-label {
+        color: #e5e7eb;
+    }
+    .progress-step.completed .step-label {
+        color: #34d399;
+    }
+    .progress-line {
+        position: absolute;
+        top: 1.25rem;
+        left: calc(50% + 1.25rem);
+        right: calc(-50% + 1.25rem);
+        height: 2px;
+        background: rgba(255, 255, 255, 0.1);
+        z-index: 1;
+    }
+    .progress-step.completed .progress-line {
+        background: #22c55e;
+    }
+    .progress-step:last-child .progress-line {
+        display: none;
+    }
+    
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    .form-group label {
+        display: block;
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: #e5e7eb;
+        margin-bottom: 0.375rem;
+    }
+    .form-group label .required {
+        color: #ef4444;
+        margin-left: 0.25rem;
+    }
+    .form-group .help-text {
+        font-size: 0.75rem;
+        color: #6b7280;
+        margin-top: 0.25rem;
+    }
+    .form-group .error-text {
+        font-size: 0.75rem;
+        color: #ef4444;
+        margin-top: 0.25rem;
+    }
+    
+    .btn-primary {
+        background: #3b82f6;
+        color: white;
+        padding: 0.625rem 1.5rem;
+        border-radius: 0.5rem;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        border: none;
+        cursor: pointer;
+    }
+    .btn-primary:hover {
+        background: #2563eb;
+        transform: translateY(-1px);
+    }
+    .btn-secondary {
+        background: rgba(255, 255, 255, 0.05);
+        color: #e5e7eb;
+        padding: 0.625rem 1.5rem;
+        border-radius: 0.5rem;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        cursor: pointer;
+    }
+    .btn-secondary:hover {
+        background: rgba(255, 255, 255, 0.1);
+    }
+    .btn-danger {
+        background: rgba(239, 68, 68, 0.15);
+        color: #f87171;
+        padding: 0.625rem 1.5rem;
+        border-radius: 0.5rem;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        border: 1px solid rgba(239, 68, 68, 0.2);
+        cursor: pointer;
+    }
+    .btn-danger:hover {
+        background: rgba(239, 68, 68, 0.25);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    
+    <!-- Header -->
+    <div class="bg-gradient-to-r from-blue-600/20 to-purple-600/20 rounded-xl border border-white/10 p-6">
+        <div>
+            <h1 class="text-2xl font-bold text-white">Hospital Verification</h1>
+            <p class="text-gray-400 mt-1">Step 2 of 5: Contact Information</p>
+            <p class="text-sm text-gray-500 mt-1">Enter your hospital's contact details.</p>
+        </div>
+    </div>
+    
+    <!-- Progress Bar -->
+    <div class="bg-white/5 rounded-xl border border-white/10 p-6">
+        <div class="flex justify-between max-w-3xl mx-auto relative">
+            <!-- Step 1: Hospital Information -->
+            <div class="progress-step completed">
+                <div class="step-circle">
+                    <i class="fas fa-check"></i>
+                </div>
+                <p class="step-label">Hospital Info</p>
+            </div>
+            
+            <!-- Step 2: Contact Information -->
+            <div class="progress-step active">
+                <div class="progress-line"></div>
+                <div class="step-circle">2</div>
+                <p class="step-label">Contact Info</p>
+            </div>
+            
+            <!-- Step 3: Address -->
+            <div class="progress-step">
+                <div class="progress-line"></div>
+                <div class="step-circle">3</div>
+                <p class="step-label">Address</p>
+            </div>
+            
+            <!-- Step 4: Documents -->
+            <div class="progress-step">
+                <div class="progress-line"></div>
+                <div class="step-circle">4</div>
+                <p class="step-label">Documents</p>
+            </div>
+            
+            <!-- Step 5: Review -->
+            <div class="progress-step">
+                <div class="progress-line"></div>
+                <div class="step-circle">5</div>
+                <p class="step-label">Review & Submit</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Form -->
+    <div class="bg-white/5 rounded-xl border border-white/10 p-6">
+        <h2 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+            <i class="fas fa-phone text-blue-400"></i>
+            Hospital Contact Information
+        </h2>
+        
+        <form method="post">
+            {% csrf_token %}
+            
+            {% if form.non_field_errors %}
+                <div class="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
+                    {% for error in form.non_field_errors %}
+                        <p class="text-red-400 text-sm">{{ error }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Hospital Email -->
+                <div class="form-group md:col-span-2">
+                    <label for="{{ form.hospital_email.id_for_label }}">
+                        Hospital Email <span class="required">*</span>
+                    </label>
+                    {{ form.hospital_email }}
+                    <p class="help-text">This will be the primary contact email for your hospital.</p>
+                    {% if form.hospital_email.errors %}
+                        <p class="error-text">{{ form.hospital_email.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <!-- Phone Number -->
+                <div class="form-group">
+                    <label for="{{ form.phone.id_for_label }}">
+                        Phone Number <span class="required">*</span>
+                    </label>
+                    {{ form.phone }}
+                    <p class="help-text">Format: 017XXXXXXXX or +88017XXXXXXXX</p>
+                    {% if form.phone.errors %}
+                        <p class="error-text">{{ form.phone.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <!-- Emergency Phone -->
+                <div class="form-group">
+                    <label for="{{ form.emergency_phone.id_for_label }}">
+                        Emergency Phone
+                    </label>
+                    {{ form.emergency_phone }}
+                    <p class="help-text">Format: 019XXXXXXXX (Optional)</p>
+                    {% if form.emergency_phone.errors %}
+                        <p class="error-text">{{ form.emergency_phone.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <!-- Website -->
+                <div class="form-group md:col-span-2">
+                    <label for="{{ form.website.id_for_label }}">
+                        Website
+                    </label>
+                    {{ form.website }}
+                    <p class="help-text">Example: https://hospital.com (Optional)</p>
+                    {% if form.website.errors %}
+                        <p class="error-text">{{ form.website.errors.0 }}</p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Form Actions -->
+            <div class="flex flex-wrap items-center justify-between gap-3 pt-6 border-t border-white/10">
+                <a href="/hospital-admin/verification/hospital-information/" class="btn-secondary">
+                    <i class="fas fa-arrow-left mr-2"></i>
+                    Previous
+                </a>
+                <div class="flex flex-wrap items-center gap-3">
+                    <button type="submit" name="save_draft" value="save_draft" class="btn-secondary">
+                        <i class="fas fa-save mr-2"></i>
+                        Save Draft
+                    </button>
+                    <button type="submit" name="save_continue" value="save_continue" class="btn-primary">
+                        <i class="fas fa-arrow-right mr-2"></i>
+                        Save & Continue →
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+    
+</div>
+{% endblock %}

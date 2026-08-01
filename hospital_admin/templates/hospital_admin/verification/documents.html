@@ -1,0 +1,405 @@
+<!-- templates/hospital_admin/verification/documents.html -->
+{% extends "hospital_admin/base.html" %}
+{% load static %}
+
+{% block title %}Documents Upload | Hospital Verification{% endblock %}
+
+{% block page_title %}Hospital Verification{% endblock %}
+{% block current_page %}Step 4 of 5: Documents Upload{% endblock %}
+
+{% block extra_css %}
+<style>
+    .progress-step {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        position: relative;
+        flex: 1;
+    }
+    .progress-step .step-circle {
+        width: 2.5rem;
+        height: 2.5rem;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 0.875rem;
+        border: 2px solid rgba(255, 255, 255, 0.1);
+        background: rgba(255, 255, 255, 0.05);
+        color: #6b7280;
+        transition: all 0.3s ease;
+        position: relative;
+        z-index: 2;
+    }
+    .progress-step.active .step-circle {
+        border-color: #3b82f6;
+        background: rgba(59, 130, 246, 0.2);
+        color: #60a5fa;
+    }
+    .progress-step.completed .step-circle {
+        border-color: #22c55e;
+        background: rgba(34, 197, 94, 0.2);
+        color: #34d399;
+    }
+    .progress-step .step-label {
+        font-size: 0.65rem;
+        color: #6b7280;
+        margin-top: 0.5rem;
+        text-align: center;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    .progress-step.active .step-label {
+        color: #e5e7eb;
+    }
+    .progress-step.completed .step-label {
+        color: #34d399;
+    }
+    .progress-line {
+        position: absolute;
+        top: 1.25rem;
+        left: calc(50% + 1.25rem);
+        right: calc(-50% + 1.25rem);
+        height: 2px;
+        background: rgba(255, 255, 255, 0.1);
+        z-index: 1;
+    }
+    .progress-step.completed .progress-line {
+        background: #22c55e;
+    }
+    .progress-step:last-child .progress-line {
+        display: none;
+    }
+    
+    .upload-card {
+        background: rgba(255, 255, 255, 0.03);
+        border: 2px dashed rgba(255, 255, 255, 0.1);
+        border-radius: 0.75rem;
+        padding: 2rem;
+        text-align: center;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+    .upload-card:hover {
+        border-color: rgba(59, 130, 246, 0.3);
+        background: rgba(59, 130, 246, 0.05);
+    }
+    .upload-card.dragover {
+        border-color: #3b82f6;
+        background: rgba(59, 130, 246, 0.1);
+    }
+    .upload-card .icon {
+        font-size: 2.5rem;
+        color: #6b7280;
+        margin-bottom: 0.5rem;
+    }
+    .upload-card .title {
+        color: #e5e7eb;
+        font-weight: 500;
+    }
+    .upload-card .subtitle {
+        color: #6b7280;
+        font-size: 0.75rem;
+    }
+    .upload-card .file-info {
+        color: #60a5fa;
+        font-size: 0.75rem;
+        margin-top: 0.5rem;
+    }
+    
+    .file-preview {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.75rem;
+        background: rgba(255, 255, 255, 0.03);
+        border-radius: 0.5rem;
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        margin-top: 0.5rem;
+    }
+    .file-preview .file-icon {
+        width: 2.5rem;
+        height: 2.5rem;
+        border-radius: 0.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+        flex-shrink: 0;
+    }
+    .file-preview .file-icon.pdf { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
+    .file-preview .file-icon.image { background: rgba(59, 130, 246, 0.15); color: #60a5fa; }
+    .file-preview .file-icon.webp { background: rgba(139, 92, 246, 0.15); color: #a78bfa; }
+    
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    .form-group label {
+        display: block;
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: #e5e7eb;
+        margin-bottom: 0.375rem;
+    }
+    .form-group label .required {
+        color: #ef4444;
+        margin-left: 0.25rem;
+    }
+    .form-group .help-text {
+        font-size: 0.75rem;
+        color: #6b7280;
+        margin-top: 0.25rem;
+    }
+    .form-group .error-text {
+        font-size: 0.75rem;
+        color: #ef4444;
+        margin-top: 0.25rem;
+    }
+    
+    .btn-primary {
+        background: #3b82f6;
+        color: white;
+        padding: 0.625rem 1.5rem;
+        border-radius: 0.5rem;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        border: none;
+        cursor: pointer;
+    }
+    .btn-primary:hover {
+        background: #2563eb;
+        transform: translateY(-1px);
+    }
+    .btn-secondary {
+        background: rgba(255, 255, 255, 0.05);
+        color: #e5e7eb;
+        padding: 0.625rem 1.5rem;
+        border-radius: 0.5rem;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        cursor: pointer;
+    }
+    .btn-secondary:hover {
+        background: rgba(255, 255, 255, 0.1);
+    }
+    .btn-success {
+        background: #22c55e;
+        color: white;
+        padding: 0.625rem 1.5rem;
+        border-radius: 0.5rem;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        border: none;
+        cursor: pointer;
+    }
+    .btn-success:hover {
+        background: #16a34a;
+        transform: translateY(-1px);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    
+    <!-- Header -->
+    <div class="bg-gradient-to-r from-blue-600/20 to-purple-600/20 rounded-xl border border-white/10 p-6">
+        <div>
+            <h1 class="text-2xl font-bold text-white">Hospital Verification</h1>
+            <p class="text-gray-400 mt-1">Step 4 of 5: Documents Upload</p>
+            <p class="text-sm text-gray-500 mt-1">Upload your hospital legal documents for verification.</p>
+        </div>
+    </div>
+    
+    <!-- Progress Bar -->
+    <div class="bg-white/5 rounded-xl border border-white/10 p-6">
+        <div class="flex justify-between max-w-3xl mx-auto relative">
+            <!-- Step 1 -->
+            <div class="progress-step completed">
+                <div class="step-circle"><i class="fas fa-check"></i></div>
+                <p class="step-label">Hospital Info</p>
+            </div>
+            
+            <!-- Step 2 -->
+            <div class="progress-step completed">
+                <div class="progress-line"></div>
+                <div class="step-circle"><i class="fas fa-check"></i></div>
+                <p class="step-label">Contact Info</p>
+            </div>
+            
+            <!-- Step 3 -->
+            <div class="progress-step completed">
+                <div class="progress-line"></div>
+                <div class="step-circle"><i class="fas fa-check"></i></div>
+                <p class="step-label">Address</p>
+            </div>
+            
+            <!-- Step 4 -->
+            <div class="progress-step active">
+                <div class="progress-line"></div>
+                <div class="step-circle">4</div>
+                <p class="step-label">Documents</p>
+            </div>
+            
+            <!-- Step 5 -->
+            <div class="progress-step">
+                <div class="progress-line"></div>
+                <div class="step-circle">5</div>
+                <p class="step-label">Review & Submit</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Form -->
+    <div class="bg-white/5 rounded-xl border border-white/10 p-6">
+        <h2 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+            <i class="fas fa-file-upload text-blue-400"></i>
+            Upload Documents
+        </h2>
+        
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            
+            {% if form.non_field_errors %}
+                <div class="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
+                    {% for error in form.non_field_errors %}
+                        <p class="text-red-400 text-sm">{{ error }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                
+                <!-- Logo -->
+                <div class="form-group">
+                    <label for="{{ form.logo.id_for_label }}">Hospital Logo</label>
+                    {{ form.logo }}
+                    <div class="upload-card" onclick="document.getElementById('{{ form.logo.id_for_label }}').click();">
+                        <div class="icon"><i class="fas fa-image"></i></div>
+                        <p class="title">Upload Hospital Logo</p>
+                        <p class="subtitle">{{ form.logo.help_text }}</p>
+                        {% if application.logo %}
+                            <p class="file-info">✓ Current: {{ application.logo.name|slice:"30" }}</p>
+                        {% endif %}
+                    </div>
+                    {% if form.logo.errors %}
+                        <p class="error-text">{{ form.logo.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <!-- Trade License -->
+                <div class="form-group">
+                    <label for="{{ form.trade_license.id_for_label }}">
+                        Trade License <span class="required">*</span>
+                    </label>
+                    {{ form.trade_license }}
+                    <div class="upload-card" onclick="document.getElementById('{{ form.trade_license.id_for_label }}').click();">
+                        <div class="icon"><i class="fas fa-file-contract"></i></div>
+                        <p class="title">Upload Trade License</p>
+                        <p class="subtitle">{{ form.trade_license.help_text }}</p>
+                        {% if application.trade_license %}
+                            <p class="file-info">✓ Current: {{ application.trade_license.name|slice:"30" }}</p>
+                        {% endif %}
+                    </div>
+                    {% if form.trade_license.errors %}
+                        <p class="error-text">{{ form.trade_license.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <!-- Hospital License -->
+                <div class="form-group">
+                    <label for="{{ form.hospital_license.id_for_label }}">
+                        Hospital License <span class="required">*</span>
+                    </label>
+                    {{ form.hospital_license }}
+                    <div class="upload-card" onclick="document.getElementById('{{ form.hospital_license.id_for_label }}').click();">
+                        <div class="icon"><i class="fas fa-certificate"></i></div>
+                        <p class="title">Upload Hospital License</p>
+                        <p class="subtitle">{{ form.hospital_license.help_text }}</p>
+                        {% if application.hospital_license %}
+                            <p class="file-info">✓ Current: {{ application.hospital_license.name|slice:"30" }}</p>
+                        {% endif %}
+                    </div>
+                    {% if form.hospital_license.errors %}
+                        <p class="error-text">{{ form.hospital_license.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <!-- Government Approval -->
+                <div class="form-group">
+                    <label for="{{ form.govt_approval.id_for_label }}">Government Approval</label>
+                    {{ form.govt_approval }}
+                    <div class="upload-card" onclick="document.getElementById('{{ form.govt_approval.id_for_label }}').click();">
+                        <div class="icon"><i class="fas fa-landmark"></i></div>
+                        <p class="title">Upload Government Approval</p>
+                        <p class="subtitle">{{ form.govt_approval.help_text }}</p>
+                        {% if application.govt_approval %}
+                            <p class="file-info">✓ Current: {{ application.govt_approval.name|slice:"30" }}</p>
+                        {% endif %}
+                    </div>
+                    {% if form.govt_approval.errors %}
+                        <p class="error-text">{{ form.govt_approval.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <!-- TIN Certificate -->
+                <div class="form-group">
+                    <label for="{{ form.tin_certificate.id_for_label }}">TIN Certificate</label>
+                    {{ form.tin_certificate }}
+                    <div class="upload-card" onclick="document.getElementById('{{ form.tin_certificate.id_for_label }}').click();">
+                        <div class="icon"><i class="fas fa-file-invoice"></i></div>
+                        <p class="title">Upload TIN Certificate</p>
+                        <p class="subtitle">{{ form.tin_certificate.help_text }}</p>
+                        {% if application.tin_certificate %}
+                            <p class="file-info">✓ Current: {{ application.tin_certificate.name|slice:"30" }}</p>
+                        {% endif %}
+                    </div>
+                    {% if form.tin_certificate.errors %}
+                        <p class="error-text">{{ form.tin_certificate.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <!-- Other Documents -->
+                <div class="form-group">
+                    <label for="{{ form.other_documents.id_for_label }}">Other Documents</label>
+                    {{ form.other_documents }}
+                    <div class="upload-card" onclick="document.getElementById('{{ form.other_documents.id_for_label }}').click();">
+                        <div class="icon"><i class="fas fa-folder-open"></i></div>
+                        <p class="title">Upload Other Documents</p>
+                        <p class="subtitle">{{ form.other_documents.help_text }}</p>
+                        {% if application.other_documents %}
+                            <p class="file-info">✓ Current: {{ application.other_documents.name|slice:"30" }}</p>
+                        {% endif %}
+                    </div>
+                    {% if form.other_documents.errors %}
+                        <p class="error-text">{{ form.other_documents.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+            </div>
+            
+            <!-- Form Actions -->
+            <div class="flex flex-wrap items-center justify-between gap-3 pt-6 border-t border-white/10">
+                <a href="/hospital-admin/verification/address-information/" class="btn-secondary">
+                    <i class="fas fa-arrow-left mr-2"></i>
+                    Previous
+                </a>
+                <div class="flex flex-wrap items-center gap-3">
+                    <button type="submit" name="save_draft" value="save_draft" class="btn-secondary">
+                        <i class="fas fa-save mr-2"></i>
+                        Save Draft
+                    </button>
+                    <button type="submit" name="save_continue" value="save_continue" class="btn-primary">
+                        <i class="fas fa-arrow-right mr-2"></i>
+                        Save & Continue →
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+    
+</div>
+{% endblock %}

@@ -22,7 +22,7 @@ urlpatterns = [
       path('analytics/', include('analytics.urls')),
       path('notifications/', include('notifications.urls')),
       path('superadmin/', include('superadmin.urls')),
-
+      path('hospital-admin/',include('hospital_admin.urls')),
 
 
 

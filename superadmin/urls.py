@@ -36,6 +36,9 @@ urlpatterns = [
     path('users/', views.AllUsersView.as_view(), name='all_users'),
     path('users/<int:user_id>/', views.UserDetailView.as_view(), name='user_detail'),
     path('users/<int:user_id>/toggle-status/', views.toggle_user_status, name='toggle_user_status'),
+    path('settings/profile/', views.SuperAdminProfileView.as_view(), name='profile'),
+    path('settings/change-password/', views.SuperAdminChangePasswordView.as_view(), name='change_password'),
     # API
     path('api/pending-count/', views.pending_hospital_applications_count, name='pending_count'),
+    
 ]

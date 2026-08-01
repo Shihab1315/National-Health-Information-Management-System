@@ -1,0 +1,294 @@
+<!-- templates/hospital_admin/dashboard.html -->
+{% extends "hospital_admin/base.html" %}
+{% load static %}
+
+{% block title %}Dashboard | Hospital Admin{% endblock %}
+
+{% block page_title %}Dashboard{% endblock %}
+{% block current_page %}Overview{% endblock %}
+
+{% block extra_css %}
+<style>
+    .status-card {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 1rem;
+        padding: 1.5rem;
+        transition: all 0.3s ease;
+    }
+    .status-card:hover {
+        border-color: rgba(59, 130, 246, 0.3);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+    }
+    .status-badge {
+        padding: 0.25rem 1rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .status-badge .dot {
+        width: 0.4rem;
+        height: 0.4rem;
+        border-radius: 50%;
+        display: inline-block;
+    }
+    .status-badge.gray { background: rgba(107, 114, 128, 0.15); color: #9ca3af; }
+    .status-badge.gray .dot { background: #6b7280; }
+    .status-badge.yellow { background: rgba(245, 158, 11, 0.15); color: #fbbf24; }
+    .status-badge.yellow .dot { background: #f59e0b; }
+    .status-badge.orange { background: rgba(251, 146, 60, 0.15); color: #fb923c; }
+    .status-badge.orange .dot { background: #f97316; }
+    .status-badge.amber { background: rgba(245, 158, 11, 0.15); color: #fbbf24; }
+    .status-badge.amber .dot { background: #d97706; }
+    .status-badge.red { background: rgba(239, 68, 68, 0.15); color: #f87171; }
+    .status-badge.red .dot { background: #ef4444; }
+    .status-badge.green { background: rgba(34, 197, 94, 0.15); color: #34d399; }
+    .status-badge.green .dot { background: #22c55e; }
+    
+    .info-card {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 0.75rem;
+        padding: 1rem;
+    }
+    .info-card .label {
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #6b7280;
+        font-weight: 600;
+    }
+    .info-card .value {
+        font-size: 0.875rem;
+        color: #e5e7eb;
+        margin-top: 0.25rem;
+        font-weight: 500;
+    }
+    
+    .welcome-card {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.1));
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 1rem;
+        padding: 2rem;
+    }
+    
+    .notification-card {
+        background: rgba(59, 130, 246, 0.05);
+        border: 1px solid rgba(59, 130, 246, 0.1);
+        border-radius: 0.75rem;
+        padding: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    .notification-card .icon {
+        width: 2.5rem;
+        height: 2.5rem;
+        border-radius: 50%;
+        background: rgba(59, 130, 246, 0.1);
+        color: #60a5fa;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    
+    <!-- Welcome Card -->
+    <div class="welcome-card">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+                <h1 class="text-2xl font-bold text-white">
+                    Welcome, {{ user.get_full_name|default:user.username }}!
+                </h1>
+                <p class="text-gray-400 mt-1">Hospital Administrator</p>
+            </div>
+            <div>
+                <span class="status-badge 
+                    {% if is_verified %}green
+                    {% elif status_info.color %}{{ status_info.color }}
+                    {% else %}gray{% endif %}
+                ">
+                    <span class="dot"></span>
+                    {{ status_info.label|default:"Not Verified" }}
+                </span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- Main Status Card -->
+        <div class="lg:col-span-2">
+            <div class="status-card h-full">
+                <h2 class="text-lg font-semibold text-white mb-4">Hospital Status</h2>
+                
+                <div class="flex flex-col items-start gap-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-4 h-4 rounded-full 
+                            {% if is_verified %}bg-green-500
+                            {% elif status_info.color == 'gray' %}bg-gray-500
+                            {% elif status_info.color == 'yellow' %}bg-yellow-500
+                            {% elif status_info.color == 'orange' %}bg-orange-500
+                            {% elif status_info.color == 'amber' %}bg-amber-500
+                            {% elif status_info.color == 'red' %}bg-red-500
+                            {% else %}bg-gray-500{% endif %}
+                        "></div>
+                        <span class="text-xl font-semibold text-white">
+                            {% if is_verified %}
+                                ✅ Verified
+                            {% else %}
+                                ❌ Not Verified
+                            {% endif %}
+                        </span>
+                    </div>
+                    
+                    <p class="text-gray-300 text-sm">
+                        {{ status_info.message|default:"Your hospital has not been verified yet. Complete your hospital profile and submit it for Super Admin approval." }}
+                    </p>
+                    
+                    {% if status_info.button_url and not is_verified %}
+                        <a href="{% url status_info.button_url %}" 
+                           class="px-6 py-2.5 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-lg transition-colors {% if status_info.button_disabled %}opacity-50 cursor-not-allowed{% endif %}">
+                            {{ status_info.button_text }}
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Quick Info Card -->
+        <div class="lg:col-span-1">
+            <div class="status-card h-full">
+                <h2 class="text-lg font-semibold text-white mb-4">Quick Info</h2>
+                
+                <div class="space-y-3">
+                    <div class="info-card">
+                        <p class="label">Application Number</p>
+                        <p class="value">{{ application.application_number|default:"N/A" }}</p>
+                    </div>
+                    <div class="info-card">
+                        <p class="label">Application Date</p>
+                        <p class="value">{{ application.created_at|date:"M d, Y"|default:"N/A" }}</p>
+                    </div>
+                    <div class="info-card">
+                        <p class="label">Current Status</p>
+                        <p class="value">
+                            <span class="status-badge 
+                                {% if is_verified %}green
+                                {% elif status_info.color %}{{ status_info.color }}
+                                {% else %}gray{% endif %}
+                                " style="font-size: 0.7rem; padding: 0.15rem 0.75rem;">
+                                <span class="dot"></span>
+                                {{ status_info.label|default:"Not Submitted" }}
+                            </span>
+                        </p>
+                    </div>
+                    <div class="info-card">
+                        <p class="label">Last Updated</p>
+                        <p class="value">{{ application.updated_at|date:"M d, Y h:i A"|default:"N/A" }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+    
+    <!-- Notification Card -->
+    <div class="notification-card">
+        <div class="icon">
+            <i class="fas fa-bell"></i>
+        </div>
+        <div>
+            <p class="text-white font-medium text-sm">
+                {% if is_verified %}
+                    ✅ Your hospital is verified! All features are now unlocked.
+                {% elif application and application.status == 'submitted' %}
+                    Your application has been submitted. Please wait for Super Admin review.
+                {% elif application and application.status == 'under_review' %}
+                    Your application is currently being reviewed by the Super Admin.
+                {% elif application and application.status == 'need_more_info' %}
+                    Super Admin needs additional information. Please update your application.
+                {% elif application and application.status == 'rejected' %}
+                    Your application was rejected. Please review the remarks and resubmit.
+                {% elif application and application.status == 'draft' %}
+                    Complete your hospital profile and submit for verification.
+                {% else %}
+                    Complete your hospital verification to access all features.
+                {% endif %}
+            </p>
+            <p class="text-xs text-gray-500 mt-1">
+                {% if application %}
+                    Status: {{ application.get_status_display }}
+                {% else %}
+                    No application submitted yet
+                {% endif %}
+            </p>
+        </div>
+    </div>
+    
+    <!-- Quick Actions -->
+    <div class="bg-white/5 rounded-xl border border-white/10 p-6">
+        <h2 class="text-white text-lg font-semibold mb-4 flex items-center gap-2">
+            <i class="fas fa-bolt text-blue-400"></i> Quick Actions
+        </h2>
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+            <a href="{% url 'hospital_admin:verification' %}" class="quick-action-btn">
+                <div class="icon"><i class="fas fa-hospital"></i></div>
+                <div class="label">Hospital Verification</div>
+                <div class="desc">Complete your verification</div>
+            </a>
+            <a href="#" class="quick-action-btn locked">
+                <div class="icon"><i class="fas fa-user-md"></i></div>
+                <div class="label">Doctor Management</div>
+                <div class="desc">{% if is_verified %}Manage doctors{% else %}🔒 Locked{% endif %}</div>
+            </a>
+            <a href="#" class="quick-action-btn locked">
+                <div class="icon"><i class="fas fa-calendar-check"></i></div>
+                <div class="label">Appointments</div>
+                <div class="desc">{% if is_verified %}View appointments{% else %}🔒 Locked{% endif %}</div>
+            </a>
+            <a href="#" class="quick-action-btn locked">
+                <div class="icon"><i class="fas fa-cog"></i></div>
+                <div class="label">Settings</div>
+                <div class="desc">{% if is_verified %}Configure settings{% else %}🔒 Locked{% endif %}</div>
+            </a>
+        </div>
+    </div>
+
+</div>
+
+<style>
+    .quick-action-btn {
+        transition: all 0.2s ease;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 0.75rem;
+        padding: 1rem;
+        text-align: center;
+        text-decoration: none;
+        color: inherit;
+        display: block;
+    }
+    .quick-action-btn:hover {
+        transform: translateY(-2px);
+        border-color: rgba(59, 130, 246, 0.3);
+        box-shadow: 0 8px 25px -5px rgba(0, 0, 0, 0.2);
+        background: rgba(59, 130, 246, 0.05);
+    }
+    .quick-action-btn .icon { font-size: 1.5rem; color: #60a5fa; margin-bottom: 0.5rem; }
+    .quick-action-btn .label { font-size: 0.8125rem; font-weight: 500; color: #e5e7eb; }
+    .quick-action-btn .desc { font-size: 0.7rem; color: #6b7280; }
+    .quick-action-btn.locked .icon { color: #4b5563; }
+    .quick-action-btn.locked .label { color: #6b7280; }
+    .quick-action-btn.locked:hover { border-color: rgba(255, 255, 255, 0.06); transform: none; background: none; }
+</style>
+{% endblock %}
