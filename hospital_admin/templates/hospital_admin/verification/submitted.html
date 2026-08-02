@@ -43,13 +43,13 @@
                 </div>
                 <div class="flex justify-between py-2 border-b border-white/5">
                     <span class="text-gray-400">Submission Date</span>
-                    <span class="text-white">{{ application.submitted_at|date:"F d, Y h:i A" }}</span>
+                    <span class="text-white">{{ application.submitted_at|date:"F d, Y h:i A"|default:application.updated_at|date:"F d, Y h:i A" }}</span>
                 </div>
                 <div class="flex justify-between py-2 border-b border-white/5">
                     <span class="text-gray-400">Current Status</span>
                     <span class="px-3 py-1 bg-yellow-500/20 text-yellow-400 rounded-full text-sm font-medium">
                         <i class="fas fa-clock mr-1"></i>
-                        Submitted
+                        {{ application.get_status_display }}
                     </span>
                 </div>
             </div>
@@ -101,7 +101,7 @@
             <i class="fas fa-home mr-2"></i>
             Go to Dashboard
         </a>
-        <a href="#" class="px-6 py-2.5 bg-white/5 hover:bg-white/10 text-gray-300 font-medium rounded-lg transition-colors">
+        <a href="/hospital-admin/verification/review/" class="px-6 py-2.5 bg-white/5 hover:bg-white/10 text-gray-300 font-medium rounded-lg transition-colors">
             <i class="fas fa-eye mr-2"></i>
             View Application
         </a>

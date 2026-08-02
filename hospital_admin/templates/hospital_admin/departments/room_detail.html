@@ -1,0 +1,225 @@
+<!-- templates/hospital_admin/departments/room_detail.html -->
+{% extends "hospital_admin/base.html" %}
+{% load static %}
+
+{% block title %}Room {{ room.room_number }} | Hospital Admin{% endblock %}
+
+{% block page_title %}Room Detail{% endblock %}
+{% block current_page %}Room Detail{% endblock %}
+
+{% block extra_css %}
+<style>
+    .info-card {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 0.75rem;
+        padding: 1rem;
+        transition: all 0.2s ease;
+    }
+    .info-card:hover {
+        border-color: rgba(59, 130, 246, 0.2);
+    }
+    .info-card .label {
+        font-size: 0.65rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #6b7280;
+        font-weight: 600;
+    }
+    .info-card .value {
+        font-size: 0.9rem;
+        color: #e5e7eb;
+        margin-top: 0.25rem;
+        word-break: break-word;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    
+    <!-- Header -->
+    <div class="bg-gradient-to-r from-blue-600/20 to-purple-600/20 rounded-xl border border-white/10 p-6">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+                <h1 class="text-2xl font-bold text-white">Room {{ room.room_number }}</h1>
+                <p class="text-gray-400 text-sm mt-1">{{ room.get_room_type_display }}</p>
+            </div>
+            <div>
+                <span class="status-badge {{ room.status }}">
+                    <span class="dot"></span>
+                    {{ room.get_status_display }}
+                </span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <div class="lg:col-span-2 space-y-6">
+            
+            <!-- Room Information -->
+            <div class="bg-white/5 rounded-xl border border-white/10 p-6">
+                <h2 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                    <i class="fas fa-info-circle text-blue-400"></i>
+                    Room Information
+                </h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="info-card">
+                        <p class="label">Room Number</p>
+                        <p class="value font-medium text-white">{{ room.room_number }}</p>
+                    </div>
+                    <div class="info-card">
+                        <p class="label">Department</p>
+                        <p class="value">{{ room.department.name|default:"Not Assigned" }}</p>
+                    </div>
+                    <div class="info-card">
+                        <p class="label">Room Type</p>
+                        <p class="value">{{ room.get_room_type_display }}</p>
+                    </div>
+                    <div class="info-card">
+                        <p class="label">Floor</p>
+                        <p class="value">{{ room.floor|default:"Not specified" }}</p>
+                    </div>
+                    <div class="info-card">
+                        <p class="label">Capacity</p>
+                        <p class="value">{{ room.capacity }}</p>
+                    </div>
+                    <div class="info-card">
+                        <p class="label">Occupied Beds</p>
+                        <p class="value">{{ room.occupied }}</p>
+                    </div>
+                    <div class="info-card">
+                        <p class="label">Available Beds</p>
+                        <p class="value">{{ room.available_beds }}</p>
+                    </div>
+                    <div class="info-card">
+                        <p class="label">Status</p>
+                        <p class="value">
+                            <span class="status-badge {{ room.status }}">
+                                <span class="dot"></span>
+                                {{ room.get_status_display }}
+                            </span>
+                        </p>
+                    </div>
+                    <div class="info-card md:col-span-2">
+                        <p class="label">Description</p>
+                        <p class="value">{{ room.description|default:"No description provided" }}</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Assigned Doctor -->
+            {% if room.assigned_doctor %}
+            <div class="bg-white/5 rounded-xl border border-white/10 p-6">
+                <h2 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                    <i class="fas fa-user-md text-green-400"></i>
+                    Assigned Doctor
+                </h2>
+                
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 font-bold text-lg">
+                        {{ room.assigned_doctor.user.get_full_name|slice:":1"|upper }}
+                    </div>
+                    <div>
+                        <p class="text-white font-medium">Dr. {{ room.assigned_doctor.user.get_full_name|default:room.assigned_doctor.user.username }}</p>
+                        <p class="text-gray-400 text-sm">{{ room.assigned_doctor.specialties.first.name|default:"General Medicine" }}</p>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Notes -->
+            {% if room.notes %}
+            <div class="bg-white/5 rounded-xl border border-white/10 p-6">
+                <h2 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                    <i class="fas fa-sticky-note text-yellow-400"></i>
+                    Notes
+                </h2>
+                <p class="text-gray-300">{{ room.notes }}</p>
+            </div>
+            {% endif %}
+            
+        </div>
+        
+        <!-- Sidebar -->
+        <div class="space-y-6">
+            
+            <div class="bg-white/5 rounded-xl border border-white/10 p-6 sticky top-6">
+                <h3 class="text-sm font-medium text-gray-400 mb-4">Actions</h3>
+                
+                <div class="space-y-3">
+                    <button onclick="openEditModal('{{ room.id }}')" class="w-full px-4 py-2.5 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-lg transition-colors flex items-center justify-center gap-2">
+                        <i class="fas fa-edit"></i>
+                        Edit Room
+                    </button>
+                    
+                    <select class="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-lg text-white focus:border-blue-500 focus:outline-none transition" onchange="changeStatus(this.value)">
+                        <option value="">Change Status</option>
+                        <option value="available">Available</option>
+                        <option value="occupied">Occupied</option>
+                        <option value="maintenance">Maintenance</option>
+                        <option value="inactive">Inactive</option>
+                    </select>
+                    
+                    <button onclick="openDeleteModal('{{ room.id }}', '{{ room.room_number }}')" class="w-full px-4 py-2.5 bg-red-500 hover:bg-red-600 text-white font-medium rounded-lg transition-colors flex items-center justify-center gap-2">
+                        <i class="fas fa-trash"></i>
+                        Delete Room
+                    </button>
+                    
+                    <a href="{% url 'hospital_admin:rooms' %}" class="w-full px-4 py-2.5 bg-white/5 hover:bg-white/10 text-gray-300 font-medium rounded-lg transition-colors flex items-center justify-center gap-2">
+                        <i class="fas fa-arrow-left"></i>
+                        Back to Rooms
+                    </a>
+                </div>
+            </div>
+            
+            <div class="bg-white/5 rounded-xl border border-white/10 p-6">
+                <h3 class="text-sm font-medium text-gray-400 mb-3">Information</h3>
+                <div class="space-y-2 text-sm">
+                    <div class="flex justify-between">
+                        <span class="text-gray-400">ID</span>
+                        <span class="text-white font-mono">#{{ room.id }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-400">Created</span>
+                        <span class="text-gray-300">{{ room.created_at|date:"M d, Y" }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-400">Updated</span>
+                        <span class="text-gray-300">{{ room.updated_at|date:"M d, Y" }}</span>
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+        
+    </div>
+    
+</div>
+
+<script>
+    function changeStatus(status) {
+        if (!status) return;
+        if (confirm('Are you sure you want to change the status?')) {
+            fetch('{% url "hospital_admin:toggle_room_status" room.id %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({ status: status })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            });
+        }
+    }
+</script>
+{% endblock %}

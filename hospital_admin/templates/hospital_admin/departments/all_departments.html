@@ -1,0 +1,652 @@
+<!-- templates/hospital_admin/departments/all_departments.html -->
+{% extends "hospital_admin/base.html" %}
+{% load static %}
+
+{% block title %}All Departments | Hospital Admin{% endblock %}
+
+{% block page_title %}Department Management{% endblock %}
+{% block current_page %}All Departments{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stat-card {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 1rem;
+        padding: 1.25rem;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        opacity: 0.8;
+    }
+    .stat-card.blue::before { background: #3b82f6; }
+    .stat-card.green::before { background: #22c55e; }
+    .stat-card.red::before { background: #ef4444; }
+    .stat-card.purple::before { background: #8b5cf6; }
+    
+    .stat-card:hover {
+        transform: translateY(-4px);
+        border-color: rgba(255, 255, 255, 0.15);
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+    }
+    .stat-card .stat-icon {
+        width: 2.5rem;
+        height: 2.5rem;
+        border-radius: 0.75rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+    }
+    .stat-card .stat-icon.blue { background: rgba(59, 130, 246, 0.15); color: #60a5fa; }
+    .stat-card .stat-icon.green { background: rgba(34, 197, 94, 0.15); color: #34d399; }
+    .stat-card .stat-icon.red { background: rgba(239, 68, 68, 0.15); color: #f87171; }
+    .stat-card .stat-icon.purple { background: rgba(139, 92, 246, 0.15); color: #a78bfa; }
+    
+    .stat-card .stat-number {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: #ffffff;
+    }
+    .stat-card .stat-label {
+        font-size: 0.7rem;
+        color: #6b7280;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    
+    .status-badge {
+        padding: 0.2rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.6rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+    }
+    .status-badge .dot {
+        width: 0.35rem;
+        height: 0.35rem;
+        border-radius: 50%;
+        display: inline-block;
+    }
+    .status-badge.active { background: rgba(34, 197, 94, 0.15); color: #34d399; }
+    .status-badge.active .dot { background: #22c55e; }
+    .status-badge.inactive { background: rgba(107, 114, 128, 0.15); color: #9ca3af; }
+    .status-badge.inactive .dot { background: #6b7280; }
+    
+    .filter-select {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 0.5rem;
+        padding: 0.4rem 2rem 0.4rem 0.75rem;
+        color: #e5e7eb;
+        font-size: 0.8125rem;
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 0.75rem center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    .filter-select:focus {
+        outline: none;
+        border-color: #3b82f6;
+    }
+    .filter-select option {
+        background: #0d1f3c;
+        color: #e5e7eb;
+    }
+    
+    .action-btn {
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.375rem;
+        transition: all 0.2s ease;
+        color: #6b7280;
+        border: none;
+        background: none;
+        cursor: pointer;
+        font-size: 0.9rem;
+    }
+    .action-btn:hover { color: #60a5fa; background: rgba(59, 130, 246, 0.1); }
+    .action-btn.edit:hover { color: #fbbf24; background: rgba(245, 158, 11, 0.1); }
+    .action-btn.danger:hover { color: #f87171; background: rgba(239, 68, 68, 0.1); }
+    .action-btn.success:hover { color: #34d399; background: rgba(34, 197, 94, 0.1); }
+    
+    .table-container {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 1rem;
+        overflow: hidden;
+    }
+    .table-container table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    .table-container th {
+        text-align: left;
+        padding: 0.75rem 1rem;
+        font-size: 0.6rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #6b7280;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+    .table-container td {
+        padding: 0.75rem 1rem;
+        font-size: 0.85rem;
+        color: #e5e7eb;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    }
+    .table-container tr:hover td {
+        background: rgba(255, 255, 255, 0.03);
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 3rem 1rem;
+    }
+    .empty-state .empty-icon {
+        font-size: 4rem;
+        color: #4b5563;
+        margin-bottom: 1rem;
+    }
+    
+    .modal-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.7);
+        backdrop-filter: blur(4px);
+        z-index: 9999;
+        align-items: center;
+        justify-content: center;
+    }
+    .modal-overlay.active {
+        display: flex;
+    }
+    .modal-content {
+        background: #0d1f3c;
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 1rem;
+        padding: 2rem;
+        max-width: 600px;
+        width: 90%;
+        max-height: 90vh;
+        overflow-y: auto;
+        animation: modalSlideIn 0.3s ease;
+    }
+    @keyframes modalSlideIn {
+        from { transform: translateY(-20px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+    }
+    
+    .btn-primary {
+        background: #3b82f6;
+        color: white;
+        padding: 0.625rem 1.5rem;
+        border-radius: 0.5rem;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        border: none;
+        cursor: pointer;
+    }
+    .btn-primary:hover {
+        background: #2563eb;
+    }
+    .btn-danger {
+        background: #ef4444;
+        color: white;
+        padding: 0.625rem 1.5rem;
+        border-radius: 0.5rem;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        border: none;
+        cursor: pointer;
+    }
+    .btn-danger:hover {
+        background: #dc2626;
+    }
+    .btn-secondary {
+        background: rgba(255, 255, 255, 0.05);
+        color: #e5e7eb;
+        padding: 0.625rem 1.5rem;
+        border-radius: 0.5rem;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        cursor: pointer;
+    }
+    .btn-secondary:hover {
+        background: rgba(255, 255, 255, 0.1);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+            <h1 class="text-2xl font-bold text-white">All Departments</h1>
+            <p class="text-gray-400 mt-1">Manage all departments of your hospital.</p>
+        </div>
+        <a href="{% url 'hospital_admin:add_department' %}" class="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition flex items-center gap-2">
+            <i class="fas fa-plus"></i>
+            Add Department
+        </a>
+    </div>
+    
+    <!-- Statistics Cards -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="stat-card blue">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="stat-label">Total Departments</p>
+                    <p class="stat-number">{{ total_departments }}</p>
+                </div>
+                <div class="stat-icon blue">
+                    <i class="fas fa-building"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-card green">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="stat-label">Active Departments</p>
+                    <p class="stat-number">{{ active_departments }}</p>
+                </div>
+                <div class="stat-icon green">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-card red">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="stat-label">Inactive Departments</p>
+                    <p class="stat-number">{{ inactive_departments }}</p>
+                </div>
+                <div class="stat-icon red">
+                    <i class="fas fa-ban"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-card purple">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="stat-label">Doctors Assigned</p>
+                    <p class="stat-number">{{ total_doctors }}</p>
+                </div>
+                <div class="stat-icon purple">
+                    <i class="fas fa-user-doctor"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Search & Filters -->
+    <div class="bg-white/5 rounded-xl border border-white/10 p-4">
+        <form method="get" class="flex flex-wrap gap-3 items-center">
+            <!-- Search -->
+            <div class="flex-1 min-w-[200px] relative">
+                <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm"></i>
+                <input type="text" 
+                       name="search" 
+                       value="{{ search_query }}"
+                       placeholder="Search department..." 
+                       class="w-full pl-9 pr-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:border-blue-500 focus:outline-none transition">
+            </div>
+            
+            <!-- Status Filter -->
+            <div class="min-w-[130px]">
+                <select name="status" class="filter-select w-full">
+                    <option value="">All Status</option>
+                    <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Active</option>
+                    <option value="inactive" {% if status_filter == 'inactive' %}selected{% endif %}>Inactive</option>
+                </select>
+            </div>
+            
+            <!-- Sort -->
+            <div class="min-w-[130px]">
+                <select name="sort" class="filter-select w-full">
+                    <option value="newest" {% if sort_by == 'newest' %}selected{% endif %}>Newest</option>
+                    <option value="oldest" {% if sort_by == 'oldest' %}selected{% endif %}>Oldest</option>
+                    <option value="name_asc" {% if sort_by == 'name_asc' %}selected{% endif %}>A-Z</option>
+                    <option value="name_desc" {% if sort_by == 'name_desc' %}selected{% endif %}>Z-A</option>
+                </select>
+            </div>
+            
+            <!-- Buttons -->
+            <div class="flex gap-2">
+                <button type="submit" class="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition font-medium text-sm">
+                    <i class="fas fa-search mr-1"></i> Search
+                </button>
+                {% if search_query or status_filter or sort_by != 'newest' %}
+                    <a href="{% url 'hospital_admin:all_departments' %}" class="px-4 py-2 bg-white/5 hover:bg-white/10 text-gray-300 rounded-lg transition font-medium text-sm">
+                        <i class="fas fa-times mr-1"></i> Reset
+                    </a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+    
+    <!-- Departments Table -->
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Department</th>
+                    <th>Code</th>
+                    <th>Head</th>
+                    <th>Doctors</th>
+                    <th>Status</th>
+                    <th>Created</th>
+                    <th class="text-right">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if departments %}
+                    {% for dept in departments %}
+                    <tr>
+                        <td>
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-lg bg-blue-500/20 flex items-center justify-center text-blue-400 flex-shrink-0">
+                                    <i class="fas fa-building"></i>
+                                </div>
+                                <div>
+                                    <p class="font-medium text-white">{{ dept.name }}</p>
+                                    <p class="text-gray-500 text-xs">{{ dept.description|truncatechars:30|default:"No description" }}</p>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="font-mono text-sm text-gray-400">
+                            {{ dept.id|stringformat:"03d" }}
+                        </td>
+                        <td>
+                            {% if dept.head_doctor %}
+                                <div class="flex items-center gap-2">
+                                    <div class="w-6 h-6 rounded-full bg-green-500/20 flex items-center justify-center text-green-400 text-xs font-bold">
+                                        {{ dept.head_doctor.user.get_full_name|slice:":1"|upper }}
+                                    </div>
+                                    <span class="text-sm">{{ dept.head_doctor.user.get_full_name|default:dept.head_doctor.user.username }}</span>
+                                </div>
+                            {% else %}
+                                <span class="text-gray-500 text-sm">Not Assigned</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="text-sm">{{ dept.doctor_count|default:"0" }}</span>
+                        </td>
+                        <td>
+                            <span class="status-badge {% if dept.active %}active{% else %}inactive{% endif %}">
+                                <span class="dot"></span>
+                                {% if dept.active %}Active{% else %}Inactive{% endif %}
+                            </span>
+                        </td>
+                        <td class="text-sm text-gray-400">
+                            {{ dept.created_at|date:"M d, Y" }}
+                        </td>
+                        <td class="text-right">
+                            <div class="flex items-center justify-end gap-1">
+                                <button onclick="openViewModal(
+                                    '{{ dept.id }}',
+                                    '{{ dept.name|escapejs }}',
+                                    '{{ dept.id|stringformat:"03d" }}',
+                                    '{{ dept.description|escapejs|default:"No description" }}',
+                                    '{{ dept.floor_number|default:"Not specified" }}',
+                                    '{% if dept.head_doctor %}Dr. {{ dept.head_doctor.user.get_full_name|escapejs }}{% else %}Not Assigned{% endif %}',
+                                    '{{ dept.doctor_count|default:"0" }}',
+                                    '{% if dept.active %}Active{% else %}Inactive{% endif %}',
+                                    '{{ dept.created_at|date:"M d, Y" }}',
+                                    '{{ dept.updated_at|date:"M d, Y" }}'
+                                )" class="action-btn" title="View">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <a href="{% url 'hospital_admin:department_detail' dept.id %}" class="action-btn" title="View Full Details">
+                                    <i class="fas fa-arrow-right"></i>
+                                </a>
+                               <a href="{% url 'hospital_admin:edit_department' dept.id %}" class="action-btn edit" title="Edit">
+                                <i class="fas fa-edit"></i>
+                                  </a>
+                                <form method="post" action="{% url 'hospital_admin:toggle_department' dept.id %}" class="inline">
+                                    {% csrf_token %}
+                                    <button type="submit" class="action-btn {% if dept.active %}danger{% else %}success{% endif %}" 
+                                            title="{% if dept.active %}Deactivate{% else %}Activate{% endif %}">
+                                        <i class="fas {% if dept.active %}fa-ban{% else %}fa-check-circle{% endif %}"></i>
+                                    </button>
+                                </form>
+                                <button onclick="openDeleteModal('{{ dept.id }}', '{{ dept.name }}')" class="action-btn danger" title="Delete">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="7">
+                            <div class="empty-state">
+                                <div class="empty-icon">
+                                    <i class="fas fa-building"></i>
+                                </div>
+                                <h3 class="text-xl font-semibold text-white mb-2">No Departments Found</h3>
+                                <p class="text-gray-400">No departments have been created yet.</p>
+                                <a href="{% url 'hospital_admin:add_department' %}" class="inline-block mt-4 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition">
+                                    <i class="fas fa-plus mr-1"></i> Add First Department
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+    
+    <!-- Pagination -->
+    {% if departments and departments.paginator.num_pages > 1 %}
+    <div class="flex items-center justify-between flex-wrap gap-3">
+        <p class="text-sm text-gray-400">
+            Showing {{ departments.start_index }} to {{ departments.end_index }} of {{ departments.paginator.count }} departments
+        </p>
+        <div class="flex items-center gap-1">
+            {% if departments.has_previous %}
+                <a href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}" 
+                   class="px-3 py-1.5 bg-white/5 hover:bg-white/10 rounded text-gray-300 transition text-sm">
+                    <i class="fas fa-angle-double-left"></i>
+                </a>
+                <a href="?page={{ departments.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}" 
+                   class="px-3 py-1.5 bg-white/5 hover:bg-white/10 rounded text-gray-300 transition text-sm">
+                    <i class="fas fa-angle-left"></i>
+                </a>
+            {% endif %}
+            
+            <span class="px-3 py-1.5 bg-blue-500/20 text-blue-400 rounded text-sm font-medium">
+                {{ departments.number }}
+            </span>
+            
+            {% if departments.has_next %}
+                <a href="?page={{ departments.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}" 
+                   class="px-3 py-1.5 bg-white/5 hover:bg-white/10 rounded text-gray-300 transition text-sm">
+                    <i class="fas fa-angle-right"></i>
+                </a>
+                <a href="?page={{ departments.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}" 
+                   class="px-3 py-1.5 bg-white/5 hover:bg-white/10 rounded text-gray-300 transition text-sm">
+                    <i class="fas fa-angle-double-right"></i>
+                </a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+    
+</div>
+
+<!-- View Department Modal -->
+<div class="modal-overlay" id="viewModal">
+    <div class="modal-content">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-xl font-bold text-white" id="viewModalTitle">Department Details</h3>
+            <button onclick="closeModal('viewModal')" class="text-gray-400 hover:text-white">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div id="viewModalContent">
+            <div class="space-y-3">
+                <div class="flex justify-between py-2 border-b border-white/5">
+                    <span class="text-gray-400">Name</span>
+                    <span class="text-white font-medium" id="viewDeptName">-</span>
+                </div>
+                <div class="flex justify-between py-2 border-b border-white/5">
+                    <span class="text-gray-400">Code</span>
+                    <span class="text-white font-mono" id="viewDeptCode">-</span>
+                </div>
+                <div class="flex justify-between py-2 border-b border-white/5">
+                    <span class="text-gray-400">Description</span>
+                    <span class="text-white" id="viewDeptDesc">-</span>
+                </div>
+                <div class="flex justify-between py-2 border-b border-white/5">
+                    <span class="text-gray-400">Floor</span>
+                    <span class="text-white" id="viewDeptFloor">-</span>
+                </div>
+                <div class="flex justify-between py-2 border-b border-white/5">
+                    <span class="text-gray-400">Head Doctor</span>
+                    <span class="text-white" id="viewDeptHead">-</span>
+                </div>
+                <div class="flex justify-between py-2 border-b border-white/5">
+                    <span class="text-gray-400">Total Doctors</span>
+                    <span class="text-white" id="viewDeptDoctors">-</span>
+                </div>
+                <div class="flex justify-between py-2 border-b border-white/5">
+                    <span class="text-gray-400">Status</span>
+                    <span id="viewDeptStatus">-</span>
+                </div>
+                <div class="flex justify-between py-2 border-b border-white/5">
+                    <span class="text-gray-400">Created</span>
+                    <span class="text-white" id="viewDeptCreated">-</span>
+                </div>
+                <div class="flex justify-between py-2">
+                    <span class="text-gray-400">Updated</span>
+                    <span class="text-white" id="viewDeptUpdated">-</span>
+                </div>
+            </div>
+        </div>
+        <div class="mt-4 pt-4 border-t border-white/10 flex justify-end gap-2">
+            <a href="#" id="viewDeptDetailLink" class="px-4 py-2 bg-purple-500 hover:bg-purple-600 text-white rounded-lg transition text-sm flex items-center gap-1">
+                <i class="fas fa-arrow-right"></i> View Full Details
+            </a>
+            <button onclick="closeModal('viewModal')" class="px-4 py-2 bg-white/5 hover:bg-white/10 text-gray-300 rounded-lg transition">
+                Close
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Modal -->
+<div class="modal-overlay" id="deleteModal">
+    <div class="modal-content">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-xl font-bold text-white">Delete Department</h3>
+            <button onclick="closeModal('deleteModal')" class="text-gray-400 hover:text-white">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <p class="text-gray-300 mb-4">
+            Are you sure you want to delete <strong class="text-white" id="deleteDeptName"></strong>?
+        </p>
+        <form id="deleteForm" method="post">
+            {% csrf_token %}
+            <div class="flex gap-3">
+                <button type="submit" class="flex-1 px-4 py-2.5 bg-red-500 hover:bg-red-600 text-white font-medium rounded-lg transition-colors">
+                    Delete
+                </button>
+                <button type="button" onclick="closeModal('deleteModal')" class="flex-1 px-4 py-2.5 bg-white/5 hover:bg-white/10 text-gray-300 font-medium rounded-lg transition-colors">
+                    Cancel
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    // View Modal - Updated with real data
+    function openViewModal(deptId, deptName, deptCode, deptDesc, deptFloor, deptHead, deptDoctors, deptStatus, deptCreated, deptUpdated) {
+        document.getElementById('viewModalTitle').textContent = 'Department Details';
+        document.getElementById('viewDeptName').textContent = deptName || 'N/A';
+        document.getElementById('viewDeptCode').textContent = deptCode || 'N/A';
+        document.getElementById('viewDeptDesc').textContent = deptDesc || 'No description';
+        document.getElementById('viewDeptFloor').textContent = deptFloor || 'Not specified';
+        document.getElementById('viewDeptHead').textContent = deptHead || 'Not Assigned';
+        document.getElementById('viewDeptDoctors').textContent = deptDoctors || '0';
+        
+        // Status badge
+        var statusHtml = '';
+        if (deptStatus === 'Active') {
+            statusHtml = '<span class="status-badge active"><span class="dot"></span>Active</span>';
+        } else {
+            statusHtml = '<span class="status-badge inactive"><span class="dot"></span>Inactive</span>';
+        }
+        document.getElementById('viewDeptStatus').innerHTML = statusHtml;
+        
+        document.getElementById('viewDeptCreated').textContent = deptCreated || 'N/A';
+        document.getElementById('viewDeptUpdated').textContent = deptUpdated || 'N/A';
+        
+        // Set the detail link
+        document.getElementById('viewDeptDetailLink').href = '/hospital-admin/departments/' + deptId + '/';
+        
+        document.getElementById('viewModal').classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+    
+    function openEditModal(deptId) {
+        alert('Edit department: ' + deptId);
+    }
+    
+    function openDeleteModal(deptId, deptName) {
+        document.getElementById('deleteDeptName').textContent = deptName;
+        document.getElementById('deleteForm').action = '/hospital-admin/departments/' + deptId + '/delete/';
+        document.getElementById('deleteModal').classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+    
+    function closeModal(modalId) {
+        document.getElementById(modalId).classList.remove('active');
+        document.body.style.overflow = '';
+    }
+    
+    // Close modal on overlay click
+    document.querySelectorAll('.modal-overlay').forEach(modal => {
+        modal.addEventListener('click', function(e) {
+            if (e.target === this) {
+                this.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+        });
+    });
+    
+    // Close modal on Escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            document.querySelectorAll('.modal-overlay.active').forEach(modal => {
+                modal.classList.remove('active');
+                document.body.style.overflow = '';
+            });
+        }
+    });
+</script>
+{% endblock %}

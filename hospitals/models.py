@@ -619,3 +619,106 @@ class HospitalApplication(models.Model):
         ).count() + 1
         seq = str(count).zfill(4)
         return f"HAPP-{date_part}-{seq}"
+    
+class Room(models.Model):
+    """Room/Unit model for hospital departments."""
+    
+    class RoomType(models.TextChoices):
+        GENERAL_WARD = 'general_ward', 'General Ward'
+        PRIVATE_CABIN = 'private_cabin', 'Private Cabin'
+        VIP_CABIN = 'vip_cabin', 'VIP Cabin'
+        ICU = 'icu', 'ICU'
+        NICU = 'nicu', 'NICU'
+        CCU = 'ccu', 'CCU'
+        OPERATION_THEATER = 'operation_theater', 'Operation Theater'
+        EMERGENCY_ROOM = 'emergency_room', 'Emergency Room'
+        CONSULTATION_ROOM = 'consultation_room', 'Consultation Room'
+        LABORATORY = 'laboratory', 'Laboratory'
+        PHARMACY = 'pharmacy', 'Pharmacy'
+        RECEPTION = 'reception', 'Reception'
+        WAITING_AREA = 'waiting_area', 'Waiting Area'
+    
+    class Status(models.TextChoices):
+        AVAILABLE = 'available', 'Available'
+        OCCUPIED = 'occupied', 'Occupied'
+        MAINTENANCE = 'maintenance', 'Maintenance'
+        INACTIVE = 'inactive', 'Inactive'
+    
+    # Relationships
+    hospital = models.ForeignKey(
+        'Hospital',
+        on_delete=models.CASCADE,
+        related_name='rooms'
+    )
+    department = models.ForeignKey(
+        'HospitalDepartment',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='rooms'
+    )
+    
+    # Basic Info
+    room_number = models.CharField(max_length=50)
+    room_type = models.CharField(max_length=30, choices=RoomType.choices, default=RoomType.GENERAL_WARD)
+    floor = models.CharField(max_length=20, blank=True)
+    description = models.TextField(blank=True)
+    
+    # Capacity
+    capacity = models.PositiveIntegerField(default=1)
+    occupied = models.PositiveIntegerField(default=0)
+    
+    # Status
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.AVAILABLE)
+    is_active = models.BooleanField(default=True)
+    
+    # Additional Info
+    assigned_doctor = models.ForeignKey(
+        'doctors.Doctor',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='assigned_rooms'
+    )
+    notes = models.TextField(blank=True)
+    
+    # Timestamps
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    created_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='room_created'
+    )
+    updated_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='room_updated'
+    )
+    
+    class Meta:
+        ordering = ['department__name', 'room_number']
+        unique_together = ['hospital', 'room_number']
+        verbose_name = 'Room'
+        verbose_name_plural = 'Rooms'
+    
+    def __str__(self):
+        return f"{self.room_number} - {self.get_room_type_display()}"
+    
+    @property
+    def available_beds(self):
+        return self.capacity - self.occupied
+    
+    @property
+    def is_full(self):
+        return self.occupied >= self.capacity
+    
+    @property
+    def occupancy_percentage(self):
+        if self.capacity == 0:
+            return 0
+        return round((self.occupied / self.capacity) * 100)

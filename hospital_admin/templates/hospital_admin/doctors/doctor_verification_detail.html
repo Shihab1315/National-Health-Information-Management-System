@@ -1,0 +1,356 @@
+<!-- templates/hospital_admin/doctors/doctor_verification_detail.html -->
+{% extends "hospital_admin/base.html" %}
+{% load static %}
+
+{% block title %}Verification Detail | Hospital Admin{% endblock %}
+
+{% block page_title %}Verification Detail{% endblock %}
+{% block current_page %}Doctor Management / Verification / Detail{% endblock %}
+
+{% block extra_css %}
+<style>
+    .info-card {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 0.75rem;
+        padding: 1rem;
+    }
+    .info-card .label {
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #6b7280;
+        font-weight: 600;
+    }
+    .info-card .value {
+        font-size: 0.875rem;
+        color: #e5e7eb;
+        margin-top: 0.25rem;
+        word-break: break-word;
+    }
+    .profile-image {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 3px solid rgba(255, 255, 255, 0.1);
+    }
+    .status-badge {
+        padding: 0.35rem 1rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+    .status-badge .dot {
+        width: 0.4rem;
+        height: 0.4rem;
+        border-radius: 50%;
+        display: inline-block;
+    }
+    .status-badge.pending { background: rgba(245, 158, 11, 0.15); color: #fbbf24; }
+    .status-badge.pending .dot { background: #f59e0b; }
+    .status-badge.verified { background: rgba(34, 197, 94, 0.15); color: #34d399; }
+    .status-badge.verified .dot { background: #22c55e; }
+    .status-badge.rejected { background: rgba(239, 68, 68, 0.15); color: #f87171; }
+    .status-badge.rejected .dot { background: #ef4444; }
+
+    .action-btn {
+        padding: 0.625rem 1.5rem;
+        border-radius: 0.5rem;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        border: none;
+        cursor: pointer;
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+    .action-btn.success {
+        background: #22c55e;
+        color: white;
+    }
+    .action-btn.success:hover {
+        background: #16a34a;
+    }
+    .action-btn.danger {
+        background: #ef4444;
+        color: white;
+    }
+    .action-btn.danger:hover {
+        background: #dc2626;
+    }
+    .action-btn.secondary {
+        background: rgba(255, 255, 255, 0.05);
+        color: #e5e7eb;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .action-btn.secondary:hover {
+        background: rgba(255, 255, 255, 0.1);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    
+    <!-- Header -->
+    <div class="bg-gradient-to-r from-blue-600/20 to-purple-600/20 rounded-xl border border-white/10 p-6">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+                <h1 class="text-2xl font-bold text-white">{{ doctor.user.get_full_name|default:doctor.user.username }}</h1>
+                <p class="text-gray-400 text-sm mt-1">Verification Details</p>
+                <div class="flex items-center gap-2 text-sm text-gray-400 mt-1">
+                    <span>Dashboard</span>
+                    <i class="fas fa-chevron-right text-xs"></i>
+                    <span>Doctor Management</span>
+                    <i class="fas fa-chevron-right text-xs"></i>
+                    <span>Verification</span>
+                    <i class="fas fa-chevron-right text-xs"></i>
+                    <span class="text-blue-400">Detail</span>
+                </div>
+            </div>
+            <div>
+                <span class="status-badge 
+                    {% if not doctor.is_verified and doctor.is_active %}pending
+                    {% elif doctor.is_verified and doctor.is_active %}verified
+                    {% elif not doctor.is_verified and not doctor.is_active %}rejected{% endif %}
+                ">
+                    <span class="dot"></span>
+                    {% if not doctor.is_verified and doctor.is_active %}Pending
+                    {% elif doctor.is_verified and doctor.is_active %}Verified
+                    {% elif not doctor.is_verified and not doctor.is_active %}Rejected{% endif %}
+                </span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- Main Content -->
+        <div class="lg:col-span-2 space-y-6">
+            
+            <!-- Personal Information -->
+            <div class="bg-white/5 rounded-xl border border-white/10 p-6">
+                <h2 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                    <i class="fas fa-user-circle text-blue-400"></i>
+                    Personal Information
+                </h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="info-card">
+                        <p class="label">Full Name</p>
+                        <p class="value font-medium text-white">{{ doctor.user.get_full_name|default:"Not set" }}</p>
+                    </div>
+                    <div class="info-card">
+                        <p class="label">Username</p>
+                        <p class="value">@{{ doctor.user.username }}</p>
+                    </div>
+                    <div class="info-card">
+                        <p class="label">Email</p>
+                        <p class="value">{{ doctor.user.email|default:"Not set" }}</p>
+                    </div>
+                    <div class="info-card">
+                        <p class="label">Phone</p>
+                        <p class="value">{{ doctor.user.phone|default:"Not set" }}</p>
+                    </div>
+                    <div class="info-card">
+                        <p class="label">Gender</p>
+                        <p class="value">{{ doctor.gender|default:"Not set"|title }}</p>
+                    </div>
+                    <div class="info-card">
+                        <p class="label">Date of Birth</p>
+                        <p class="value">{{ doctor.date_of_birth|date:"F d, Y"|default:"Not set" }}</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Professional Information -->
+            <div class="bg-white/5 rounded-xl border border-white/10 p-6">
+                <h2 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                    <i class="fas fa-briefcase text-purple-400"></i>
+                    Professional Information
+                </h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="info-card">
+                        <p class="label">BMDC Number</p>
+                        <p class="value font-mono">{{ doctor.registration_number|default:"Not set" }}</p>
+                    </div>
+                    <div class="info-card">
+                        <p class="label">Department</p>
+                        <p class="value">
+                            {% if doctor.specialties.all %}
+                                {% for specialty in doctor.specialties.all %}
+                                    <span class="inline-block px-2 py-0.5 bg-blue-500/10 text-blue-400 rounded text-xs mr-1">
+                                        {{ specialty.name }}
+                                    </span>
+                                {% endfor %}
+                            {% else %}
+                                Not Assigned
+                            {% endif %}
+                        </p>
+                    </div>
+                    <div class="info-card">
+                        <p class="label">Experience</p>
+                        <p class="value">{{ doctor.experience|default:"0" }} years</p>
+                    </div>
+                    <div class="info-card">
+                        <p class="label">Qualification</p>
+                        <p class="value">{{ doctor.qualification|default:"Not set" }}</p>
+                    </div>
+                    <div class="info-card">
+                        <p class="label">Hospital</p>
+                        <p class="value">{{ doctor.hospital.name|default:"Not assigned" }}</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Address -->
+            <div class="bg-white/5 rounded-xl border border-white/10 p-6">
+                <h2 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                    <i class="fas fa-map-marker-alt text-green-400"></i>
+                    Address
+                </h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="info-card md:col-span-2">
+                        <p class="label">Full Address</p>
+                        <p class="value">{{ doctor.address|default:"Not set" }}</p>
+                    </div>
+                    <div class="info-card">
+                        <p class="label">City</p>
+                        <p class="value">{{ doctor.city|default:"Not set" }}</p>
+                    </div>
+                    <div class="info-card">
+                        <p class="label">District</p>
+                        <p class="value">{{ doctor.district|default:"Not set" }}</p>
+                    </div>
+                    <div class="info-card">
+                        <p class="label">Zip Code</p>
+                        <p class="value">{{ doctor.zip_code|default:"Not set" }}</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Verification Info -->
+            <div class="bg-white/5 rounded-xl border border-white/10 p-6">
+                <h2 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                    <i class="fas fa-check-circle text-yellow-400"></i>
+                    Verification Information
+                </h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="info-card">
+                        <p class="label">Submission Date</p>
+                        <p class="value">{{ doctor.created_at|date:"F d, Y h:i A" }}</p>
+                    </div>
+                    <div class="info-card">
+                        <p class="label">Status</p>
+                        <p class="value">
+                            <span class="status-badge 
+                                {% if not doctor.is_verified and doctor.is_active %}pending
+                                {% elif doctor.is_verified and doctor.is_active %}verified
+                                {% elif not doctor.is_verified and not doctor.is_active %}rejected{% endif %}
+                                " style="font-size: 0.65rem; padding: 0.2rem 0.75rem;">
+                                <span class="dot"></span>
+                                {% if not doctor.is_verified and doctor.is_active %}Pending
+                                {% elif doctor.is_verified and doctor.is_active %}Verified
+                                {% elif not doctor.is_verified and not doctor.is_active %}Rejected{% endif %}
+                            </span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+        
+        <!-- Sidebar -->
+        <div class="lg:col-span-1">
+            <div class="bg-white/5 rounded-xl border border-white/10 p-6 sticky top-6">
+                <!-- Profile Photo -->
+                <div class="text-center mb-6">
+                    {% if doctor.profile_photo %}
+                        <img src="{{ doctor.profile_photo.url }}" alt="{{ doctor.user.get_full_name }}" class="profile-image mx-auto">
+                    {% else %}
+                        <div class="w-24 h-24 mx-auto rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 text-3xl font-bold">
+                            {{ doctor.user.get_full_name|slice:":1"|upper|default:doctor.user.username|slice:":1"|upper }}
+                        </div>
+                    {% endif %}
+                    <h3 class="text-white font-semibold mt-2">{{ doctor.user.get_full_name|default:doctor.user.username }}</h3>
+                    <p class="text-gray-400 text-sm">@{{ doctor.user.username }}</p>
+                </div>
+                
+                <div class="border-t border-white/10 pt-4">
+                    <h4 class="text-sm font-medium text-gray-400 mb-3">Actions</h4>
+                    
+                    <div class="space-y-2">
+                        {% if not doctor.is_verified and doctor.is_active %}
+                            <!-- Approve Form - Direct Submit with Confirm -->
+                            <form method="post" action="{% url 'hospital_admin:approve_doctor' doctor.id %}" 
+                                  onsubmit="return confirm('Are you sure you want to approve {{ doctor.user.get_full_name|default:doctor.user.username }}?')">
+                                {% csrf_token %}
+                                <button type="submit" class="action-btn success">
+                                    <i class="fas fa-check-circle"></i>
+                                    Approve Doctor
+                                </button>
+                            </form>
+                            
+                            <!-- Reject Form with Textarea -->
+                            <form method="post" action="{% url 'hospital_admin:reject_doctor' doctor.id %}" id="rejectForm">
+                                {% csrf_token %}
+                                <div class="mb-2">
+                                    <textarea name="reason" id="rejectReason" rows="2" 
+                                              class="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:border-red-500 focus:outline-none text-sm"
+                                              placeholder="Enter rejection reason..."></textarea>
+                                </div>
+                                <button type="submit" class="action-btn danger" onclick="return validateRejectForm()">
+                                    <i class="fas fa-times-circle"></i>
+                                    Reject Doctor
+                                </button>
+                            </form>
+                        {% endif %}
+                        
+                        <a href="{% url 'hospital_admin:doctor_verification' %}?tab=pending" 
+                           class="action-btn secondary">
+                            <i class="fas fa-arrow-left"></i>
+                            Back to Verification
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- User Info -->
+                <div class="mt-4 pt-4 border-t border-white/10">
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-400">ID</span>
+                        <span class="text-white font-mono">#{{ doctor.id }}</span>
+                    </div>
+                    <div class="flex justify-between text-sm mt-1">
+                        <span class="text-gray-400">Created</span>
+                        <span class="text-gray-300">{{ doctor.created_at|date:"M d, Y" }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+    
+</div>
+
+<script>
+    function validateRejectForm() {
+        var reason = document.getElementById('rejectReason').value.trim();
+        if (!reason) {
+            alert('Please provide a rejection reason.');
+            return false;
+        }
+        return confirm('Are you sure you want to reject this doctor?');
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,555 @@
+<!-- templates/hospital_admin/appointments/dashboard.html -->
+{% extends "hospital_admin/base.html" %}
+{% load static %}
+
+{% block title %}Appointment Dashboard | Hospital Admin{% endblock %}
+
+{% block page_title %}Appointment Dashboard{% endblock %}
+{% block current_page %}Appointment Management / Dashboard{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stat-card {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 1rem;
+        padding: 1.25rem;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        opacity: 0.8;
+    }
+    .stat-card.blue::before { background: #3b82f6; }
+    .stat-card.yellow::before { background: #f59e0b; }
+    .stat-card.green::before { background: #22c55e; }
+    .stat-card.purple::before { background: #8b5cf6; }
+    .stat-card.red::before { background: #ef4444; }
+    .stat-card.indigo::before { background: #6366f1; }
+    
+    .stat-card:hover {
+        transform: translateY(-4px);
+        border-color: rgba(255, 255, 255, 0.15);
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+    }
+    .stat-card .stat-number {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: #ffffff;
+    }
+    .stat-card .stat-label {
+        font-size: 0.7rem;
+        color: #6b7280;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    .stat-card .stat-icon {
+        width: 2.5rem;
+        height: 2.5rem;
+        border-radius: 0.75rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+    }
+    .stat-card .stat-icon.blue { background: rgba(59, 130, 246, 0.15); color: #60a5fa; }
+    .stat-card .stat-icon.yellow { background: rgba(245, 158, 11, 0.15); color: #fbbf24; }
+    .stat-card .stat-icon.green { background: rgba(34, 197, 94, 0.15); color: #34d399; }
+    .stat-card .stat-icon.purple { background: rgba(139, 92, 246, 0.15); color: #a78bfa; }
+    .stat-card .stat-icon.red { background: rgba(239, 68, 68, 0.15); color: #f87171; }
+    .stat-card .stat-icon.indigo { background: rgba(99, 102, 241, 0.15); color: #818cf8; }
+    
+    .quick-action-card {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 0.75rem;
+        padding: 1rem;
+        text-align: center;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        text-decoration: none;
+        color: inherit;
+        display: block;
+    }
+    .quick-action-card:hover {
+        transform: translateY(-3px);
+        border-color: rgba(59, 130, 246, 0.3);
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+        background: rgba(59, 130, 246, 0.05);
+    }
+    .quick-action-card .icon {
+        width: 3rem;
+        height: 3rem;
+        border-radius: 0.75rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+        margin: 0 auto 0.5rem;
+    }
+    .quick-action-card .icon.blue { background: rgba(59, 130, 246, 0.15); color: #60a5fa; }
+    .quick-action-card .icon.green { background: rgba(34, 197, 94, 0.15); color: #34d399; }
+    .quick-action-card .icon.purple { background: rgba(139, 92, 246, 0.15); color: #a78bfa; }
+    .quick-action-card .icon.orange { background: rgba(245, 158, 11, 0.15); color: #fbbf24; }
+    .quick-action-card .icon.teal { background: rgba(20, 184, 166, 0.15); color: #2dd4bf; }
+    .quick-action-card .title {
+        font-size: 0.85rem;
+        font-weight: 500;
+        color: #e5e7eb;
+    }
+    .quick-action-card .desc {
+        font-size: 0.7rem;
+        color: #6b7280;
+    }
+    
+    .status-badge {
+        padding: 0.2rem 0.6rem;
+        border-radius: 9999px;
+        font-size: 0.55rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+    }
+    .status-badge .dot {
+        width: 0.35rem;
+        height: 0.35rem;
+        border-radius: 50%;
+        display: inline-block;
+    }
+    .status-badge.pending { background: rgba(245, 158, 11, 0.15); color: #fbbf24; }
+    .status-badge.pending .dot { background: #f59e0b; }
+    .status-badge.confirmed { background: rgba(34, 197, 94, 0.15); color: #34d399; }
+    .status-badge.confirmed .dot { background: #22c55e; }
+    .status-badge.completed { background: rgba(139, 92, 246, 0.15); color: #a78bfa; }
+    .status-badge.completed .dot { background: #8b5cf6; }
+    .status-badge.cancelled { background: rgba(239, 68, 68, 0.15); color: #f87171; }
+    .status-badge.cancelled .dot { background: #ef4444; }
+    
+    .timeline-item {
+        position: relative;
+        padding-left: 2rem;
+        padding-bottom: 1.25rem;
+        border-left: 2px solid rgba(255, 255, 255, 0.06);
+    }
+    .timeline-item:last-child {
+        border-left: 2px solid transparent;
+        padding-bottom: 0;
+    }
+    .timeline-item .timeline-icon {
+        position: absolute;
+        left: -0.625rem;
+        top: 0;
+        width: 1.25rem;
+        height: 1.25rem;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.625rem;
+        color: white;
+        z-index: 2;
+    }
+    .timeline-item .timeline-icon.blue { background: #3b82f6; }
+    .timeline-item .timeline-icon.green { background: #22c55e; }
+    .timeline-item .timeline-icon.yellow { background: #f59e0b; }
+    .timeline-item .timeline-icon.red { background: #ef4444; }
+    .timeline-item .timeline-icon.purple { background: #8b5cf6; }
+    
+    .progress-bar-track {
+        height: 4px;
+        border-radius: 2px;
+        background: rgba(255, 255, 255, 0.06);
+        overflow: hidden;
+        margin-top: 0.25rem;
+    }
+    .progress-bar-track .progress-fill {
+        height: 100%;
+        border-radius: 2px;
+        transition: width 0.6s ease;
+    }
+    
+    .avatar-circle {
+        width: 2rem;
+        height: 2rem;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 0.65rem;
+        flex-shrink: 0;
+    }
+    .avatar-circle.blue { background: rgba(59, 130, 246, 0.2); color: #60a5fa; }
+    .avatar-circle.green { background: rgba(34, 197, 94, 0.2); color: #34d399; }
+    .avatar-circle.purple { background: rgba(139, 92, 246, 0.2); color: #a78bfa; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    
+    <!-- Header -->
+    <div>
+        <h1 class="text-2xl font-bold text-white">Appointment Dashboard</h1>
+        <p class="text-gray-400 mt-1">Monitor all hospital appointments, schedules and appointment statistics.</p>
+    </div>
+    
+    <!-- Statistics Cards -->
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+        <div class="stat-card blue">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="stat-label">Today's Appointments</p>
+                    <p class="stat-number">{{ today_total }}</p>
+                </div>
+                <div class="stat-icon blue">
+                    <i class="fas fa-calendar-day"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-card yellow">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="stat-label">Pending</p>
+                    <p class="stat-number">{{ pending_total }}</p>
+                </div>
+                <div class="stat-icon yellow">
+                    <i class="fas fa-clock"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-card green">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="stat-label">Confirmed</p>
+                    <p class="stat-number">{{ confirmed_total }}</p>
+                </div>
+                <div class="stat-icon green">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-card purple">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="stat-label">Completed</p>
+                    <p class="stat-number">{{ completed_total }}</p>
+                </div>
+                <div class="stat-icon purple">
+                    <i class="fas fa-clipboard-check"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-card red">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="stat-label">Cancelled</p>
+                    <p class="stat-number">{{ cancelled_total }}</p>
+                </div>
+                <div class="stat-icon red">
+                    <i class="fas fa-times-circle"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-card indigo">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="stat-label">Total</p>
+                    <p class="stat-number">{{ total_appointments }}</p>
+                </div>
+                <div class="stat-icon indigo">
+                    <i class="fas fa-calendar"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Quick Actions -->
+    <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
+        <a href="{% url 'hospital_admin:appointments' %}" class="quick-action-card">
+            <div class="icon blue"><i class="fas fa-list"></i></div>
+            <p class="title">View All Appointments</p>
+            <p class="desc">Browse all appointments</p>
+        </a>
+        <a href="#" class="quick-action-card">
+            <div class="icon green"><i class="fas fa-calendar-day"></i></div>
+            <p class="title">Today's Schedule</p>
+            <p class="desc">View today's schedule</p>
+        </a>
+        <a href="#" class="quick-action-card">
+            <div class="icon purple"><i class="fas fa-user-md"></i></div>
+            <p class="title">Doctor Schedule</p>
+            <p class="desc">View doctor schedules</p>
+        </a>
+        <a href="#" class="quick-action-card">
+            <div class="icon orange"><i class="fas fa-calendar-alt"></i></div>
+            <p class="title">Appointment Calendar</p>
+            <p class="desc">Calendar view</p>
+        </a>
+        <a href="#" class="quick-action-card">
+            <div class="icon teal"><i class="fas fa-chart-bar"></i></div>
+            <p class="title">Generate Report</p>
+            <p class="desc">Export appointment reports</p>
+        </a>
+    </div>
+    
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- Left Column -->
+        <div class="lg:col-span-2 space-y-6">
+            
+            <!-- Today's Overview -->
+            <div class="bg-white/5 rounded-xl border border-white/10 p-6">
+                <h2 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                    <i class="fas fa-calendar-day text-blue-400"></i>
+                    Today's Overview
+                </h2>
+                <div class="flex items-center justify-between">
+                    <p class="text-gray-400">{{ today_date|date:"l, F d, Y" }}</p>
+                    <div class="flex items-center gap-4">
+                        <div class="text-center">
+                            <p class="text-2xl font-bold text-white">{{ today_total }}</p>
+                            <p class="text-xs text-gray-400">Total</p>
+                        </div>
+                        <div class="text-center">
+                            <p class="text-2xl font-bold text-green-400">{{ completed_total }}</p>
+                            <p class="text-xs text-gray-400">Completed</p>
+                        </div>
+                        <div class="text-center">
+                            <p class="text-2xl font-bold text-yellow-400">{{ pending_total }}</p>
+                            <p class="text-xs text-gray-400">Pending</p>
+                        </div>
+                        <div class="text-center">
+                            <p class="text-2xl font-bold text-red-400">{{ cancelled_total }}</p>
+                            <p class="text-xs text-gray-400">Cancelled</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Appointment Status Chart -->
+            <div class="bg-white/5 rounded-xl border border-white/10 p-6">
+                <h2 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                    <i class="fas fa-chart-pie text-purple-400"></i>
+                    Appointment Status
+                </h2>
+                <div class="space-y-3">
+                    <div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-300">Pending</span>
+                            <span class="text-yellow-400">{{ pending_total }}</span>
+                        </div>
+                        <div class="progress-bar-track">
+                            <div class="progress-fill" style="width: {% widthratio pending_total today_total 100 %}%; background: #f59e0b;"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-300">Confirmed</span>
+                            <span class="text-green-400">{{ confirmed_total }}</span>
+                        </div>
+                        <div class="progress-bar-track">
+                            <div class="progress-fill" style="width: {% widthratio confirmed_total today_total 100 %}%; background: #22c55e;"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-300">Completed</span>
+                            <span class="text-purple-400">{{ completed_total }}</span>
+                        </div>
+                        <div class="progress-bar-track">
+                            <div class="progress-fill" style="width: {% widthratio completed_total today_total 100 %}%; background: #8b5cf6;"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-300">Cancelled</span>
+                            <span class="text-red-400">{{ cancelled_total }}</span>
+                        </div>
+                        <div class="progress-bar-track">
+                            <div class="progress-fill" style="width: {% widthratio cancelled_total today_total 100 %}%; background: #ef4444;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Recent Appointments -->
+            <div class="bg-white/5 rounded-xl border border-white/10 p-6">
+                <h2 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                    <i class="fas fa-clock text-blue-400"></i>
+                    Recent Appointments
+                </h2>
+                
+                {% if recent_appointments %}
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead>
+                                <tr class="border-b border-white/10">
+                                    <th class="text-left py-2 px-3 text-xs font-medium text-gray-400 uppercase tracking-wider">Patient</th>
+                                    <th class="text-left py-2 px-3 text-xs font-medium text-gray-400 uppercase tracking-wider">Doctor</th>
+                                    <th class="text-left py-2 px-3 text-xs font-medium text-gray-400 uppercase tracking-wider">Date</th>
+                                    <th class="text-left py-2 px-3 text-xs font-medium text-gray-400 uppercase tracking-wider">Time</th>
+                                    <th class="text-left py-2 px-3 text-xs font-medium text-gray-400 uppercase tracking-wider">Status</th>
+                                    <th class="text-right py-2 px-3 text-xs font-medium text-gray-400 uppercase tracking-wider">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for appointment in recent_appointments %}
+                                <tr class="border-b border-white/5 hover:bg-white/5 transition">
+                                    <td class="py-2 px-3">
+                                        <div class="flex items-center gap-2">
+                                            <div class="avatar-circle blue">
+                                                {{ appointment.patient.user.get_full_name|slice:":1"|upper }}
+                                            </div>
+                                            <span class="text-sm">{{ appointment.patient.user.get_full_name|default:appointment.patient.user.username }}</span>
+                                        </div>
+                                    </td>
+                                    <td class="py-2 px-3 text-sm text-gray-300">Dr. {{ appointment.doctor.user.get_full_name|default:appointment.doctor.user.username }}</td>
+                                    <td class="py-2 px-3 text-sm text-gray-300">{{ appointment.appointment_date|date:"M d, Y" }}</td>
+                                    <td class="py-2 px-3 text-sm text-gray-300">{{ appointment.appointment_time|time:"h:i A" }}</td>
+                                    <td class="py-2 px-3">
+                                        <span class="status-badge {{ appointment.status }}">
+                                            <span class="dot"></span>
+                                            {{ appointment.get_status_display }}
+                                        </span>
+                                    </td>
+                                    <td class="py-2 px-3 text-right">
+                                        <a href="{% url 'hospital_admin:appointment_detail' appointment.id %}" class="text-blue-400 hover:text-blue-300 text-sm" title="View">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="text-gray-400 text-center py-4">No recent appointments</p>
+                {% endif %}
+            </div>
+            
+        </div>
+        
+        <!-- Right Column -->
+        <div class="space-y-6">
+            
+            <!-- Department Appointments -->
+            <div class="bg-white/5 rounded-xl border border-white/10 p-6">
+                <h2 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                    <i class="fas fa-building text-green-400"></i>
+                    Appointments by Department
+                </h2>
+                
+                {% if dept_appointments %}
+                    <div class="space-y-3">
+                        {% for dept in dept_appointments %}
+                        <div>
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-300">{{ dept.name }}</span>
+                                <span class="text-blue-400">{{ dept.count }}</span>
+                            </div>
+                            <div class="progress-bar-track">
+                                <div class="progress-fill" style="width: {% widthratio dept.count dept.total 100 %}%; background: #3b82f6;"></div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-gray-400 text-center py-4">No department data</p>
+                {% endif %}
+            </div>
+            
+            <!-- Top Busiest Doctors -->
+            <div class="bg-white/5 rounded-xl border border-white/10 p-6">
+                <h2 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                    <i class="fas fa-user-md text-purple-400"></i>
+                    Top Busiest Doctors
+                </h2>
+                
+                {% if top_doctors %}
+                    <div class="space-y-3">
+                        {% for doc in top_doctors %}
+                        <div class="flex items-center gap-3 p-2 bg-white/5 rounded-lg hover:bg-white/10 transition">
+                            <div class="avatar-circle blue">
+                                {{ doc.doctor__user__first_name|slice:":1"|upper }}
+                            </div>
+                            <div class="flex-1">
+                                <p class="text-sm text-white">Dr. {{ doc.doctor__user__first_name }} {{ doc.doctor__user__last_name }}</p>
+                            </div>
+                            <span class="text-sm text-blue-400">{{ doc.count }}</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-gray-400 text-center py-4">No doctor data</p>
+                {% endif %}
+            </div>
+            
+            <!-- Upcoming Appointments -->
+            <div class="bg-white/5 rounded-xl border border-white/10 p-6">
+                <h2 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                    <i class="fas fa-calendar-plus text-yellow-400"></i>
+                    Upcoming Appointments
+                </h2>
+                
+                {% if upcoming_appointments %}
+                    <div class="space-y-3">
+                        {% for appointment in upcoming_appointments %}
+                        <div class="flex items-center gap-3 p-2 bg-white/5 rounded-lg hover:bg-white/10 transition">
+                            <div class="w-8 h-8 rounded-full bg-yellow-500/20 flex items-center justify-center text-yellow-400 text-xs font-bold">
+                                {{ forloop.counter }}
+                            </div>
+                            <div class="flex-1">
+                                <p class="text-sm text-white">{{ appointment.patient.user.get_full_name|default:appointment.patient.user.username }}</p>
+                                <p class="text-xs text-gray-400">{{ appointment.appointment_time|time:"h:i A" }} • Dr. {{ appointment.doctor.user.get_full_name|default:appointment.doctor.user.username }}</p>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-gray-400 text-center py-4">No upcoming appointments</p>
+                {% endif %}
+            </div>
+            
+            <!-- Recent Activities -->
+            <div class="bg-white/5 rounded-xl border border-white/10 p-6">
+                <h2 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                    <i class="fas fa-clock text-blue-400"></i>
+                    Recent Activities
+                </h2>
+                
+                <div class="space-y-0">
+                    {% for activity in recent_activities %}
+                    <div class="timeline-item">
+                        <div class="timeline-icon {{ activity.color }}">
+                            <i class="fas {{ activity.icon }}"></i>
+                        </div>
+                        <p class="text-sm text-gray-300">{{ activity.text }}</p>
+                        <p class="text-xs text-gray-500">{{ activity.time }}</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            
+        </div>
+        
+    </div>
+    
+</div>
+{% endblock %}

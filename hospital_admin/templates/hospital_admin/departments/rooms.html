@@ -1,0 +1,625 @@
+<!-- templates/hospital_admin/departments/rooms.html -->
+{% extends "hospital_admin/base.html" %}
+{% load static %}
+
+{% block title %}Rooms & Units | Hospital Admin{% endblock %}
+
+{% block page_title %}Department Management{% endblock %}
+{% block current_page %}Rooms & Units{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stat-card {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 1rem;
+        padding: 1.25rem;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        opacity: 0.8;
+    }
+    .stat-card.blue::before { background: #3b82f6; }
+    .stat-card.green::before { background: #22c55e; }
+    .stat-card.red::before { background: #ef4444; }
+    .stat-card.purple::before { background: #8b5cf6; }
+    .stat-card.orange::before { background: #f59e0b; }
+    .stat-card.teal::before { background: #14b8a6; }
+    
+    .stat-card:hover {
+        transform: translateY(-4px);
+        border-color: rgba(255, 255, 255, 0.15);
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+    }
+    .stat-card .stat-number {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: #ffffff;
+    }
+    .stat-card .stat-label {
+        font-size: 0.7rem;
+        color: #6b7280;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    .stat-card .stat-icon {
+        width: 2.5rem;
+        height: 2.5rem;
+        border-radius: 0.75rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+    }
+    .stat-card .stat-icon.blue { background: rgba(59, 130, 246, 0.15); color: #60a5fa; }
+    .stat-card .stat-icon.green { background: rgba(34, 197, 94, 0.15); color: #34d399; }
+    .stat-card .stat-icon.red { background: rgba(239, 68, 68, 0.15); color: #f87171; }
+    .stat-card .stat-icon.purple { background: rgba(139, 92, 246, 0.15); color: #a78bfa; }
+    .stat-card .stat-icon.orange { background: rgba(245, 158, 11, 0.15); color: #fbbf24; }
+    .stat-card .stat-icon.teal { background: rgba(20, 184, 166, 0.15); color: #2dd4bf; }
+    
+    .status-badge {
+        padding: 0.2rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.6rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+    }
+    .status-badge .dot {
+        width: 0.35rem;
+        height: 0.35rem;
+        border-radius: 50%;
+        display: inline-block;
+    }
+    .status-badge.available { background: rgba(34, 197, 94, 0.15); color: #34d399; }
+    .status-badge.available .dot { background: #22c55e; }
+    .status-badge.occupied { background: rgba(239, 68, 68, 0.15); color: #f87171; }
+    .status-badge.occupied .dot { background: #ef4444; }
+    .status-badge.maintenance { background: rgba(245, 158, 11, 0.15); color: #fbbf24; }
+    .status-badge.maintenance .dot { background: #f59e0b; }
+    .status-badge.inactive { background: rgba(107, 114, 128, 0.15); color: #9ca3af; }
+    .status-badge.inactive .dot { background: #6b7280; }
+    
+    .room-type-badge {
+        padding: 0.15rem 0.5rem;
+        border-radius: 9999px;
+        font-size: 0.6rem;
+        font-weight: 500;
+        display: inline-block;
+    }
+    .room-type-badge.icu { background: rgba(239, 68, 68, 0.15); color: #f87171; }
+    .room-type-badge.ward { background: rgba(59, 130, 246, 0.15); color: #60a5fa; }
+    .room-type-badge.cabin { background: rgba(139, 92, 246, 0.15); color: #a78bfa; }
+    .room-type-badge.ot { background: rgba(34, 197, 94, 0.15); color: #34d399; }
+    .room-type-badge.default { background: rgba(255, 255, 255, 0.05); color: #9ca3af; }
+    
+    .filter-select {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 0.5rem;
+        padding: 0.4rem 2rem 0.4rem 0.75rem;
+        color: #e5e7eb;
+        font-size: 0.8125rem;
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 0.75rem center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    .filter-select:focus {
+        outline: none;
+        border-color: #3b82f6;
+    }
+    
+    .action-btn {
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.375rem;
+        transition: all 0.2s ease;
+        color: #6b7280;
+        border: none;
+        background: none;
+        cursor: pointer;
+        font-size: 0.9rem;
+    }
+    .action-btn:hover { color: #60a5fa; background: rgba(59, 130, 246, 0.1); }
+    .action-btn.danger:hover { color: #f87171; background: rgba(239, 68, 68, 0.1); }
+    .action-btn.success:hover { color: #34d399; background: rgba(34, 197, 94, 0.1); }
+    
+    .table-container {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 1rem;
+        overflow: hidden;
+    }
+    .table-container table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    .table-container th {
+        text-align: left;
+        padding: 0.75rem 1rem;
+        font-size: 0.6rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #6b7280;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+    .table-container td {
+        padding: 0.75rem 1rem;
+        font-size: 0.85rem;
+        color: #e5e7eb;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    }
+    .table-container tr:hover td {
+        background: rgba(255, 255, 255, 0.03);
+    }
+    
+    .modal-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.7);
+        backdrop-filter: blur(4px);
+        z-index: 9999;
+        align-items: center;
+        justify-content: center;
+    }
+    .modal-overlay.active {
+        display: flex;
+    }
+    .modal-content {
+        background: #0d1f3c;
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 1rem;
+        padding: 2rem;
+        max-width: 550px;
+        width: 90%;
+        max-height: 90vh;
+        overflow-y: auto;
+        animation: modalSlideIn 0.3s ease;
+    }
+    @keyframes modalSlideIn {
+        from { transform: translateY(-20px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+            <h1 class="text-2xl font-bold text-white">Rooms & Units</h1>
+            <p class="text-gray-400 mt-1">Manage all rooms, cabins, wards and operational units of every department.</p>
+        </div>
+        <button onclick="openAddModal()" class="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition flex items-center gap-2">
+            <i class="fas fa-plus"></i>
+            Add Room / Unit
+        </button>
+    </div>
+    
+    <!-- Statistics Cards -->
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+        <div class="stat-card blue">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="stat-label">Total Rooms</p>
+                    <p class="stat-number">{{ total_rooms }}</p>
+                </div>
+                <div class="stat-icon blue">
+                    <i class="fas fa-door-open"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-card green">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="stat-label">Available</p>
+                    <p class="stat-number">{{ available_rooms }}</p>
+                </div>
+                <div class="stat-icon green">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-card red">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="stat-label">Occupied</p>
+                    <p class="stat-number">{{ occupied_rooms }}</p>
+                </div>
+                <div class="stat-icon red">
+                    <i class="fas fa-user"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-card purple">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="stat-label">ICU Rooms</p>
+                    <p class="stat-number">{{ icu_rooms }}</p>
+                </div>
+                <div class="stat-icon purple">
+                    <i class="fas fa-heartbeat"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-card orange">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="stat-label">Operation Theaters</p>
+                    <p class="stat-number">{{ ot_rooms }}</p>
+                </div>
+                <div class="stat-icon orange">
+                    <i class="fas fa-scalpel"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-card teal">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="stat-label">Wards</p>
+                    <p class="stat-number">{{ wards }}</p>
+                </div>
+                <div class="stat-icon teal">
+                    <i class="fas fa-bed"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Search & Filters -->
+    <div class="bg-white/5 rounded-xl border border-white/10 p-4">
+        <form method="get" class="flex flex-wrap gap-3 items-center">
+            <div class="flex-1 min-w-[180px] relative">
+                <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm"></i>
+                <input type="text" 
+                       name="search" 
+                       value="{{ search_query }}"
+                       placeholder="Search room..." 
+                       class="w-full pl-9 pr-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:border-blue-500 focus:outline-none transition">
+            </div>
+            
+            <div class="min-w-[130px]">
+                <select name="department" class="filter-select w-full">
+                    <option value="">All Departments</option>
+                    {% for dept in departments %}
+                        <option value="{{ dept.id }}" {% if dept_filter == dept.id|stringformat:"s" %}selected{% endif %}>
+                            {{ dept.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="min-w-[130px]">
+                <select name="room_type" class="filter-select w-full">
+                    <option value="">All Types</option>
+                    <option value="general_ward" {% if type_filter == 'general_ward' %}selected{% endif %}>General Ward</option>
+                    <option value="private_cabin" {% if type_filter == 'private_cabin' %}selected{% endif %}>Private Cabin</option>
+                    <option value="vip_cabin" {% if type_filter == 'vip_cabin' %}selected{% endif %}>VIP Cabin</option>
+                    <option value="icu" {% if type_filter == 'icu' %}selected{% endif %}>ICU</option>
+                    <option value="nicu" {% if type_filter == 'nicu' %}selected{% endif %}>NICU</option>
+                    <option value="ccu" {% if type_filter == 'ccu' %}selected{% endif %}>CCU</option>
+                    <option value="operation_theater" {% if type_filter == 'operation_theater' %}selected{% endif %}>Operation Theater</option>
+                    <option value="emergency_room" {% if type_filter == 'emergency_room' %}selected{% endif %}>Emergency Room</option>
+                    <option value="consultation_room" {% if type_filter == 'consultation_room' %}selected{% endif %}>Consultation Room</option>
+                    <option value="laboratory" {% if type_filter == 'laboratory' %}selected{% endif %}>Laboratory</option>
+                    <option value="pharmacy" {% if type_filter == 'pharmacy' %}selected{% endif %}>Pharmacy</option>
+                </select>
+            </div>
+            
+            <div class="min-w-[130px]">
+                <select name="status" class="filter-select w-full">
+                    <option value="">All Status</option>
+                    <option value="available" {% if status_filter == 'available' %}selected{% endif %}>Available</option>
+                    <option value="occupied" {% if status_filter == 'occupied' %}selected{% endif %}>Occupied</option>
+                    <option value="maintenance" {% if status_filter == 'maintenance' %}selected{% endif %}>Maintenance</option>
+                    <option value="inactive" {% if status_filter == 'inactive' %}selected{% endif %}>Inactive</option>
+                </select>
+            </div>
+            
+            <div class="flex gap-2">
+                <button type="submit" class="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition font-medium text-sm">
+                    <i class="fas fa-search mr-1"></i> Search
+                </button>
+                {% if search_query or dept_filter or type_filter or status_filter %}
+                    <a href="{% url 'hospital_admin:rooms' %}" class="px-4 py-2 bg-white/5 hover:bg-white/10 text-gray-300 rounded-lg transition font-medium text-sm">
+                        <i class="fas fa-times mr-1"></i> Reset
+                    </a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+    
+    <!-- Rooms Table -->
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Room</th>
+                    <th>Department</th>
+                    <th>Type</th>
+                    <th>Floor</th>
+                    <th>Capacity</th>
+                    <th>Occupied</th>
+                    <th>Status</th>
+                    <th class="text-right">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if rooms %}
+                    {% for room in rooms %}
+                    <tr>
+                        <td>
+                            <div class="flex items-center gap-2">
+                                <div class="w-8 h-8 rounded-lg bg-blue-500/20 flex items-center justify-center text-blue-400 flex-shrink-0">
+                                    <i class="fas fa-door-open"></i>
+                                </div>
+                                <span class="font-medium text-white">{{ room.room_number }}</span>
+                            </div>
+                        </td>
+                        <td>
+                            {{ room.department.name|default:"Not Assigned" }}
+                        </td>
+                        <td>
+                            <span class="room-type-badge 
+                                {% if room.room_type == 'icu' or room.room_type == 'nicu' or room.room_type == 'ccu' %}icu
+                                {% elif room.room_type == 'general_ward' %}ward
+                                {% elif room.room_type == 'private_cabin' or room.room_type == 'vip_cabin' %}cabin
+                                {% elif room.room_type == 'operation_theater' %}ot
+                                {% else %}default{% endif %}
+                            ">
+                                {{ room.get_room_type_display }}
+                            </span>
+                        </td>
+                        <td>{{ room.floor|default:"—" }}</td>
+                        <td>{{ room.capacity }}</td>
+                        <td>
+                            <div>
+                                <span class="text-sm">{{ room.occupied }}/{{ room.capacity }}</span>
+                                <div class="w-16 h-1.5 bg-white/10 rounded-full mt-0.5">
+                                    <div class="h-full rounded-full bg-blue-500" style="width: {{ room.occupancy_percentage }}%;"></div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="status-badge {{ room.status }}">
+                                <span class="dot"></span>
+                                {{ room.get_status_display }}
+                            </span>
+                        </td>
+                        <td class="text-right">
+                            <div class="flex items-center justify-end gap-1">
+                                <a href="{% url 'hospital_admin:room_detail' room.id %}" class="action-btn" title="View">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <button onclick="openEditModal('{{ room.id }}')" class="action-btn" title="Edit">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button onclick="openDeleteModal('{{ room.id }}', '{{ room.room_number }}')" class="action-btn danger" title="Delete">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="8">
+                            <div class="text-center py-12">
+                                <i class="fas fa-door-open text-4xl text-gray-600 mb-3"></i>
+                                <h3 class="text-xl font-semibold text-white mb-2">No Rooms Added Yet</h3>
+                                <p class="text-gray-400">Start by adding your first room or unit.</p>
+                                <button onclick="openAddModal()" class="mt-4 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition">
+                                    <i class="fas fa-plus mr-1"></i> Add First Room
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+    
+    <!-- Pagination -->
+    {% if rooms and rooms.paginator.num_pages > 1 %}
+    <div class="flex items-center justify-between flex-wrap gap-3">
+        <p class="text-sm text-gray-400">
+            Showing {{ rooms.start_index }} to {{ rooms.end_index }} of {{ rooms.paginator.count }} rooms
+        </p>
+        <div class="flex items-center gap-1">
+            {% if rooms.has_previous %}
+                <a href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}{% if dept_filter %}&department={{ dept_filter }}{% endif %}{% if type_filter %}&room_type={{ type_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}" 
+                   class="px-3 py-1.5 bg-white/5 hover:bg-white/10 rounded text-gray-300 transition text-sm">
+                    <i class="fas fa-angle-double-left"></i>
+                </a>
+                <a href="?page={{ rooms.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if dept_filter %}&department={{ dept_filter }}{% endif %}{% if type_filter %}&room_type={{ type_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}" 
+                   class="px-3 py-1.5 bg-white/5 hover:bg-white/10 rounded text-gray-300 transition text-sm">
+                    <i class="fas fa-angle-left"></i>
+                </a>
+            {% endif %}
+            
+            <span class="px-3 py-1.5 bg-blue-500/20 text-blue-400 rounded text-sm font-medium">
+                {{ rooms.number }}
+            </span>
+            
+            {% if rooms.has_next %}
+                <a href="?page={{ rooms.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if dept_filter %}&department={{ dept_filter }}{% endif %}{% if type_filter %}&room_type={{ type_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}" 
+                   class="px-3 py-1.5 bg-white/5 hover:bg-white/10 rounded text-gray-300 transition text-sm">
+                    <i class="fas fa-angle-right"></i>
+                </a>
+                <a href="?page={{ rooms.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}{% if dept_filter %}&department={{ dept_filter }}{% endif %}{% if type_filter %}&room_type={{ type_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}" 
+                   class="px-3 py-1.5 bg-white/5 hover:bg-white/10 rounded text-gray-300 transition text-sm">
+                    <i class="fas fa-angle-double-right"></i>
+                </a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+    
+</div>
+
+<!-- Add Room Modal -->
+<div class="modal-overlay" id="addModal">
+    <div class="modal-content">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-xl font-bold text-white">Add Room / Unit</h3>
+            <button onclick="closeModal('addModal')" class="text-gray-400 hover:text-white">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <form method="post" action="{% url 'hospital_admin:add_room' %}">
+            {% csrf_token %}
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-1">Department *</label>
+                    <select name="department" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 outline-none transition appearance-none" required>
+                        <option value="">Select Department</option>
+                        {% for dept in departments %}
+                            <option value="{{ dept.id }}">{{ dept.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-1">Room Number *</label>
+                    <input type="text" name="room_number" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 outline-none transition" placeholder="Enter room number" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-1">Room Type *</label>
+                    <select name="room_type" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 outline-none transition appearance-none" required>
+                        <option value="general_ward">General Ward</option>
+                        <option value="private_cabin">Private Cabin</option>
+                        <option value="vip_cabin">VIP Cabin</option>
+                        <option value="icu">ICU</option>
+                        <option value="nicu">NICU</option>
+                        <option value="ccu">CCU</option>
+                        <option value="operation_theater">Operation Theater</option>
+                        <option value="emergency_room">Emergency Room</option>
+                        <option value="consultation_room">Consultation Room</option>
+                        <option value="laboratory">Laboratory</option>
+                        <option value="pharmacy">Pharmacy</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-1">Floor</label>
+                    <input type="text" name="floor" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 outline-none transition" placeholder="Enter floor number">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-1">Capacity *</label>
+                    <input type="number" name="capacity" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 outline-none transition" placeholder="Enter capacity" min="1" value="1" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-1">Status</label>
+                    <select name="status" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 outline-none transition appearance-none">
+                        <option value="available">Available</option>
+                        <option value="occupied">Occupied</option>
+                        <option value="maintenance">Maintenance</option>
+                        <option value="inactive">Inactive</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-1">Description</label>
+                    <textarea name="description" rows="2" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 outline-none transition resize-none" placeholder="Enter room description"></textarea>
+                </div>
+            </div>
+            <div class="flex gap-3 mt-6 pt-4 border-t border-white/10">
+                <button type="submit" class="flex-1 px-4 py-2.5 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-lg transition-colors">
+                    Save
+                </button>
+                <button type="button" onclick="closeModal('addModal')" class="flex-1 px-4 py-2.5 bg-white/5 hover:bg-white/10 text-gray-300 font-medium rounded-lg transition-colors">
+                    Cancel
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Delete Modal -->
+<div class="modal-overlay" id="deleteModal">
+    <div class="modal-content">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-xl font-bold text-white">Delete Room</h3>
+            <button onclick="closeModal('deleteModal')" class="text-gray-400 hover:text-white">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <p class="text-gray-300 mb-4">
+            Are you sure you want to delete room <strong class="text-white" id="deleteRoomNumber"></strong>?
+        </p>
+        <form method="post" id="deleteForm">
+            {% csrf_token %}
+            <div class="flex gap-3">
+                <button type="submit" class="flex-1 px-4 py-2.5 bg-red-500 hover:bg-red-600 text-white font-medium rounded-lg transition-colors">
+                    Delete
+                </button>
+                <button type="button" onclick="closeModal('deleteModal')" class="flex-1 px-4 py-2.5 bg-white/5 hover:bg-white/10 text-gray-300 font-medium rounded-lg transition-colors">
+                    Cancel
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function openAddModal() {
+        document.getElementById('addModal').classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+    
+    function openEditModal(roomId) {
+        alert('Edit room: ' + roomId);
+    }
+    
+    function openDeleteModal(roomId, roomNumber) {
+        document.getElementById('deleteRoomNumber').textContent = roomNumber;
+        document.getElementById('deleteForm').action = '/hospital-admin/rooms/' + roomId + '/delete/';
+        document.getElementById('deleteModal').classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+    
+    function closeModal(modalId) {
+        document.getElementById(modalId).classList.remove('active');
+        document.body.style.overflow = '';
+    }
+    
+    document.querySelectorAll('.modal-overlay').forEach(modal => {
+        modal.addEventListener('click', function(e) {
+            if (e.target === this) {
+                this.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+        });
+    });
+    
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            document.querySelectorAll('.modal-overlay.active').forEach(modal => {
+                modal.classList.remove('active');
+                document.body.style.overflow = '';
+            });
+        }
+    });
+</script>
+{% endblock %}

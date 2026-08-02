@@ -1,0 +1,578 @@
+<!-- templates/hospital_admin/doctors/doctor_verification.html -->
+{% extends "hospital_admin/base.html" %}
+{% load static %}
+
+{% block title %}Doctor Verification | Hospital Admin{% endblock %}
+
+{% block page_title %}Doctor Verification{% endblock %}
+{% block current_page %}Doctor Management / Verification{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stat-card {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 0.75rem;
+        padding: 1rem;
+        transition: all 0.2s ease;
+    }
+    .stat-card:hover {
+        border-color: rgba(59, 130, 246, 0.3);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px -5px rgba(0, 0, 0, 0.2);
+    }
+    .stat-card .number {
+        font-size: 1.5rem;
+        font-weight: 700;
+    }
+    .stat-card .label {
+        font-size: 0.75rem;
+        color: #6b7280;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    .stat-card .icon {
+        width: 2.5rem;
+        height: 2.5rem;
+        border-radius: 0.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+    }
+    .stat-card .icon.yellow { background: rgba(245, 158, 11, 0.15); color: #fbbf24; }
+    .stat-card .icon.green { background: rgba(34, 197, 94, 0.15); color: #34d399; }
+    .stat-card .icon.red { background: rgba(239, 68, 68, 0.15); color: #f87171; }
+    .stat-card .icon.blue { background: rgba(59, 130, 246, 0.15); color: #60a5fa; }
+    
+    .status-badge {
+        padding: 0.2rem 0.6rem;
+        border-radius: 9999px;
+        font-size: 0.6rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+    }
+    .status-badge .dot {
+        width: 0.35rem;
+        height: 0.35rem;
+        border-radius: 50%;
+        display: inline-block;
+    }
+    .status-badge.pending { background: rgba(245, 158, 11, 0.15); color: #fbbf24; }
+    .status-badge.pending .dot { background: #f59e0b; }
+    .status-badge.verified { background: rgba(34, 197, 94, 0.15); color: #34d399; }
+    .status-badge.verified .dot { background: #22c55e; }
+    .status-badge.rejected { background: rgba(239, 68, 68, 0.15); color: #f87171; }
+    .status-badge.rejected .dot { background: #ef4444; }
+    
+    .tab-btn {
+        padding: 0.5rem 1.25rem;
+        border-radius: 0.5rem 0.5rem 0 0;
+        font-size: 0.875rem;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        border: 1px solid transparent;
+        border-bottom: none;
+        cursor: pointer;
+        background: transparent;
+        color: #9ca3af;
+        text-decoration: none;
+    }
+    .tab-btn:hover {
+        color: #e5e7eb;
+        background: rgba(255, 255, 255, 0.03);
+    }
+    .tab-btn.active {
+        color: #60a5fa;
+        background: rgba(59, 130, 246, 0.1);
+        border-color: rgba(255, 255, 255, 0.06);
+    }
+    .tab-btn .badge {
+        display: inline-block;
+        padding: 0.1rem 0.5rem;
+        border-radius: 9999px;
+        font-size: 0.6rem;
+        font-weight: 600;
+        margin-left: 0.3rem;
+    }
+    .tab-btn .badge.pending { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
+    .tab-btn .badge.verified { background: rgba(34, 197, 94, 0.2); color: #34d399; }
+    .tab-btn .badge.rejected { background: rgba(239, 68, 68, 0.2); color: #f87171; }
+    
+    .filter-select {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 0.5rem;
+        padding: 0.4rem 2rem 0.4rem 0.75rem;
+        color: #e5e7eb;
+        font-size: 0.8125rem;
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 0.75rem center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    .filter-select:focus {
+        outline: none;
+        border-color: #3b82f6;
+    }
+    .filter-select option {
+        background: #0d1f3c;
+        color: #e5e7eb;
+    }
+    
+    .avatar-circle {
+        width: 2.5rem;
+        height: 2.5rem;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 0.75rem;
+        flex-shrink: 0;
+    }
+    .avatar-circle.blue { background: rgba(59, 130, 246, 0.2); color: #60a5fa; }
+    
+    .modal-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.7);
+        backdrop-filter: blur(4px);
+        z-index: 9999;
+        align-items: center;
+        justify-content: center;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal-content {
+        background: #0d1f3c;
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 1rem;
+        padding: 2rem;
+        max-width: 500px;
+        width: 90%;
+        max-height: 90vh;
+        overflow-y: auto;
+        animation: modalSlideIn 0.3s ease;
+    }
+    @keyframes modalSlideIn {
+        from { transform: translateY(-20px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+    }
+    
+    .empty-state-icon {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+    }
+    .time-ago {
+        color: #6b7280;
+        font-size: 0.7rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    
+    <!-- Header -->
+    <div>
+        <h1 class="text-2xl font-bold text-white">Doctor Verification</h1>
+        <p class="text-gray-400 mt-1">Review doctor verification requests submitted by doctors.</p>
+    </div>
+    
+    <!-- Statistics Cards -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="stat-card">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="label">Pending Requests</p>
+                    <p class="number text-yellow-400">{{ pending_count }}</p>
+                </div>
+                <div class="icon yellow">
+                    <i class="fas fa-clock"></i>
+                </div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="label">Verified Doctors</p>
+                    <p class="number text-green-400">{{ verified_count }}</p>
+                </div>
+                <div class="icon green">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="label">Rejected Requests</p>
+                    <p class="number text-red-400">{{ rejected_count }}</p>
+                </div>
+                <div class="icon red">
+                    <i class="fas fa-times-circle"></i>
+                </div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="label">Today's Requests</p>
+                    <p class="number text-blue-400">{{ today_requests }}</p>
+                </div>
+                <div class="icon blue">
+                    <i class="fas fa-calendar-day"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Tabs -->
+    <div class="border-b border-white/10">
+        <nav class="flex gap-1" aria-label="Tabs">
+            <a href="?tab=pending{% if search_query %}&search={{ search_query }}{% endif %}{% if dept_filter %}&department={{ dept_filter }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}" 
+               class="tab-btn {% if tab == 'pending' %}active{% endif %}">
+                Pending
+                <span class="badge pending">{{ pending_count }}</span>
+            </a>
+            <a href="?tab=verified{% if search_query %}&search={{ search_query }}{% endif %}{% if dept_filter %}&department={{ dept_filter }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}" 
+               class="tab-btn {% if tab == 'verified' %}active{% endif %}">
+                Verified
+                <span class="badge verified">{{ verified_count }}</span>
+            </a>
+            <a href="?tab=rejected{% if search_query %}&search={{ search_query }}{% endif %}{% if dept_filter %}&department={{ dept_filter }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}" 
+               class="tab-btn {% if tab == 'rejected' %}active{% endif %}">
+                Rejected
+                <span class="badge rejected">{{ rejected_count }}</span>
+            </a>
+        </nav>
+    </div>
+    
+    <!-- Search & Filters -->
+    <div class="bg-white/5 rounded-xl border border-white/10 p-4">
+        <form method="get" class="flex flex-wrap gap-3">
+            <input type="hidden" name="tab" value="{{ tab }}">
+            
+            <!-- Search -->
+            <div class="flex-1 min-w-[200px] relative">
+                <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm"></i>
+                <input type="text" 
+                       name="search" 
+                       value="{{ search_query }}"
+                       placeholder="Search by name, BMDC, email, phone..." 
+                       class="w-full pl-9 pr-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:border-blue-500 focus:outline-none transition">
+            </div>
+            
+            <!-- Department Filter -->
+            <div class="min-w-[150px]">
+                <select name="department" class="filter-select w-full">
+                    <option value="">All Departments</option>
+                    {% for dept in departments %}
+                        <option value="{{ dept.id }}" {% if dept_filter == dept.id|stringformat:"s" %}selected{% endif %}>
+                            {{ dept.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <!-- Sort -->
+            <div class="min-w-[130px]">
+                <select name="sort" class="filter-select w-full">
+                    <option value="newest" {% if sort_by == 'newest' %}selected{% endif %}>Newest</option>
+                    <option value="oldest" {% if sort_by == 'oldest' %}selected{% endif %}>Oldest</option>
+                    <option value="name_asc" {% if sort_by == 'name_asc' %}selected{% endif %}>Name A-Z</option>
+                    <option value="name_desc" {% if sort_by == 'name_desc' %}selected{% endif %}>Name Z-A</option>
+                    <option value="department" {% if sort_by == 'department' %}selected{% endif %}>Department</option>
+                </select>
+            </div>
+            
+            <!-- Submit & Reset -->
+            <div class="flex gap-2">
+                <button type="submit" class="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition font-medium text-sm">
+                    <i class="fas fa-search mr-1"></i> Search
+                </button>
+                {% if search_query or dept_filter or sort_by != 'newest' %}
+                    <a href="?tab={{ tab }}" class="px-4 py-2 bg-white/5 hover:bg-white/10 text-gray-300 rounded-lg transition font-medium text-sm">
+                        <i class="fas fa-times mr-1"></i> Clear
+                    </a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+    
+    <!-- Doctors List -->
+    {% if doctors %}
+        <div class="bg-white/5 rounded-xl border border-white/10 overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead>
+                        <tr class="border-b border-white/10 bg-white/5">
+                            <th class="text-left py-3 px-4 text-xs font-medium text-gray-400 uppercase tracking-wider">Doctor</th>
+                            <th class="text-left py-3 px-4 text-xs font-medium text-gray-400 uppercase tracking-wider">Department</th>
+                            <th class="text-left py-3 px-4 text-xs font-medium text-gray-400 uppercase tracking-wider">BMDC</th>
+                            <th class="text-left py-3 px-4 text-xs font-medium text-gray-400 uppercase tracking-wider">Status</th>
+                            <th class="text-left py-3 px-4 text-xs font-medium text-gray-400 uppercase tracking-wider">Submitted</th>
+                            <th class="text-right py-3 px-4 text-xs font-medium text-gray-400 uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for doctor in doctors %}
+                        <tr class="border-b border-white/5 hover:bg-white/5 transition">
+                            <td class="py-3 px-4">
+                                <div class="flex items-center gap-3">
+                                    <div class="avatar-circle blue">
+                                        {{ doctor.user.get_full_name|slice:":1"|upper|default:doctor.user.username|slice:":1"|upper }}
+                                    </div>
+                                    <div>
+                                        <p class="text-white font-medium text-sm">{{ doctor.user.get_full_name|default:doctor.user.username }}</p>
+                                        <p class="text-gray-500 text-xs">{{ doctor.qualification|truncatechars:20|default:"N/A" }}</p>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="py-3 px-4 text-gray-300 text-sm">
+                                {% if doctor.specialties.all %}
+                                    {% for specialty in doctor.specialties.all %}
+                                        <span class="inline-block px-2 py-0.5 bg-blue-500/10 text-blue-400 rounded text-xs mr-1">
+                                            {{ specialty.name }}
+                                        </span>
+                                    {% endfor %}
+                                {% else %}
+                                    <span class="text-gray-500">Not Assigned</span>
+                                {% endif %}
+                            </td>
+                            <td class="py-3 px-4 text-gray-300 text-sm font-mono">
+                                {{ doctor.registration_number|default:"N/A" }}
+                            </td>
+                            <td class="py-3 px-4">
+                                <span class="status-badge 
+                                    {% if tab == 'pending' %}pending
+                                    {% elif tab == 'verified' %}verified
+                                    {% elif tab == 'rejected' %}rejected{% endif %}
+                                ">
+                                    <span class="dot"></span>
+                                    {% if tab == 'pending' %}Pending
+                                    {% elif tab == 'verified' %}Verified
+                                    {% elif tab == 'rejected' %}Rejected{% endif %}
+                                </span>
+                            </td>
+                            <td class="py-3 px-4">
+                                <div class="text-gray-300 text-sm">{{ doctor.created_at|date:"M d, Y" }}</div>
+                                <div class="time-ago">{{ doctor.created_at|timesince }} ago</div>
+                            </td>
+                            <td class="py-3 px-4 text-right">
+                                <div class="flex items-center justify-end gap-1">
+                                    <!-- View Details -->
+                                    <a href="{% url 'hospital_admin:doctor_verification_detail' doctor.id %}" 
+                                       class="p-1.5 text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 rounded transition" 
+                                       title="View Details">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    
+                                    {% if tab == 'pending' %}
+                                        <!-- Approve -->
+                                        <form method="post" action="{% url 'hospital_admin:approve_doctor' doctor.id %}" 
+                                              onsubmit="return confirm('Are you sure you want to approve {{ doctor.user.get_full_name|default:doctor.user.username }}?')">
+                                            {% csrf_token %}
+                                            <button type="submit" class="p-1.5 text-green-400 hover:text-green-300 hover:bg-green-500/10 rounded transition" title="Approve">
+                                                <i class="fas fa-check-circle"></i>
+                                            </button>
+                                        </form>
+                                        
+                                        <!-- Reject -->
+                                        <button onclick="openRejectModal('{{ doctor.id }}', '{{ doctor.user.get_full_name }}')" 
+                                                class="p-1.5 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded transition"
+                                                title="Reject">
+                                            <i class="fas fa-times-circle"></i>
+                                        </button>
+                                    {% endif %}
+                                    
+                                    {% if tab == 'verified' %}
+                                        <!-- Deactivate -->
+                                        <form method="post" action="{% url 'hospital_admin:deactivate_doctor' doctor.id %}" 
+                                              onsubmit="return confirm('Are you sure you want to deactivate {{ doctor.user.get_full_name|default:doctor.user.username }}?')">
+                                            {% csrf_token %}
+                                            <button type="submit" class="p-1.5 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded transition" title="Deactivate">
+                                                <i class="fas fa-user-slash"></i>
+                                            </button>
+                                        </form>
+                                    {% endif %}
+                                    
+                                    {% if tab == 'rejected' %}
+                                        <!-- Approve Again -->
+                                        <form method="post" action="{% url 'hospital_admin:approve_doctor' doctor.id %}" 
+                                              onsubmit="return confirm('Are you sure you want to approve {{ doctor.user.get_full_name|default:doctor.user.username }} again?')">
+                                            {% csrf_token %}
+                                            <button type="submit" class="p-1.5 text-green-400 hover:text-green-300 hover:bg-green-500/10 rounded transition" title="Approve Again">
+                                                <i class="fas fa-undo"></i>
+                                            </button>
+                                        </form>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Pagination -->
+        {% if doctors.paginator.num_pages > 1 %}
+        <div class="flex items-center justify-between flex-wrap gap-3">
+            <p class="text-sm text-gray-400">
+                Showing {{ doctors.start_index }} to {{ doctors.end_index }} of {{ doctors.paginator.count }} doctors
+            </p>
+            <div class="flex items-center gap-1">
+                {% if doctors.has_previous %}
+                    <a href="?page=1&tab={{ tab }}{% if search_query %}&search={{ search_query }}{% endif %}{% if dept_filter %}&department={{ dept_filter }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}" 
+                       class="px-3 py-1.5 bg-white/5 hover:bg-white/10 rounded text-gray-300 transition text-sm">
+                        <i class="fas fa-angle-double-left"></i>
+                    </a>
+                    <a href="?page={{ doctors.previous_page_number }}&tab={{ tab }}{% if search_query %}&search={{ search_query }}{% endif %}{% if dept_filter %}&department={{ dept_filter }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}" 
+                       class="px-3 py-1.5 bg-white/5 hover:bg-white/10 rounded text-gray-300 transition text-sm">
+                        <i class="fas fa-angle-left"></i>
+                    </a>
+                {% endif %}
+                
+                <span class="px-3 py-1.5 bg-blue-500/20 text-blue-400 rounded text-sm font-medium">
+                    {{ doctors.number }}
+                </span>
+                
+                {% if doctors.has_next %}
+                    <a href="?page={{ doctors.next_page_number }}&tab={{ tab }}{% if search_query %}&search={{ search_query }}{% endif %}{% if dept_filter %}&department={{ dept_filter }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}" 
+                       class="px-3 py-1.5 bg-white/5 hover:bg-white/10 rounded text-gray-300 transition text-sm">
+                        <i class="fas fa-angle-right"></i>
+                    </a>
+                    <a href="?page={{ doctors.paginator.num_pages }}&tab={{ tab }}{% if search_query %}&search={{ search_query }}{% endif %}{% if dept_filter %}&department={{ dept_filter }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}" 
+                       class="px-3 py-1.5 bg-white/5 hover:bg-white/10 rounded text-gray-300 transition text-sm">
+                        <i class="fas fa-angle-double-right"></i>
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+        
+    {% else %}
+        <!-- Empty State -->
+        <div class="flex items-center justify-center h-64">
+            <div class="text-center">
+                <div class="empty-state-icon">
+                    {% if tab == 'pending' %}⏳
+                    {% elif tab == 'verified' %}✅
+                    {% elif tab == 'rejected' %}❌
+                    {% else %}🎉{% endif %}
+                </div>
+                <h2 class="text-2xl font-bold text-white">
+                    {% if tab == 'pending' %}
+                        No Pending Verification Requests
+                    {% elif tab == 'verified' %}
+                        No Verified Doctors
+                    {% elif tab == 'rejected' %}
+                        No Rejected Requests
+                    {% endif %}
+                </h2>
+                <p class="text-gray-400 mt-2">
+                    {% if search_query or dept_filter %}
+                        No doctors match your search criteria.
+                    {% elif tab == 'pending' %}
+                        All doctor verification requests have been processed.
+                    {% elif tab == 'verified' %}
+                        Doctors will appear here once they are verified.
+                    {% elif tab == 'rejected' %}
+                        No doctors have been rejected yet.
+                    {% endif %}
+                </p>
+                {% if search_query or dept_filter %}
+                    <a href="?tab={{ tab }}" class="inline-block mt-4 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition">
+                        <i class="fas fa-times mr-1"></i> Clear Filters
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    {% endif %}
+    
+</div>
+
+<!-- Reject Modal -->
+<div class="modal-overlay" id="rejectModal">
+    <div class="modal-content">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-xl font-bold text-white">Reject Doctor</h3>
+            <button onclick="closeModal('rejectModal')" class="text-gray-400 hover:text-white">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <p class="text-gray-300 mb-4">
+            Please provide a reason for rejecting <strong class="text-white" id="rejectDoctorName"></strong>.
+        </p>
+        <form id="rejectForm" method="post" action="{% url 'hospital_admin:reject_doctor' 0 %}">
+            {% csrf_token %}
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-300 mb-1">Rejection Reason *</label>
+                <textarea name="reason" id="rejectReason" rows="4" 
+                          class="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:border-red-500 focus:outline-none"
+                          placeholder="Explain why this doctor is being rejected..."></textarea>
+                <p id="rejectError" class="text-red-400 text-xs mt-1 hidden">Please provide a rejection reason.</p>
+            </div>
+            <div class="flex gap-3">
+                <button type="submit" class="flex-1 px-4 py-2.5 bg-red-500 hover:bg-red-600 text-white font-medium rounded-lg transition-colors">
+                    Reject
+                </button>
+                <button type="button" onclick="closeModal('rejectModal')" class="flex-1 px-4 py-2.5 bg-white/5 hover:bg-white/10 text-gray-300 font-medium rounded-lg transition-colors">
+                    Cancel
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function openRejectModal(doctorId, doctorName) {
+        document.getElementById('rejectDoctorName').textContent = doctorName;
+        document.getElementById('rejectForm').action = '/hospital-admin/doctors/verification/' + doctorId + '/reject/';
+        document.getElementById('rejectReason').value = '';
+        document.getElementById('rejectError').classList.add('hidden');
+        document.getElementById('rejectModal').classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+    
+    function closeModal(modalId) {
+        document.getElementById(modalId).classList.remove('active');
+        document.body.style.overflow = '';
+    }
+    
+    document.querySelectorAll('.modal-overlay').forEach(modal => {
+        modal.addEventListener('click', function(e) {
+            if (e.target === this) {
+                this.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+        });
+    });
+    
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            document.querySelectorAll('.modal-overlay.active').forEach(modal => {
+                modal.classList.remove('active');
+                document.body.style.overflow = '';
+            });
+        }
+    });
+    
+    document.getElementById('rejectForm').addEventListener('submit', function(e) {
+        const reason = document.getElementById('rejectReason').value.trim();
+        if (!reason) {
+            e.preventDefault();
+            document.getElementById('rejectError').classList.remove('hidden');
+        }
+    });
+</script>
+{% endblock %}

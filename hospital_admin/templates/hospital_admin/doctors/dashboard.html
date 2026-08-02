@@ -1,0 +1,143 @@
+<!-- templates/hospital_admin/doctors/dashboard.html -->
+{% extends "hospital_admin/base.html" %}
+{% load static %}
+
+{% block title %}Doctor Dashboard | Hospital Admin{% endblock %}
+
+{% block page_title %}Doctor Dashboard{% endblock %}
+{% block current_page %}Doctor Management / Dashboard{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+            <h1 class="text-2xl font-bold text-white">Doctor Dashboard</h1>
+            <p class="text-gray-400 mt-1">Overview of all doctors in your hospital</p>
+        </div>
+       
+    </div>
+    
+    <!-- Statistics Cards -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="bg-white/5 rounded-2xl border border-white/10 p-6 hover:bg-white/10 transition">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-gray-400 text-sm">Total Doctors</p>
+                    <p class="text-3xl font-bold text-white">{{ total_doctors }}</p>
+                </div>
+                <div class="w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center text-blue-400">
+                    <i class="fas fa-user-md text-xl"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-white/5 rounded-2xl border border-white/10 p-6 hover:bg-white/10 transition">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-gray-400 text-sm">Active Doctors</p>
+                    <p class="text-3xl font-bold text-green-400">{{ active_doctors }}</p>
+                </div>
+                <div class="w-12 h-12 rounded-xl bg-green-500/20 flex items-center justify-center text-green-400">
+                    <i class="fas fa-check-circle text-xl"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-white/5 rounded-2xl border border-white/10 p-6 hover:bg-white/10 transition">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-gray-400 text-sm">Pending Verification</p>
+                    <p class="text-3xl font-bold text-yellow-400">{{ pending_verification }}</p>
+                </div>
+                <div class="w-12 h-12 rounded-xl bg-yellow-500/20 flex items-center justify-center text-yellow-400">
+                    <i class="fas fa-clock text-xl"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-white/5 rounded-2xl border border-white/10 p-6 hover:bg-white/10 transition">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-gray-400 text-sm">Rejected Requests</p>
+                    <p class="text-3xl font-bold text-red-400">{{ rejected_requests }}</p>
+                </div>
+                <div class="w-12 h-12 rounded-xl bg-red-500/20 flex items-center justify-center text-red-400">
+                    <i class="fas fa-times-circle text-xl"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recent Activities & Quick Actions -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- Recent Doctors -->
+        <div class="lg:col-span-2 bg-white/5 rounded-2xl border border-white/10 p-6">
+            <h2 class="text-lg font-semibold text-white mb-4">Recently Added Doctors</h2>
+            
+            {% if recent_doctors %}
+                <div class="space-y-3">
+                    {% for doctor in recent_doctors %}
+                    <div class="flex items-center justify-between p-3 bg-white/5 rounded-xl hover:bg-white/10 transition">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400">
+                                <span class="font-bold">{{ doctor.user.get_full_name|slice:":1"|upper }}</span>
+                            </div>
+                            <div>
+                                <p class="text-white font-medium">{{ doctor.user.get_full_name }}</p>
+                                <p class="text-gray-400 text-sm">{{ doctor.specialties.first.name|default:"Not Assigned" }}</p>
+                            </div>
+                        </div>
+                        <span class="px-2 py-1 text-xs rounded-full {% if doctor.is_active %}bg-green-500/20 text-green-400{% else %}bg-red-500/20 text-red-400{% endif %}">
+                            {% if doctor.is_active %}Active{% else %}Inactive{% endif %}
+                        </span>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="text-gray-400">No doctors added yet.</p>
+            {% endif %}
+        </div>
+        
+        <!-- Quick Actions -->
+        <div class="bg-white/5 rounded-2xl border border-white/10 p-6">
+            <h2 class="text-lg font-semibold text-white mb-4">Quick Actions</h2>
+            
+            <div class="space-y-3">
+                <a href="{% url 'hospital_admin:add_doctor' %}" class="flex items-center gap-3 p-3 bg-white/5 rounded-xl hover:bg-white/10 transition">
+                    <div class="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center text-blue-400">
+                        <i class="fas fa-plus"></i>
+                    </div>
+                    <div>
+                        
+                        <p class="text-gray-400 text-sm">Submit a new doctor request</p>
+                    </div>
+                </a>
+                
+                <a href="{% url 'hospital_admin:doctor_list' %}" class="flex items-center gap-3 p-3 bg-white/5 rounded-xl hover:bg-white/10 transition">
+                    <div class="w-10 h-10 rounded-xl bg-green-500/20 flex items-center justify-center text-green-400">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div>
+                        <p class="text-white font-medium">View All Doctors</p>
+                        <p class="text-gray-400 text-sm">Manage your doctor list</p>
+                    </div>
+                </a>
+                
+                <a href="{% url 'hospital_admin:doctor_verification' %}" class="flex items-center gap-3 p-3 bg-white/5 rounded-xl hover:bg-white/10 transition">
+                    <div class="w-10 h-10 rounded-xl bg-yellow-500/20 flex items-center justify-center text-yellow-400">
+                        <i class="fas fa-check-double"></i>
+                    </div>
+                    <div>
+                        <p class="text-white font-medium">Pending Verification</p>
+                        <p class="text-gray-400 text-sm">Review doctor requests</p>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </div>
+    
+</div>
+{% endblock %}

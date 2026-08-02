@@ -1,0 +1,474 @@
+<!-- templates/hospital_admin/doctors/pending_doctor_detail.html -->
+{% extends "hospital_admin/base.html" %}
+{% load static %}
+
+{% block title %}Doctor Verification Request | Hospital Admin{% endblock %}
+
+{% block page_title %}Doctor Verification Request{% endblock %}
+{% block current_page %}Doctor Detail{% endblock %}
+
+{% block extra_css %}
+<style>
+    .detail-card {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 0.75rem;
+        padding: 1.25rem;
+        transition: all 0.2s ease;
+    }
+    .detail-card:hover {
+        border-color: rgba(59, 130, 246, 0.2);
+    }
+    .detail-card .card-title {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: #e5e7eb;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .detail-card .card-title i {
+        color: #60a5fa;
+    }
+    
+    .info-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.5rem 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    }
+    .info-row:last-child {
+        border-bottom: none;
+    }
+    .info-row .label {
+        color: #6b7280;
+        font-size: 0.8rem;
+    }
+    .info-row .value {
+        color: #e5e7eb;
+        font-size: 0.85rem;
+        font-weight: 500;
+        text-align: right;
+        max-width: 60%;
+        word-break: break-word;
+    }
+    
+    .profile-photo {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 3px solid rgba(255, 255, 255, 0.1);
+    }
+    .profile-avatar {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        font-weight: 700;
+        background: rgba(59, 130, 246, 0.2);
+        color: #60a5fa;
+        border: 3px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .status-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+    }
+    .status-badge .dot {
+        width: 0.35rem;
+        height: 0.35rem;
+        border-radius: 50%;
+        display: inline-block;
+    }
+    .status-badge.pending { background: rgba(245, 158, 11, 0.15); color: #fbbf24; }
+    .status-badge.pending .dot { background: #f59e0b; }
+    .status-badge.verified { background: rgba(34, 197, 94, 0.15); color: #34d399; }
+    .status-badge.verified .dot { background: #22c55e; }
+    .status-badge.rejected { background: rgba(239, 68, 68, 0.15); color: #f87171; }
+    .status-badge.rejected .dot { background: #ef4444; }
+    
+    .action-btn {
+        padding: 0.625rem 1.5rem;
+        border-radius: 0.5rem;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        border: none;
+        cursor: pointer;
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+    .action-btn.success {
+        background: #22c55e;
+        color: white;
+    }
+    .action-btn.success:hover {
+        background: #16a34a;
+    }
+    .action-btn.danger {
+        background: #ef4444;
+        color: white;
+    }
+    .action-btn.danger:hover {
+        background: #dc2626;
+    }
+    .action-btn.secondary {
+        background: rgba(255, 255, 255, 0.05);
+        color: #e5e7eb;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .action-btn.secondary:hover {
+        background: rgba(255, 255, 255, 0.1);
+    }
+    
+    .modal-overlay {
+        display: none !important;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.7);
+        backdrop-filter: blur(4px);
+        z-index: 9999;
+        align-items: center;
+        justify-content: center;
+    }
+    .modal-overlay.active {
+        display: flex !important;
+    }
+    .modal-content {
+        background: #0d1f3c;
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 1rem;
+        padding: 2rem;
+        max-width: 500px;
+        width: 90%;
+        max-height: 90vh;
+        overflow-y: auto;
+        animation: modalSlideIn 0.3s ease;
+    }
+    @keyframes modalSlideIn {
+        from { transform: translateY(-20px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    
+    <!-- Header -->
+    <div class="bg-gradient-to-r from-blue-600/20 to-purple-600/20 rounded-xl border border-white/10 p-6">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+                <h1 class="text-2xl font-bold text-white">Verification Detail</h1>
+                <div class="flex items-center gap-2 text-sm text-gray-400 mt-1">
+                    <span>Dashboard</span>
+                    <i class="fas fa-chevron-right text-xs"></i>
+                    <span>Doctor Management</span>
+                    <i class="fas fa-chevron-right text-xs"></i>
+                    <span>Verification</span>
+                    <i class="fas fa-chevron-right text-xs"></i>
+                    <span class="text-blue-400">Detail</span>
+                </div>
+            </div>
+            <div>
+                <span class="status-badge 
+                    {% if doctor.is_verified and doctor.is_active %}verified
+                    {% elif not doctor.is_verified and not doctor.is_active %}rejected
+                    {% else %}pending{% endif %}
+                ">
+                    <span class="dot"></span>
+                    {% if doctor.is_verified and doctor.is_active %}Verified
+                    {% elif not doctor.is_verified and not doctor.is_active %}Rejected
+                    {% else %}Pending{% endif %}
+                </span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- LEFT COLUMN -->
+        <div class="lg:col-span-2 space-y-6">
+            
+            <!-- Doctor Profile -->
+            <div class="detail-card">
+                <div class="flex items-start gap-4">
+                    {% if doctor.profile_photo %}
+                        <img src="{{ doctor.profile_photo.url }}" alt="{{ doctor.user.get_full_name }}" class="profile-photo">
+                    {% else %}
+                        <div class="profile-avatar">
+                            {{ doctor.user.get_full_name|slice:":1"|upper|default:doctor.user.username|slice:":1"|upper }}
+                        </div>
+                    {% endif %}
+                    <div class="flex-1">
+                        <h3 class="text-xl font-semibold text-white">{{ doctor.user.get_full_name|default:doctor.user.username }}</h3>
+                        <p class="text-gray-400">@{{ doctor.user.username }}</p>
+                        <div class="grid grid-cols-2 gap-2 mt-3">
+                            <div>
+                                <p class="text-gray-500 text-xs">EMAIL</p>
+                                <p class="text-gray-300 text-sm">{{ doctor.user.email|default:"Not set" }}</p>
+                            </div>
+                            <div>
+                                <p class="text-gray-500 text-xs">PHONE</p>
+                                <p class="text-gray-300 text-sm">{{ doctor.user.phone|default:"Not set" }}</p>
+                            </div>
+                            <div>
+                                <p class="text-gray-500 text-xs">GENDER</p>
+                                <p class="text-gray-300 text-sm">{{ doctor.gender|default:"Not set"|title }}</p>
+                            </div>
+                            <div>
+                                <p class="text-gray-500 text-xs">DATE OF BIRTH</p>
+                                <p class="text-gray-300 text-sm">{{ doctor.date_of_birth|date:"F d, Y"|default:"Not set" }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Professional Information -->
+            <div class="detail-card">
+                <div class="card-title">
+                    <i class="fas fa-briefcase"></i>
+                    Professional Information
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div class="info-row">
+                        <span class="label">BMDC NUMBER</span>
+                        <span class="value">{{ doctor.registration_number|default:"Not set" }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="label">DEPARTMENT</span>
+                        <span class="value">{{ doctor.specialties.first.name|default:"Not Assigned" }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="label">EXPERIENCE</span>
+                        <span class="value">{{ doctor.experience|default:"0" }} years</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="label">QUALIFICATION</span>
+                        <span class="value">{{ doctor.qualification|default:"Not set" }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="label">HOSPITAL</span>
+                        <span class="value">{{ doctor.hospital.name }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="label">SUBMISSION DATE</span>
+                        <span class="value">{{ doctor.created_at|date:"F d, Y h:i A" }}</span>
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+        
+        <!-- RIGHT COLUMN -->
+        <div class="lg:col-span-1 space-y-6">
+            
+            <!-- Action Card -->
+            <div class="detail-card">
+                <div class="card-title">
+                    <i class="fas fa-bolt"></i>
+                    Actions
+                </div>
+                
+                <div class="space-y-3">
+                    {% if not doctor.is_verified or not doctor.is_active %}
+                        <button onclick="openApproveModal()" class="action-btn success">
+                            <i class="fas fa-check-circle"></i>
+                            Approve Doctor
+                        </button>
+                        <button onclick="openRejectModal()" class="action-btn danger">
+                            <i class="fas fa-times-circle"></i>
+                            Reject Doctor
+                        </button>
+                    {% else %}
+                        <div class="text-center py-2 text-green-400">
+                            <i class="fas fa-check-circle"></i>
+                            Doctor already verified
+                        </div>
+                    {% endif %}
+                    <a href="{% url 'hospital_admin:doctor_verification' %}?tab=pending" class="action-btn secondary">
+                        <i class="fas fa-arrow-left"></i>
+                        Back to Verification
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Info Card -->
+            <div class="detail-card">
+                <div class="card-title">
+                    <i class="fas fa-info-circle"></i>
+                    Information
+                </div>
+                <div class="space-y-2">
+                    <div class="info-row">
+                        <span class="label">ID</span>
+                        <span class="value font-mono">#{{ doctor.id }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="label">Created</span>
+                        <span class="value">{{ doctor.created_at|date:"M d, Y" }}</span>
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+        
+    </div>
+    
+</div>
+
+<!-- Approve Modal -->
+<div class="modal-overlay" id="approveModal">
+    <div class="modal-content">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-xl font-bold text-white">Approve Doctor</h3>
+            <button type="button" onclick="closeApproveModal()" class="text-gray-400 hover:text-white">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <p class="text-gray-300 mb-4">
+            Are you sure you want to approve <strong class="text-white">{{ doctor.user.get_full_name|default:doctor.user.username }}</strong>?
+        </p>
+        <div class="space-y-2 mb-4">
+            <div class="flex justify-between py-1 border-b border-white/5">
+                <span class="text-gray-400">Doctor Name</span>
+                <span class="text-white">{{ doctor.user.get_full_name|default:doctor.user.username }}</span>
+            </div>
+            <div class="flex justify-between py-1 border-b border-white/5">
+                <span class="text-gray-400">BMDC</span>
+                <span class="text-white">{{ doctor.registration_number|default:"N/A" }}</span>
+            </div>
+            <div class="flex justify-between py-1 border-b border-white/5">
+                <span class="text-gray-400">Department</span>
+                <span class="text-white">{{ doctor.specialties.first.name|default:"Not Assigned" }}</span>
+            </div>
+        </div>
+        <form method="post" action="{% url 'hospital_admin:approve_doctor' doctor.id %}">
+            {% csrf_token %}
+            <div class="flex gap-3">
+                <button type="submit" class="flex-1 px-4 py-2.5 bg-green-500 hover:bg-green-600 text-white font-medium rounded-lg transition-colors">
+                    Approve
+                </button>
+                <button type="button" onclick="closeApproveModal()" class="flex-1 px-4 py-2.5 bg-white/5 hover:bg-white/10 text-gray-300 font-medium rounded-lg transition-colors">
+                    Cancel
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Reject Modal -->
+<div class="modal-overlay" id="rejectModal">
+    <div class="modal-content">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-xl font-bold text-white">Reject Doctor</h3>
+            <button type="button" onclick="closeRejectModal()" class="text-gray-400 hover:text-white">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <p class="text-gray-300 mb-4">
+            Please provide a reason for rejecting <strong class="text-white">{{ doctor.user.get_full_name|default:doctor.user.username }}</strong>.
+        </p>
+        <form method="post" action="{% url 'hospital_admin:reject_doctor' doctor.id %}" id="rejectForm">
+            {% csrf_token %}
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-300 mb-1">Rejection Reason *</label>
+                <textarea name="reason" id="rejectReason" rows="4" 
+                          class="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:border-red-500 focus:outline-none"
+                          placeholder="Explain why this doctor is being rejected..."></textarea>
+                <p id="rejectError" class="text-red-400 text-xs mt-1 hidden">Please provide a rejection reason.</p>
+            </div>
+            <div class="flex gap-3">
+                <button type="submit" class="flex-1 px-4 py-2.5 bg-red-500 hover:bg-red-600 text-white font-medium rounded-lg transition-colors">
+                    Reject
+                </button>
+                <button type="button" onclick="closeRejectModal()" class="flex-1 px-4 py-2.5 bg-white/5 hover:bg-white/10 text-gray-300 font-medium rounded-lg transition-colors">
+                    Cancel
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    // Approve Modal
+    function openApproveModal() {
+        document.getElementById('approveModal').style.display = 'flex';
+        document.getElementById('approveModal').classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+    
+    function closeApproveModal() {
+        document.getElementById('approveModal').style.display = 'none';
+        document.getElementById('approveModal').classList.remove('active');
+        document.body.style.overflow = '';
+    }
+    
+    // Reject Modal
+    function openRejectModal() {
+        document.getElementById('rejectModal').style.display = 'flex';
+        document.getElementById('rejectModal').classList.add('active');
+        document.body.style.overflow = 'hidden';
+        document.getElementById('rejectError').classList.add('hidden');
+        document.getElementById('rejectReason').value = '';
+    }
+    
+    function closeRejectModal() {
+        document.getElementById('rejectModal').style.display = 'none';
+        document.getElementById('rejectModal').classList.remove('active');
+        document.body.style.overflow = '';
+    }
+    
+    // Close modal when clicking outside
+    document.querySelectorAll('.modal-overlay').forEach(function(modal) {
+        modal.addEventListener('click', function(e) {
+            if (e.target === this) {
+                this.style.display = 'none';
+                this.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+        });
+    });
+    
+    // Close modal with Escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            document.querySelectorAll('.modal-overlay.active').forEach(function(modal) {
+                modal.style.display = 'none';
+                modal.classList.remove('active');
+                document.body.style.overflow = '';
+            });
+        }
+    });
+    
+    // Reject form validation
+    document.getElementById('rejectForm').addEventListener('submit', function(e) {
+        var reason = document.getElementById('rejectReason').value.trim();
+        if (!reason) {
+            e.preventDefault();
+            document.getElementById('rejectError').classList.remove('hidden');
+        }
+    });
+    
+    document.getElementById('rejectReason').addEventListener('input', function() {
+        if (this.value.trim()) {
+            document.getElementById('rejectError').classList.add('hidden');
+        }
+    });
+</script>
+{% endblock %}

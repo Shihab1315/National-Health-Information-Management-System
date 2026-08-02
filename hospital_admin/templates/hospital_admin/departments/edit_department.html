@@ -1,0 +1,581 @@
+<!-- templates/hospital_admin/departments/edit_department.html -->
+{% extends "hospital_admin/base.html" %}
+{% load static %}
+
+{% block title %}Edit Department | Hospital Admin{% endblock %}
+
+{% block page_title %}Department Management{% endblock %}
+{% block current_page %}Edit Department{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-section {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 1rem;
+        padding: 1.5rem;
+        transition: all 0.3s ease;
+    }
+    .form-section:hover {
+        border-color: rgba(59, 130, 246, 0.2);
+    }
+    .form-section .section-title {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #e5e7eb;
+        margin-bottom: 1.25rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .form-section .section-title i {
+        color: #60a5fa;
+    }
+    
+    .form-group {
+        margin-bottom: 1.25rem;
+    }
+    .form-group label {
+        display: block;
+        font-size: 0.85rem;
+        font-weight: 500;
+        color: #e5e7eb;
+        margin-bottom: 0.375rem;
+    }
+    .form-group label .required {
+        color: #ef4444;
+        margin-left: 0.25rem;
+    }
+    .form-group .help-text {
+        font-size: 0.75rem;
+        color: #6b7280;
+        margin-top: 0.25rem;
+    }
+    .form-group .error-text {
+        font-size: 0.75rem;
+        color: #ef4444;
+        margin-top: 0.25rem;
+    }
+    
+    .checkbox-group {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.25rem 0;
+    }
+    .checkbox-group input[type="checkbox"] {
+        width: 1rem;
+        height: 1rem;
+        border-radius: 0.25rem;
+        border: 2px solid rgba(255, 255, 255, 0.2);
+        background: transparent;
+        cursor: pointer;
+        flex-shrink: 0;
+        accent-color: #3b82f6;
+    }
+    .checkbox-group label {
+        font-size: 0.85rem;
+        color: #e5e7eb;
+        cursor: pointer;
+        margin-bottom: 0;
+    }
+    
+    .btn-primary {
+        background: #3b82f6;
+        color: white;
+        padding: 0.625rem 1.5rem;
+        border-radius: 0.5rem;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        border: none;
+        cursor: pointer;
+    }
+    .btn-primary:hover {
+        background: #2563eb;
+        transform: translateY(-1px);
+    }
+    .btn-secondary {
+        background: rgba(255, 255, 255, 0.05);
+        color: #e5e7eb;
+        padding: 0.625rem 1.5rem;
+        border-radius: 0.5rem;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        cursor: pointer;
+    }
+    .btn-secondary:hover {
+        background: rgba(255, 255, 255, 0.1);
+    }
+    .btn-success {
+        background: #22c55e;
+        color: white;
+        padding: 0.625rem 1.5rem;
+        border-radius: 0.5rem;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        border: none;
+        cursor: pointer;
+    }
+    .btn-success:hover {
+        background: #16a34a;
+        transform: translateY(-1px);
+    }
+    
+    .change-history-card {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 0.75rem;
+        padding: 1rem;
+    }
+    .change-history-card .history-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.4rem 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    }
+    .change-history-card .history-item:last-child {
+        border-bottom: none;
+    }
+    .change-history-card .history-label {
+        font-size: 0.8rem;
+        color: #6b7280;
+    }
+    .change-history-card .history-value {
+        font-size: 0.85rem;
+        color: #e5e7eb;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+            <h1 class="text-2xl font-bold text-white">Edit Department</h1>
+            <div class="flex items-center gap-2 text-sm text-gray-400 mt-1">
+                <span>Dashboard</span>
+                <i class="fas fa-chevron-right text-xs"></i>
+                <span>Department Management</span>
+                <i class="fas fa-chevron-right text-xs"></i>
+                <span>All Departments</span>
+                <i class="fas fa-chevron-right text-xs"></i>
+                <span class="text-blue-400">{{ department.name }}</span>
+                <i class="fas fa-chevron-right text-xs"></i>
+                <span class="text-yellow-400">Edit</span>
+            </div>
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+            <a href="{% url 'hospital_admin:department_detail' department.id %}" class="px-4 py-2 bg-purple-500 hover:bg-purple-600 text-white rounded-lg transition flex items-center gap-2">
+                <i class="fas fa-eye"></i>
+                View Department
+            </a>
+            <a href="{% url 'hospital_admin:all_departments' %}" class="px-4 py-2 bg-white/5 hover:bg-white/10 text-gray-300 rounded-lg transition flex items-center gap-2">
+                <i class="fas fa-arrow-left"></i>
+                Back to All Departments
+            </a>
+        </div>
+    </div>
+    
+    <!-- Description -->
+    <p class="text-gray-400 text-sm">Update department information, facilities, contact details, working hours, and department configuration.</p>
+    
+    <!-- Form -->
+    <form method="post" novalidate>
+        {% csrf_token %}
+        
+        {% if form.non_field_errors %}
+            <div class="bg-red-500/10 border border-red-500/20 rounded-xl p-4">
+                {% for error in form.non_field_errors %}
+                    <p class="text-red-400">{{ error }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
+        
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            <!-- Left Column - Main Form -->
+            <div class="lg:col-span-2 space-y-6">
+                
+                <!-- Section 1: Basic Information -->
+                <div class="form-section">
+                    <div class="section-title">
+                        <i class="fas fa-info-circle"></i>
+                        Basic Information
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="form-group">
+                            <label for="{{ form.name.id_for_label }}">
+                                Department Name <span class="required">*</span>
+                            </label>
+                            {{ form.name }}
+                            {% if form.name.errors %}
+                                <p class="error-text">{{ form.name.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="department_type">Department Type</label>
+                            {{ form.department_type }}
+                            {% if form.department_type.errors %}
+                                <p class="error-text">{{ form.department_type.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="{{ form.description.id_for_label }}">
+                            Description <span class="required">*</span>
+                        </label>
+                        {{ form.description }}
+                        {% if form.description.errors %}
+                            <p class="error-text">{{ form.description.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        <div class="checkbox-group">
+                            {{ form.active }}
+                            <label for="{{ form.active.id_for_label }}">Active</label>
+                        </div>
+                        {% if form.active.errors %}
+                            <p class="error-text">{{ form.active.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Section 2: Location Information -->
+                <div class="form-section">
+                    <div class="section-title">
+                        <i class="fas fa-map-marker-alt"></i>
+                        Location Information
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="form-group">
+                            <label for="floor_number">Floor Number</label>
+                            {{ form.floor_number }}
+                            {% if form.floor_number.errors %}
+                                <p class="error-text">{{ form.floor_number.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                        <div class="form-group">
+                            <label for="room_number">Room Number</label>
+                            {{ form.room_number }}
+                            {% if form.room_number.errors %}
+                                <p class="error-text">{{ form.room_number.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                        <div class="form-group">
+                            <label for="building_name">Building Name</label>
+                            {{ form.building_name }}
+                            {% if form.building_name.errors %}
+                                <p class="error-text">{{ form.building_name.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                        <div class="form-group">
+                            <label for="block">Block</label>
+                            {{ form.block }}
+                            {% if form.block.errors %}
+                                <p class="error-text">{{ form.block.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Section 3: Contact Information -->
+                <div class="form-section">
+                    <div class="section-title">
+                        <i class="fas fa-phone"></i>
+                        Contact Information
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="form-group">
+                            <label for="{{ form.phone.id_for_label }}">Department Phone</label>
+                            {{ form.phone }}
+                            {% if form.phone.errors %}
+                                <p class="error-text">{{ form.phone.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                        <div class="form-group">
+                            <label for="extension_number">Extension Number</label>
+                            {{ form.extension_number }}
+                            {% if form.extension_number.errors %}
+                                <p class="error-text">{{ form.extension_number.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                        <div class="form-group md:col-span-2">
+                            <label for="{{ form.email.id_for_label }}">Department Email</label>
+                            {{ form.email }}
+                            {% if form.email.errors %}
+                                <p class="error-text">{{ form.email.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Section 4: Department Capacity -->
+                <div class="form-section">
+                    <div class="section-title">
+                        <i class="fas fa-users"></i>
+                        Department Capacity
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="form-group">
+                            <label for="max_doctors">Maximum Doctors</label>
+                            {{ form.max_doctors }}
+                            {% if form.max_doctors.errors %}
+                                <p class="error-text">{{ form.max_doctors.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                        <div class="form-group">
+                            <label for="max_nurses">Maximum Nurses</label>
+                            {{ form.max_nurses }}
+                            {% if form.max_nurses.errors %}
+                                <p class="error-text">{{ form.max_nurses.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                        <div class="form-group">
+                            <label for="max_beds">Maximum Beds</label>
+                            {{ form.max_beds }}
+                            {% if form.max_beds.errors %}
+                                <p class="error-text">{{ form.max_beds.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                        <div class="form-group">
+                            <label for="max_rooms">Maximum Rooms</label>
+                            {{ form.max_rooms }}
+                            {% if form.max_rooms.errors %}
+                                <p class="error-text">{{ form.max_rooms.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Section 5: Department Head -->
+                <div class="form-section">
+                    <div class="section-title">
+                        <i class="fas fa-user-tie"></i>
+                        Department Head
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="{{ form.head_doctor.id_for_label }}">Assign Department Head</label>
+                        {{ form.head_doctor }}
+                        <p class="help-text">Select a verified doctor from your hospital</p>
+                        {% if form.head_doctor.errors %}
+                            <p class="error-text">{{ form.head_doctor.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Section 6: Facilities -->
+                <div class="form-section">
+                    <div class="section-title">
+                        <i class="fas fa-building"></i>
+                        Facilities
+                    </div>
+                    
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <div class="checkbox-group">
+                            {{ form.emergency_service }}
+                            <label for="{{ form.emergency_service.id_for_label }}">Emergency Service</label>
+                        </div>
+                        <div class="checkbox-group">
+                            {{ form.icu }}
+                            <label for="{{ form.icu.id_for_label }}">ICU</label>
+                        </div>
+                        <div class="checkbox-group">
+                            {{ form.operation_theater }}
+                            <label for="{{ form.operation_theater.id_for_label }}">Operation Theater</label>
+                        </div>
+                        <div class="checkbox-group">
+                            {{ form.laboratory }}
+                            <label for="{{ form.laboratory.id_for_label }}">Laboratory</label>
+                        </div>
+                        <div class="checkbox-group">
+                            {{ form.pharmacy }}
+                            <label for="{{ form.pharmacy.id_for_label }}">Pharmacy</label>
+                        </div>
+                        <div class="checkbox-group">
+                            {{ form.waiting_area }}
+                            <label for="{{ form.waiting_area.id_for_label }}">Waiting Area</label>
+                        </div>
+                        <div class="checkbox-group">
+                            {{ form.reception }}
+                            <label for="{{ form.reception.id_for_label }}">Reception</label>
+                        </div>
+                        <div class="checkbox-group">
+                            {{ form.wheelchair_accessible }}
+                            <label for="{{ form.wheelchair_accessible.id_for_label }}">Wheelchair Accessible</label>
+                        </div>
+                        <div class="checkbox-group">
+                            {{ form.twenty_four_hours }}
+                            <label for="{{ form.twenty_four_hours.id_for_label }}">24 Hours Service</label>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Section 7: Working Hours -->
+                <div class="form-section">
+                    <div class="section-title">
+                        <i class="fas fa-clock"></i>
+                        Working Hours
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="form-group">
+                            <label for="opening_time">Opening Time</label>
+                            {{ form.opening_time }}
+                            {% if form.opening_time.errors %}
+                                <p class="error-text">{{ form.opening_time.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                        <div class="form-group">
+                            <label for="closing_time">Closing Time</label>
+                            {{ form.closing_time }}
+                            {% if form.closing_time.errors %}
+                                <p class="error-text">{{ form.closing_time.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                        <div class="form-group md:col-span-2">
+                            <div class="checkbox-group">
+                                {{ form.open_24_hours }}
+                                <label for="{{ form.open_24_hours.id_for_label }}">Open 24 Hours</label>
+                            </div>
+                            {% if form.open_24_hours.errors %}
+                                <p class="error-text">{{ form.open_24_hours.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Section 8: Additional Notes -->
+                <div class="form-section">
+                    <div class="section-title">
+                        <i class="fas fa-sticky-note"></i>
+                        Additional Notes
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="notes">Notes</label>
+                        {{ form.notes }}
+                        <p class="help-text">Any additional information about this department</p>
+                        {% if form.notes.errors %}
+                            <p class="error-text">{{ form.notes.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+                
+            </div>
+            
+            <!-- Right Column - Sidebar -->
+            <div class="space-y-6">
+                
+               <!-- Change History -->
+<div class="form-section">
+    <div class="section-title">
+        <i class="fas fa-history"></i>
+        Change History
+    </div>
+    
+    <div class="change-history-card">
+        <div class="history-item">
+            <span class="history-label">Created By</span>
+            <span class="history-value">{{ department.created_by|default:"System" }}</span>
+        </div>
+        <div class="history-item">
+            <span class="history-label">Created Date</span>
+            <span class="history-value">{{ department.created_at|date:"F d, Y h:i A" }}</span>
+        </div>
+        <div class="history-item">
+            <span class="history-label">Last Updated</span>
+            <span class="history-value">{{ department.updated_at|date:"F d, Y h:i A" }}</span>
+        </div>
+        <div class="history-item">
+            <span class="history-label">Updated By</span>
+            <span class="history-value">{{ department.updated_by|default:"Not available" }}</span>
+        </div>
+    </div>
+</div>
+                
+                <!-- Quick Actions -->
+                <div class="form-section">
+                    <div class="section-title">
+                        <i class="fas fa-bolt"></i>
+                        Quick Actions
+                    </div>
+                    
+                    <div class="space-y-2">
+                        <a href="{% url 'hospital_admin:department_detail' department.id %}" class="flex items-center gap-3 p-3 bg-white/5 rounded-xl hover:bg-white/10 transition">
+                            <div class="w-10 h-10 rounded-xl bg-purple-500/20 flex items-center justify-center text-purple-400">
+                                <i class="fas fa-eye"></i>
+                            </div>
+                            <div>
+                                <p class="text-white font-medium text-sm">View Department</p>
+                                <p class="text-gray-400 text-xs">See department details</p>
+                            </div>
+                        </a>
+                        <a href="{% url 'hospital_admin:all_departments' %}" class="flex items-center gap-3 p-3 bg-white/5 rounded-xl hover:bg-white/10 transition">
+                            <div class="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center text-blue-400">
+                                <i class="fas fa-list"></i>
+                            </div>
+                            <div>
+                                <p class="text-white font-medium text-sm">All Departments</p>
+                                <p class="text-gray-400 text-xs">Back to department list</p>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Department Info -->
+                <div class="form-section">
+                    <div class="section-title">
+                        <i class="fas fa-info-circle"></i>
+                        Department Info
+                    </div>
+                    
+                    <div class="space-y-2 text-sm">
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">ID</span>
+                            <span class="text-white font-mono">#{{ department.id }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">Status</span>
+                            <span class="text-green-400">{% if department.active %}Active{% else %}Inactive{% endif %}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">Department Code</span>
+                            <span class="text-white font-mono">{{ department.id|stringformat:"03d" }}</span>
+                        </div>
+                    </div>
+                </div>
+                
+            </div>
+            
+        </div>
+        
+        <!-- Form Actions -->
+        <div class="flex flex-wrap items-center justify-end gap-3 pt-6 border-t border-white/10">
+            <a href="{% url 'hospital_admin:all_departments' %}" class="btn-secondary">
+                <i class="fas fa-times mr-2"></i>
+                Cancel
+            </a>
+            <button type="submit" name="save_continue" class="btn-success">
+                <i class="fas fa-save mr-2"></i>
+                Save & Continue Editing
+            </button>
+            <button type="submit" name="save" class="btn-primary">
+                <i class="fas fa-save mr-2"></i>
+                Save Changes
+            </button>
+        </div>
+    </form>
+    
+</div>
+{% endblock %}

@@ -1,0 +1,828 @@
+<!-- templates/hospital_admin/departments/department_detail.html -->
+{% extends "hospital_admin/base.html" %}
+{% load static %}
+
+{% block title %}{{ department.name }} | Hospital Admin{% endblock %}
+
+{% block page_title %}Department Detail{% endblock %}
+{% block current_page %}Department Detail{% endblock %}
+
+{% block extra_css %}
+<style>
+    .info-card {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 0.75rem;
+        padding: 1rem;
+        transition: all 0.2s ease;
+    }
+    .info-card:hover {
+        border-color: rgba(59, 130, 246, 0.2);
+        background: rgba(255, 255, 255, 0.05);
+    }
+    .info-card .label {
+        font-size: 0.65rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #6b7280;
+        font-weight: 600;
+    }
+    .info-card .value {
+        font-size: 0.9rem;
+        color: #e5e7eb;
+        margin-top: 0.25rem;
+        word-break: break-word;
+    }
+    
+    .stat-card {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 1rem;
+        padding: 1.25rem;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        opacity: 0.8;
+    }
+    .stat-card.blue::before { background: #3b82f6; }
+    .stat-card.green::before { background: #22c55e; }
+    .stat-card.purple::before { background: #8b5cf6; }
+    .stat-card.orange::before { background: #f59e0b; }
+    
+    .stat-card:hover {
+        transform: translateY(-4px);
+        border-color: rgba(255, 255, 255, 0.15);
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+    }
+    .stat-card .stat-number {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: #ffffff;
+    }
+    .stat-card .stat-label {
+        font-size: 0.7rem;
+        color: #6b7280;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    .stat-card .stat-icon {
+        width: 2.5rem;
+        height: 2.5rem;
+        border-radius: 0.75rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+    }
+    .stat-card .stat-icon.blue { background: rgba(59, 130, 246, 0.15); color: #60a5fa; }
+    .stat-card .stat-icon.green { background: rgba(34, 197, 94, 0.15); color: #34d399; }
+    .stat-card .stat-icon.purple { background: rgba(139, 92, 246, 0.15); color: #a78bfa; }
+    .stat-card .stat-icon.orange { background: rgba(245, 158, 11, 0.15); color: #fbbf24; }
+    
+    .status-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+    }
+    .status-badge .dot {
+        width: 0.35rem;
+        height: 0.35rem;
+        border-radius: 50%;
+        display: inline-block;
+    }
+    .status-badge.active { background: rgba(34, 197, 94, 0.15); color: #34d399; }
+    .status-badge.active .dot { background: #22c55e; }
+    .status-badge.inactive { background: rgba(107, 114, 128, 0.15); color: #9ca3af; }
+    .status-badge.inactive .dot { background: #6b7280; }
+    
+    .timeline-item {
+        position: relative;
+        padding-left: 2rem;
+        padding-bottom: 1.25rem;
+        border-left: 2px solid rgba(255, 255, 255, 0.06);
+    }
+    .timeline-item:last-child {
+        border-left: 2px solid transparent;
+        padding-bottom: 0;
+    }
+    .timeline-item .timeline-icon {
+        position: absolute;
+        left: -0.625rem;
+        top: 0;
+        width: 1.25rem;
+        height: 1.25rem;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.625rem;
+        color: white;
+        z-index: 2;
+    }
+    .timeline-item .timeline-icon.blue { background: #3b82f6; }
+    .timeline-item .timeline-icon.green { background: #22c55e; }
+    .timeline-item .timeline-icon.yellow { background: #f59e0b; }
+    .timeline-item .timeline-icon.purple { background: #8b5cf6; }
+    .timeline-item .timeline-icon.orange { background: #f97316; }
+    
+    .facility-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.5rem 0.75rem;
+        background: rgba(255, 255, 255, 0.03);
+        border-radius: 0.5rem;
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        transition: all 0.2s ease;
+    }
+    .facility-item:hover {
+        background: rgba(255, 255, 255, 0.06);
+        border-color: rgba(59, 130, 246, 0.2);
+    }
+    .facility-item .facility-icon {
+        width: 2rem;
+        height: 2rem;
+        border-radius: 0.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.875rem;
+        flex-shrink: 0;
+    }
+    .facility-item .facility-icon.active { background: rgba(34, 197, 94, 0.15); color: #34d399; }
+    .facility-item .facility-icon.inactive { background: rgba(107, 114, 128, 0.15); color: #6b7280; }
+    .facility-item .facility-name {
+        font-size: 0.85rem;
+        color: #e5e7eb;
+        flex: 1;
+    }
+    .facility-item .facility-status {
+        font-size: 0.6rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+    .facility-item .facility-status.active { color: #34d399; }
+    .facility-item .facility-status.inactive { color: #6b7280; }
+    
+    .quick-action-card {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 0.75rem;
+        padding: 1rem;
+        text-align: center;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        text-decoration: none;
+        color: inherit;
+        display: block;
+    }
+    .quick-action-card:hover {
+        transform: translateY(-3px);
+        border-color: rgba(59, 130, 246, 0.3);
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+        background: rgba(59, 130, 246, 0.05);
+    }
+    .quick-action-card .icon {
+        width: 3rem;
+        height: 3rem;
+        border-radius: 0.75rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+        margin: 0 auto 0.5rem;
+    }
+    .quick-action-card .icon.blue { background: rgba(59, 130, 246, 0.15); color: #60a5fa; }
+    .quick-action-card .icon.green { background: rgba(34, 197, 94, 0.15); color: #34d399; }
+    .quick-action-card .icon.purple { background: rgba(139, 92, 246, 0.15); color: #a78bfa; }
+    .quick-action-card .icon.orange { background: rgba(245, 158, 11, 0.15); color: #fbbf24; }
+    .quick-action-card .title {
+        font-size: 0.85rem;
+        font-weight: 500;
+        color: #e5e7eb;
+    }
+    .quick-action-card .desc {
+        font-size: 0.7rem;
+        color: #6b7280;
+    }
+    
+    .avatar-circle {
+        width: 2.5rem;
+        height: 2.5rem;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 0.75rem;
+        flex-shrink: 0;
+    }
+    .avatar-circle.blue { background: rgba(59, 130, 246, 0.2); color: #60a5fa; }
+    .avatar-circle.green { background: rgba(34, 197, 94, 0.2); color: #34d399; }
+    .avatar-circle.purple { background: rgba(139, 92, 246, 0.2); color: #a78bfa; }
+    
+    .head-doctor-card {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 1rem;
+        padding: 1.5rem;
+        text-align: center;
+        transition: all 0.3s ease;
+    }
+    .head-doctor-card:hover {
+        border-color: rgba(59, 130, 246, 0.3);
+        transform: translateY(-3px);
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+    }
+    .head-doctor-card .head-photo {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 3px solid rgba(255, 255, 255, 0.1);
+        margin: 0 auto;
+    }
+    .head-doctor-card .head-avatar {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        font-weight: 700;
+        background: rgba(59, 130, 246, 0.2);
+        color: #60a5fa;
+        border: 3px solid rgba(255, 255, 255, 0.1);
+        margin: 0 auto;
+    }
+    
+    .btn-primary {
+        background: #3b82f6;
+        color: white;
+        padding: 0.5rem 1.25rem;
+        border-radius: 0.5rem;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        border: none;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .btn-primary:hover {
+        background: #2563eb;
+        transform: translateY(-1px);
+        color: white;
+        text-decoration: none;
+    }
+    .btn-secondary {
+        background: rgba(255, 255, 255, 0.05);
+        color: #e5e7eb;
+        padding: 0.5rem 1.25rem;
+        border-radius: 0.5rem;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .btn-secondary:hover {
+        background: rgba(255, 255, 255, 0.1);
+        color: #e5e7eb;
+        text-decoration: none;
+    }
+    .btn-danger {
+        background: #ef4444;
+        color: white;
+        padding: 0.5rem 1.25rem;
+        border-radius: 0.5rem;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        border: none;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .btn-danger:hover {
+        background: #dc2626;
+        transform: translateY(-1px);
+        color: white;
+        text-decoration: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+            <h1 class="text-2xl font-bold text-white">Department Detail</h1>
+            <div class="flex items-center gap-2 text-sm text-gray-400 mt-1">
+                <span>Dashboard</span>
+                <i class="fas fa-chevron-right text-xs"></i>
+                <span>Department Management</span>
+                <i class="fas fa-chevron-right text-xs"></i>
+                <span>All Departments</span>
+                <i class="fas fa-chevron-right text-xs"></i>
+                <span class="text-blue-400">{{ department.name }}</span>
+            </div>
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+            <a href="{% url 'hospital_admin:edit_department' department.id %}" class="btn-primary">
+                <i class="fas fa-edit"></i>
+                Edit Department
+            </a>
+            {% if department.active %}
+                <form method="post" action="{% url 'hospital_admin:toggle_department' department.id %}" class="inline">
+                    {% csrf_token %}
+                    <button type="submit" class="btn-danger">
+                        <i class="fas fa-ban"></i>
+                        Deactivate
+                    </button>
+                </form>
+            {% else %}
+                <form method="post" action="{% url 'hospital_admin:toggle_department' department.id %}" class="inline">
+                    {% csrf_token %}
+                    <button type="submit" class="btn-primary" style="background: #22c55e;">
+                        <i class="fas fa-check-circle"></i>
+                        Activate
+                    </button>
+                </form>
+            {% endif %}
+            <a href="{% url 'hospital_admin:all_departments' %}" class="btn-secondary">
+                <i class="fas fa-arrow-left"></i>
+                Back to Departments
+            </a>
+        </div>
+    </div>
+    
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- Main Content -->
+        <div class="lg:col-span-2 space-y-6">
+            
+            <!-- Department Overview -->
+            <div class="bg-white/5 rounded-xl border border-white/10 p-6">
+                <h2 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                    <i class="fas fa-info-circle text-blue-400"></i>
+                    Department Overview
+                </h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="info-card">
+                        <p class="label">Department Name</p>
+                        <p class="value font-medium text-white">{{ department.name }}</p>
+                    </div>
+                    <div class="info-card">
+                        <p class="label">Department Code</p>
+                        <p class="value font-mono">{{ department.id|stringformat:"03d" }}</p>
+                    </div>
+                    <div class="info-card">
+                        <p class="label">Status</p>
+                        <p class="value">
+                            <span class="status-badge {% if department.active %}active{% else %}inactive{% endif %}">
+                                <span class="dot"></span>
+                                {% if department.active %}Active{% else %}Inactive{% endif %}
+                            </span>
+                        </p>
+                    </div>
+                    <div class="info-card">
+                        <p class="label">Department Type</p>
+                        <p class="value">Medical</p>
+                    </div>
+                    <div class="info-card">
+                        <p class="label">Created Date</p>
+                        <p class="value">{{ department.created_at|date:"F d, Y h:i A" }}</p>
+                    </div>
+                    <div class="info-card">
+                        <p class="label">Last Updated</p>
+                        <p class="value">{{ department.updated_at|date:"F d, Y h:i A" }}</p>
+                    </div>
+                    <div class="info-card md:col-span-2">
+                        <p class="label">Description</p>
+                        <p class="value">{{ department.description|default:"No description provided" }}</p>
+                    </div>
+                    <div class="info-card">
+                        <p class="label">Floor</p>
+                        <p class="value">{{ department.floor_number|default:"Not specified" }}</p>
+                    </div>
+                    <div class="info-card">
+                        <p class="label">Room Number</p>
+                        <p class="value">Not specified</p>
+                    </div>
+                    <div class="info-card">
+                        <p class="label">Building</p>
+                        <p class="value">Not specified</p>
+                    </div>
+                    <div class="info-card">
+                        <p class="label">Block</p>
+                        <p class="value">Not specified</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Department Facilities -->
+            <div class="bg-white/5 rounded-xl border border-white/10 p-6">
+                <h2 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                    <i class="fas fa-building text-green-400"></i>
+                    Department Facilities
+                </h2>
+                
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    <div class="facility-item">
+                        <div class="facility-icon {% if facilities.emergency_service %}active{% else %}inactive{% endif %}">
+                            <i class="fas fa-ambulance"></i>
+                        </div>
+                        <span class="facility-name">Emergency</span>
+                        <span class="facility-status {% if facilities.emergency_service %}active{% else %}inactive{% endif %}">
+                            {% if facilities.emergency_service %}✓{% else %}✗{% endif %}
+                        </span>
+                    </div>
+                    <div class="facility-item">
+                        <div class="facility-icon {% if facilities.icu %}active{% else %}inactive{% endif %}">
+                            <i class="fas fa-heartbeat"></i>
+                        </div>
+                        <span class="facility-name">ICU</span>
+                        <span class="facility-status {% if facilities.icu %}active{% else %}inactive{% endif %}">
+                            {% if facilities.icu %}✓{% else %}✗{% endif %}
+                        </span>
+                    </div>
+                    <div class="facility-item">
+                        <div class="facility-icon {% if facilities.operation_theater %}active{% else %}inactive{% endif %}">
+                            <i class="fas fa-scalpel"></i>
+                        </div>
+                        <span class="facility-name">Operation Theater</span>
+                        <span class="facility-status {% if facilities.operation_theater %}active{% else %}inactive{% endif %}">
+                            {% if facilities.operation_theater %}✓{% else %}✗{% endif %}
+                        </span>
+                    </div>
+                    <div class="facility-item">
+                        <div class="facility-icon {% if facilities.laboratory %}active{% else %}inactive{% endif %}">
+                            <i class="fas fa-flask"></i>
+                        </div>
+                        <span class="facility-name">Laboratory</span>
+                        <span class="facility-status {% if facilities.laboratory %}active{% else %}inactive{% endif %}">
+                            {% if facilities.laboratory %}✓{% else %}✗{% endif %}
+                        </span>
+                    </div>
+                    <div class="facility-item">
+                        <div class="facility-icon {% if facilities.pharmacy %}active{% else %}inactive{% endif %}">
+                            <i class="fas fa-pills"></i>
+                        </div>
+                        <span class="facility-name">Pharmacy</span>
+                        <span class="facility-status {% if facilities.pharmacy %}active{% else %}inactive{% endif %}">
+                            {% if facilities.pharmacy %}✓{% else %}✗{% endif %}
+                        </span>
+                    </div>
+                    <div class="facility-item">
+                        <div class="facility-icon {% if facilities.waiting_area %}active{% else %}inactive{% endif %}">
+                            <i class="fas fa-chair"></i>
+                        </div>
+                        <span class="facility-name">Waiting Area</span>
+                        <span class="facility-status {% if facilities.waiting_area %}active{% else %}inactive{% endif %}">
+                            {% if facilities.waiting_area %}✓{% else %}✗{% endif %}
+                        </span>
+                    </div>
+                    <div class="facility-item">
+                        <div class="facility-icon {% if facilities.reception %}active{% else %}inactive{% endif %}">
+                            <i class="fas fa-desktop"></i>
+                        </div>
+                        <span class="facility-name">Reception</span>
+                        <span class="facility-status {% if facilities.reception %}active{% else %}inactive{% endif %}">
+                            {% if facilities.reception %}✓{% else %}✗{% endif %}
+                        </span>
+                    </div>
+                    <div class="facility-item">
+                        <div class="facility-icon {% if facilities.wheelchair_accessible %}active{% else %}inactive{% endif %}">
+                            <i class="fas fa-wheelchair"></i>
+                        </div>
+                        <span class="facility-name">Wheelchair Access</span>
+                        <span class="facility-status {% if facilities.wheelchair_accessible %}active{% else %}inactive{% endif %}">
+                            {% if facilities.wheelchair_accessible %}✓{% else %}✗{% endif %}
+                        </span>
+                    </div>
+                    <div class="facility-item">
+                        <div class="facility-icon {% if facilities.twenty_four_hours %}active{% else %}inactive{% endif %}">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <span class="facility-name">24 Hour Service</span>
+                        <span class="facility-status {% if facilities.twenty_four_hours %}active{% else %}inactive{% endif %}">
+                            {% if facilities.twenty_four_hours %}✓{% else %}✗{% endif %}
+                        </span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Contact & Working Hours -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="bg-white/5 rounded-xl border border-white/10 p-6">
+                    <h2 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                        <i class="fas fa-phone text-blue-400"></i>
+                        Contact Information
+                    </h2>
+                    <div class="space-y-3">
+                        <div class="info-card">
+                            <p class="label">Department Phone</p>
+                            <p class="value">{{ department.phone|default:"Not provided" }}</p>
+                        </div>
+                        <div class="info-card">
+                            <p class="label">Department Email</p>
+                            <p class="value">{{ department.email|default:"Not provided" }}</p>
+                        </div>
+                        <div class="info-card">
+                            <p class="label">Extension</p>
+                            <p class="value">Not provided</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-white/5 rounded-xl border border-white/10 p-6">
+                    <h2 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                        <i class="fas fa-clock text-yellow-400"></i>
+                        Working Hours
+                    </h2>
+                    <div class="space-y-3">
+                        <div class="info-card">
+                            <p class="label">Opening Time</p>
+                            <p class="value">08:00 AM</p>
+                        </div>
+                        <div class="info-card">
+                            <p class="label">Closing Time</p>
+                            <p class="value">08:00 PM</p>
+                        </div>
+                        <div class="info-card">
+                            <p class="label">24 Hours</p>
+                            <p class="value"><span class="text-red-400">No</span></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Doctors Table -->
+            <div class="bg-white/5 rounded-xl border border-white/10 p-6">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+                    <h2 class="text-lg font-semibold text-white flex items-center gap-2">
+                        <i class="fas fa-user-md text-purple-400"></i>
+                        Doctors in this Department ({{ total_doctors }})
+                    </h2>
+                    <div class="flex items-center gap-2">
+                        <div class="relative">
+                            <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm"></i>
+                            <input type="text" placeholder="Search doctor..." 
+                                   class="pl-9 pr-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:border-blue-500 focus:outline-none transition text-sm">
+                        </div>
+                        <button class="px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition text-sm flex items-center gap-1">
+                            <i class="fas fa-plus"></i> Assign
+                        </button>
+                    </div>
+                </div>
+                
+                {% if doctors %}
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead>
+                                <tr class="border-b border-white/10">
+                                    <th class="text-left py-2 px-3 text-xs font-medium text-gray-400 uppercase tracking-wider">Doctor</th>
+                                    <th class="text-left py-2 px-3 text-xs font-medium text-gray-400 uppercase tracking-wider">Specialization</th>
+                                    <th class="text-left py-2 px-3 text-xs font-medium text-gray-400 uppercase tracking-wider">Experience</th>
+                                    <th class="text-left py-2 px-3 text-xs font-medium text-gray-400 uppercase tracking-wider">Status</th>
+                                    <th class="text-right py-2 px-3 text-xs font-medium text-gray-400 uppercase tracking-wider">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for doctor in doctors %}
+                                <tr class="border-b border-white/5 hover:bg-white/5 transition">
+                                    <td class="py-2 px-3">
+                                        <div class="flex items-center gap-2">
+                                            <div class="avatar-circle blue">
+                                                {{ doctor.user.get_full_name|slice:":1"|upper|default:doctor.user.username|slice:":1"|upper }}
+                                            </div>
+                                            <div>
+                                                <p class="text-white text-sm font-medium">{{ doctor.user.get_full_name|default:doctor.user.username }}</p>
+                                                <p class="text-gray-500 text-xs">Dr.</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="py-2 px-3 text-gray-300 text-sm">
+                                        {% if doctor.specialties.all %}
+                                            {% for spec in doctor.specialties.all|slice:":2" %}
+                                                <span class="inline-block px-2 py-0.5 bg-blue-500/10 text-blue-400 rounded text-xs mr-1">{{ spec.name }}</span>
+                                            {% endfor %}
+                                            {% if doctor.specialties.all|length > 2 %}
+                                                <span class="text-gray-500 text-xs">+{{ doctor.specialties.all|length|add:"-2" }}</span>
+                                            {% endif %}
+                                        {% else %}
+                                            <span class="text-gray-500 text-sm">Not Specified</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="py-2 px-3 text-gray-300 text-sm">{{ doctor.experience|default:"0" }} years</td>
+                                    <td class="py-2 px-3">
+                                        <span class="status-badge {% if doctor.is_active %}active{% else %}inactive{% endif %}" style="font-size: 0.55rem; padding: 0.15rem 0.5rem;">
+                                            <span class="dot"></span>
+                                            {% if doctor.is_active %}Active{% else %}Inactive{% endif %}
+                                        </span>
+                                    </td>
+                                    <td class="py-2 px-3 text-right">
+                                        <div class="flex items-center justify-end gap-1">
+                                            <button class="p-1 text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 rounded transition" title="View">
+                                                <i class="fas fa-eye text-sm"></i>
+                                            </button>
+                                            <button class="p-1 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded transition" title="Remove">
+                                                <i class="fas fa-user-minus text-sm"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-8">
+                        <i class="fas fa-user-md text-4xl text-gray-600 mb-3"></i>
+                        <p class="text-gray-400">No Doctors Assigned Yet</p>
+                        <p class="text-gray-500 text-sm">Assign a doctor to this department</p>
+                        <button class="mt-3 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition text-sm">
+                            <i class="fas fa-plus mr-1"></i> Assign Doctor
+                        </button>
+                    </div>
+                {% endif %}
+            </div>
+            
+            <!-- Recent Activities -->
+            <div class="bg-white/5 rounded-xl border border-white/10 p-6">
+                <h2 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                    <i class="fas fa-clock text-blue-400"></i>
+                    Recent Activities
+                </h2>
+                
+                <div class="space-y-0">
+                    {% for activity in recent_activities %}
+                    <div class="timeline-item">
+                        <div class="timeline-icon {{ activity.color }}">
+                            <i class="fas {{ activity.icon }}"></i>
+                        </div>
+                        <p class="text-sm text-gray-300">{{ activity.text }}</p>
+                        <p class="text-xs text-gray-500">{{ activity.time }}</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            
+        </div>
+        
+        <!-- Sidebar -->
+        <div class="space-y-6">
+            
+            <!-- Statistics -->
+            <div class="grid grid-cols-2 gap-3">
+                <div class="stat-card blue">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="stat-label">Assigned Doctors</p>
+                            <p class="stat-number">{{ total_doctors }}</p>
+                        </div>
+                        <div class="stat-icon blue">
+                            <i class="fas fa-user-md"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="stat-card green">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="stat-label">Available Doctors</p>
+                            <p class="stat-number">{{ available_doctors }}</p>
+                        </div>
+                        <div class="stat-icon green">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="stat-card purple">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="stat-label">Total Patients</p>
+                            <p class="stat-number">{{ total_patients }}</p>
+                        </div>
+                        <div class="stat-icon purple">
+                            <i class="fas fa-users"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="stat-card orange">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="stat-label">Today's Appointments</p>
+                            <p class="stat-number">{{ today_appointments }}</p>
+                        </div>
+                        <div class="stat-icon orange">
+                            <i class="fas fa-calendar-day"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Head Doctor -->
+            <div class="head-doctor-card">
+                <h3 class="text-sm font-medium text-gray-400 mb-4">Department Head</h3>
+                
+                {% if department.head_doctor %}
+                    <img src="{{ department.head_doctor.profile_photo.url|default:'#' }}" alt="{{ department.head_doctor.user.get_full_name }}" class="head-photo">
+                    <h4 class="text-white font-semibold mt-2">Dr. {{ department.head_doctor.user.get_full_name|default:department.head_doctor.user.username }}</h4>
+                    <p class="text-gray-400 text-sm">{{ department.head_doctor.specialties.first.name|default:"General Medicine" }}</p>
+                    <p class="text-gray-500 text-xs">{{ department.head_doctor.experience|default:"0" }} years experience</p>
+                    <div class="flex items-center justify-center gap-4 mt-3 text-sm">
+                        <span class="text-gray-400"><i class="fas fa-envelope mr-1"></i>{{ department.head_doctor.user.email|default:"N/A" }}</span>
+                        <span class="text-gray-400"><i class="fas fa-phone mr-1"></i>{{ department.head_doctor.user.phone|default:"N/A" }}</span>
+                    </div>
+                    <a href="#" class="btn-primary mt-4 text-sm">
+                        <i class="fas fa-eye"></i> View Profile
+                    </a>
+                {% else %}
+                    <div class="w-20 h-20 mx-auto rounded-full bg-gray-500/20 flex items-center justify-center text-gray-400 text-3xl">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <p class="text-gray-400 mt-2">No Department Head Assigned</p>
+                    <button class="btn-primary mt-3 text-sm">
+                        <i class="fas fa-user-tie"></i> Assign Head
+                    </button>
+                {% endif %}
+            </div>
+            
+            <!-- Quick Actions -->
+            <div class="bg-white/5 rounded-xl border border-white/10 p-4">
+                <h3 class="text-sm font-medium text-gray-400 mb-3">Quick Actions</h3>
+                
+                <div class="grid grid-cols-2 gap-2">
+                    <a href="#" class="quick-action-card">
+                        <div class="icon blue"><i class="fas fa-user-plus"></i></div>
+                        <p class="title text-xs">Assign Doctor</p>
+                    </a>
+                    <a href="#" class="quick-action-card">
+                        <div class="icon green"><i class="fas fa-user-tie"></i></div>
+                        <p class="title text-xs">Assign Head</p>
+                    </a>
+                    <a href="{% url 'hospital_admin:edit_department' department.id %}" class="quick-action-card">
+                        <div class="icon purple"><i class="fas fa-edit"></i></div>
+                        <p class="title text-xs">Edit Department</p>
+                    </a>
+                    <a href="#" class="quick-action-card">
+                        <div class="icon orange"><i class="fas fa-calendar-check"></i></div>
+                        <p class="title text-xs">View Appointments</p>
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Department Info -->
+            <div class="bg-white/5 rounded-xl border border-white/10 p-4">
+                <h3 class="text-sm font-medium text-gray-400 mb-3">Department Information</h3>
+                <div class="space-y-2 text-sm">
+                    <div class="flex justify-between">
+                        <span class="text-gray-400">ID</span>
+                        <span class="text-white font-mono">#{{ department.id }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-400">Created</span>
+                        <span class="text-gray-300">{{ department.created_at|date:"M d, Y" }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-400">Updated</span>
+                        <span class="text-gray-300">{{ department.updated_at|date:"M d, Y" }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-400">Status</span>
+                        <span class="text-green-400">{% if department.active %}Active{% else %}Inactive{% endif %}</span>
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+        
+    </div>
+    
+</div>
+{% endblock %}

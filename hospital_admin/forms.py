@@ -3,6 +3,8 @@ from django import forms
 from django.core.exceptions import ValidationError
 from hospitals.models import HospitalApplication
 import re
+from hospitals.models import HospitalDepartment, Hospital, Room
+from doctors.models import Doctor
 
 class HospitalInformationForm(forms.ModelForm):
     """Form for hospital information step."""
@@ -454,3 +456,683 @@ class HospitalDocumentsForm(forms.ModelForm):
             if ext not in valid_extensions:
                 raise ValidationError('Invalid file format. Allowed: PDF, JPG, PNG.')
         return other_documents
+    
+class DepartmentForm(forms.ModelForm):
+    """Form for creating/updating departments."""
+    
+    # Additional fields for the form
+    floor_number = forms.IntegerField(
+        required=False,
+        min_value=0,
+        widget=forms.NumberInput(attrs={
+            'class': 'w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 outline-none transition',
+            'placeholder': 'Enter floor number'
+        })
+    )
+    
+    room_number = forms.CharField(
+        required=False,
+        max_length=50,
+        widget=forms.TextInput(attrs={
+            'class': 'w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 outline-none transition',
+            'placeholder': 'Enter room number'
+        })
+    )
+    
+    building_name = forms.CharField(
+        required=False,
+        max_length=100,
+        widget=forms.TextInput(attrs={
+            'class': 'w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 outline-none transition',
+            'placeholder': 'Enter building name'
+        })
+    )
+    
+    block = forms.CharField(
+        required=False,
+        max_length=50,
+        widget=forms.TextInput(attrs={
+            'class': 'w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 outline-none transition',
+            'placeholder': 'Enter block name'
+        })
+    )
+    
+    extension_number = forms.CharField(
+        required=False,
+        max_length=20,
+        widget=forms.TextInput(attrs={
+            'class': 'w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 outline-none transition',
+            'placeholder': 'Enter extension number'
+        })
+    )
+    
+    max_doctors = forms.IntegerField(
+        required=False,
+        min_value=0,
+        initial=10,
+        widget=forms.NumberInput(attrs={
+            'class': 'w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 outline-none transition',
+            'placeholder': 'Maximum doctors'
+        })
+    )
+    
+    max_nurses = forms.IntegerField(
+        required=False,
+        min_value=0,
+        initial=20,
+        widget=forms.NumberInput(attrs={
+            'class': 'w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 outline-none transition',
+            'placeholder': 'Maximum nurses'
+        })
+    )
+    
+    max_beds = forms.IntegerField(
+        required=False,
+        min_value=0,
+        initial=30,
+        widget=forms.NumberInput(attrs={
+            'class': 'w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 outline-none transition',
+            'placeholder': 'Maximum beds'
+        })
+    )
+    
+    max_rooms = forms.IntegerField(
+        required=False,
+        min_value=0,
+        initial=5,
+        widget=forms.NumberInput(attrs={
+            'class': 'w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 outline-none transition',
+            'placeholder': 'Maximum rooms'
+        })
+    )
+    
+    opening_time = forms.TimeField(
+        required=False,
+        widget=forms.TimeInput(attrs={
+            'type': 'time',
+            'class': 'w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 outline-none transition'
+        })
+    )
+    
+    closing_time = forms.TimeField(
+        required=False,
+        widget=forms.TimeInput(attrs={
+            'type': 'time',
+            'class': 'w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 outline-none transition'
+        })
+    )
+    
+    open_24_hours = forms.BooleanField(
+        required=False,
+        initial=False,
+        widget=forms.CheckboxInput(attrs={
+            'class': 'w-4 h-4 rounded border-white/10 bg-white/5 text-blue-500 focus:ring-blue-500'
+        })
+    )
+    
+    # Facilities checkboxes
+    emergency_service = forms.BooleanField(required=False, initial=False)
+    icu = forms.BooleanField(required=False, initial=False)
+    operation_theater = forms.BooleanField(required=False, initial=False)
+    laboratory = forms.BooleanField(required=False, initial=False)
+    pharmacy = forms.BooleanField(required=False, initial=False)
+    waiting_area = forms.BooleanField(required=False, initial=False)
+    reception = forms.BooleanField(required=False, initial=False)
+    wheelchair_accessible = forms.BooleanField(required=False, initial=False)
+    twenty_four_hours = forms.BooleanField(required=False, initial=False)
+    
+    notes = forms.CharField(
+        required=False,
+        widget=forms.Textarea(attrs={
+            'rows': 4,
+            'class': 'w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 outline-none transition resize-none',
+            'placeholder': 'Enter any additional notes about this department...'
+        })
+    )
+    
+    class Meta:
+        model = HospitalDepartment
+        fields = [
+            'name',
+            'description',
+            'phone',
+            'email',
+            'head_doctor',
+            'active',
+        ]
+        widgets = {
+            'name': forms.TextInput(attrs={
+                'class': 'w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 outline-none transition',
+                'placeholder': 'Enter department name'
+            }),
+            'description': forms.Textarea(attrs={
+                'rows': 3,
+                'class': 'w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 outline-none transition resize-none',
+                'placeholder': 'Enter department description'
+            }),
+            'phone': forms.TextInput(attrs={
+                'class': 'w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 outline-none transition',
+                'placeholder': 'Enter phone number'
+            }),
+            'email': forms.EmailInput(attrs={
+                'class': 'w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 outline-none transition',
+                'placeholder': 'Enter email address'
+            }),
+            'head_doctor': forms.Select(attrs={
+                'class': 'w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 outline-none transition appearance-none'
+            }),
+            'active': forms.CheckboxInput(attrs={
+                'class': 'w-4 h-4 rounded border-white/10 bg-white/5 text-blue-500 focus:ring-blue-500'
+            }),
+        }
+    
+    def __init__(self, *args, **kwargs):
+        self.hospital = kwargs.pop('hospital', None)
+        super().__init__(*args, **kwargs)
+        
+        # Set hospital in instance if not set
+        if self.hospital:
+            self.instance.hospital = self.hospital
+        
+        # Add placeholders and labels
+        self.fields['name'].label = 'Department Name *'
+        self.fields['description'].label = 'Description *'
+        self.fields['phone'].label = 'Department Phone'
+        self.fields['email'].label = 'Department Email'
+        self.fields['head_doctor'].label = 'Department Head'
+        self.fields['active'].label = 'Active'
+        
+        # Filter head_doctor choices to only verified doctors in the current hospital
+        if self.hospital:
+            from doctors.models import Doctor
+            doctors = Doctor.objects.filter(
+                hospital=self.hospital,
+                is_verified=True,
+                is_active=True
+            ).select_related('user')
+            
+            choices = [('', 'Not Assigned')]
+            for doctor in doctors:
+                display_name = doctor.user.get_full_name() or doctor.user.username
+                choices.append((doctor.id, f'Dr. {display_name}'))
+            
+            self.fields['head_doctor'].choices = choices
+    
+    def clean_name(self):
+        """Validate department name is unique within the hospital."""
+        name = self.cleaned_data.get('name')
+        if name and self.hospital:
+            existing = HospitalDepartment.objects.filter(
+                hospital=self.hospital,
+                name__iexact=name
+            )
+            if self.instance and self.instance.pk:
+                existing = existing.exclude(pk=self.instance.pk)
+            if existing.exists():
+                raise ValidationError('A department with this name already exists in your hospital.')
+        return name
+    
+    def clean_phone(self):
+        """Validate phone number format."""
+        phone = self.cleaned_data.get('phone')
+        if phone:
+            import re
+            # Remove any non-digit characters
+            phone = re.sub(r'[^\d+]', '', phone)
+            if len(phone) < 10:
+                raise ValidationError('Enter a valid phone number.')
+        return phone
+    
+    def clean_email(self):
+        """Validate email format."""
+        email = self.cleaned_data.get('email')
+        if email:
+            from django.core.validators import validate_email
+            try:
+                validate_email(email)
+            except ValidationError:
+                raise ValidationError('Enter a valid email address.')
+        return email
+    
+    def clean(self):
+        """Validate working hours."""
+        cleaned_data = super().clean()
+        opening_time = cleaned_data.get('opening_time')
+        closing_time = cleaned_data.get('closing_time')
+        open_24_hours = cleaned_data.get('open_24_hours')
+        
+        if not open_24_hours and opening_time and closing_time and closing_time <= opening_time:
+            raise ValidationError('Closing time must be after opening time.')
+        
+        return cleaned_data
+    
+    def save(self, commit=True):
+        """Save the form."""
+        instance = super().save(commit=False)
+        
+        # Set hospital if not set
+        if self.hospital and not instance.hospital_id:
+            instance.hospital = self.hospital
+        
+        if commit:
+            instance.save()
+        
+        return instance
+
+
+class DepartmentHeadForm(forms.Form):
+    """Form for assigning department head."""
+    
+    head_doctor = forms.ModelChoiceField(
+        queryset=Doctor.objects.none(),
+        required=False,
+        widget=forms.Select(attrs={
+            'class': 'w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 outline-none transition appearance-none'
+        })
+    )
+    
+    def __init__(self, *args, **kwargs):
+        hospital = kwargs.pop('hospital', None)
+        super().__init__(*args, **kwargs)
+        
+        if hospital:
+            self.fields['head_doctor'].queryset = Doctor.objects.filter(
+                hospital=hospital,
+                is_verified=True,
+                is_active=True
+            ).select_related('user')
+            
+class EditDepartmentForm(forms.ModelForm):
+    """Form for editing departments."""
+    
+    # Additional fields for the form
+    department_type = forms.ChoiceField(
+        choices=[
+            ('', 'Select Type'),
+            ('medical', 'Medical'),
+            ('surgical', 'Surgical'),
+            ('diagnostic', 'Diagnostic'),
+            ('emergency', 'Emergency'),
+            ('administrative', 'Administrative'),
+            ('support_service', 'Support Service'),
+            ('specialized', 'Specialized'),
+        ],
+        required=False,
+        widget=forms.Select(attrs={
+            'class': 'w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 outline-none transition appearance-none'
+        })
+    )
+    
+    floor_number = forms.IntegerField(
+        required=False,
+        min_value=0,
+        widget=forms.NumberInput(attrs={
+            'class': 'w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 outline-none transition',
+            'placeholder': 'Enter floor number'
+        })
+    )
+    
+    room_number = forms.CharField(
+        required=False,
+        max_length=50,
+        widget=forms.TextInput(attrs={
+            'class': 'w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 outline-none transition',
+            'placeholder': 'Enter room number'
+        })
+    )
+    
+    building_name = forms.CharField(
+        required=False,
+        max_length=100,
+        widget=forms.TextInput(attrs={
+            'class': 'w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 outline-none transition',
+            'placeholder': 'Enter building name'
+        })
+    )
+    
+    block = forms.CharField(
+        required=False,
+        max_length=50,
+        widget=forms.TextInput(attrs={
+            'class': 'w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 outline-none transition',
+            'placeholder': 'Enter block name'
+        })
+    )
+    
+    extension_number = forms.CharField(
+        required=False,
+        max_length=20,
+        widget=forms.TextInput(attrs={
+            'class': 'w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 outline-none transition',
+            'placeholder': 'Enter extension number'
+        })
+    )
+    
+    max_doctors = forms.IntegerField(
+        required=False,
+        min_value=0,
+        initial=10,
+        widget=forms.NumberInput(attrs={
+            'class': 'w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 outline-none transition',
+            'placeholder': 'Maximum doctors'
+        })
+    )
+    
+    max_nurses = forms.IntegerField(
+        required=False,
+        min_value=0,
+        initial=20,
+        widget=forms.NumberInput(attrs={
+            'class': 'w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 outline-none transition',
+            'placeholder': 'Maximum nurses'
+        })
+    )
+    
+    max_beds = forms.IntegerField(
+        required=False,
+        min_value=0,
+        initial=30,
+        widget=forms.NumberInput(attrs={
+            'class': 'w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 outline-none transition',
+            'placeholder': 'Maximum beds'
+        })
+    )
+    
+    max_rooms = forms.IntegerField(
+        required=False,
+        min_value=0,
+        initial=5,
+        widget=forms.NumberInput(attrs={
+            'class': 'w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 outline-none transition',
+            'placeholder': 'Maximum rooms'
+        })
+    )
+    
+    opening_time = forms.TimeField(
+        required=False,
+        widget=forms.TimeInput(attrs={
+            'type': 'time',
+            'class': 'w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 outline-none transition'
+        })
+    )
+    
+    closing_time = forms.TimeField(
+        required=False,
+        widget=forms.TimeInput(attrs={
+            'type': 'time',
+            'class': 'w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 outline-none transition'
+        })
+    )
+    
+    open_24_hours = forms.BooleanField(
+        required=False,
+        initial=False,
+        widget=forms.CheckboxInput(attrs={
+            'class': 'w-4 h-4 rounded border-white/10 bg-white/5 text-blue-500 focus:ring-blue-500'
+        })
+    )
+    
+    # Facilities checkboxes
+    emergency_service = forms.BooleanField(required=False, initial=False)
+    icu = forms.BooleanField(required=False, initial=False)
+    operation_theater = forms.BooleanField(required=False, initial=False)
+    laboratory = forms.BooleanField(required=False, initial=False)
+    pharmacy = forms.BooleanField(required=False, initial=False)
+    waiting_area = forms.BooleanField(required=False, initial=False)
+    reception = forms.BooleanField(required=False, initial=False)
+    wheelchair_accessible = forms.BooleanField(required=False, initial=False)
+    twenty_four_hours = forms.BooleanField(required=False, initial=False)
+    
+    notes = forms.CharField(
+        required=False,
+        widget=forms.Textarea(attrs={
+            'rows': 4,
+            'class': 'w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 outline-none transition resize-none',
+            'placeholder': 'Enter any additional notes about this department...'
+        })
+    )
+    
+    class Meta:
+        model = HospitalDepartment
+        fields = [
+            'name',
+            'description',
+            'phone',
+            'email',
+            'head_doctor',
+            'active',
+        ]
+        widgets = {
+            'name': forms.TextInput(attrs={
+                'class': 'w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 outline-none transition',
+                'placeholder': 'Enter department name'
+            }),
+            'description': forms.Textarea(attrs={
+                'rows': 3,
+                'class': 'w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 outline-none transition resize-none',
+                'placeholder': 'Enter department description'
+            }),
+            'phone': forms.TextInput(attrs={
+                'class': 'w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 outline-none transition',
+                'placeholder': 'Enter phone number'
+            }),
+            'email': forms.EmailInput(attrs={
+                'class': 'w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 outline-none transition',
+                'placeholder': 'Enter email address'
+            }),
+            'head_doctor': forms.Select(attrs={
+                'class': 'w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 outline-none transition appearance-none'
+            }),
+            'active': forms.CheckboxInput(attrs={
+                'class': 'w-4 h-4 rounded border-white/10 bg-white/5 text-blue-500 focus:ring-blue-500'
+            }),
+        }
+    
+    def __init__(self, *args, **kwargs):
+        self.hospital = kwargs.pop('hospital', None)
+        super().__init__(*args, **kwargs)
+        
+        # Set hospital in instance if not set
+        if self.hospital:
+            self.instance.hospital = self.hospital
+        
+        # Add labels
+        self.fields['name'].label = 'Department Name *'
+        self.fields['description'].label = 'Description *'
+        self.fields['phone'].label = 'Department Phone'
+        self.fields['email'].label = 'Department Email'
+        self.fields['head_doctor'].label = 'Department Head'
+        self.fields['active'].label = 'Active'
+        
+        # Filter head_doctor choices
+        if self.hospital:
+            from doctors.models import Doctor
+            doctors = Doctor.objects.filter(
+                hospital=self.hospital,
+                is_verified=True,
+                is_active=True
+            ).select_related('user')
+            
+            choices = [('', 'Not Assigned')]
+            for doctor in doctors:
+                display_name = doctor.user.get_full_name() or doctor.user.username
+                choices.append((doctor.id, f'Dr. {display_name}'))
+            
+            self.fields['head_doctor'].choices = choices
+    
+    def clean_name(self):
+        """Validate department name is unique within the hospital."""
+        name = self.cleaned_data.get('name')
+        if name and self.hospital:
+            existing = HospitalDepartment.objects.filter(
+                hospital=self.hospital,
+                name__iexact=name
+            )
+            if self.instance and self.instance.pk:
+                existing = existing.exclude(pk=self.instance.pk)
+            if existing.exists():
+                raise ValidationError('A department with this name already exists in your hospital.')
+        return name
+    
+    def clean_phone(self):
+        """Validate phone number format."""
+        phone = self.cleaned_data.get('phone')
+        if phone:
+            import re
+            phone = re.sub(r'[^\d+]', '', phone)
+            if len(phone) < 10:
+                raise ValidationError('Enter a valid phone number.')
+        return phone
+    
+    def clean_email(self):
+        """Validate email format."""
+        email = self.cleaned_data.get('email')
+        if email:
+            from django.core.validators import validate_email
+            try:
+                validate_email(email)
+            except ValidationError:
+                raise ValidationError('Enter a valid email address.')
+        return email
+    
+    def clean(self):
+        """Validate working hours."""
+        cleaned_data = super().clean()
+        opening_time = cleaned_data.get('opening_time')
+        closing_time = cleaned_data.get('closing_time')
+        open_24_hours = cleaned_data.get('open_24_hours')
+        
+        if not open_24_hours and opening_time and closing_time and closing_time <= opening_time:
+            raise ValidationError('Closing time must be after opening time.')
+        
+        return cleaned_data
+    
+    def save(self, commit=True):
+        """Save the form."""
+        instance = super().save(commit=False)
+        
+        if self.hospital and not instance.hospital_id:
+            instance.hospital = self.hospital
+        
+        if commit:
+            instance.save()
+        
+        return instance
+    
+class RoomForm(forms.ModelForm):
+    """Form for creating/editing rooms."""
+    
+    class Meta:
+        model = Room
+        fields = [
+            'department', 'room_number', 'room_type', 'floor',
+            'capacity', 'description', 'status', 'assigned_doctor', 'notes'
+        ]
+        widgets = {
+            'department': forms.Select(attrs={
+                'class': 'w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 outline-none transition appearance-none'
+            }),
+            'room_number': forms.TextInput(attrs={
+                'class': 'w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 outline-none transition',
+                'placeholder': 'Enter room number'
+            }),
+            'room_type': forms.Select(attrs={
+                'class': 'w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 outline-none transition appearance-none'
+            }),
+            'floor': forms.TextInput(attrs={
+                'class': 'w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 outline-none transition',
+                'placeholder': 'Enter floor number'
+            }),
+            'capacity': forms.NumberInput(attrs={
+                'class': 'w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 outline-none transition',
+                'placeholder': 'Enter capacity',
+                'min': 1
+            }),
+            'description': forms.Textarea(attrs={
+                'rows': 3,
+                'class': 'w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 outline-none transition resize-none',
+                'placeholder': 'Enter room description'
+            }),
+            'status': forms.Select(attrs={
+                'class': 'w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 outline-none transition appearance-none'
+            }),
+            'assigned_doctor': forms.Select(attrs={
+                'class': 'w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 outline-none transition appearance-none'
+            }),
+            'notes': forms.Textarea(attrs={
+                'rows': 3,
+                'class': 'w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 outline-none transition resize-none',
+                'placeholder': 'Enter any additional notes'
+            }),
+        }
+        labels = {
+            'department': 'Department',
+            'room_number': 'Room Number *',
+            'room_type': 'Room Type *',
+            'floor': 'Floor',
+            'capacity': 'Capacity *',
+            'description': 'Description',
+            'status': 'Status',
+            'assigned_doctor': 'Assigned Doctor',
+            'notes': 'Notes',
+        }
+    
+    def __init__(self, *args, **kwargs):
+        self.hospital = kwargs.pop('hospital', None)
+        super().__init__(*args, **kwargs)
+        
+        if self.hospital:
+            # Filter departments by hospital
+            self.fields['department'].queryset = HospitalDepartment.objects.filter(
+                hospital=self.hospital,
+                active=True
+            )
+            
+            # Filter doctors by hospital
+            from doctors.models import Doctor
+            self.fields['assigned_doctor'].queryset = Doctor.objects.filter(
+                hospital=self.hospital,
+                is_active=True
+            ).select_related('user')
+        
+        # Add empty choices
+        self.fields['department'].choices = [('', 'Select Department')] + list(self.fields['department'].choices)[1:]
+        self.fields['assigned_doctor'].choices = [('', 'Not Assigned')] + list(self.fields['assigned_doctor'].choices)[1:]
+    
+    def clean_room_number(self):
+        """Validate room number uniqueness within hospital."""
+        room_number = self.cleaned_data.get('room_number')
+        if room_number and self.hospital:
+            existing = Room.objects.filter(
+                hospital=self.hospital,
+                room_number__iexact=room_number
+            )
+            if self.instance and self.instance.pk:
+                existing = existing.exclude(pk=self.instance.pk)
+            if existing.exists():
+                raise ValidationError('A room with this number already exists in your hospital.')
+        return room_number
+    
+    def clean_capacity(self):
+        """Validate capacity."""
+        capacity = self.cleaned_data.get('capacity')
+        if capacity and capacity < 1:
+            raise ValidationError('Capacity must be at least 1.')
+        return capacity
+    
+    def clean_occupied(self):
+        """Validate occupied beds don't exceed capacity."""
+        occupied = self.cleaned_data.get('occupied', 0)
+        capacity = self.cleaned_data.get('capacity', 0)
+        if occupied > capacity:
+            raise ValidationError('Occupied beds cannot exceed capacity.')
+        return occupied
+    
+    def save(self, commit=True):
+        """Save the room."""
+        instance = super().save(commit=False)
+        if self.hospital:
+            instance.hospital = self.hospital
+        if commit:
+            instance.save()
+        return instance

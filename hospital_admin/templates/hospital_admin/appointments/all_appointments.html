@@ -1,0 +1,729 @@
+<!-- templates/hospital_admin/appointments/all_appointments.html -->
+{% extends "hospital_admin/base.html" %}
+{% load static %}
+
+{% block title %}All Appointments | Hospital Admin{% endblock %}
+
+{% block page_title %}Appointment Management{% endblock %}
+{% block current_page %}All Appointments{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stat-card {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 1rem;
+        padding: 1.25rem;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        opacity: 0.8;
+    }
+    .stat-card.blue::before { background: #3b82f6; }
+    .stat-card.yellow::before { background: #f59e0b; }
+    .stat-card.green::before { background: #22c55e; }
+    .stat-card.purple::before { background: #8b5cf6; }
+    .stat-card.red::before { background: #ef4444; }
+    .stat-card.indigo::before { background: #6366f1; }
+    
+    .stat-card:hover {
+        transform: translateY(-4px);
+        border-color: rgba(255, 255, 255, 0.15);
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+    }
+    .stat-card .stat-number {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: #ffffff;
+    }
+    .stat-card .stat-label {
+        font-size: 0.7rem;
+        color: #6b7280;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    .stat-card .stat-icon {
+        width: 2.5rem;
+        height: 2.5rem;
+        border-radius: 0.75rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+    }
+    .stat-card .stat-icon.blue { background: rgba(59, 130, 246, 0.15); color: #60a5fa; }
+    .stat-card .stat-icon.yellow { background: rgba(245, 158, 11, 0.15); color: #fbbf24; }
+    .stat-card .stat-icon.green { background: rgba(34, 197, 94, 0.15); color: #34d399; }
+    .stat-card .stat-icon.purple { background: rgba(139, 92, 246, 0.15); color: #a78bfa; }
+    .stat-card .stat-icon.red { background: rgba(239, 68, 68, 0.15); color: #f87171; }
+    .stat-card .stat-icon.indigo { background: rgba(99, 102, 241, 0.15); color: #818cf8; }
+    
+    .status-badge {
+        padding: 0.2rem 0.7rem;
+        border-radius: 9999px;
+        font-size: 0.6rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+    }
+    .status-badge .dot {
+        width: 0.35rem;
+        height: 0.35rem;
+        border-radius: 50%;
+        display: inline-block;
+    }
+    .status-badge.pending { background: rgba(245, 158, 11, 0.15); color: #fbbf24; }
+    .status-badge.pending .dot { background: #f59e0b; }
+    .status-badge.confirmed { background: rgba(34, 197, 94, 0.15); color: #34d399; }
+    .status-badge.confirmed .dot { background: #22c55e; }
+    .status-badge.completed { background: rgba(99, 102, 241, 0.15); color: #818cf8; }
+    .status-badge.completed .dot { background: #6366f1; }
+    .status-badge.cancelled { background: rgba(239, 68, 68, 0.15); color: #f87171; }
+    .status-badge.cancelled .dot { background: #ef4444; }
+    
+    .filter-select {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 0.5rem;
+        padding: 0.4rem 2rem 0.4rem 0.75rem;
+        color: #e5e7eb;
+        font-size: 0.8125rem;
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 0.75rem center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    .filter-select:focus {
+        outline: none;
+        border-color: #3b82f6;
+    }
+    .filter-select option {
+        background: #0d1f3c;
+        color: #e5e7eb;
+    }
+    
+    .avatar-circle {
+        width: 2.5rem;
+        height: 2.5rem;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 0.75rem;
+        flex-shrink: 0;
+    }
+    .avatar-circle.blue { background: rgba(59, 130, 246, 0.2); color: #60a5fa; }
+    .avatar-circle.green { background: rgba(34, 197, 94, 0.2); color: #34d399; }
+    .avatar-circle.purple { background: rgba(139, 92, 246, 0.2); color: #a78bfa; }
+    .avatar-circle.orange { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
+    
+    .table-container {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 1rem;
+        overflow: hidden;
+    }
+    .table-container table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    .table-container th {
+        text-align: left;
+        padding: 0.75rem 1rem;
+        font-size: 0.6rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #6b7280;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+    .table-container td {
+        padding: 0.75rem 1rem;
+        font-size: 0.85rem;
+        color: #e5e7eb;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    }
+    .table-container tr:hover td {
+        background: rgba(255, 255, 255, 0.03);
+    }
+    
+    .action-btn {
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.375rem;
+        transition: all 0.2s ease;
+        color: #6b7280;
+        border: none;
+        background: none;
+        cursor: pointer;
+        font-size: 0.85rem;
+    }
+    .action-btn:hover { color: #60a5fa; background: rgba(59, 130, 246, 0.1); }
+    .action-btn.confirm:hover { color: #34d399; background: rgba(34, 197, 94, 0.1); }
+    .action-btn.reject:hover { color: #f87171; background: rgba(239, 68, 68, 0.1); }
+    .action-btn.cancel:hover { color: #f59e0b; background: rgba(245, 158, 11, 0.1); }
+    .action-btn.disabled {
+        opacity: 0.3;
+        cursor: not-allowed;
+    }
+    .action-btn.disabled:hover {
+        background: none;
+        color: #6b7280;
+    }
+    
+    .modal-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.7);
+        backdrop-filter: blur(4px);
+        z-index: 9999;
+        align-items: center;
+        justify-content: center;
+    }
+    .modal-overlay.active {
+        display: flex;
+    }
+    .modal-content {
+        background: #0d1f3c;
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 1rem;
+        padding: 2rem;
+        max-width: 500px;
+        width: 90%;
+        max-height: 90vh;
+        overflow-y: auto;
+        animation: modalSlideIn 0.3s ease;
+    }
+    @keyframes modalSlideIn {
+        from { transform: translateY(-20px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 4rem 1rem;
+    }
+    .empty-state .empty-icon {
+        font-size: 5rem;
+        color: #4b5563;
+        margin-bottom: 1rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+            <h1 class="text-2xl font-bold text-white">All Appointments</h1>
+            <p class="text-gray-400 mt-1">Manage every patient appointment in your hospital.</p>
+        </div>
+    </div>
+    
+    <!-- Statistics Cards -->
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+        <div class="stat-card blue">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="stat-label">Today's Appointments</p>
+                    <p class="stat-number">{{ today_count }}</p>
+                </div>
+                <div class="stat-icon blue">
+                    <i class="fas fa-calendar-check"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-card yellow">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="stat-label">Pending</p>
+                    <p class="stat-number">{{ pending_count }}</p>
+                </div>
+                <div class="stat-icon yellow">
+                    <i class="fas fa-clock"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-card green">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="stat-label">Confirmed</p>
+                    <p class="stat-number">{{ confirmed_count }}</p>
+                </div>
+                <div class="stat-icon green">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-card purple">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="stat-label">Completed</p>
+                    <p class="stat-number">{{ completed_count }}</p>
+                </div>
+                <div class="stat-icon purple">
+                    <i class="fas fa-clipboard-check"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-card red">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="stat-label">Cancelled</p>
+                    <p class="stat-number">{{ cancelled_count }}</p>
+                </div>
+                <div class="stat-icon red">
+                    <i class="fas fa-times-circle"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-card indigo">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="stat-label">Total</p>
+                    <p class="stat-number">{{ total_count }}</p>
+                </div>
+                <div class="stat-icon indigo">
+                    <i class="fas fa-calendar"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Search & Filters -->
+    <div class="bg-white/5 rounded-xl border border-white/10 p-4">
+        <form method="get" class="flex flex-wrap gap-3 items-center">
+            <div class="flex-1 min-w-[180px] relative">
+                <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm"></i>
+                <input type="text" 
+                       name="search" 
+                       value="{{ search_query }}"
+                       placeholder="Search by patient, doctor, appointment ID..." 
+                       class="w-full pl-9 pr-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:border-blue-500 focus:outline-none transition">
+            </div>
+            
+            <div class="min-w-[140px]">
+                <select name="doctor" class="filter-select w-full">
+                    <option value="">All Doctors</option>
+                    {% for doctor in doctors %}
+                        <option value="{{ doctor.id }}" {% if doctor_filter == doctor.id|stringformat:"s" %}selected{% endif %}>
+                            Dr. {{ doctor.user.get_full_name|default:doctor.user.username }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="min-w-[140px]">
+                <select name="department" class="filter-select w-full">
+                    <option value="">All Departments</option>
+                    {% for dept in departments %}
+                        <option value="{{ dept.id }}" {% if department_filter == dept.id|stringformat:"s" %}selected{% endif %}>
+                            {{ dept.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="min-w-[130px]">
+                <select name="status" class="filter-select w-full">
+                    <option value="">All Status</option>
+                    <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>Pending</option>
+                    <option value="confirmed" {% if status_filter == 'confirmed' %}selected{% endif %}>Confirmed</option>
+                    <option value="completed" {% if status_filter == 'completed' %}selected{% endif %}>Completed</option>
+                    <option value="cancelled" {% if status_filter == 'cancelled' %}selected{% endif %}>Cancelled</option>
+                </select>
+            </div>
+            
+            <div class="min-w-[150px]">
+                <input type="date" 
+                       name="date" 
+                       value="{{ selected_date }}"
+                       class="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:border-blue-500 focus:outline-none transition">
+            </div>
+            
+            <div class="min-w-[130px]">
+                <select name="sort" class="filter-select w-full">
+                    <option value="newest" {% if sort_by == 'newest' %}selected{% endif %}>Newest</option>
+                    <option value="oldest" {% if sort_by == 'oldest' %}selected{% endif %}>Oldest</option>
+                    <option value="today" {% if sort_by == 'today' %}selected{% endif %}>Today</option>
+                    <option value="tomorrow" {% if sort_by == 'tomorrow' %}selected{% endif %}>Tomorrow</option>
+                </select>
+            </div>
+            
+            <div class="flex gap-2">
+                <button type="submit" class="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition font-medium text-sm">
+                    <i class="fas fa-search mr-1"></i> Search
+                </button>
+                {% if search_query or doctor_filter or department_filter or status_filter or selected_date or sort_by != 'newest' %}
+                    <a href="{% url 'hospital_admin:appointments' %}" class="px-4 py-2 bg-white/5 hover:bg-white/10 text-gray-300 rounded-lg transition font-medium text-sm">
+                        <i class="fas fa-times mr-1"></i> Reset
+                    </a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+    
+    <!-- Appointments Table -->
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Patient</th>
+                    <th>Doctor</th>
+                    <th>Department</th>
+                    <th>Date</th>
+                    <th>Time</th>
+                    <th>Status</th>
+                    <th class="text-right">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if appointments %}
+                    {% for appt in appointments %}
+                    <tr>
+                        <td>
+                            <a href="{% url 'hospital_admin:appointment_detail' appt.id %}" class="text-blue-400 hover:text-blue-300 font-mono text-sm">
+                                #{{ appt.id|stringformat:"06d" }}
+                            </a>
+                        </td>
+                        <td>
+                            <div class="flex items-center gap-2">
+                                <div class="avatar-circle blue">
+                                    {{ appt.patient.user.get_full_name|slice:":1"|upper|default:"P" }}
+                                </div>
+                                <div>
+                                    <p class="text-sm text-white">{{ appt.patient.user.get_full_name|default:appt.patient.user.username }}</p>
+                                    <p class="text-xs text-gray-500">{{ appt.patient.user.phone|default:"No phone" }}</p>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <p class="text-sm text-gray-300">Dr. {{ appt.doctor.user.get_full_name|default:appt.doctor.user.username }}</p>
+                            <p class="text-xs text-gray-500">
+                                {% if appt.doctor.specialties.all %}
+                                    {{ appt.doctor.specialties.all|join:", " }}
+                                {% else %}
+                                    General
+                                {% endif %}
+                            </p>
+                        </td>
+                        <td>
+                            <span class="inline-block px-2 py-0.5 bg-blue-500/10 text-blue-400 rounded text-xs">
+                                {% if appt.doctor.specialties.all %}
+                                    {{ appt.doctor.specialties.all.first.name }}
+                                {% else %}
+                                    General
+                                {% endif %}
+                            </span>
+                        </td>
+                        <td>
+                            <p class="text-sm text-gray-300">{{ appt.appointment_date|date:"M d, Y" }}</p>
+                        </td>
+                        <td>
+                            <p class="text-sm text-gray-300">{{ appt.appointment_time|time:"h:i A" }}</p>
+                        </td>
+                        <td>
+                            <span class="status-badge {{ appt.status }}">
+                                <span class="dot"></span>
+                                {{ appt.get_status_display }}
+                            </span>
+                        </td>
+                        <td class="text-right">
+                            <div class="flex items-center justify-end gap-1">
+                                <!-- View Button - Always visible -->
+                                <a href="{% url 'hospital_admin:appointment_detail' appt.id %}" class="action-btn" title="View">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                
+                                {% if appt.status == 'pending' %}
+                                    <!-- Approve Button -->
+                                    <button onclick="openApproveModal('{{ appt.id }}', '{{ appt.patient.user.get_full_name }}', 'Dr. {{ appt.doctor.user.get_full_name }}', '{{ appt.doctor.specialties.all.first.name|default:"General" }}', '{{ appt.appointment_date|date:"M d, Y" }}', '{{ appt.appointment_time|time:"h:i A" }}')" 
+                                            class="action-btn confirm" title="Approve">
+                                        <i class="fas fa-check-circle"></i>
+                                    </button>
+                                    <!-- Reject Button -->
+                                    <button onclick="openRejectModal('{{ appt.id }}', '{{ appt.patient.user.get_full_name }}')" 
+                                            class="action-btn reject" title="Reject">
+                                        <i class="fas fa-times-circle"></i>
+                                    </button>
+                                {% endif %}
+                                
+                                {% if appt.status == 'confirmed' %}
+                                    <!-- Cancel Button -->
+                                    <button onclick="openCancelModal('{{ appt.id }}', '{{ appt.patient.user.get_full_name }}')" 
+                                            class="action-btn cancel" title="Cancel">
+                                        <i class="fas fa-calendar-times"></i>
+                                    </button>
+                                {% endif %}
+                                
+                                {% if appt.status == 'completed' or appt.status == 'cancelled' %}
+                                    <!-- No actions for completed/cancelled -->
+                                    <span class="text-gray-500 text-xs">—</span>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="8">
+                            <div class="empty-state">
+                                <div class="empty-icon">
+                                    <i class="fas fa-calendar-alt"></i>
+                                </div>
+                                <h3 class="text-2xl font-bold text-white mb-2">No Appointments Found</h3>
+                                <p class="text-gray-400">Appointments booked by patients will appear here.</p>
+                                <a href="{% url 'hospital_admin:appointments' %}" class="inline-block mt-4 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition">
+                                    <i class="fas fa-sync mr-1"></i> Refresh
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+    
+    <!-- Pagination -->
+    {% if appointments and appointments.paginator.num_pages > 1 %}
+    <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+        <p class="text-sm text-gray-400">
+            Showing {{ appointments.start_index }}–{{ appointments.end_index }} of {{ appointments.paginator.count }} appointments
+        </p>
+        <div class="flex items-center gap-1">
+            {% if appointments.has_previous %}
+                <a href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}{% if doctor_filter %}&doctor={{ doctor_filter }}{% endif %}{% if department_filter %}&department={{ department_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if selected_date %}&date={{ selected_date }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}" 
+                   class="px-3 py-1.5 bg-white/5 hover:bg-white/10 rounded text-gray-300 transition text-sm">
+                    <i class="fas fa-angle-double-left"></i>
+                </a>
+                <a href="?page={{ appointments.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if doctor_filter %}&doctor={{ doctor_filter }}{% endif %}{% if department_filter %}&department={{ department_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if selected_date %}&date={{ selected_date }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}" 
+                   class="px-3 py-1.5 bg-white/5 hover:bg-white/10 rounded text-gray-300 transition text-sm">
+                    <i class="fas fa-angle-left"></i>
+                </a>
+            {% endif %}
+            
+            <span class="px-3 py-1.5 bg-blue-500/20 text-blue-400 rounded text-sm font-medium">
+                {{ appointments.number }}
+            </span>
+            
+            {% if appointments.has_next %}
+                <a href="?page={{ appointments.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if doctor_filter %}&doctor={{ doctor_filter }}{% endif %}{% if department_filter %}&department={{ department_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if selected_date %}&date={{ selected_date }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}" 
+                   class="px-3 py-1.5 bg-white/5 hover:bg-white/10 rounded text-gray-300 transition text-sm">
+                    <i class="fas fa-angle-right"></i>
+                </a>
+                <a href="?page={{ appointments.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}{% if doctor_filter %}&doctor={{ doctor_filter }}{% endif %}{% if department_filter %}&department={{ department_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if selected_date %}&date={{ selected_date }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}" 
+                   class="px-3 py-1.5 bg-white/5 hover:bg-white/10 rounded text-gray-300 transition text-sm">
+                    <i class="fas fa-angle-double-right"></i>
+                </a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+    
+</div>
+
+<!-- Approve Modal -->
+<div class="modal-overlay" id="approveModal">
+    <div class="modal-content">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-xl font-bold text-white">Approve Appointment</h3>
+            <button onclick="closeModal('approveModal')" class="text-gray-400 hover:text-white">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="space-y-3 mb-4">
+            <div class="flex justify-between py-2 border-b border-white/5">
+                <span class="text-gray-400">Patient</span>
+                <span class="text-white font-medium" id="approvePatient"></span>
+            </div>
+            <div class="flex justify-between py-2 border-b border-white/5">
+                <span class="text-gray-400">Doctor</span>
+                <span class="text-white font-medium" id="approveDoctor"></span>
+            </div>
+            <div class="flex justify-between py-2 border-b border-white/5">
+                <span class="text-gray-400">Department</span>
+                <span class="text-white font-medium" id="approveDepartment"></span>
+            </div>
+            <div class="flex justify-between py-2 border-b border-white/5">
+                <span class="text-gray-400">Date</span>
+                <span class="text-white font-medium" id="approveDate"></span>
+            </div>
+            <div class="flex justify-between py-2">
+                <span class="text-gray-400">Time</span>
+                <span class="text-white font-medium" id="approveTime"></span>
+            </div>
+        </div>
+        <form id="approveForm" method="post">
+            {% csrf_token %}
+            <div class="flex gap-3">
+                <button type="submit" class="flex-1 px-4 py-2.5 bg-green-500 hover:bg-green-600 text-white font-medium rounded-lg transition-colors">
+                    Approve
+                </button>
+                <button type="button" onclick="closeModal('approveModal')" class="flex-1 px-4 py-2.5 bg-white/5 hover:bg-white/10 text-gray-300 font-medium rounded-lg transition-colors">
+                    Cancel
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Reject Modal -->
+<div class="modal-overlay" id="rejectModal">
+    <div class="modal-content">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-xl font-bold text-white">Reject Appointment</h3>
+            <button onclick="closeModal('rejectModal')" class="text-gray-400 hover:text-white">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <p class="text-gray-300 mb-4">
+            Please provide a reason for rejecting this appointment for <strong class="text-white" id="rejectPatient"></strong>.
+        </p>
+        <form id="rejectForm" method="post">
+            {% csrf_token %}
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-300 mb-1">Rejection Reason *</label>
+                <textarea name="rejection_reason" id="rejectReason" rows="4" 
+                          class="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:border-red-500 focus:outline-none"
+                          placeholder="Explain why this appointment is being rejected..."></textarea>
+                <p id="rejectError" class="text-red-400 text-xs mt-1 hidden">Please provide a rejection reason.</p>
+            </div>
+            <div class="flex gap-3">
+                <button type="submit" class="flex-1 px-4 py-2.5 bg-red-500 hover:bg-red-600 text-white font-medium rounded-lg transition-colors">
+                    Reject
+                </button>
+                <button type="button" onclick="closeModal('rejectModal')" class="flex-1 px-4 py-2.5 bg-white/5 hover:bg-white/10 text-gray-300 font-medium rounded-lg transition-colors">
+                    Cancel
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Cancel Modal -->
+<div class="modal-overlay" id="cancelModal">
+    <div class="modal-content">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-xl font-bold text-white">Cancel Appointment</h3>
+            <button onclick="closeModal('cancelModal')" class="text-gray-400 hover:text-white">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <p class="text-gray-300 mb-4">
+            Are you sure you want to cancel this appointment for <strong class="text-white" id="cancelPatient"></strong>?
+        </p>
+        <form id="cancelForm" method="post">
+            {% csrf_token %}
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-300 mb-1">Cancellation Note (Optional)</label>
+                <textarea name="cancellation_note" rows="3" 
+                          class="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:border-yellow-500 focus:outline-none"
+                          placeholder="Optional note for cancellation..."></textarea>
+            </div>
+            <div class="flex gap-3">
+                <button type="submit" class="flex-1 px-4 py-2.5 bg-yellow-500 hover:bg-yellow-600 text-white font-medium rounded-lg transition-colors">
+                    Cancel Appointment
+                </button>
+                <button type="button" onclick="closeModal('cancelModal')" class="flex-1 px-4 py-2.5 bg-white/5 hover:bg-white/10 text-gray-300 font-medium rounded-lg transition-colors">
+                    Close
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    // Approve Modal
+    function openApproveModal(id, patient, doctor, department, date, time) {
+        document.getElementById('approvePatient').textContent = patient;
+        document.getElementById('approveDoctor').textContent = doctor;
+        document.getElementById('approveDepartment').textContent = department;
+        document.getElementById('approveDate').textContent = date;
+        document.getElementById('approveTime').textContent = time;
+        document.getElementById('approveForm').action = '/hospital-admin/appointments/' + id + '/approve/';
+        document.getElementById('approveModal').classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+    
+    // Reject Modal
+    function openRejectModal(id, patient) {
+        document.getElementById('rejectPatient').textContent = patient;
+        document.getElementById('rejectForm').action = '/hospital-admin/appointments/' + id + '/reject/';
+        document.getElementById('rejectReason').value = '';
+        document.getElementById('rejectError').classList.add('hidden');
+        document.getElementById('rejectModal').classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+    
+    // Cancel Modal
+    function openCancelModal(id, patient) {
+        document.getElementById('cancelPatient').textContent = patient;
+        document.getElementById('cancelForm').action = '/hospital-admin/appointments/' + id + '/cancel/';
+        document.getElementById('cancelModal').classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+    
+    function closeModal(modalId) {
+        document.getElementById(modalId).classList.remove('active');
+        document.body.style.overflow = '';
+    }
+    
+    // Close modal on overlay click
+    document.querySelectorAll('.modal-overlay').forEach(modal => {
+        modal.addEventListener('click', function(e) {
+            if (e.target === this) {
+                this.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+        });
+    });
+    
+    // Close modal on Escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            document.querySelectorAll('.modal-overlay.active').forEach(modal => {
+                modal.classList.remove('active');
+                document.body.style.overflow = '';
+            });
+        }
+    });
+    
+    // Reject form validation
+    document.getElementById('rejectForm').addEventListener('submit', function(e) {
+        const reason = document.getElementById('rejectReason').value.trim();
+        if (!reason) {
+            e.preventDefault();
+            document.getElementById('rejectError').classList.remove('hidden');
+        }
+    });
+    
+    document.getElementById('rejectReason').addEventListener('input', function() {
+        if (this.value.trim()) {
+            document.getElementById('rejectError').classList.add('hidden');
+        }
+    });
+</script>
+{% endblock %}

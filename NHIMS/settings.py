@@ -83,6 +83,7 @@ TEMPLATES = [
                 'accounts.context_processors.user_role',
                 'laboratory.context_processors.laboratory_context',
                 'notifications.context_processors.unread_notification_count',
+                'hospital_admin.context_processors.hospital_admin_context',
 
             ],
         },

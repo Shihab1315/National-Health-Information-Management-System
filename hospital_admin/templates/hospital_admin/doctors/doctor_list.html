@@ -1,0 +1,400 @@
+<!-- templates/hospital_admin/doctors/doctor_list.html -->
+{% extends "hospital_admin/base.html" %}
+{% load static %}
+
+{% block title %}All Doctors | Hospital Admin{% endblock %}
+
+{% block page_title %}Doctor Management{% endblock %}
+{% block current_page %}All Doctors{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stat-card {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 0.75rem;
+        padding: 1rem;
+        transition: all 0.2s ease;
+    }
+    .stat-card:hover {
+        border-color: rgba(59, 130, 246, 0.3);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px -5px rgba(0, 0, 0, 0.2);
+    }
+    .stat-card .number {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #ffffff;
+    }
+    .stat-card .label {
+        font-size: 0.75rem;
+        color: #6b7280;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    .stat-card .icon {
+        width: 2.5rem;
+        height: 2.5rem;
+        border-radius: 0.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+    }
+    .stat-card .icon.blue { background: rgba(59, 130, 246, 0.15); color: #60a5fa; }
+    .stat-card .icon.green { background: rgba(34, 197, 94, 0.15); color: #34d399; }
+    .stat-card .icon.red { background: rgba(239, 68, 68, 0.15); color: #f87171; }
+    .stat-card .icon.orange { background: rgba(245, 158, 11, 0.15); color: #fbbf24; }
+    
+    .status-badge {
+        padding: 0.2rem 0.6rem;
+        border-radius: 9999px;
+        font-size: 0.6rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+    }
+    .status-badge .dot {
+        width: 0.35rem;
+        height: 0.35rem;
+        border-radius: 50%;
+        display: inline-block;
+    }
+    .status-badge.active { background: rgba(34, 197, 94, 0.15); color: #34d399; }
+    .status-badge.active .dot { background: #22c55e; }
+    .status-badge.inactive { background: rgba(107, 114, 128, 0.15); color: #9ca3af; }
+    .status-badge.inactive .dot { background: #6b7280; }
+    
+    .availability-badge {
+        padding: 0.2rem 0.6rem;
+        border-radius: 9999px;
+        font-size: 0.6rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+    }
+    .availability-badge .dot {
+        width: 0.35rem;
+        height: 0.35rem;
+        border-radius: 50%;
+        display: inline-block;
+    }
+    .availability-badge.available { background: rgba(34, 197, 94, 0.15); color: #34d399; }
+    .availability-badge.available .dot { background: #22c55e; }
+    .availability-badge.unavailable { background: rgba(239, 68, 68, 0.15); color: #f87171; }
+    .availability-badge.unavailable .dot { background: #ef4444; }
+    
+    .filter-select {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 0.5rem;
+        padding: 0.4rem 2rem 0.4rem 0.75rem;
+        color: #e5e7eb;
+        font-size: 0.8125rem;
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 0.75rem center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    .filter-select:focus {
+        outline: none;
+        border-color: #3b82f6;
+    }
+    .filter-select option {
+        background: #0d1f3c;
+        color: #e5e7eb;
+    }
+    
+    .avatar-circle {
+        width: 2.5rem;
+        height: 2.5rem;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 0.75rem;
+        flex-shrink: 0;
+    }
+    .avatar-circle.blue { background: rgba(59, 130, 246, 0.2); color: #60a5fa; }
+    .avatar-circle.green { background: rgba(34, 197, 94, 0.2); color: #34d399; }
+    .avatar-circle.purple { background: rgba(139, 92, 246, 0.2); color: #a78bfa; }
+    .avatar-circle.orange { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
+    .avatar-circle.teal { background: rgba(20, 184, 166, 0.2); color: #2dd4bf; }
+    .avatar-circle.gray { background: rgba(255, 255, 255, 0.05); color: #9ca3af; }
+    
+    .specialty-badge {
+        display: inline-block;
+        padding: 0.1rem 0.5rem;
+        border-radius: 9999px;
+        font-size: 0.6rem;
+        font-weight: 500;
+        background: rgba(59, 130, 246, 0.1);
+        color: #60a5fa;
+        margin-right: 0.2rem;
+        margin-bottom: 0.1rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+            <h1 class="text-2xl font-bold text-white">All Doctors</h1>
+            <p class="text-gray-400 mt-1">Manage all doctors working in your hospital</p>
+        </div>
+        <div class="flex items-center gap-2 bg-blue-500/10 border border-blue-500/20 px-4 py-2 rounded-lg">
+            <span class="text-blue-400 font-bold">{{ total_doctors }}</span>
+            <span class="text-gray-400 text-sm">Total Doctors</span>
+        </div>
+    </div>
+    
+    <!-- Statistics Cards -->
+    <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+        <div class="stat-card">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="label">Total Doctors</p>
+                    <p class="number">{{ total_doctors }}</p>
+                </div>
+                <div class="icon blue">
+                    <i class="fas fa-user-md"></i>
+                </div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="label">Active Doctors</p>
+                    <p class="number text-green-400">{{ active_doctors }}</p>
+                </div>
+                <div class="icon green">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="label">Inactive Doctors</p>
+                    <p class="number text-red-400">{{ inactive_doctors }}</p>
+                </div>
+                <div class="icon red">
+                    <i class="fas fa-user-slash"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Search & Filters -->
+    <div class="bg-white/5 rounded-xl border border-white/10 p-4">
+        <form method="get" class="flex flex-wrap gap-3">
+            <!-- Search -->
+            <div class="flex-1 min-w-[200px] relative">
+                <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm"></i>
+                <input type="text" 
+                       name="search" 
+                       value="{{ search_query }}"
+                       placeholder="Search doctors..." 
+                       class="w-full pl-9 pr-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:border-blue-500 focus:outline-none transition">
+            </div>
+            
+            <!-- Specialty Filter -->
+            <div class="min-w-[150px]">
+                <select name="specialty" class="filter-select w-full">
+                    <option value="">All Specialties</option>
+                    {% for specialty in specialties %}
+                        <option value="{{ specialty.id }}" {% if specialty_filter == specialty.id|stringformat:"s" %}selected{% endif %}>
+                            {{ specialty.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <!-- Status Filter -->
+            <div class="min-w-[130px]">
+                <select name="status" class="filter-select w-full">
+                    <option value="">All Status</option>
+                    <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Active</option>
+                    <option value="inactive" {% if status_filter == 'inactive' %}selected{% endif %}>Inactive</option>
+                </select>
+            </div>
+            
+            <!-- Sort -->
+            <div class="min-w-[130px]">
+                <select name="sort" class="filter-select w-full">
+                    <option value="newest" {% if sort_by == 'newest' %}selected{% endif %}>Newest</option>
+                    <option value="oldest" {% if sort_by == 'oldest' %}selected{% endif %}>Oldest</option>
+                    <option value="name_asc" {% if sort_by == 'name_asc' %}selected{% endif %}>Name A-Z</option>
+                    <option value="name_desc" {% if sort_by == 'name_desc' %}selected{% endif %}>Name Z-A</option>
+                    <option value="experience" {% if sort_by == 'experience' %}selected{% endif %}>Experience</option>
+                </select>
+            </div>
+            
+            <!-- Submit & Reset -->
+            <div class="flex gap-2">
+                <button type="submit" class="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition font-medium text-sm">
+                    <i class="fas fa-search mr-1"></i> Search
+                </button>
+                {% if search_query or specialty_filter or status_filter %}
+                    <a href="{% url 'hospital_admin:doctor_list' %}" class="px-4 py-2 bg-white/5 hover:bg-white/10 text-gray-300 rounded-lg transition font-medium text-sm">
+                        <i class="fas fa-times mr-1"></i> Clear
+                    </a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+    
+    <!-- Doctors Table -->
+    {% if doctors %}
+        <div class="bg-white/5 rounded-xl border border-white/10 overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead>
+                        <tr class="border-b border-white/10 bg-white/5">
+                            <th class="text-left py-3 px-4 text-xs font-medium text-gray-400 uppercase tracking-wider">Doctor</th>
+                            <th class="text-left py-3 px-4 text-xs font-medium text-gray-400 uppercase tracking-wider">Specialty</th>
+                            <th class="text-left py-3 px-4 text-xs font-medium text-gray-400 uppercase tracking-wider">Reg. No.</th>
+                            <th class="text-left py-3 px-4 text-xs font-medium text-gray-400 uppercase tracking-wider">Contact</th>
+                            <th class="text-left py-3 px-4 text-xs font-medium text-gray-400 uppercase tracking-wider">Status</th>
+                            <th class="text-right py-3 px-4 text-xs font-medium text-gray-400 uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for doctor in doctors %}
+                        <tr class="border-b border-white/5 hover:bg-white/5 transition">
+                            <td class="py-3 px-4">
+                                <div class="flex items-center gap-3">
+                                    <div class="avatar-circle blue">
+                                        {{ doctor.user.get_full_name|slice:":1"|upper|default:doctor.user.username|slice:":1"|upper }}
+                                    </div>
+                                    <div>
+                                        <p class="text-white font-medium text-sm">{{ doctor.user.get_full_name|default:doctor.user.username }}</p>
+                                        <p class="text-gray-500 text-xs">{{ doctor.qualification|truncatechars:20|default:"N/A" }}</p>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="py-3 px-4">
+                                {% if doctor.specialties.all %}
+                                    {% for specialty in doctor.specialties.all %}
+                                        <span class="specialty-badge">{{ specialty.name }}</span>
+                                    {% endfor %}
+                                {% else %}
+                                    <span class="text-gray-500 text-sm">Not Assigned</span>
+                                {% endif %}
+                            </td>
+                            <td class="py-3 px-4 text-gray-300 text-sm font-mono">
+                                {{ doctor.registration_number|default:"N/A" }}
+                            </td>
+                            <td class="py-3 px-4">
+                                <div class="text-gray-300 text-sm">{{ doctor.email|default:doctor.user.email|default:"N/A" }}</div>
+                                <div class="text-gray-500 text-xs">{{ doctor.phone|default:doctor.user.phone|default:"N/A" }}</div>
+                            </td>
+                            <td class="py-3 px-4">
+                                <span class="status-badge {% if doctor.is_active %}active{% else %}inactive{% endif %}">
+                                    <span class="dot"></span>
+                                    {% if doctor.is_active %}Active{% else %}Inactive{% endif %}
+                                </span>
+                            </td>
+                            <td class="py-3 px-4 text-right">
+                                <div class="flex items-center justify-end gap-1">
+                                    <a href="#" class="p-1.5 text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 rounded transition" title="View">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="#" class="p-1.5 text-yellow-400 hover:text-yellow-300 hover:bg-yellow-500/10 rounded transition" title="Edit">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    {% if doctor.is_active %}
+                                        <button class="p-1.5 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded transition" title="Deactivate">
+                                            <i class="fas fa-user-slash"></i>
+                                        </button>
+                                    {% else %}
+                                        <button class="p-1.5 text-green-400 hover:text-green-300 hover:bg-green-500/10 rounded transition" title="Activate">
+                                            <i class="fas fa-user-check"></i>
+                                        </button>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Pagination -->
+        {% if doctors.paginator.num_pages > 1 %}
+        <div class="flex items-center justify-between flex-wrap gap-3">
+            <p class="text-sm text-gray-400">
+                Showing {{ doctors.start_index }} to {{ doctors.end_index }} of {{ doctors.paginator.count }} doctors
+            </p>
+            <div class="flex items-center gap-1">
+                {% if doctors.has_previous %}
+                    <a href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}{% if specialty_filter %}&specialty={{ specialty_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}" 
+                       class="px-3 py-1.5 bg-white/5 hover:bg-white/10 rounded text-gray-300 transition text-sm">
+                        <i class="fas fa-angle-double-left"></i>
+                    </a>
+                    <a href="?page={{ doctors.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if specialty_filter %}&specialty={{ specialty_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}" 
+                       class="px-3 py-1.5 bg-white/5 hover:bg-white/10 rounded text-gray-300 transition text-sm">
+                        <i class="fas fa-angle-left"></i>
+                    </a>
+                {% endif %}
+                
+                <span class="px-3 py-1.5 bg-blue-500/20 text-blue-400 rounded text-sm font-medium">
+                    {{ doctors.number }}
+                </span>
+                
+                {% if doctors.has_next %}
+                    <a href="?page={{ doctors.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if specialty_filter %}&specialty={{ specialty_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}" 
+                       class="px-3 py-1.5 bg-white/5 hover:bg-white/10 rounded text-gray-300 transition text-sm">
+                        <i class="fas fa-angle-right"></i>
+                    </a>
+                    <a href="?page={{ doctors.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}{% if specialty_filter %}&specialty={{ specialty_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}" 
+                       class="px-3 py-1.5 bg-white/5 hover:bg-white/10 rounded text-gray-300 transition text-sm">
+                        <i class="fas fa-angle-double-right"></i>
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+        
+    {% else %}
+        <!-- Empty State -->
+        <div class="flex items-center justify-center h-64">
+            <div class="text-center">
+                <i class="fas fa-user-md text-6xl text-gray-600 mb-4"></i>
+                <h2 class="text-2xl font-bold text-white">No Doctors Found</h2>
+                <p class="text-gray-400 mt-2">
+                    {% if search_query or specialty_filter or status_filter %}
+                        No doctors match your search criteria.
+                    {% else %}
+                        No doctors have been added to your hospital yet.
+                    {% endif %}
+                </p>
+                {% if search_query or specialty_filter or status_filter %}
+                    <a href="{% url 'hospital_admin:doctor_list' %}" class="inline-block mt-4 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition">
+                        <i class="fas fa-times mr-1"></i> Clear Filters
+                    </a>
+                {% else %}
+                    <a href="#" class="inline-block mt-4 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition">
+                        <i class="fas fa-plus mr-1"></i> Add Your First Doctor
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    {% endif %}
+    
+</div>
+{% endblock %}
