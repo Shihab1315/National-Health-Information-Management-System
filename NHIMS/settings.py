@@ -84,6 +84,7 @@ TEMPLATES = [
                 'laboratory.context_processors.laboratory_context',
                 'notifications.context_processors.unread_notification_count',
                 'hospital_admin.context_processors.hospital_admin_context',
+                 'doctors.context_processors.doctor_verification_status',
 
             ],
         },

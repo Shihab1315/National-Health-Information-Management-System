@@ -1,168 +1,707 @@
-{% extends "base.html" %}
 {% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Doctor Dashboard | NHIMS{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    {% block extra_css %}{% endblock %}
+    
+    <style>
+        /* ===== RESET ===== */
+        * { 
+            margin: 0; 
+            padding: 0; 
+            box-sizing: border-box; 
+        }
+        
+        html {
+            height: 100%;
+            scroll-behavior: smooth;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #0a1628;
+            color: #e5e7eb;
+            min-height: 100vh;
+            height: 100%;
+            overflow: hidden;
+            display: flex;
+        }
+        
+        .top-navbar { display: none !important; }
+        
+        /* ===== SIDEBAR ===== */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 50;
+            width: 280px;
+            height: 100vh;
+            background: #0d1f3c;
+            border-right: 1px solid rgba(255, 255, 255, 0.06);
+            transform: translateX(-100%);
+            transition: transform 0.3s ease-in-out;
+            overflow-y: auto;
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+        }
+        
+        .sidebar.open {
+            transform: translateX(0);
+        }
+        
+        @media (min-width: 768px) {
+            .sidebar {
+                transform: translateX(0);
+            }
+        }
+        
+        .sidebar::-webkit-scrollbar { width: 4px; }
+        .sidebar::-webkit-scrollbar-track { background: transparent; }
+        .sidebar::-webkit-scrollbar-thumb { background: rgba(59, 130, 246, 0.3); border-radius: 4px; }
+        
+        .sidebar-brand {
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            flex-shrink: 0;
+        }
+        
+        .sidebar-nav {
+            padding: 0.75rem 0.75rem 6rem;
+            flex: 1;
+        }
+        
+        .sidebar-nav .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.625rem 1rem;
+            border-radius: 0.5rem;
+            color: rgba(255, 255, 255, 0.6);
+            text-decoration: none;
+            transition: all 0.15s ease;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            position: relative;
+            width: 100%;
+            border: none;
+            background: none;
+            text-align: left;
+        }
+        
+        .sidebar-nav .nav-item:hover:not(.locked) { background: rgba(255, 255, 255, 0.05); color: #ffffff; }
+        .sidebar-nav .nav-item.active { background: rgba(59, 130, 246, 0.15); color: #60a5fa; }
+        .sidebar-nav .nav-item.active::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0.25rem;
+            bottom: 0.25rem;
+            width: 3px;
+            background: #3b82f6;
+            border-radius: 0 4px 4px 0;
+        }
+        
+        .sidebar-nav .nav-item i { width: 1.25rem; text-align: center; font-size: 1rem; flex-shrink: 0; }
+        .sidebar-nav .nav-divider {
+            height: 1px;
+            background: rgba(255, 255, 255, 0.06);
+            margin: 0.5rem 1rem;
+        }
+        
+        .sidebar-nav .nav-item .badge {
+            margin-left: auto;
+            font-size: 0.6rem;
+            padding: 0.125rem 0.5rem;
+            border-radius: 9999px;
+            font-weight: 600;
+        }
+        .badge.pending { background: #f59e0b; color: white; }
+        .badge.verified { background: #22c55e; color: white; }
+        
+        .sidebar-nav .nav-item.locked {
+            opacity: 0.5;
+            cursor: not-allowed;
+            color: rgba(255, 255, 255, 0.3);
+        }
+        .sidebar-nav .nav-item.locked:hover {
+            background: none;
+            color: rgba(255, 255, 255, 0.3);
+        }
+        .sidebar-nav .nav-item.locked i { color: rgba(255, 255, 255, 0.2); }
+        .sidebar-nav .nav-item .lock-icon {
+            margin-left: auto;
+            font-size: 0.7rem;
+            color: rgba(255, 255, 255, 0.2);
+        }
+        
+        .sidebar-footer {
+            padding: 1rem 1.5rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
+            font-size: 0.7rem;
+            color: rgba(255, 255, 255, 0.3);
+            text-align: center;
+            flex-shrink: 0;
+        }
+        
+        /* ===== MAIN CONTENT WRAPPER ===== */
+        .main-wrapper {
+            margin-left: 0;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+            width: 100%;
+        }
+        
+        @media (min-width: 768px) {
+            .main-wrapper {
+                margin-left: 280px;
+            }
+        }
+        
+        /* ===== MOBILE NAVBAR ===== */
+        .mobile-navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 40;
+            background: rgba(10, 22, 40, 0.85);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            padding: 0.75rem 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        @media (min-width: 768px) {
+            .mobile-navbar {
+                display: none;
+            }
+        }
+        
+        /* ===== PAGE HEADER ===== */
+        .page-header {
+            padding: 1.25rem 1.5rem 0.5rem;
+            flex-shrink: 0;
+            width: 100%;
+        }
+        
+        .page-header .breadcrumb {
+            font-size: 0.75rem;
+            color: #9ca3af;
+        }
+        .page-header .breadcrumb .current {
+            color: #60a5fa;
+        }
+        
+        /* ===== MAIN CONTENT AREA ===== */
+        .main-content-scroll {
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding: 1rem 1.5rem 2rem;
+            width: 100%;
+            min-height: 0;
+        }
+        
+        @media (max-width: 640px) {
+            .main-content-scroll {
+                padding: 0.75rem;
+                padding-bottom: 1.5rem;
+            }
+            .page-header {
+                padding: 1rem 1rem 0.25rem;
+            }
+            .page-header h1 {
+                font-size: 1.25rem !important;
+            }
+        }
+        
+        /* Scrollbar for main content */
+        .main-content-scroll::-webkit-scrollbar {
+            width: 5px;
+        }
+        .main-content-scroll::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.02);
+        }
+        .main-content-scroll::-webkit-scrollbar-thumb {
+            background: rgba(59, 130, 246, 0.3);
+            border-radius: 8px;
+        }
+        .main-content-scroll::-webkit-scrollbar-thumb:hover {
+            background: rgba(59, 130, 246, 0.5);
+        }
+        
+        /* ===== PROFILE DROPDOWN ===== */
+        .profile-dropdown { position: relative; }
+        .profile-dropdown .profile-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: none;
+            border: none;
+            color: #e5e7eb;
+            cursor: pointer;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.5rem;
+            transition: all 0.15s ease;
+        }
+        .profile-dropdown .profile-btn:hover { background: rgba(255, 255, 255, 0.05); }
+        .profile-dropdown .profile-btn .avatar {
+            width: 2rem;
+            height: 2rem;
+            border-radius: 50%;
+            background: rgba(59, 130, 246, 0.2);
+            color: #60a5fa;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.75rem;
+        }
+        .profile-dropdown .profile-btn .name { font-size: 0.875rem; font-weight: 500; display: none; }
+        @media (min-width: 640px) {
+            .profile-dropdown .profile-btn .name { display: inline; }
+        }
+        
+        .profile-dropdown .dropdown-menu {
+            display: none;
+            position: absolute;
+            right: 0;
+            top: calc(100% + 0.5rem);
+            min-width: 200px;
+            background: #0d1f3c;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 0.75rem;
+            padding: 0.5rem;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+        }
+        .profile-dropdown .dropdown-menu.show { display: block; }
+        .profile-dropdown .dropdown-menu .menu-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.5rem 0.75rem;
+            border-radius: 0.375rem;
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            font-size: 0.8125rem;
+            transition: all 0.15s ease;
+        }
+        .profile-dropdown .dropdown-menu .menu-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: #ffffff;
+        }
+        .profile-dropdown .dropdown-menu .menu-item i { width: 1.25rem; text-align: center; }
+        .profile-dropdown .dropdown-menu .menu-divider { height: 1px; background: rgba(255, 255, 255, 0.06); margin: 0.25rem 0; }
+        .profile-dropdown .dropdown-menu .menu-item.danger { color: #ef4444; }
+        .profile-dropdown .dropdown-menu .menu-item.danger:hover { background: rgba(239, 68, 68, 0.1); }
+        
+        /* ===== MODAL ===== */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(4px);
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-overlay.active {
+            display: flex;
+        }
+        .modal-content {
+            background: #0d1f3c;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 1rem;
+            padding: 2rem;
+            max-width: 450px;
+            width: 90%;
+            animation: modalSlideIn 0.3s ease;
+        }
+        @keyframes modalSlideIn {
+            from { transform: translateY(-20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        /* ===== UTILITY ===== */
+        .container-fluid {
+            width: 100%;
+            max-width: 100%;
+            padding: 0;
+        }
+        
+        /* ===== RESPONSIVE TABLE ===== */
+        .table-responsive {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            width: 100%;
+        }
+        
+        .table-responsive table {
+            min-width: 700px;
+            width: 100%;
+        }
+        
+        /* ===== MODAL SCROLL FIX ===== */
+        .modal-open {
+            overflow: hidden !important;
+        }
+        
+        /* ===== ANIMATION ===== */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .page-container {
+            animation: fadeIn 0.3s ease;
+        }
+        
+        /* ===== GRID FIX ===== */
+        .grid {
+            width: 100%;
+        }
+        
+        /* ===== CARD FIX ===== */
+        .bg-\[\#0d1f3c\] {
+            width: 100%;
+            overflow: hidden;
+        }
+        
+        /* ===== RESPONSIVE IMAGES ===== */
+        img {
+            max-width: 100%;
+            height: auto;
+        }
+    </style>
+</head>
+<body>
 
-{% block title %}Doctor Dashboard | NHIMS{% endblock %}
+    <!-- ===== MOBILE NAVBAR ===== -->
+    <nav class="mobile-navbar">
+        <div class="flex items-center gap-3">
+            <button id="sidebarToggle" class="text-white text-xl">
+                <i class="fas fa-bars"></i>
+            </button>
+            <span class="text-white font-semibold text-sm">NHIMS Doctor</span>
+        </div>
+        <div class="flex items-center gap-2">
+            <div class="profile-dropdown" id="profileDropdown">
+                <button class="profile-btn" id="profileBtn">
+                    <div class="avatar">{{ user.get_full_name|slice:":1"|upper|default:user.username|slice:":1"|upper }}</div>
+                    <span class="name">{{ user.get_full_name|default:user.username }}</span>
+                    <i class="fas fa-chevron-down chevron" id="chevronIcon"></i>
+                </button>
+                <div class="dropdown-menu" id="dropdownMenu">
+                    <a href="{% url 'doctors:doctor_profile' %}" class="menu-item">
+                        <i class="fas fa-user-circle"></i>
+                        <span>My Profile</span>
+                    </a>
+                    <a href="{% url 'doctors:doctor_general_settings' %}" class="menu-item">
+                        <i class="fas fa-cog"></i>
+                        <span>Settings</span>
+                    </a>
+                    <div class="menu-divider"></div>
+                    <button onclick="openLogoutModal()" class="menu-item danger w-full text-left">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span>Logout</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
 
-{% block extra_css %}
-<style>
-    .top-navbar { display: none !important; }
-    html { scroll-behavior: smooth; }
-</style>
-{% endblock %}
-
-{% block navbar %}
-<nav class="fixed top-0 left-0 right-0 z-40 bg-[#0a1628]/80 backdrop-blur-sm border-b border-white/10 px-4 py-3 md:hidden">
-    <div class="flex items-center justify-between">
-        <button id="sidebarToggle" class="text-white text-2xl">
-            <i class="fas fa-bars"></i>
-        </button>
-        <span class="text-white font-semibold">NHIMS Doctor</span>
-        <div class="w-8"></div>
-    </div>
-</nav>
-{% endblock %}
-
-{% block content %}
-<div class="flex min-h-screen bg-[#0a1628]">
-    <!-- ====================== SIDEBAR ====================== -->
-    <aside id="sidebar" class="fixed top-0 left-0 z-50 h-full w-72 bg-[#0d1f3c] border-r border-white/10 transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out overflow-y-auto">
-        <div class="p-4 border-b border-white/10">
+    <!-- ===== SIDEBAR ===== -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-brand">
             <div class="flex items-center gap-3">
                 <div class="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 text-xl font-bold">
-                    {% if request.user.doctor %}
-                        {{ request.user.doctor.full_name|slice:":1"|upper }}
-                    {% else %}
-                        D
-                    {% endif %}
+                    {{ user.get_full_name|slice:":1"|upper|default:user.username|slice:":1"|upper }}
                 </div>
                 <div>
-                    <p class="text-white font-semibold text-sm">
-                        {% if request.user.doctor %}
-                            {{ request.user.doctor.full_name }}
-                        {% else %}
-                            Doctor
-                        {% endif %}
-                    </p>
+                    <p class="text-white font-semibold text-sm">{{ user.get_full_name|default:user.username }}</p>
                     <p class="text-gray-400 text-xs">Doctor</p>
                 </div>
             </div>
         </div>
-        <nav class="p-3 space-y-1">
-            <a href="{% url 'dashboard:doctor_dashboard' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition {% if request.resolver_match.url_name == 'doctor_dashboard' %}bg-blue-600/30 text-blue-300{% else %}text-gray-300 hover:bg-white/5 hover:text-white{% endif %}">
-                <i class="fas fa-th-large w-5 text-center"></i> Dashboard
+        
+        <nav class="sidebar-nav">
+            <!-- Dashboard -->
+            <a href="{% url 'dashboard:doctor_dashboard' %}" 
+               class="nav-item {% if not is_verified %}locked{% endif %} {% if request.resolver_match.url_name == 'doctor_dashboard' %}active{% endif %}"
+               {% if not is_verified %}onclick="showVerificationAlert(event)" href="#"{% endif %}>
+                <i class="fas fa-th-large"></i>
+                <span>Dashboard</span>
+                {% if not is_verified %}<i class="fas fa-lock lock-icon"></i>{% endif %}
             </a>
-            <a href="{% url 'appointments:doctor_appointments' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition {% if request.resolver_match.url_name == 'doctor_appointments' %}bg-blue-600/30 text-blue-300{% else %}text-gray-300 hover:bg-white/5 hover:text-white{% endif %}">
-                <i class="fas fa-calendar-check w-5 text-center"></i> Appointments
+            
+            <div class="nav-divider"></div>
+            
+            <!-- Appointments -->
+            <a href="{% url 'appointments:doctor_appointments' %}" 
+               class="nav-item {% if not is_verified %}locked{% endif %}"
+               {% if not is_verified %}onclick="showVerificationAlert(event)" href="#"{% endif %}>
+                <i class="fas fa-calendar-check"></i>
+                <span>Appointments</span>
+                {% if not is_verified %}<i class="fas fa-lock lock-icon"></i>{% endif %}
             </a>
-            <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
-                <i class="fas fa-prescription-bottle w-5 text-center"></i> Prescriptions
+            
+            <!-- Patients -->
+            <a href="{% url 'patients:list' %}" 
+               class="nav-item {% if not is_verified %}locked{% endif %}"
+               {% if not is_verified %}onclick="showVerificationAlert(event)" href="#"{% endif %}>
+                <i class="fas fa-users"></i>
+                <span>Patients</span>
+                {% if not is_verified %}<i class="fas fa-lock lock-icon"></i>{% endif %}
             </a>
-            <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
-                <i class="fas fa-flask w-5 text-center"></i> Laboratory
+            
+            <!-- Prescriptions -->
+            <a href="{% url 'prescriptions:doctor_prescription_list' %}" 
+               class="nav-item {% if not is_verified %}locked{% endif %}"
+               {% if not is_verified %}onclick="showVerificationAlert(event)" href="#"{% endif %}>
+                <i class="fas fa-prescription"></i>
+                <span>Prescriptions</span>
+                {% if not is_verified %}<i class="fas fa-lock lock-icon"></i>{% endif %}
             </a>
-            <hr class="border-white/10 my-3">
-            <a href="{% url 'patients:profile' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
-                <i class="fas fa-user-circle w-5 text-center"></i> Profile
+            
+            <!-- Laboratory -->
+            <a href="{% url 'laboratory:doctor_lab_requests' %}" 
+               class="nav-item {% if not is_verified %}locked{% endif %}"
+               {% if not is_verified %}onclick="showVerificationAlert(event)" href="#"{% endif %}>
+                <i class="fas fa-flask"></i>
+                <span>Laboratory</span>
+                {% if not is_verified %}<i class="fas fa-lock lock-icon"></i>{% endif %}
             </a>
-            <a href="{% url 'patients:patient_settings' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
-                <i class="fas fa-cog w-5 text-center"></i> Settings
+            
+            <!-- Notifications -->
+            <a href="{% url 'notifications:doctor_notifications' %}" 
+               class="nav-item {% if not is_verified %}locked{% endif %}"
+               {% if not is_verified %}onclick="showVerificationAlert(event)" href="#"{% endif %}>
+                <i class="fas fa-bell"></i>
+                <span>Notifications</span>
+                {% if not is_verified %}<i class="fas fa-lock lock-icon"></i>{% endif %}
             </a>
-            <!-- Logout button -->
-            <button type="button"
-                    class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-red-400 hover:bg-red-500/10 hover:text-red-300 w-full text-left"
-                    onclick="openLogoutModal()">
-                <i class="fas fa-sign-out-alt w-5 text-center"></i> Logout
+            
+            <div class="nav-divider"></div>
+            
+            <!-- Verification - Always accessible -->
+            <a href="{% url 'doctors:verification' %}" class="nav-item {% if request.resolver_match.url_name == 'verification' %}active{% endif %}">
+                <i class="fas fa-check-double"></i>
+                <span>Verification</span>
+                {% if not is_verified %}
+                    <span class="badge pending">Pending</span>
+                {% else %}
+                    <span class="badge verified">Verified</span>
+                {% endif %}
+            </a>
+            
+            <!-- Profile - Always accessible -->
+            <a href="{% url 'doctors:doctor_profile' %}" class="nav-item {% if request.resolver_match.url_name == 'doctor_profile' %}active{% endif %}">
+                <i class="fas fa-user-circle"></i>
+                <span>Profile</span>
+            </a>
+            
+            <!-- Settings - Always accessible -->
+            <a href="{% url 'doctors:doctor_general_settings' %}" class="nav-item {% if request.resolver_match.url_name == 'doctor_general_settings' %}active{% endif %}">
+                <i class="fas fa-cog"></i>
+                <span>Settings</span>
+            </a>
+            
+            <div class="nav-divider"></div>
+            
+            <!-- Logout -->
+            <button onclick="openLogoutModal()" class="nav-item" style="color: rgba(239, 68, 68, 0.7); width: 100%;">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Logout</span>
             </button>
         </nav>
-        <div class="absolute bottom-4 left-4 right-4 text-center text-gray-500 text-xs">
-            NHIMS v2.0
+        
+        <div class="sidebar-footer">
+            NHIMS v2.0 &bull; Doctor
         </div>
     </aside>
 
-    <!-- ====================== MAIN CONTENT ====================== -->
-    <main class="flex-1 md:ml-72 p-4 md:p-6 space-y-6 mt-14 md:mt-0">
-        {% block doctor_content %}
-        <!-- Child templates will inject content here -->
-        {% endblock %}
-    </main>
-</div>
-
-<!-- ====================== LOGOUT MODAL ====================== -->
-<div id="logoutModal"
-     class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm transition-opacity duration-300 opacity-0 pointer-events-none"
-     role="dialog" aria-modal="true" aria-labelledby="logoutModalTitle">
-    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full mx-4 p-6 transform transition-all duration-300 scale-95">
-        <div class="flex items-center justify-between mb-4">
-            <h3 id="logoutModalTitle" class="text-xl font-semibold text-gray-900 dark:text-white">Logout</h3>
-            <button type="button" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition" onclick="closeLogoutModal()">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                </svg>
-                <span class="sr-only">Close</span>
-            </button>
+    <!-- ===== MAIN CONTENT ===== -->
+    <div class="main-wrapper">
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+                <div>
+                    <h1 class="text-2xl font-bold text-white">{% block page_title %}Dashboard{% endblock %}</h1>
+                    <div class="breadcrumb">
+                        {% block breadcrumb %}
+                            <span>Dashboard</span>
+                            <span class="mx-1">/</span>
+                            <span class="current">{% block current_page %}Overview{% endblock %}</span>
+                        {% endblock %}
+                    </div>
+                </div>
+                <div class="flex items-center gap-3">
+                    <div class="profile-dropdown" id="profileDropdownDesktop">
+                        <button class="profile-btn" id="profileBtnDesktop">
+                            <div class="avatar">{{ user.get_full_name|slice:":1"|upper|default:user.username|slice:":1"|upper }}</div>
+                            <span class="name">{{ user.get_full_name|default:user.username }}</span>
+                            <i class="fas fa-chevron-down chevron" id="chevronIconDesktop"></i>
+                        </button>
+                        <div class="dropdown-menu" id="dropdownMenuDesktop">
+                            <a href="{% url 'doctors:doctor_profile' %}" class="menu-item">
+                                <i class="fas fa-user-circle"></i>
+                                <span>My Profile</span>
+                            </a>
+                            <a href="{% url 'doctors:doctor_general_settings' %}" class="menu-item">
+                                <i class="fas fa-cog"></i>
+                                <span>Settings</span>
+                            </a>
+                            <div class="menu-divider"></div>
+                            <button onclick="openLogoutModal()" class="menu-item danger w-full text-left">
+                                <i class="fas fa-sign-out-alt"></i>
+                                <span>Logout</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-        <p class="text-gray-600 dark:text-gray-300 mb-6">Are you sure you want to logout from your NHIMS account?</p>
-        <div class="flex flex-col sm:flex-row gap-3 justify-end">
-            <button type="button" class="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition" onclick="closeLogoutModal()">Cancel</button>
-            <form action="{% url 'patients:logout' %}" method="post" class="inline">
-                {% csrf_token %}
-                <button type="submit" class="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white font-medium transition shadow-md w-full sm:w-auto">Logout</button>
-            </form>
+
+        <!-- Scrollable Content -->
+        <div class="main-content-scroll">
+            {% block content %}
+            <div class="page-container">
+                <div class="text-center py-12">
+                    <i class="fas fa-arrow-left text-gray-600 text-4xl mb-4"></i>
+                    <p class="text-gray-400">Select an option from the sidebar</p>
+                </div>
+            </div>
+            {% endblock %}
         </div>
     </div>
-</div>
 
-<!-- ====================== SCRIPTS ====================== -->
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const sidebar = document.getElementById('sidebar');
-        const toggleBtn = document.getElementById('sidebarToggle');
+    <!-- ===== LOGOUT MODAL ===== -->
+    <div class="modal-overlay" id="logoutModal">
+        <div class="modal-content">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-xl font-bold text-white">Logout</h3>
+                <button onclick="closeLogoutModal()" class="text-gray-400 hover:text-white">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <p class="text-gray-300 mb-6">Are you sure you want to logout from your NHIMS account?</p>
+            <div class="flex gap-3">
+                <form action="{% url 'accounts:logout' %}" method="post" class="flex-1">
+                    {% csrf_token %}
+                    <button type="submit" class="w-full px-4 py-2.5 bg-red-500 hover:bg-red-600 text-white font-medium rounded-lg transition-colors">
+                        Logout
+                    </button>
+                </form>
+                <button onclick="closeLogoutModal()" class="flex-1 px-4 py-2.5 bg-white/5 hover:bg-white/10 text-gray-300 font-medium rounded-lg transition-colors">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
 
-        if (toggleBtn && sidebar) {
-            toggleBtn.addEventListener('click', function () {
-                sidebar.classList.toggle('-translate-x-full');
-            });
-
-            document.addEventListener('click', function (event) {
-                const isClickInside = sidebar.contains(event.target) || toggleBtn.contains(event.target);
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const sidebar = document.getElementById('sidebar');
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            
+            if (sidebarToggle) {
+                sidebarToggle.addEventListener('click', function() {
+                    sidebar.classList.toggle('open');
+                });
+            }
+            
+            document.addEventListener('click', function(event) {
+                const isClickInside = sidebar.contains(event.target) || sidebarToggle?.contains(event.target);
                 if (!isClickInside && window.innerWidth < 768) {
-                    sidebar.classList.add('-translate-x-full');
+                    sidebar.classList.remove('open');
                 }
             });
-
-            document.addEventListener('keydown', function (e) {
-                if (e.key === 'Escape' && window.innerWidth < 768) {
-                    sidebar.classList.add('-translate-x-full');
+            
+            // ===== PROFILE DROPDOWN (Mobile) =====
+            const profileBtn = document.getElementById('profileBtn');
+            const dropdownMenu = document.getElementById('dropdownMenu');
+            const chevronIcon = document.getElementById('chevronIcon');
+            
+            if (profileBtn) {
+                profileBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    dropdownMenu.classList.toggle('show');
+                    chevronIcon.classList.toggle('open');
+                });
+            }
+            
+            // ===== PROFILE DROPDOWN (Desktop) =====
+            const profileBtnDesktop = document.getElementById('profileBtnDesktop');
+            const dropdownMenuDesktop = document.getElementById('dropdownMenuDesktop');
+            const chevronIconDesktop = document.getElementById('chevronIconDesktop');
+            
+            if (profileBtnDesktop) {
+                profileBtnDesktop.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    dropdownMenuDesktop.classList.toggle('show');
+                    chevronIconDesktop.classList.toggle('open');
+                });
+            }
+            
+            document.addEventListener('click', function() {
+                dropdownMenu?.classList.remove('show');
+                dropdownMenuDesktop?.classList.remove('show');
+            });
+        });
+        
+        // ===== VERIFICATION ALERT =====
+        function showVerificationAlert(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            alert('Your account is under verification. Please wait until Hospital Admin approves your documents.');
+            return false;
+        }
+        
+        // ===== LOGOUT MODAL =====
+        function openLogoutModal() {
+            document.getElementById('logoutModal').classList.add('active');
+            document.body.classList.add('modal-open');
+        }
+        
+        function closeLogoutModal() {
+            document.getElementById('logoutModal').classList.remove('active');
+            document.body.classList.remove('modal-open');
+        }
+        
+        document.querySelectorAll('.modal-overlay').forEach(modal => {
+            modal.addEventListener('click', function(e) {
+                if (e.target === this) {
+                    this.classList.remove('active');
+                    document.body.classList.remove('modal-open');
                 }
             });
-        }
-    });
-
-    // Modal scripts
-    const modal = document.getElementById('logoutModal');
-
-    function openLogoutModal() {
-        modal.classList.remove('opacity-0', 'pointer-events-none');
-        modal.querySelector('div').classList.remove('scale-95');
-        modal.querySelector('div').classList.add('scale-100');
-    }
-
-    function closeLogoutModal() {
-        modal.classList.add('opacity-0', 'pointer-events-none');
-        modal.querySelector('div').classList.remove('scale-100');
-        modal.querySelector('div').classList.add('scale-95');
-    }
-
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape' && !modal.classList.contains('pointer-events-none')) {
-            closeLogoutModal();
-        }
-    });
-
-    modal.addEventListener('click', function(e) {
-        if (e.target === modal) {
-            closeLogoutModal();
-        }
-    });
-</script>
-{% endblock %}
+        });
+        
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                document.querySelectorAll('.modal-overlay.active').forEach(modal => {
+                    modal.classList.remove('active');
+                    document.body.classList.remove('modal-open');
+                });
+            }
+        });
+    </script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

@@ -348,3 +348,12 @@ def profile_view(request):
 #             'Invalid user role. Please contact administrator.'
 #         )
 #         return redirect('dashboard:homepage')
+def logout_view(request):
+    # ALL messages clear
+    storage = messages.get_messages(request)
+    for _ in storage:
+        pass  # সব মেসেজ ড্রেইন করে ফেলা
+    storage.used = True
+    
+    logout(request)
+    return redirect('accounts:login')

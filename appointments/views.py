@@ -1628,7 +1628,9 @@ class DoctorAppointmentListView(View):
         page_obj = paginator.get_page(page_number)
         
         context = {
+            
             'doctor': doctor,
+            'is_verified': doctor.is_verified,
             'page_obj': page_obj,
             'appointments': page_obj,
             'total': total,

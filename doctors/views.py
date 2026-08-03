@@ -11,6 +11,8 @@ from django.utils.decorators import method_decorator
 from django.utils import timezone
 from appointments.models import Appointment
 from prescriptions.models import Prescription
+from django.http import JsonResponse
+
 from django.views import View
 from .forms import DoctorProfilePhotoForm
 from django.contrib.auth.views import PasswordChangeView
@@ -24,6 +26,8 @@ from .forms import DoctorGeneralSettingsForm
 from .models import DoctorNotificationSettings
 from .forms import DoctorNotificationSettingsForm
 from notifications.models import Notification
+
+
 @login_required
 @role_required(['super_admin','hospital_admin'])
 def doctor_list(request):
@@ -523,3 +527,40 @@ class DoctorNotificationSettingsView(View):
         }
         
         return render(request, self.template_name, context)
+
+
+@login_required
+@role_required(['doctor'])
+def doctor_verification(request):
+    """
+    Doctor Verification page.
+    Shows verification status and allows doctors to submit for verification.
+    """
+    try:
+        doctor = Doctor.objects.select_related('user', 'hospital').prefetch_related('specialties').get(user=request.user)
+    except Doctor.DoesNotExist:
+        messages.error(request, "Doctor profile not found.")
+        return redirect('dashboard:doctor_dashboard')
+    
+    is_verified = doctor.is_verified
+    
+    # Get verification checklist
+    checklist = {
+        'personal_info': bool(doctor.user.get_full_name() and doctor.user.email),
+        'bmdc_registration': bool(doctor.registration_number and doctor.registration_number != '000000'),
+        'medical_degree': bool(doctor.qualification),
+        'experience': bool(doctor.experience and doctor.experience > 0),
+        'hospital_assignment': bool(doctor.hospital),
+        'specialization': doctor.specialties.exists(),
+        'government_id': bool(doctor.national_id and doctor.national_id != '0000000000'),
+        'profile_photo': bool(doctor.profile_photo),
+    }
+    
+    context = {
+        'doctor': doctor,
+        'is_verified': is_verified,
+        'checklist': checklist,
+        'page_title': 'Verification',
+        'current_page': 'Verification',
+    }
+    return render(request, 'doctors/verification.html', context)

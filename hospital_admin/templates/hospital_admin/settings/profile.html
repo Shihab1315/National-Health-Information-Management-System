@@ -1,0 +1,174 @@
+<!-- templates/hospital_admin/settings/profile.html -->
+{% extends "hospital_admin/base.html" %}
+{% load static %}
+
+{% block title %}Profile Settings | Hospital Admin{% endblock %}
+
+{% block page_title %}Profile Settings{% endblock %}
+{% block current_page %}Profile Settings{% endblock %}
+
+{% block extra_css %}
+<style>
+    .profile-image {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 3px solid rgba(255, 255, 255, 0.1);
+    }
+    .profile-avatar {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 3rem;
+        font-weight: 700;
+        background: rgba(59, 130, 246, 0.2);
+        color: #60a5fa;
+        border: 3px solid rgba(255, 255, 255, 0.1);
+    }
+    .info-card {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 0.75rem;
+        padding: 1rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+            <h1 class="text-2xl font-bold text-white">Profile Settings</h1>
+            <p class="text-gray-400 mt-1">Update your personal information</p>
+        </div>
+    </div>
+    
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- Left Column - Profile Picture -->
+        <div class="lg:col-span-1">
+            <div class="bg-white/5 rounded-xl border border-white/10 p-6 text-center">
+                <h3 class="text-white font-semibold text-base mb-4">Profile Picture</h3>
+                
+                {% if user.profile_picture %}
+                    <img src="{{ user.profile_picture.url }}" alt="{{ user.get_full_name }}" class="profile-image mx-auto">
+                {% else %}
+                    <div class="profile-avatar mx-auto">
+                        {{ user.get_full_name|slice:":1"|upper|default:user.username|slice:":1"|upper }}
+                    </div>
+                {% endif %}
+                
+                <div class="mt-4">
+                    <p class="text-white font-medium">{{ user.get_full_name|default:user.username }}</p>
+                    <p class="text-gray-400 text-sm">{{ user.get_role_display }}</p>
+                    <p class="text-gray-500 text-xs mt-1">{{ user.email }}</p>
+                </div>
+                
+                <div class="mt-4 pt-4 border-t border-white/10">
+                    <div class="text-left space-y-2">
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-400">Username</span>
+                            <span class="text-white">@{{ user.username }}</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-400">Role</span>
+                            <span class="text-white">{{ user.get_role_display }}</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-400">Joined</span>
+                            <span class="text-white">{{ user.date_joined|date:"M d, Y" }}</span>
+                        </div>
+                        {% if user.hospital %}
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-400">Hospital</span>
+                            <span class="text-white">{{ user.hospital.name }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Right Column - Edit Form -->
+        <div class="lg:col-span-2">
+            <div class="bg-white/5 rounded-xl border border-white/10 p-6">
+                <h3 class="text-white font-semibold text-base mb-4">Edit Profile</h3>
+                
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    {% if form.non_field_errors %}
+                        <div class="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm">
+                            {% for error in form.non_field_errors %}
+                                <p>{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-1">Profile Picture</label>
+                            {{ form.profile_picture }}
+                            <p class="text-xs text-gray-500 mt-1">JPG, PNG, WEBP • Max size: 2MB</p>
+                            {% if form.profile_picture.errors %}
+                                <p class="text-red-400 text-xs mt-1">{{ form.profile_picture.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-300 mb-1">First Name</label>
+                                {{ form.first_name }}
+                                {% if form.first_name.errors %}
+                                    <p class="text-red-400 text-xs mt-1">{{ form.first_name.errors.0 }}</p>
+                                {% endif %}
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-300 mb-1">Last Name</label>
+                                {{ form.last_name }}
+                                {% if form.last_name.errors %}
+                                    <p class="text-red-400 text-xs mt-1">{{ form.last_name.errors.0 }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-1">Email Address</label>
+                            {{ form.email }}
+                            {% if form.email.errors %}
+                                <p class="text-red-400 text-xs mt-1">{{ form.email.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-1">Phone Number</label>
+                            {{ form.phone }}
+                            <p class="text-xs text-gray-500 mt-1">Format: 017XXXXXXXX or +88017XXXXXXXX</p>
+                            {% if form.phone.errors %}
+                                <p class="text-red-400 text-xs mt-1">{{ form.phone.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="pt-4 border-t border-white/10 flex gap-3">
+                            <button type="submit" class="px-6 py-2.5 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-lg transition-colors">
+                                <i class="fas fa-save mr-2"></i> Save Changes
+                            </button>
+                            <a href="{% url 'hospital_admin:settings' %}" class="px-6 py-2.5 bg-white/5 hover:bg-white/10 text-gray-300 font-medium rounded-lg transition-colors">
+                                Cancel
+                            </a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+    </div>
+    
+</div>
+{% endblock %}

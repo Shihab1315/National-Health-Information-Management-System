@@ -1,0 +1,266 @@
+<!-- templates/doctors/verification.html -->
+{% extends "doctor/base.html" %}
+{% load static %}
+
+{% block title %}Doctor Verification | NHIMS{% endblock %}
+
+{% block page_title %}Verification{% endblock %}
+{% block current_page %}Verification{% endblock %}
+
+{% block extra_css %}
+<style>
+    .status-badge {
+        padding: 0.35rem 1rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+    .status-badge .dot {
+        width: 0.4rem;
+        height: 0.4rem;
+        border-radius: 50%;
+        display: inline-block;
+    }
+    .status-badge.pending { background: rgba(245, 158, 11, 0.15); color: #fbbf24; }
+    .status-badge.pending .dot { background: #f59e0b; }
+    .status-badge.verified { background: rgba(34, 197, 94, 0.15); color: #34d399; }
+    .status-badge.verified .dot { background: #22c55e; }
+    .status-badge.rejected { background: rgba(239, 68, 68, 0.15); color: #f87171; }
+    .status-badge.rejected .dot { background: #ef4444; }
+    
+    .checklist-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.5rem 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    }
+    .checklist-item:last-child {
+        border-bottom: none;
+    }
+    .checklist-item .check-icon {
+        width: 1.5rem;
+        height: 1.5rem;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.65rem;
+        flex-shrink: 0;
+    }
+    .checklist-item .check-icon.done {
+        background: rgba(34, 197, 94, 0.15);
+        color: #34d399;
+    }
+    .checklist-item .check-icon.missing {
+        background: rgba(239, 68, 68, 0.15);
+        color: #f87171;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    
+    <!-- Header -->
+    <div>
+        <h1 class="text-2xl font-bold text-white">Doctor Verification</h1>
+        <p class="text-gray-400 mt-1">Submit your professional documents for hospital verification.</p>
+    </div>
+    
+    <!-- Status Banner -->
+    {% if is_verified %}
+        <div class="bg-green-500/10 border border-green-500/20 rounded-xl p-4 flex items-center gap-3">
+            <i class="fas fa-check-circle text-green-400 text-xl"></i>
+            <div>
+                <p class="text-green-400 font-medium">✅ Your account has been verified successfully!</p>
+                <p class="text-gray-400 text-sm">All dashboard modules are now unlocked.</p>
+            </div>
+        </div>
+    {% else %}
+        <div class="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-4 flex items-center gap-3">
+            <i class="fas fa-clock text-yellow-400 text-xl"></i>
+            <div>
+                <p class="text-yellow-400 font-medium">⏳ Verification Pending</p>
+                <p class="text-gray-400 text-sm">Your account is awaiting verification. Please complete all required fields and submit.</p>
+            </div>
+        </div>
+    {% endif %}
+    
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- Left Column - Main Content -->
+        <div class="lg:col-span-2 space-y-6">
+            
+            <!-- Verification Checklist -->
+            <div class="bg-white/5 rounded-xl border border-white/10 p-6">
+                <h2 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                    <i class="fas fa-list-check text-blue-400"></i>
+                    Verification Checklist
+                </h2>
+                
+                <div class="space-y-1">
+                    <div class="checklist-item">
+                        <div class="check-icon {% if checklist.personal_info %}done{% else %}missing{% endif %}">
+                            <i class="fas {% if checklist.personal_info %}fa-check{% else %}fa-times{% endif %}"></i>
+                        </div>
+                        <span class="text-gray-300">Personal Information</span>
+                        <span class="ml-auto text-sm {% if checklist.personal_info %}text-green-400{% else %}text-red-400{% endif %}">
+                            {% if checklist.personal_info %}✔ Completed{% else %}⚠ Missing{% endif %}
+                        </span>
+                    </div>
+                    <div class="checklist-item">
+                        <div class="check-icon {% if checklist.bmdc_registration %}done{% else %}missing{% endif %}">
+                            <i class="fas {% if checklist.bmdc_registration %}fa-check{% else %}fa-times{% endif %}"></i>
+                        </div>
+                        <span class="text-gray-300">BMDC Registration Number</span>
+                        <span class="ml-auto text-sm {% if checklist.bmdc_registration %}text-green-400{% else %}text-red-400{% endif %}">
+                            {% if checklist.bmdc_registration %}✔ Completed{% else %}⚠ Missing{% endif %}
+                        </span>
+                    </div>
+                    <div class="checklist-item">
+                        <div class="check-icon {% if checklist.medical_degree %}done{% else %}missing{% endif %}">
+                            <i class="fas {% if checklist.medical_degree %}fa-check{% else %}fa-times{% endif %}"></i>
+                        </div>
+                        <span class="text-gray-300">Medical Degree</span>
+                        <span class="ml-auto text-sm {% if checklist.medical_degree %}text-green-400{% else %}text-red-400{% endif %}">
+                            {% if checklist.medical_degree %}✔ Completed{% else %}⚠ Missing{% endif %}
+                        </span>
+                    </div>
+                    <div class="checklist-item">
+                        <div class="check-icon {% if checklist.experience %}done{% else %}missing{% endif %}">
+                            <i class="fas {% if checklist.experience %}fa-check{% else %}fa-times{% endif %}"></i>
+                        </div>
+                        <span class="text-gray-300">Experience</span>
+                        <span class="ml-auto text-sm {% if checklist.experience %}text-green-400{% else %}text-red-400{% endif %}">
+                            {% if checklist.experience %}✔ Completed{% else %}⚠ Missing{% endif %}
+                        </span>
+                    </div>
+                    <div class="checklist-item">
+                        <div class="check-icon {% if checklist.hospital_assignment %}done{% else %}missing{% endif %}">
+                            <i class="fas {% if checklist.hospital_assignment %}fa-check{% else %}fa-times{% endif %}"></i>
+                        </div>
+                        <span class="text-gray-300">Hospital Assignment</span>
+                        <span class="ml-auto text-sm {% if checklist.hospital_assignment %}text-green-400{% else %}text-red-400{% endif %}">
+                            {% if checklist.hospital_assignment %}✔ Completed{% else %}⚠ Missing{% endif %}
+                        </span>
+                    </div>
+                    <div class="checklist-item">
+                        <div class="check-icon {% if checklist.specialization %}done{% else %}missing{% endif %}">
+                            <i class="fas {% if checklist.specialization %}fa-check{% else %}fa-times{% endif %}"></i>
+                        </div>
+                        <span class="text-gray-300">Specialization</span>
+                        <span class="ml-auto text-sm {% if checklist.specialization %}text-green-400{% else %}text-red-400{% endif %}">
+                            {% if checklist.specialization %}✔ Completed{% else %}⚠ Missing{% endif %}
+                        </span>
+                    </div>
+                    <div class="checklist-item">
+                        <div class="check-icon {% if checklist.government_id %}done{% else %}missing{% endif %}">
+                            <i class="fas {% if checklist.government_id %}fa-check{% else %}fa-times{% endif %}"></i>
+                        </div>
+                        <span class="text-gray-300">Government ID</span>
+                        <span class="ml-auto text-sm {% if checklist.government_id %}text-green-400{% else %}text-red-400{% endif %}">
+                            {% if checklist.government_id %}✔ Completed{% else %}⚠ Missing{% endif %}
+                        </span>
+                    </div>
+                    <div class="checklist-item">
+                        <div class="check-icon {% if checklist.profile_photo %}done{% else %}missing{% endif %}">
+                            <i class="fas {% if checklist.profile_photo %}fa-check{% else %}fa-times{% endif %}"></i>
+                        </div>
+                        <span class="text-gray-300">Profile Photo</span>
+                        <span class="ml-auto text-sm {% if checklist.profile_photo %}text-green-400{% else %}text-red-400{% endif %}">
+                            {% if checklist.profile_photo %}✔ Completed{% else %}⚠ Missing{% endif %}
+                        </span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Submit Button -->
+            {% if not is_verified %}
+            <div class="bg-white/5 rounded-xl border border-white/10 p-6">
+                <h2 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                    <i class="fas fa-paper-plane text-blue-400"></i>
+                    Submit Verification
+                </h2>
+                <button id="submitVerification" class="w-full px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-lg transition">
+                    <i class="fas fa-paper-plane mr-2"></i> Submit for Verification
+                </button>
+                <p class="text-gray-500 text-xs text-center mt-2">By submitting, you agree to verify your credentials.</p>
+            </div>
+            {% endif %}
+            
+        </div>
+        
+        <!-- Right Column - Summary -->
+        <div class="lg:col-span-1 space-y-6">
+            
+            <!-- Verification Summary -->
+            <div class="bg-white/5 rounded-xl border border-white/10 p-6">
+                <h2 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                    <i class="fas fa-file-alt text-blue-400"></i>
+                    Verification Summary
+                </h2>
+                
+                <div class="space-y-3">
+                    <div class="flex justify-between py-2 border-b border-white/5">
+                        <span class="text-gray-400">Doctor Name</span>
+                        <span class="text-white font-medium">{{ doctor.user.get_full_name|default:doctor.user.username }}</span>
+                    </div>
+                    <div class="flex justify-between py-2 border-b border-white/5">
+                        <span class="text-gray-400">Hospital</span>
+                        <span class="text-white">{{ doctor.hospital.name|default:"Not Assigned" }}</span>
+                    </div>
+                    <div class="flex justify-between py-2 border-b border-white/5">
+                        <span class="text-gray-400">Specialization</span>
+                        <span class="text-white">
+                            {% if doctor.specialties.all %}
+                                {{ doctor.specialties.all|join:", " }}
+                            {% else %}
+                                Not Assigned
+                            {% endif %}
+                        </span>
+                    </div>
+                    <div class="flex justify-between py-2 border-b border-white/5">
+                        <span class="text-gray-400">BMDC Number</span>
+                        <span class="text-white font-mono">{{ doctor.registration_number|default:"Not Set" }}</span>
+                    </div>
+                    <div class="flex justify-between py-2">
+                        <span class="text-gray-400">Current Status</span>
+                        <span class="status-badge {% if is_verified %}verified{% else %}pending{% endif %}" style="font-size: 0.65rem; padding: 0.2rem 0.6rem;">
+                            <span class="dot"></span>
+                            {% if is_verified %}Verified{% else %}Pending{% endif %}
+                        </span>
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+        
+    </div>
+    
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const submitBtn = document.getElementById('submitVerification');
+        if (submitBtn) {
+            submitBtn.addEventListener('click', function() {
+                if (confirm('Are you sure you want to submit your verification request?')) {
+                    this.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Submitting...';
+                    this.disabled = true;
+                    
+                    // Simulate API call - Replace with actual POST request
+                    setTimeout(function() {
+                        window.location.reload();
+                    }, 2000);
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

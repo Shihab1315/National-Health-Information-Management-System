@@ -5,6 +5,10 @@ from hospitals.models import HospitalApplication
 import re
 from hospitals.models import HospitalDepartment, Hospital, Room
 from doctors.models import Doctor
+from django.contrib.auth import get_user_model
+from django.contrib.auth.forms import PasswordChangeForm
+
+User = get_user_model()
 
 class HospitalInformationForm(forms.ModelForm):
     """Form for hospital information step."""
@@ -1136,3 +1140,170 @@ class RoomForm(forms.ModelForm):
         if commit:
             instance.save()
         return instance
+    
+class ProfileForm(forms.ModelForm):
+    """Form for updating user profile."""
+    
+    class Meta:
+        model = User
+        fields = ['first_name', 'last_name', 'email', 'phone', 'profile_picture']
+        widgets = {
+            'first_name': forms.TextInput(attrs={
+                'class': 'w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 outline-none transition',
+                'placeholder': 'Enter your first name'
+            }),
+            'last_name': forms.TextInput(attrs={
+                'class': 'w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 outline-none transition',
+                'placeholder': 'Enter your last name'
+            }),
+            'email': forms.EmailInput(attrs={
+                'class': 'w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 outline-none transition',
+                'placeholder': 'Enter your email address'
+            }),
+            'phone': forms.TextInput(attrs={
+                'class': 'w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 outline-none transition',
+                'placeholder': 'Enter your phone number'
+            }),
+            'profile_picture': forms.FileInput(attrs={
+                'class': 'w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 outline-none transition file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-blue-500/20 file:text-blue-400 hover:file:bg-blue-500/30'
+            }),
+        }
+        labels = {
+            'first_name': 'First Name',
+            'last_name': 'Last Name',
+            'email': 'Email Address',
+            'phone': 'Phone Number',
+            'profile_picture': 'Profile Picture',
+        }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Make email required
+        self.fields['email'].required = True
+    
+    def clean_email(self):
+        """Validate email is unique."""
+        email = self.cleaned_data.get('email')
+        if email:
+            # Check if email exists for other users
+            if User.objects.exclude(id=self.instance.id).filter(email=email).exists():
+                raise ValidationError('This email is already registered.')
+        return email
+    
+    def clean_phone(self):
+        """Validate phone number format."""
+        phone = self.cleaned_data.get('phone')
+        if phone:
+            # Remove any non-digit characters except +
+            phone = re.sub(r'[^\d+]', '', phone)
+            # Check if phone number is valid (Bangladesh format)
+            if not re.match(r'^\+?8801[3-9]\d{8}$|^01[3-9]\d{8}$', phone):
+                raise ValidationError('Enter a valid phone number (e.g., 017XXXXXXXX or +88017XXXXXXXX).')
+        return phone
+    
+    def clean_profile_picture(self):
+        """Validate profile picture."""
+        picture = self.cleaned_data.get('profile_picture')
+        if picture:
+            # Check file size (max 2MB)
+            if picture.size > 2 * 1024 * 1024:
+                raise ValidationError('Profile picture must be less than 2MB.')
+            
+            # Check file extension
+            valid_extensions = ['jpg', 'jpeg', 'png', 'webp']
+            ext = picture.name.split('.')[-1].lower()
+            if ext not in valid_extensions:
+                raise ValidationError('Only JPG, JPEG, PNG, and WEBP files are allowed.')
+        return picture
+
+
+class CustomPasswordChangeForm(PasswordChangeForm):
+    """Custom password change form with validation."""
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        
+        # Add CSS classes to all fields
+        for field in self.fields.values():
+            field.widget.attrs.update({
+                'class': 'w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 outline-none transition pr-12'
+            })
+        
+        # Add placeholders
+        self.fields['old_password'].widget.attrs['placeholder'] = 'Enter your current password'
+        self.fields['new_password1'].widget.attrs['placeholder'] = 'Enter your new password'
+        self.fields['new_password2'].widget.attrs['placeholder'] = 'Confirm your new password'
+    
+    def clean_new_password1(self):
+        """Validate new password strength."""
+        password = self.cleaned_data.get('new_password1')
+        
+        if password:
+            # Check minimum length
+            if len(password) < 8:
+                raise ValidationError('Password must be at least 8 characters long.')
+            
+            # Check uppercase
+            if not re.search(r'[A-Z]', password):
+                raise ValidationError('Password must contain at least one uppercase letter.')
+            
+            # Check lowercase
+            if not re.search(r'[a-z]', password):
+                raise ValidationError('Password must contain at least one lowercase letter.')
+            
+            # Check digit
+            if not re.search(r'\d', password):
+                raise ValidationError('Password must contain at least one number.')
+            
+            # Check special character
+            if not re.search(r'[!@#$%^&*(),.?":{}|<>]', password):
+                raise ValidationError('Password must contain at least one special character.')
+        
+        return password
+
+
+class NotificationPreferencesForm(forms.Form):
+    """Form for notification preferences."""
+    
+    email_notifications = forms.BooleanField(
+        required=False,
+        initial=True,
+        widget=forms.CheckboxInput(attrs={
+            'class': 'w-4 h-4 rounded border-white/10 bg-white/5 text-blue-500 focus:ring-blue-500'
+        })
+    )
+    sms_notifications = forms.BooleanField(
+        required=False,
+        initial=False,
+        widget=forms.CheckboxInput(attrs={
+            'class': 'w-4 h-4 rounded border-white/10 bg-white/5 text-blue-500 focus:ring-blue-500'
+        })
+    )
+    appointment_notifications = forms.BooleanField(
+        required=False,
+        initial=True,
+        widget=forms.CheckboxInput(attrs={
+            'class': 'w-4 h-4 rounded border-white/10 bg-white/5 text-blue-500 focus:ring-blue-500'
+        })
+    )
+    doctor_verification_notifications = forms.BooleanField(
+        required=False,
+        initial=True,
+        widget=forms.CheckboxInput(attrs={
+            'class': 'w-4 h-4 rounded border-white/10 bg-white/5 text-blue-500 focus:ring-blue-500'
+        })
+    )
+    department_notifications = forms.BooleanField(
+        required=False,
+        initial=False,
+        widget=forms.CheckboxInput(attrs={
+            'class': 'w-4 h-4 rounded border-white/10 bg-white/5 text-blue-500 focus:ring-blue-500'
+        })
+    )
+    system_announcements = forms.BooleanField(
+        required=False,
+        initial=True,
+        widget=forms.CheckboxInput(attrs={
+            'class': 'w-4 h-4 rounded border-white/10 bg-white/5 text-blue-500 focus:ring-blue-500'
+        })
+    )

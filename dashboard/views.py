@@ -287,6 +287,7 @@ def doctor_dashboard(request):
     
     context = {
         'doctor': doctor,
+        'is_verified': doctor.is_verified,
         'total_appointments': total_appointments,
         'pending': pending,
         'confirmed': confirmed,

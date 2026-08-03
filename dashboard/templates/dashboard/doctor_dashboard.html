@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "doctor/base.html" %}
 {% load static %}
 
 {% block title %}Doctor Dashboard — NHIMS{% endblock %}
@@ -17,6 +17,23 @@
     }
     .glass-card:hover {
         border-color: rgba(59, 130, 246, 0.3);
+    }
+    .locked-card {
+        opacity: 0.5;
+        cursor: not-allowed;
+        filter: grayscale(0.5);
+    }
+    .locked-card:hover {
+        border-color: rgba(255, 255, 255, 0.05);
+        transform: none !important;
+    }
+    .verification-banner {
+        background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(245, 158, 11, 0.05));
+        border: 1px solid rgba(245, 158, 11, 0.2);
+    }
+    .verification-banner.verified {
+        background: linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(34, 197, 94, 0.05));
+        border: 1px solid rgba(34, 197, 94, 0.2);
     }
 </style>
 {% endblock %}
@@ -47,83 +64,145 @@
                     <p class="text-gray-400 text-xs">{{ doctor.specialty|default:"General" }}</p>
                 </div>
             </div>
+            <!-- Verification Status Badge -->
+            <div class="mt-3">
+                {% if doctor.is_verified %}
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-green-500/20 text-green-400 border border-green-500/30">
+                        <i class="fas fa-check-circle"></i> Verified
+                    </span>
+                {% else %}
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-yellow-500/20 text-yellow-400 border border-yellow-500/30">
+                        <i class="fas fa-clock"></i> Pending Verification
+                    </span>
+                {% endif %}
+            </div>
         </div>
         <nav class="p-3 space-y-1">
-            <a href="{% url 'dashboard:doctor_dashboard' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition {% if request.resolver_match.url_name == 'doctor_dashboard' %}bg-blue-600/30 text-blue-300{% else %}text-gray-300 hover:bg-white/5 hover:text-white{% endif %}">
-                <i class="fas fa-th-large w-5 text-center"></i> Dashboard
+            <!-- Dashboard - Locked if not verified -->
+            <a href="{% url 'dashboard:doctor_dashboard' %}" 
+               class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition 
+                      {% if not doctor.is_verified %}opacity-50 cursor-not-allowed{% endif %}
+                      {% if request.resolver_match.url_name == 'doctor_dashboard' %}bg-blue-600/30 text-blue-300{% else %}text-gray-300 hover:bg-white/5 hover:text-white{% endif %}"
+               {% if not doctor.is_verified %}onclick="showVerificationAlert(event)"{% endif %}>
+                <i class="fas fa-th-large w-5 text-center"></i> 
+                Dashboard
+                {% if not doctor.is_verified %}<i class="fas fa-lock ml-auto text-gray-500 text-xs"></i>{% endif %}
             </a>
+            
+            <!-- Appointments - Locked if not verified -->
             <a href="{% url 'appointments:doctor_appointments' %}" 
                class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition 
+                      {% if not doctor.is_verified %}opacity-50 cursor-not-allowed{% endif %}
                       {% if request.resolver_match.url_name == 'doctor_appointments' or request.resolver_match.url_name == 'doctor_appointment_detail' %}
                          bg-blue-600/30 text-blue-300
                       {% else %}
                          text-gray-300 hover:bg-white/5 hover:text-white
-                      {% endif %}">
-                <i class="fas fa-calendar-check w-5 text-center"></i> Appointments
+                      {% endif %}"
+               {% if not doctor.is_verified %}onclick="showVerificationAlert(event)"{% endif %}>
+                <i class="fas fa-calendar-check w-5 text-center"></i> 
+                Appointments
+                {% if not doctor.is_verified %}<i class="fas fa-lock ml-auto text-gray-500 text-xs"></i>{% endif %}
             </a>
-            <a href="{% url 'patients:list' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-gray-300 hover:bg-white/5 hover:text-white">
-                <i class="fas fa-user-injured w-5 text-center"></i> Patients
+            
+            <!-- Patients - Locked if not verified -->
+            <a href="{% url 'patients:list' %}" 
+               class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition 
+                      {% if not doctor.is_verified %}opacity-50 cursor-not-allowed{% endif %}
+                      text-gray-300 hover:bg-white/5 hover:text-white"
+               {% if not doctor.is_verified %}onclick="showVerificationAlert(event)"{% endif %}>
+                <i class="fas fa-user-injured w-5 text-center"></i> 
+                Patients
+                {% if not doctor.is_verified %}<i class="fas fa-lock ml-auto text-gray-500 text-xs"></i>{% endif %}
             </a>
+            
+            <!-- Prescriptions - Locked if not verified -->
             <a href="{% url 'prescriptions:doctor_prescription_list' %}" 
-         class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition 
-          {% if request.resolver_match.url_name == 'doctor_prescription_list' %}
-             bg-blue-600/30 text-blue-300
-          {% else %}
-             text-gray-300 hover:bg-white/5 hover:text-white
-          {% endif %}">
-         <i class="fas fa-prescription-bottle w-5 text-center"></i> Prescriptions
-          </a>
+               class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition 
+                      {% if not doctor.is_verified %}opacity-50 cursor-not-allowed{% endif %}
+                      {% if request.resolver_match.url_name == 'doctor_prescription_list' %}
+                         bg-blue-600/30 text-blue-300
+                      {% else %}
+                         text-gray-300 hover:bg-white/5 hover:text-white
+                      {% endif %}"
+               {% if not doctor.is_verified %}onclick="showVerificationAlert(event)"{% endif %}>
+                <i class="fas fa-prescription-bottle w-5 text-center"></i> 
+                Prescriptions
+                {% if not doctor.is_verified %}<i class="fas fa-lock ml-auto text-gray-500 text-xs"></i>{% endif %}
+            </a>
+            
+            <!-- Laboratory - Locked if not verified -->
             <a href="{% url 'laboratory:doctor_lab_requests' %}" 
-   class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition 
-          {% if request.resolver_match.url_name == 'doctor_lab_requests' %}
-             bg-blue-600/30 text-blue-300
-          {% else %}
-             text-gray-300 hover:bg-white/5 hover:text-white
-          {% endif %}">
-    <i class="fas fa-flask w-5 text-center"></i> Laboratory
-           <a href="{% url 'notifications:doctor_notifications' %}" 
-           class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition 
-          {% if request.resolver_match.url_name == 'doctor_notifications' or request.resolver_match.url_name == 'doctor_notification_detail' %}
-             bg-blue-600/30 text-blue-300
-          {% else %}
-             text-gray-300 hover:bg-white/5 hover:text-white
-          {% endif %}">
-    <i class="fas fa-bell w-5 text-center"></i> Notifications
-    {% if unread_notifications > 0 %}
-        <span class="ml-auto bg-red-500 text-white text-xs rounded-full px-2 py-0.5">{{ unread_notifications }}</span>
-    {% endif %}
-          </a>
+               class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition 
+                      {% if not doctor.is_verified %}opacity-50 cursor-not-allowed{% endif %}
+                      {% if request.resolver_match.url_name == 'doctor_lab_requests' %}
+                         bg-blue-600/30 text-blue-300
+                      {% else %}
+                         text-gray-300 hover:bg-white/5 hover:text-white
+                      {% endif %}"
+               {% if not doctor.is_verified %}onclick="showVerificationAlert(event)"{% endif %}>
+                <i class="fas fa-flask w-5 text-center"></i> 
+                Laboratory
+                {% if not doctor.is_verified %}<i class="fas fa-lock ml-auto text-gray-500 text-xs"></i>{% endif %}
+            </a>
+            
+            <!-- Notifications - Locked if not verified -->
+            <a href="{% url 'notifications:doctor_notifications' %}" 
+               class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition 
+                      {% if not doctor.is_verified %}opacity-50 cursor-not-allowed{% endif %}
+                      {% if request.resolver_match.url_name == 'doctor_notifications' or request.resolver_match.url_name == 'doctor_notification_detail' %}
+                         bg-blue-600/30 text-blue-300
+                      {% else %}
+                         text-gray-300 hover:bg-white/5 hover:text-white
+                      {% endif %}"
+               {% if not doctor.is_verified %}onclick="showVerificationAlert(event)"{% endif %}>
+                <i class="fas fa-bell w-5 text-center"></i> 
+                Notifications
+                {% if unread_notifications > 0 %}
+                    <span class="ml-auto bg-red-500 text-white text-xs rounded-full px-2 py-0.5">{{ unread_notifications }}</span>
+                {% endif %}
+                {% if not doctor.is_verified %}<i class="fas fa-lock ml-auto text-gray-500 text-xs"></i>{% endif %}
+            </a>
+            
             <hr class="border-white/10 my-3">
+            
+            <!-- Verification - Always Accessible -->
+            <a href="{% url 'doctors:verification' %}"
+               class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition 
+                      {% if request.resolver_match.url_name == 'verification' %}bg-blue-600/30 text-blue-300{% else %}text-gray-300 hover:bg-white/5 hover:text-white{% endif %}">
+                <i class="fas fa-check-double w-5 text-center"></i> 
+                Verification
+                {% if not doctor.is_verified %}
+                    <span class="ml-auto bg-yellow-500 text-white text-xs rounded-full px-2 py-0.5">Pending</span>
+                {% else %}
+                    <span class="ml-auto bg-green-500 text-white text-xs rounded-full px-2 py-0.5">Verified</span>
+                {% endif %}
+            </a>
+            
+            <!-- Profile - Always Accessible -->
             <a href="{% url 'doctors:doctor_profile' %}" 
-   class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition 
-          {% if request.resolver_match.url_name == 'doctor_profile' %}
-             bg-blue-600/30 text-blue-300
-          {% else %}
-             text-gray-300 hover:bg-white/5 hover:text-white
-          {% endif %}">
-    <i class="fas fa-user-circle w-5 text-center"></i> Profile
-</a>
+               class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition 
+                      {% if request.resolver_match.url_name == 'doctor_profile' %}
+                         bg-blue-600/30 text-blue-300
+                      {% else %}
+                         text-gray-300 hover:bg-white/5 hover:text-white
+                      {% endif %}">
+                <i class="fas fa-user-circle w-5 text-center"></i> Profile
+            </a>
+            
+            <!-- Settings - Always Accessible -->
             <a href="{% url 'doctors:doctor_general_settings' %}" 
-   class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition 
-          {% if request.resolver_match.url_name == 'doctor_general_settings' %}
-             bg-blue-600/30 text-blue-300
-          {% else %}
-             text-gray-300 hover:bg-white/5 hover:text-white
-          {% endif %}">
-    <i class="fas fa-cog w-5 text-center"></i> Settings
-</a>
-
-
-{% comment %} <a href="{% url 'doctors:doctor_notification_settings' %}" 
-   class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition 
-          {% if request.resolver_match.url_name == 'doctor_notification_settings' %}
-             bg-blue-600/30 text-blue-300
-          {% else %}
-             text-gray-300 hover:bg-white/5 hover:text-white
-          {% endif %}">
-    <i class="fas fa-bell w-5 text-center"></i> Notification Settings
-</a> {% endcomment %}
-            <!-- LOGOUT -->
+               class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition 
+                      {% if request.resolver_match.url_name == 'doctor_general_settings' %}
+                         bg-blue-600/30 text-blue-300
+                      {% else %}
+                         text-gray-300 hover:bg-white/5 hover:text-white
+                      {% endif %}">
+                <i class="fas fa-cog w-5 text-center"></i> Settings
+            </a>
+            
+            <hr class="border-white/10 my-3">
+            
+            <!-- Logout -->
             <button type="button"
                     class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-red-400 hover:bg-red-500/10 hover:text-red-300 w-full text-left"
                     onclick="openLogoutModal()">
@@ -137,6 +216,35 @@
 
     <!-- ====================== MAIN CONTENT ====================== -->
     <main class="flex-1 md:ml-72 p-4 md:p-6 space-y-6 mt-14 md:mt-0">
+        
+        <!-- ====================== VERIFICATION BANNER ====================== -->
+        {% if not doctor.is_verified %}
+        <div class="verification-banner rounded-2xl p-4 flex items-center justify-between flex-wrap gap-3">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-yellow-500/20 flex items-center justify-center text-yellow-400">
+                    <i class="fas fa-clock text-xl"></i>
+                </div>
+                <div>
+                    <p class="text-yellow-400 font-medium">Account Pending Verification</p>
+                    <p class="text-gray-400 text-sm">Complete your verification to unlock all features.</p>
+                </div>
+            </div>
+            " class="px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg transition text-sm font-medium">
+                Complete Verification
+            </a>
+        </div>
+        {% else %}
+        <div class="verification-banner verified rounded-2xl p-4 flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center text-green-400">
+                <i class="fas fa-check-circle text-xl"></i>
+            </div>
+            <div>
+                <p class="text-green-400 font-medium">Account Verified ✅</p>
+                <p class="text-gray-400 text-sm">All dashboard features are now unlocked.</p>
+            </div>
+        </div>
+        {% endif %}
+
         <!-- ====================== WELCOME + DOCTOR INFO CARD ====================== -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <!-- Welcome Section -->
@@ -170,7 +278,7 @@
                     <p class="text-gray-300"><span class="text-gray-400">Hospital:</span> {{ doctor.hospital.name|default:"N/A" }}</p>
                     <p class="text-gray-300"><span class="text-gray-400">Room:</span> {{ doctor.room_number|default:"N/A" }}</p>
                     <div class="flex items-center gap-2 mt-1">
-                        <span class="text-gray-400">Status:</span>
+                        <span class="text<a href="{% url 'doctors:verification' %}"-gray-400">Status:</span>
                         {% if doctor.is_on_duty %}
                             <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
                                 <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
@@ -192,7 +300,7 @@
 
         <!-- ====================== STATISTICS CARDS ====================== -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div class="glass-card rounded-2xl border border-white/10 p-5 hover:scale-105 transition-transform duration-200">
+            <div class="glass-card rounded-2xl border border-white/10 p-5 {% if not doctor.is_verified %}locked-card{% else %}hover:scale-105 transition-transform duration-200{% endif %}">
                 <div class="flex items-start justify-between">
                     <div>
                         <p class="text-gray-400 text-sm">Today's Appointments</p>
@@ -203,7 +311,7 @@
                     </div>
                 </div>
             </div>
-            <div class="glass-card rounded-2xl border border-white/10 p-5 hover:scale-105 transition-transform duration-200">
+            <div class="glass-card rounded-2xl border border-white/10 p-5 {% if not doctor.is_verified %}locked-card{% else %}hover:scale-105 transition-transform duration-200{% endif %}">
                 <div class="flex items-start justify-between">
                     <div>
                         <p class="text-gray-400 text-sm">Upcoming Appointments</p>
@@ -214,7 +322,7 @@
                     </div>
                 </div>
             </div>
-            <div class="glass-card rounded-2xl border border-white/10 p-5 hover:scale-105 transition-transform duration-200">
+            <div class="glass-card rounded-2xl border border-white/10 p-5 {% if not doctor.is_verified %}locked-card{% else %}hover:scale-105 transition-transform duration-200{% endif %}">
                 <div class="flex items-start justify-between">
                     <div>
                         <p class="text-gray-400 text-sm">Total Patients</p>
@@ -225,7 +333,7 @@
                     </div>
                 </div>
             </div>
-            <div class="glass-card rounded-2xl border border-white/10 p-5 hover:scale-105 transition-transform duration-200">
+            <div class="glass-card rounded-2xl border border-white/10 p-5 {% if not doctor.is_verified %}locked-card{% else %}hover:scale-105 transition-transform duration-200{% endif %}">
                 <div class="flex items-start justify-between">
                     <div>
                         <p class="text-gray-400 text-sm">Pending Prescriptions</p>
@@ -240,7 +348,7 @@
 
         <!-- Second row -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            <div class="glass-card rounded-2xl border border-white/10 p-5">
+            <div class="glass-card rounded-2xl border border-white/10 p-5 {% if not doctor.is_verified %}locked-card{% else %}hover:scale-105 transition-transform duration-200{% endif %}">
                 <div class="flex items-start justify-between">
                     <div>
                         <p class="text-gray-400 text-sm">Completed Prescriptions</p>
@@ -251,7 +359,7 @@
                     </div>
                 </div>
             </div>
-            <div class="glass-card rounded-2xl border border-white/10 p-5">
+            <div class="glass-card rounded-2xl border border-white/10 p-5 {% if not doctor.is_verified %}locked-card{% else %}hover:scale-105 transition-transform duration-200{% endif %}">
                 <div class="flex items-start justify-between">
                     <div>
                         <p class="text-gray-400 text-sm">Pending Lab Reports</p>
@@ -268,28 +376,54 @@
         <div class="glass-card rounded-2xl border border-white/10 p-6">
             <h2 class="text-white text-lg font-semibold mb-4 flex items-center gap-2">
                 <i class="fas fa-bolt text-blue-400"></i> Quick Actions
+                {% if not doctor.is_verified %}
+                    <span class="text-xs text-yellow-400 ml-2">(Locked - Verify to unlock)</span>
+                {% endif %}
             </h2>
             <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-                <a href="{% url 'prescriptions:doctor_prescription_list' %}" class="bg-white/5 hover:bg-white/10 rounded-xl p-4 text-center transition group">
-                    <i class="fas fa-prescription-bottle text-purple-400 text-2xl block mb-2 group-hover:scale-110 transition"></i>
-                    <span class="text-gray-300 text-sm">New Prescription</span>
-                </a>
-                <a href="{% url 'appointments:doctor_appointments' %}" class="bg-white/5 hover:bg-white/10 rounded-xl p-4 text-center transition group">
-                    <i class="fas fa-calendar-check text-blue-400 text-2xl block mb-2 group-hover:scale-110 transition"></i>
-                    <span class="text-gray-300 text-sm">View Appointments</span>
-                </a>
-                <a href="{% url 'patients:list' %}" class="bg-white/5 hover:bg-white/10 rounded-xl p-4 text-center transition group">
-                    <i class="fas fa-user-injured text-amber-400 text-2xl block mb-2 group-hover:scale-110 transition"></i>
-                    <span class="text-gray-300 text-sm">Patient Records</span>
-                </a>
-                <a href="{% url 'laboratory:doctor_lab_request_create' %}" class="bg-white/5 hover:bg-white/10 rounded-xl p-4 text-center transition group">
-                    <i class="fas fa-flask text-rose-400 text-2xl block mb-2 group-hover:scale-110 transition"></i>
-                    <span class="text-gray-300 text-sm">Lab Request</span>
-                </a>
-                <a href="{% url 'notifications:doctor_notifications' %}" class="bg-white/5 hover:bg-white/10 rounded-xl p-4 text-center transition group">
-                    <i class="fas fa-bell text-amber-400 text-2xl block mb-2 group-hover:scale-110 transition"></i>
-                    <span class="text-gray-300 text-sm">Notifications</span>
-                </a>
+                {% if doctor.is_verified %}
+                    <a href="{% url 'prescriptions:doctor_prescription_list' %}" class="bg-white/5 hover:bg-white/10 rounded-xl p-4 text-center transition group">
+                        <i class="fas fa-prescription-bottle text-purple-400 text-2xl block mb-2 group-hover:scale-110 transition"></i>
+                        <span class="text-gray-300 text-sm">New Prescription</span>
+                    </a>
+                    <a href="{% url 'appointments:doctor_appointments' %}" class="bg-white/5 hover:bg-white/10 rounded-xl p-4 text-center transition group">
+                        <i class="fas fa-calendar-check text-blue-400 text-2xl block mb-2 group-hover:scale-110 transition"></i>
+                        <span class="text-gray-300 text-sm">View Appointments</span>
+                    </a>
+                    <a href="{% url 'patients:list' %}" class="bg-white/5 hover:bg-white/10 rounded-xl p-4 text-center transition group">
+                        <i class="fas fa-user-injured text-amber-400 text-2xl block mb-2 group-hover:scale-110 transition"></i>
+                        <span class="text-gray-300 text-sm">Patient Records</span>
+                    </a>
+                    <a href="{% url 'laboratory:doctor_lab_request_create' %}" class="bg-white/5 hover:bg-white/10 rounded-xl p-4 text-center transition group">
+                        <i class="fas fa-flask text-rose-400 text-2xl block mb-2 group-hover:scale-110 transition"></i>
+                        <span class="text-gray-300 text-sm">Lab Request</span>
+                    </a>
+                    <a href="{% url 'notifications:doctor_notifications' %}" class="bg-white/5 hover:bg-white/10 rounded-xl p-4 text-center transition group">
+                        <i class="fas fa-bell text-amber-400 text-2xl block mb-2 group-hover:scale-110 transition"></i>
+                        <span class="text-gray-300 text-sm">Notifications</span>
+                    </a>
+                {% else %}
+                    <div class="bg-white/5 rounded-xl p-4 text-center opacity-50 cursor-not-allowed">
+                        <i class="fas fa-lock text-gray-500 text-2xl block mb-2"></i>
+                        <span class="text-gray-500 text-sm">Locked</span>
+                    </div>
+                    <div class="bg-white/5 rounded-xl p-4 text-center opacity-50 cursor-not-allowed">
+                        <i class="fas fa-lock text-gray-500 text-2xl block mb-2"></i>
+                        <span class="text-gray-500 text-sm">Locked</span>
+                    </div>
+                    <div class="bg-white/5 rounded-xl p-4 text-center opacity-50 cursor-not-allowed">
+                        <i class="fas fa-lock text-gray-500 text-2xl block mb-2"></i>
+                        <span class="text-gray-500 text-sm">Locked</span>
+                    </div>
+                    <div class="bg-white/5 rounded-xl p-4 text-center opacity-50 cursor-not-allowed">
+                        <i class="fas fa-lock text-gray-500 text-2xl block mb-2"></i>
+                        <span class="text-gray-500 text-sm">Locked</span>
+                    </div>
+                    <a href="{% url 'doctors:verification' %}" class="bg-blue-500/10 hover:bg-blue-500/20 rounded-xl p-4 text-center transition border border-blue-500/20">
+                        <i class="fas fa-check-double text-blue-400 text-2xl block mb-2"></i>
+                        <span class="text-blue-400 text-sm">Verify Now</span>
+                    </a>
+                {% endif %}
             </div>
         </div>
 
@@ -297,170 +431,230 @@
         <div class="glass-card rounded-2xl border border-white/10 p-5">
             <h3 class="text-white font-medium mb-3 flex items-center justify-between">
                 Today's Appointments
-                <a href="{% url 'appointments:doctor_appointments' %}" class="text-xs text-blue-400 hover:text-blue-300">View All</a>
+                {% if doctor.is_verified %}
+                    <a href="{% url 'appointments:doctor_appointments' %}" class="text-xs text-blue-400 hover:text-blue-300">View All</a>
+                {% else %}
+                    <span class="text-xs text-gray-500"><i class="fas fa-lock mr-1"></i>Locked</span>
+                {% endif %}
             </h3>
-            <div class="overflow-x-auto">
-                <table class="w-full text-sm">
-                    <thead class="bg-white/5 border-b border-white/10">
-                        <tr class="text-left text-gray-400 font-medium">
-                            <th class="px-4 py-2">Time</th>
-                            <th class="px-4 py-2">Patient</th>
-                            <th class="px-4 py-2">Reason</th>
-                            <th class="px-4 py-2">Status</th>
-                            <th class="px-4 py-2 text-center">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-white/5">
-                        {% for apt in today_appointments %}
-                        <tr class="hover:bg-white/5 transition">
-                            <td class="px-4 py-2 text-white">{{ apt.appointment_time|time:"h:i A" }}</td>
-                            <td class="px-4 py-2 text-white">{{ apt.patient.full_name }}</td>
-                            <td class="px-4 py-2 text-gray-300">{{ apt.reason|default:"N/A" }}</td>
-                            <td class="px-4 py-2">
-                                <span class="text-xs px-2 py-0.5 rounded-full 
-                                    {% if apt.status == 'confirmed' %}bg-blue-500/20 text-blue-300
-                                    {% elif apt.status == 'completed' %}bg-green-500/20 text-green-300
-                                    {% elif apt.status == 'pending' %}bg-amber-500/20 text-amber-300
-                                    {% else %}bg-gray-500/20 text-gray-300{% endif %}">
-                                    {{ apt.get_status_display|default:apt.status }}
-                                </span>
-                            </td>
-                            <td class="px-4 py-2 text-center">
-                                <a href="{% url 'appointments:doctor_appointment_detail' apt.pk %}" class="text-blue-400 hover:text-blue-300 text-xs">View</a>
-                            </td>
-                        </tr>
-                        {% empty %}
-                        <tr>
-                            <td colspan="5" class="text-center py-4 text-gray-400">No appointments today.</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
+            {% if doctor.is_verified %}
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead class="bg-white/5 border-b border-white/10">
+                            <tr class="text-left text-gray-400 font-medium">
+                                <th class="px-4 py-2">Time</th>
+                                <th class="px-4 py-2">Patient</th>
+                                <th class="px-4 py-2">Reason</th>
+                                <th class="px-4 py-2">Status</th>
+                                <th class="px-4 py-2 text-center">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-white/5">
+                            {% for apt in today_appointments %}
+                            <tr class="hover:bg-white/5 transition">
+                                <td class="px-4 py-2 text-white">{{ apt.appointment_time|time:"h:i A" }}</td>
+                                <td class="px-4 py-2 text-white">{{ apt.patient.full_name }}</td>
+                                <td class="px-4 py-2 text-gray-300">{{ apt.reason|default:"N/A" }}</td>
+                                <td class="px-4 py-2">
+                                    <span class="text-xs px-2 py-0.5 rounded-full 
+                                        {% if apt.status == 'confirmed' %}bg-blue-500/20 text-blue-300
+                                        {% elif apt.status == 'completed' %}bg-green-500/20 text-green-300
+                                        {% elif apt.status == 'pending' %}bg-amber-500/20 text-amber-300
+                                        {% else %}bg-gray-500/20 text-gray-300{% endif %}">
+                                        {{ apt.get_status_display|default:apt.status }}
+                                    </span>
+                                </td>
+                                <td class="px-4 py-2 text-center">
+                                    <a href="{% url 'appointments:doctor_appointment_detail' apt.pk %}" class="text-blue-400 hover:text-blue-300 text-xs">View</a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center py-4 text-gray-400">No appointments today.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center py-8 opacity-50">
+                    <i class="fas fa-lock text-gray-500 text-3xl mb-2 block"></i>
+                    <p class="text-gray-400">Complete verification to view appointments</p>
+                </div>
+            {% endif %}
         </div>
 
         <!-- ====================== UPCOMING APPOINTMENTS ====================== -->
         <div class="glass-card rounded-2xl border border-white/10 p-5">
             <h3 class="text-white font-medium mb-3 flex items-center justify-between">
                 Upcoming Appointments
-                <a href="{% url 'appointments:doctor_appointments' %}" class="text-xs text-blue-400 hover:text-blue-300">View All</a>
+                {% if doctor.is_verified %}
+                    <a href="{% url 'appointments:doctor_appointments' %}" class="text-xs text-blue-400 hover:text-blue-300">View All</a>
+                {% else %}
+                    <span class="text-xs text-gray-500"><i class="fas fa-lock mr-1"></i>Locked</span>
+                {% endif %}
             </h3>
-            <div class="space-y-2">
-                {% for apt in upcoming_appointments %}
-                <div class="flex items-center justify-between text-sm border-b border-white/5 pb-2">
-                    <div>
-                        <span class="text-white">{{ apt.patient.full_name }}</span>
-                        <span class="text-gray-400 text-xs ml-2">{{ apt.appointment_date|date:"M d" }} at {{ apt.appointment_time|time:"h:i A" }}</span>
+            {% if doctor.is_verified %}
+                <div class="space-y-2">
+                    {% for apt in upcoming_appointments %}
+                    <div class="flex items-center justify-between text-sm border-b border-white/5 pb-2">
+                        <div>
+                            <span class="text-white">{{ apt.patient.full_name }}</span>
+                            <span class="text-gray-400 text-xs ml-2">{{ apt.appointment_date|date:"M d" }} at {{ apt.appointment_time|time:"h:i A" }}</span>
+                        </div>
+                        <a href="{% url 'appointments:doctor_appointment_detail' apt.pk %}" class="text-blue-400 hover:text-blue-300 text-xs">View</a>
                     </div>
-                    <a href="{% url 'appointments:doctor_appointment_detail' apt.pk %}" class="text-blue-400 hover:text-blue-300 text-xs">View</a>
+                    {% empty %}
+                    <p class="text-gray-400 text-sm">No upcoming appointments.</p>
+                    {% endfor %}
                 </div>
-                {% empty %}
-                <p class="text-gray-400 text-sm">No upcoming appointments.</p>
-                {% endfor %}
-            </div>
+            {% else %}
+                <div class="text-center py-4 opacity-50">
+                    <p class="text-gray-400 text-sm"><i class="fas fa-lock mr-1"></i>Locked - Verify to access</p>
+                </div>
+            {% endif %}
         </div>
 
         <!-- ====================== RECENT PATIENTS ====================== -->
         <div class="glass-card rounded-2xl border border-white/10 p-5">
             <h3 class="text-white font-medium mb-3 flex items-center justify-between">
                 Recent Patients
-                <a href="{% url 'patients:list' %}" class="text-xs text-blue-400 hover:text-blue-300">View All</a>
+                {% if doctor.is_verified %}
+                    <a href="{% url 'patients:list' %}" class="text-xs text-blue-400 hover:text-blue-300">View All</a>
+                {% else %}
+                    <span class="text-xs text-gray-500"><i class="fas fa-lock mr-1"></i>Locked</span>
+                {% endif %}
             </h3>
-            <div class="space-y-2">
-                {% for patient in recent_patients %}
-                <div class="flex items-center justify-between text-sm border-b border-white/5 pb-2">
-                    <div>
-                        <span class="text-white">{{ patient.full_name }}</span>
-                        <span class="text-gray-400 text-xs ml-2">{{ patient.age|default:"N/A" }} yrs</span>
-                        <span class="text-gray-400 text-xs ml-2">{{ patient.gender|default:"N/A" }}</span>
+            {% if doctor.is_verified %}
+                <div class="space-y-2">
+                    {% for patient in recent_patients %}
+                    <div class="flex items-center justify-between text-sm border-b border-white/5 pb-2">
+                        <div>
+                            <span class="text-white">{{ patient.full_name }}</span>
+                            <span class="text-gray-400 text-xs ml-2">{{ patient.age|default:"N/A" }} yrs</span>
+                            <span class="text-gray-400 text-xs ml-2">{{ patient.gender|default:"N/A" }}</span>
+                        </div>
+                        <div>
+                            <span class="text-gray-400 text-xs mr-2">{{ patient.appointments.last.appointment_date|date:"M d"|default:"" }}</span>
+                            <a href="{% url 'patients:detail' patient.pk %}" class="text-blue-400 hover:text-blue-300 text-xs">View Profile</a>
+                        </div>
                     </div>
-                    <div>
-                        <span class="text-gray-400 text-xs mr-2">{{ patient.appointments.last.appointment_date|date:"M d"|default:"" }}</span>
-                        <a href="{% url 'patients:detail' patient.pk %}" class="text-blue-400 hover:text-blue-300 text-xs">View Profile</a>
-                    </div>
+                    {% empty %}
+                    <p class="text-gray-400 text-sm">No recent patients.</p>
+                    {% endfor %}
                 </div>
-                {% empty %}
-                <p class="text-gray-400 text-sm">No recent patients.</p>
-                {% endfor %}
-            </div>
+            {% else %}
+                <div class="text-center py-4 opacity-50">
+                    <p class="text-gray-400 text-sm"><i class="fas fa-lock mr-1"></i>Locked - Verify to access</p>
+                </div>
+            {% endif %}
         </div>
 
         <!-- ====================== RECENT PRESCRIPTIONS ====================== -->
         <div class="glass-card rounded-2xl border border-white/10 p-5">
             <h3 class="text-white font-medium mb-3 flex items-center justify-between">
                 Recent Prescriptions
-                <a href="{% url 'prescriptions:list' %}" class="text-xs text-blue-400 hover:text-blue-300">View All</a>
+                {% if doctor.is_verified %}
+                    <a href="{% url 'prescriptions:list' %}" class="text-xs text-blue-400 hover:text-blue-300">View All</a>
+                {% else %}
+                    <span class="text-xs text-gray-500"><i class="fas fa-lock mr-1"></i>Locked</span>
+                {% endif %}
             </h3>
-            <div class="space-y-2">
-                {% for rx in recent_prescriptions %}
-                <div class="flex items-center justify-between text-sm border-b border-white/5 pb-2">
-                    <div>
-                        <span class="text-white">#{{ rx.prescription_number }}</span>
-                        <span class="text-gray-400 text-xs ml-2">{{ rx.patient.full_name }}</span>
+            {% if doctor.is_verified %}
+                <div class="space-y-2">
+                    {% for rx in recent_prescriptions %}
+                    <div class="flex items-center justify-between text-sm border-b border-white/5 pb-2">
+                        <div>
+                            <span class="text-white">#{{ rx.prescription_number }}</span>
+                            <span class="text-gray-400 text-xs ml-2">{{ rx.patient.full_name }}</span>
+                        </div>
+                        <div>
+                            <span class="text-gray-400 text-xs mr-2">{{ rx.created_at|date:"M d" }}</span>
+                            <span class="text-xs px-2 py-0.5 rounded-full 
+                                {% if rx.status == 'issued' %}bg-blue-500/20 text-blue-300
+                                {% elif rx.status == 'completed' %}bg-green-500/20 text-green-300
+                                {% elif rx.status == 'draft' %}bg-gray-500/20 text-gray-300
+                                {% else %}bg-amber-500/20 text-amber-300{% endif %}">
+                                {{ rx.get_status_display|default:rx.status }}
+                            </span>
+                            <a href="{% url 'prescriptions:detail' rx.pk %}" class="text-blue-400 hover:text-blue-300 text-xs ml-2">View</a>
+                        </div>
                     </div>
-                    <div>
-                        <span class="text-gray-400 text-xs mr-2">{{ rx.created_at|date:"M d" }}</span>
-                        <span class="text-xs px-2 py-0.5 rounded-full 
-                            {% if rx.status == 'issued' %}bg-blue-500/20 text-blue-300
-                            {% elif rx.status == 'completed' %}bg-green-500/20 text-green-300
-                            {% elif rx.status == 'draft' %}bg-gray-500/20 text-gray-300
-                            {% else %}bg-amber-500/20 text-amber-300{% endif %}">
-                            {{ rx.get_status_display|default:rx.status }}
-                        </span>
-                        <a href="{% url 'prescriptions:detail' rx.pk %}" class="text-blue-400 hover:text-blue-300 text-xs ml-2">View</a>
-                    </div>
+                    {% empty %}
+                    <p class="text-gray-400 text-sm">No recent prescriptions.</p>
+                    {% endfor %}
                 </div>
-                {% empty %}
-                <p class="text-gray-400 text-sm">No recent prescriptions.</p>
-                {% endfor %}
-            </div>
+            {% else %}
+                <div class="text-center py-4 opacity-50">
+                    <p class="text-gray-400 text-sm"><i class="fas fa-lock mr-1"></i>Locked - Verify to access</p>
+                </div>
+            {% endif %}
         </div>
 
         <!-- ====================== PENDING LAB REQUESTS ====================== -->
         <div class="glass-card rounded-2xl border border-white/10 p-5">
             <h3 class="text-white font-medium mb-3 flex items-center justify-between">
                 Pending Lab Requests
-                <a href="{% url 'laboratory:order_list' %}" class="text-xs text-blue-400 hover:text-blue-300">View All</a>
+                {% if doctor.is_verified %}
+                    <a href="{% url 'laboratory:order_list' %}" class="text-xs text-blue-400 hover:text-blue-300">View All</a>
+                {% else %}
+                    <span class="text-xs text-gray-500"><i class="fas fa-lock mr-1"></i>Locked</span>
+                {% endif %}
             </h3>
-            <div class="space-y-2">
-                {% for order in pending_lab_orders %}
-                <div class="flex items-center justify-between text-sm border-b border-white/5 pb-2">
-                    <div>
-                        <span class="text-white">{{ order.lab_order.patient.full_name|default:"N/A" }}</span>
-                        <span class="text-gray-400 text-xs ml-2">{{ order.lab_order.test.name|default:"Test" }}</span>
+            {% if doctor.is_verified %}
+                <div class="space-y-2">
+                    {% for order in pending_lab_orders %}
+                    <div class="flex items-center justify-between text-sm border-b border-white/5 pb-2">
+                        <div>
+                            <span class="text-white">{{ order.lab_order.patient.full_name|default:"N/A" }}</span>
+                            <span class="text-gray-400 text-xs ml-2">{{ order.lab_order.test.name|default:"Test" }}</span>
+                        </div>
+                        <div>
+                            <span class="text-xs px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300">Pending</span>
+                            <a href="{% url 'laboratory:order_detail' order.lab_order.pk %}" class="text-blue-400 hover:text-blue-300 text-xs ml-2">View</a>
+                        </div>
                     </div>
-                    <div>
-                        <span class="text-xs px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300">Pending</span>
-                        <a href="{% url 'laboratory:order_detail' order.lab_order.pk %}" class="text-blue-400 hover:text-blue-300 text-xs ml-2">View</a>
-                    </div>
+                    {% empty %}
+                    <p class="text-gray-400 text-sm">No pending lab requests.</p>
+                    {% endfor %}
                 </div>
-                {% empty %}
-                <p class="text-gray-400 text-sm">No pending lab requests.</p>
-                {% endfor %}
-            </div>
+            {% else %}
+                <div class="text-center py-4 opacity-50">
+                    <p class="text-gray-400 text-sm"><i class="fas fa-lock mr-1"></i>Locked - Verify to access</p>
+                </div>
+            {% endif %}
         </div>
 
         <!-- ====================== NOTIFICATIONS ====================== -->
         <div class="glass-card rounded-2xl border border-white/10 p-5">
             <h3 class="text-white font-medium mb-3 flex items-center gap-2">
                 <i class="fas fa-bell text-amber-400"></i> Recent Notifications
+                {% if not doctor.is_verified %}
+                    <span class="text-xs text-gray-500 ml-2"><i class="fas fa-lock mr-1"></i>Locked</span>
+                {% endif %}
             </h3>
-            <div class="space-y-2 max-h-48 overflow-y-auto">
-                {% for notif in notifications %}
-                <div class="flex items-center gap-3 text-sm border-b border-white/5 pb-2 hover:bg-white/5 p-2 rounded-lg transition">
-                    <i class="fas fa-circle text-{{ notif.verb|default:'blue' }}-400 text-xs"></i>
-                    <span class="text-gray-300 flex-1">{{ notif.message|default:"New notification" }}</span>
-                    <span class="text-gray-500 text-xs">{{ notif.created_at|timesince }} ago</span>
-                    {% if notif.is_read %}
-                        <span class="text-gray-500 text-xs"><i class="fas fa-check-circle"></i></span>
-                    {% else %}
-                        <a href="{% url 'notifications:mark_read' notif.pk %}" class="text-blue-400 hover:text-blue-300 text-xs">Mark read</a>
-                    {% endif %}
+            {% if doctor.is_verified %}
+                <div class="space-y-2 max-h-48 overflow-y-auto">
+                    {% for notif in notifications %}
+                    <div class="flex items-center gap-3 text-sm border-b border-white/5 pb-2 hover:bg-white/5 p-2 rounded-lg transition">
+                        <i class="fas fa-circle text-{{ notif.verb|default:'blue' }}-400 text-xs"></i>
+                        <span class="text-gray-300 flex-1">{{ notif.message|default:"New notification" }}</span>
+                        <span class="text-gray-500 text-xs">{{ notif.created_at|timesince }} ago</span>
+                        {% if notif.is_read %}
+                            <span class="text-gray-500 text-xs"><i class="fas fa-check-circle"></i></span>
+                        {% else %}
+                            <a href="{% url 'notifications:mark_read' notif.pk %}" class="text-blue-400 hover:text-blue-300 text-xs">Mark read</a>
+                        {% endif %}
+                    </div>
+                    {% empty %}
+                    <p class="text-gray-400 text-sm">No new notifications.</p>
+                    {% endfor %}
                 </div>
-                {% empty %}
-                <p class="text-gray-400 text-sm">No new notifications.</p>
-                {% endfor %}
-            </div>
+            {% else %}
+                <div class="text-center py-4 opacity-50">
+                    <p class="text-gray-400 text-sm"><i class="fas fa-lock mr-1"></i>Locked - Verify to access</p>
+                </div>
+            {% endif %}
         </div>
 
     </main>
@@ -516,6 +710,12 @@
             });
         }
     });
+
+    // ===== VERIFICATION ALERT =====
+    function showVerificationAlert(event) {
+        event.preventDefault();
+        alert('Your account is under verification. Please wait until Hospital Admin approves your documents.');
+    }
 
     // Logout Modal Scripts
     const modal = document.getElementById('logoutModal');

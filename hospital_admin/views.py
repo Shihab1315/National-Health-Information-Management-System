@@ -6,6 +6,9 @@ from django.utils.decorators import method_decorator
 from django.views import View
 from django.contrib import messages
 import json
+from django.contrib.auth import update_session_auth_hash
+from django.contrib.auth.forms import PasswordChangeForm
+from .forms import ProfileForm, CustomPasswordChangeForm, NotificationPreferencesForm
 
 from django.http import HttpResponse, JsonResponse, HttpResponseForbidden
 from accounts.decorators import role_required
@@ -2856,5 +2859,296 @@ class AppointmentCalendarView(HospitalAdminBaseView):
             'page_title': 'Appointment Calendar',
             'current_page': 'Appointment Calendar',
             'breadcrumb': 'Appointment Management / Appointment Calendar',
+        }
+        return render(request, self.template_name, context)
+    
+# =============================================================================
+# DOCTOR SCHEDULE
+# =============================================================================
+@method_decorator([login_required, role_required(['hospital_admin'])], name='dispatch')
+class DoctorScheduleView(HospitalAdminBaseView):
+    """Doctor Schedule view."""
+    template_name = 'hospital_admin/appointments/doctor_schedule.html'
+    
+    def get(self, request):
+        if not self.is_verified:
+            messages.warning(request, 'Please complete hospital verification first.')
+            return redirect('hospital_admin:dashboard')
+        
+        hospital = request.user.hospital
+        if not hospital:
+            messages.error(request, 'No hospital associated with your account.')
+            return redirect('hospital_admin:dashboard')
+        
+        from doctors.models import Doctor
+        from appointments.models import Appointment
+        from hospitals.models import HospitalDepartment
+        from django.utils import timezone
+        from datetime import datetime, timedelta
+        
+        today = timezone.now().date()
+        current_time = timezone.now().time()
+        
+        # Get all doctors for this hospital
+        doctors = Doctor.objects.filter(
+            hospital=hospital,
+            is_active=True
+        ).select_related('user').prefetch_related('specialties')
+        
+        # Get today's appointments
+        today_appointments = Appointment.objects.filter(
+            hospital=hospital,
+            appointment_date=today
+        ).select_related('patient', 'doctor', 'doctor__user', 'patient__user')
+        
+        # Statistics
+        total_doctors = doctors.count()
+        doctors_on_duty = doctors.filter(is_verified=True).count()
+        available_doctors = doctors.filter(is_active=True, is_verified=True).count()
+        
+        # Count busy doctors (those with appointments today)
+        busy_doctor_ids = today_appointments.values_list('doctor_id', flat=True).distinct()
+        busy_doctors = busy_doctor_ids.count()
+        
+        today_count = today_appointments.count()
+        upcoming_count = Appointment.objects.filter(
+            hospital=hospital,
+            appointment_date__gte=today,
+            status__in=['pending', 'confirmed']
+        ).count()
+        
+        # Get all appointments for weekly calendar
+        week_start = today - timedelta(days=today.weekday())
+        week_end = week_start + timedelta(days=6)
+        week_appointments = Appointment.objects.filter(
+            hospital=hospital,
+            appointment_date__gte=week_start,
+            appointment_date__lte=week_end
+        ).select_related('patient', 'doctor', 'doctor__user')
+        
+        # Build weekly schedule data
+        weekly_schedule = {}
+        for doctor in doctors:
+            doctor_schedule = {}
+            for day_offset in range(7):
+                day_date = week_start + timedelta(days=day_offset)
+                day_name = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'][day_offset]
+                day_appointments = week_appointments.filter(
+                    doctor=doctor,
+                    appointment_date=day_date
+                )
+                doctor_schedule[day_name] = {
+                    'date': day_date,
+                    'count': day_appointments.count(),
+                    'appointments': day_appointments,
+                    'is_available': doctor.is_active and doctor.is_verified,
+                    'is_weekend': day_offset >= 5,
+                }
+            weekly_schedule[doctor.id] = {
+                'doctor': doctor,
+                'schedule': doctor_schedule
+            }
+        
+        # Get departments for filter
+        departments = HospitalDepartment.objects.filter(
+            hospital=hospital,
+            active=True
+        ).order_by('name')
+        
+        context = {
+            'doctors': doctors,
+            'total_doctors': total_doctors,
+            'doctors_on_duty': doctors_on_duty,
+            'available_doctors': available_doctors,
+            'busy_doctors': busy_doctors,
+            'today_count': today_count,
+            'upcoming_count': upcoming_count,
+            'weekly_schedule': weekly_schedule,
+            'departments': departments,
+            'today': today,
+            'week_start': week_start,
+            'week_end': week_end,
+            'page_title': 'Doctor Schedule',
+            'current_page': 'Doctor Schedule',
+            'breadcrumb': 'Appointment Management / Doctor Schedule',
+        }
+        return render(request, self.template_name, context)
+    
+# =============================================================================
+# SETTINGS DASHBOARD
+# =============================================================================
+@method_decorator([login_required, role_required(['hospital_admin'])], name='dispatch')
+class SettingsDashboardView(HospitalAdminBaseView):
+    """Settings dashboard."""
+    template_name = 'hospital_admin/settings/dashboard.html'
+    
+    def get(self, request):
+        if not self.is_verified:
+            messages.warning(request, 'Please complete hospital verification first.')
+            return redirect('hospital_admin:dashboard')
+        
+        context = {
+            'page_title': 'Settings',
+            'current_page': 'Settings',
+            'breadcrumb': 'Settings',
+        }
+        return render(request, self.template_name, context)
+
+
+# =============================================================================
+# PROFILE SETTINGS
+# =============================================================================
+@method_decorator([login_required, role_required(['hospital_admin'])], name='dispatch')
+class ProfileSettingsView(HospitalAdminBaseView):
+    """Profile settings."""
+    template_name = 'hospital_admin/settings/profile.html'
+    
+    def get(self, request):
+        if not self.is_verified:
+            messages.warning(request, 'Please complete hospital verification first.')
+            return redirect('hospital_admin:dashboard')
+        
+        form = ProfileForm(instance=request.user)
+        
+        context = {
+            'form': form,
+            'user': request.user,
+            'page_title': 'Profile Settings',
+            'current_page': 'Profile Settings',
+            'breadcrumb': 'Settings / Profile',
+        }
+        return render(request, self.template_name, context)
+    
+    def post(self, request):
+        if not self.is_verified:
+            messages.warning(request, 'Please complete hospital verification first.')
+            return redirect('hospital_admin:dashboard')
+        
+        form = ProfileForm(request.POST, request.FILES, instance=request.user)
+        
+        if form.is_valid():
+            user = form.save()
+            messages.success(request, 'Profile updated successfully!')
+            return redirect('hospital_admin:profile_settings')
+        
+        context = {
+            'form': form,
+            'user': request.user,
+            'page_title': 'Profile Settings',
+            'current_page': 'Profile Settings',
+            'breadcrumb': 'Settings / Profile',
+        }
+        return render(request, self.template_name, context)
+
+
+# =============================================================================
+# CHANGE PASSWORD
+# =============================================================================
+@method_decorator([login_required, role_required(['hospital_admin'])], name='dispatch')
+class ChangePasswordView(HospitalAdminBaseView):
+    """Change password."""
+    template_name = 'hospital_admin/settings/change_password.html'
+    
+    def get(self, request):
+        if not self.is_verified:
+            messages.warning(request, 'Please complete hospital verification first.')
+            return redirect('hospital_admin:dashboard')
+        
+        form = CustomPasswordChangeForm(user=request.user)
+        
+        context = {
+            'form': form,
+            'page_title': 'Change Password',
+            'current_page': 'Change Password',
+            'breadcrumb': 'Settings / Change Password',
+        }
+        return render(request, self.template_name, context)
+    
+    def post(self, request):
+        if not self.is_verified:
+            messages.warning(request, 'Please complete hospital verification first.')
+            return redirect('hospital_admin:dashboard')
+        
+        form = CustomPasswordChangeForm(user=request.user, data=request.POST)
+        
+        if form.is_valid():
+            user = form.save()
+            update_session_auth_hash(request, user)
+            messages.success(request, 'Password changed successfully!')
+            return redirect('hospital_admin:change_password')
+        
+        context = {
+            'form': form,
+            'page_title': 'Change Password',
+            'current_page': 'Change Password',
+            'breadcrumb': 'Settings / Change Password',
+        }
+        return render(request, self.template_name, context)
+
+
+# =============================================================================
+# NOTIFICATION SETTINGS
+# =============================================================================
+@method_decorator([login_required, role_required(['hospital_admin'])], name='dispatch')
+class NotificationSettingsView(HospitalAdminBaseView):
+    """Notification preferences."""
+    template_name = 'hospital_admin/settings/notifications.html'
+    
+    def get(self, request):
+        if not self.is_verified:
+            messages.warning(request, 'Please complete hospital verification first.')
+            return redirect('hospital_admin:dashboard')
+        
+        # Get user's notification settings (can be stored in a separate model)
+        # For now, use session or defaults
+        form = NotificationPreferencesForm()
+        
+        context = {
+            'form': form,
+            'page_title': 'Notification Preferences',
+            'current_page': 'Notification Preferences',
+            'breadcrumb': 'Settings / Notifications',
+        }
+        return render(request, self.template_name, context)
+    
+    def post(self, request):
+        if not self.is_verified:
+            messages.warning(request, 'Please complete hospital verification first.')
+            return redirect('hospital_admin:dashboard')
+        
+        form = NotificationPreferencesForm(request.POST)
+        
+        if form.is_valid():
+            # Save notification preferences (you can store in User model or separate model)
+            messages.success(request, 'Notification preferences updated successfully!')
+            return redirect('hospital_admin:notification_settings')
+        
+        context = {
+            'form': form,
+            'page_title': 'Notification Preferences',
+            'current_page': 'Notification Preferences',
+            'breadcrumb': 'Settings / Notifications',
+        }
+        return render(request, self.template_name, context)
+
+
+# =============================================================================
+# SECURITY SETTINGS
+# =============================================================================
+@method_decorator([login_required, role_required(['hospital_admin'])], name='dispatch')
+class SecuritySettingsView(HospitalAdminBaseView):
+    """Account security settings."""
+    template_name = 'hospital_admin/settings/security.html'
+    
+    def get(self, request):
+        if not self.is_verified:
+            messages.warning(request, 'Please complete hospital verification first.')
+            return redirect('hospital_admin:dashboard')
+        
+        context = {
+            'user': request.user,
+            'page_title': 'Account Security',
+            'current_page': 'Account Security',
+            'breadcrumb': 'Settings / Security',
         }
         return render(request, self.template_name, context)

@@ -78,6 +78,14 @@ urlpatterns = [
     path('appointments/<int:appointment_id>/reject/', views.reject_appointment, name='reject_appointment'),
     path('appointments/<int:appointment_id>/cancel/', views.cancel_appointment, name='cancel_appointment'),
     path('appointments/calendar/', views.AppointmentCalendarView.as_view(), name='appointment_calendar'),  
+     path('appointments/doctor-schedule/', views.DoctorScheduleView.as_view(), name='doctor_schedule'),
+     
+      # ===== Settings =====
+    path('settings/', views.SettingsDashboardView.as_view(), name='settings'),
+    path('settings/profile/', views.ProfileSettingsView.as_view(), name='profile_settings'),
+    path('settings/change-password/', views.ChangePasswordView.as_view(), name='change_password'),
+    path('settings/notifications/', views.NotificationSettingsView.as_view(), name='notification_settings'),
+    path('settings/security/', views.SecuritySettingsView.as_view(), name='security_settings'),
     # Locked modules
     path('appointments/', views.LockedModuleView.as_view(), name='appointments'),
     path('settings/', views.LockedModuleView.as_view(), name='settings'),

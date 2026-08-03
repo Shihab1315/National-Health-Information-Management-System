@@ -71,6 +71,7 @@ def patient_list(request):
         'page_obj': page_obj,
         'search_query': search_query,
         'district_filter': district_filter,
+        
         'districts': Patient.objects.values_list('district', flat=True).distinct().order_by('district'),
     }
     return render(request, 'patients/patient_list.html', context)
