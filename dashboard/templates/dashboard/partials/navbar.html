@@ -33,9 +33,10 @@
                     </button>
                     <!-- Dropdown -->
                     <div class="absolute right-0 mt-2 w-48 bg-[#0d2137] border border-white/10 rounded-xl shadow-xl backdrop-blur-xl py-2 hidden group-hover:block">
-                         <a href="{% url 'accounts:dashboard_redirect' %}" class="block px-4 py-2 text-sm text-gray-300 hover:bg-white/5 hover:text-white transition">
-                            <i class="fa-regular fa-gauge-high mr-2"></i> Dashboard
-                        </a> 
+                         <a href="{% url 'accounts:dashboard_redirect' %}"
+   class="text-gray-300 py-2.5 px-4 rounded-xl hover:bg-white/5">
+    <i class="fa-regular fa-gauge-high mr-2"></i>Dashboard
+</a> 
                         <a href="{% url 'accounts:profile' %}" class="block px-4 py-2 text-sm text-gray-300 hover:bg-white/5 hover:text-white transition">
                             <i class="fa-regular fa-user mr-2"></i> Profile
                         </a>

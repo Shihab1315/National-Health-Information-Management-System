@@ -260,31 +260,41 @@ def superadmin_dashboard(request):
 @role_required(['doctor'])
 def doctor_dashboard(request):
     """Doctor Dashboard - only doctors."""
-    
+
     try:
         doctor = Doctor.objects.get(user=request.user)
     except Doctor.DoesNotExist:
-        messages.error(request, 
-            "Your account is not properly configured as a doctor. "
-            "Please contact system administrator."
-        )
-        return redirect('dashboard:homepage')
-    
-    appointments = Appointment.objects.filter(doctor=doctor).select_related('patient')
-    
+        messages.error(request, "Doctor profile not found.")
+        return redirect("dashboard:homepage")
+
+    # 🔒 যদি verify না হয় তাহলে Dashboard এ ঢুকতে পারবে না
+    if not doctor.is_verified:
+        return redirect("doctors:verification")
+
+    # ---------- নিচের পুরনো code ----------
+    appointments = Appointment.objects.filter(
+        doctor=doctor
+    ).select_related('patient')
+
     total_appointments = appointments.count()
     pending = appointments.filter(status='pending').count()
     confirmed = appointments.filter(status='confirmed').count()
     completed = appointments.filter(status='completed').count()
-    
+
     today = timezone.now().date()
+
     upcoming = appointments.filter(
         appointment_date__gte=today,
         status__in=['pending', 'confirmed']
-    ).order_by('appointment_date', 'appointment_time')[:5]
-    
-    prescriptions = Prescription.objects.filter(doctor=doctor).order_by('-created_at')[:5]
-    
+    ).order_by(
+        'appointment_date',
+        'appointment_time'
+    )[:5]
+
+    prescriptions = Prescription.objects.filter(
+        doctor=doctor
+    ).order_by('-created_at')[:5]
+
     context = {
         'doctor': doctor,
         'is_verified': doctor.is_verified,
@@ -295,7 +305,7 @@ def doctor_dashboard(request):
         'upcoming': upcoming,
         'prescriptions': prescriptions,
     }
-    
+
     return render(request, 'dashboard/doctor_dashboard.html', context)
 
 

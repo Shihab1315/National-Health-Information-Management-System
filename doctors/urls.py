@@ -12,7 +12,12 @@ urlpatterns = [
     path('<int:pk>/delete/', views.doctor_delete, name='delete'),
     
     # ===== NEW: Doctor Verification =====
-path('verification/', views.doctor_verification, name='verification'),    
+    path('verification/', views.doctor_verification, name='verification'),
+    path(
+    "profile/create/",
+    views.DoctorProfileCreateView.as_view(),
+    name="create_profile",
+),
     # Doctor Profile
     path('profile/', views.DoctorProfileView.as_view(), name='doctor_profile'),
     path('profile/edit/', views.DoctorProfileUpdateView.as_view(), name='doctor_profile_edit'),

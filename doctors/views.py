@@ -3,6 +3,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.core.paginator import Paginator
+from .forms import DoctorCreateProfileForm
 from django.db.models import Q
 from .models import Doctor, Specialty
 from .forms import DoctorForm
@@ -564,3 +565,73 @@ def doctor_verification(request):
         'current_page': 'Verification',
     }
     return render(request, 'doctors/verification.html', context)
+
+@method_decorator([login_required, role_required(['doctor'])], name='dispatch')
+class DoctorProfileCreateView(View):
+
+    template_name = "doctors/doctor/create_profile.html"
+
+    def get(self, request):
+
+        # যদি profile already থাকে
+        if Doctor.objects.filter(user=request.user).exists():
+            return redirect("accounts:dashboard_redirect")
+
+        form = DoctorCreateProfileForm()
+
+        return render(
+            request,
+            self.template_name,
+            {
+                "form": form,
+            },
+        )
+
+    def post(self, request):
+
+        # যদি profile already থাকে
+        if Doctor.objects.filter(user=request.user).exists():
+            return redirect("accounts:dashboard_redirect")
+
+        form = DoctorCreateProfileForm(
+            request.POST,
+            request.FILES,
+        )
+
+        if form.is_valid():
+
+            doctor = form.save(commit=False)
+
+            # User Link
+            doctor.user = request.user
+
+            # Auto Fill
+            doctor.full_name = (
+                request.user.get_full_name()
+                or request.user.username
+            )
+
+            doctor.email = request.user.email
+
+            # Verification Pending
+            doctor.is_verified = False
+
+            doctor.save()
+
+            # Save ManyToMany (specialties)
+            form.save_m2m()
+
+            messages.success(
+                request,
+                "Your profile has been submitted successfully. Please wait for verification."
+            )
+
+            return redirect("doctors:verification")
+
+        return render(
+            request,
+            self.template_name,
+            {
+                "form": form,
+            },
+        )

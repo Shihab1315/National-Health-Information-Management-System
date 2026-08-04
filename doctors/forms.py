@@ -461,3 +461,215 @@ class DoctorNotificationSettingsForm(forms.ModelForm):
                 self.add_error('quiet_hours_end', 'End time must be after start time.')
         
         return cleaned_data
+    
+class DoctorCreateProfileForm(forms.ModelForm):
+    """
+    Form for doctors to create their initial profile.
+    """
+    
+    class Meta:
+        model = Doctor
+        fields = [
+            "registration_number",
+            "national_id",
+            "gender",
+            "date_of_birth",
+            "phone",
+            "address",
+            "city",
+            "district",
+            "zip_code",
+            "qualification",
+            "experience",
+            "consultation_fee",
+            "hospital",
+            "specialties",
+            "available_days",
+            "available_time_start",
+            "available_time_end",
+            "bio",
+            "profile_photo",
+        ]
+        widgets = {
+            "registration_number": forms.TextInput(attrs={
+                "class": "form-control",
+                "placeholder": "BMDC Registration Number",
+                "required": True,
+            }),
+            "national_id": forms.TextInput(attrs={
+                "class": "form-control",
+                "placeholder": "National ID (10 digits)",
+                "required": True,
+            }),
+            "gender": forms.Select(attrs={
+                "class": "form-control",
+                "required": True,
+            }),
+            "date_of_birth": forms.DateInput(attrs={
+                "type": "date",
+                "class": "form-control",
+                "required": True,
+            }),
+            "phone": forms.TextInput(attrs={
+                "class": "form-control",
+                "placeholder": "Phone Number",
+                "required": True,
+            }),
+            "address": forms.Textarea(attrs={
+                "rows": 3,
+                "class": "form-control",
+                "placeholder": "Full Address",
+            }),
+            "city": forms.TextInput(attrs={
+                "class": "form-control",
+                "placeholder": "City",
+            }),
+            "district": forms.TextInput(attrs={
+                "class": "form-control",
+                "placeholder": "District",
+            }),
+            "zip_code": forms.TextInput(attrs={
+                "class": "form-control",
+                "placeholder": "Zip Code",
+            }),
+            "qualification": forms.Textarea(attrs={
+                "rows": 3,
+                "class": "form-control",
+                "placeholder": "e.g., MBBS, FCPS, MD, MS",
+                "required": True,
+            }),
+            "experience": forms.NumberInput(attrs={
+                "class": "form-control",
+                "min": 0,
+                "placeholder": "Years of experience",
+                "required": True,
+            }),
+            "consultation_fee": forms.NumberInput(attrs={
+                "class": "form-control",
+                "min": 0,
+                "placeholder": "Consultation fee in BDT",
+                "required": True,
+            }),
+            "hospital": forms.Select(attrs={
+                "class": "form-control",
+                "required": True,
+            }),
+            "specialties": forms.SelectMultiple(attrs={
+                "class": "form-control",
+                "required": True,
+            }),
+            "available_days": forms.TextInput(attrs={
+                "class": "form-control",
+                "placeholder": "Mon,Tue,Wed,Thu,Fri",
+            }),
+            "available_time_start": forms.TimeInput(attrs={
+                "type": "time",
+                "class": "form-control",
+            }),
+            "available_time_end": forms.TimeInput(attrs={
+                "type": "time",
+                "class": "form-control",
+            }),
+            "bio": forms.Textarea(attrs={
+                "rows": 4,
+                "class": "form-control",
+                "placeholder": "Professional summary and expertise",
+            }),
+            "profile_photo": forms.FileInput(attrs={
+                "class": "form-control",
+                "accept": "image/*",
+            }),
+        }
+        labels = {
+            "registration_number": "BMDC Registration Number",
+            "national_id": "National ID (NID)",
+            "date_of_birth": "Date of Birth",
+            "consultation_fee": "Consultation Fee (BDT)",
+        }
+        help_texts = {
+            "registration_number": "Your BMDC registration number",
+            "national_id": "Your 10-digit National ID number",
+            "specialties": "Hold Ctrl/Cmd to select multiple specialties",
+            "available_days": "Comma-separated days (e.g., Mon,Tue,Wed)",
+            "profile_photo": "Upload a professional photo (PNG, JPG up to 5MB)",
+        }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Make all required fields visually marked
+        for field_name, field in self.fields.items():
+            if field.required:
+                field.widget.attrs['class'] = field.widget.attrs.get('class', '') + ' required'
+    
+    def clean_registration_number(self):
+        registration_number = self.cleaned_data.get("registration_number")
+        if registration_number:
+            # Remove any whitespace
+            registration_number = registration_number.strip().upper()
+            # Check uniqueness
+            if Doctor.objects.filter(registration_number=registration_number).exists():
+                raise forms.ValidationError(
+                    "This registration number already exists. Please verify your BMDC number."
+                )
+        return registration_number
+    
+    def clean_national_id(self):
+        national_id = self.cleaned_data.get("national_id")
+        if national_id:
+            # Remove any whitespace
+            national_id = national_id.strip()
+            # Check length for NID (10 digits)
+            if len(national_id) != 10 or not national_id.isdigit():
+                raise forms.ValidationError(
+                    "National ID must be exactly 10 digits."
+                )
+            # Check uniqueness
+            if Doctor.objects.filter(national_id=national_id).exists():
+                raise forms.ValidationError(
+                    "This National ID already exists."
+                )
+        return national_id
+    
+    def clean_phone(self):
+        phone = self.cleaned_data.get("phone")
+        if phone:
+            phone = phone.strip()
+            # Check if phone contains only digits and plus sign
+            if not all(c.isdigit() or c == '+' for c in phone):
+                raise forms.ValidationError(
+                    "Phone number must contain only digits and '+' sign."
+                )
+        return phone
+    
+    def clean_consultation_fee(self):
+        fee = self.cleaned_data.get("consultation_fee")
+        if fee is not None and fee < 0:
+            raise forms.ValidationError(
+                "Consultation fee cannot be negative."
+            )
+        return fee
+    
+    def clean_experience(self):
+        experience = self.cleaned_data.get("experience")
+        if experience is not None and experience < 0:
+            raise forms.ValidationError(
+                "Experience cannot be negative."
+            )
+        if experience is not None and experience > 60:
+            raise forms.ValidationError(
+                "Please enter a valid experience (max 60 years)."
+            )
+        return experience
+    
+    def clean_available_days(self):
+        days = self.cleaned_data.get("available_days")
+        if days:
+            days = days.strip()
+            valid_days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+            day_list = [d.strip() for d in days.split(',')]
+            for day in day_list:
+                if day not in valid_days:
+                    raise forms.ValidationError(
+                        f"'{day}' is not a valid day. Use: Mon, Tue, Wed, Thu, Fri, Sat, Sun"
+                    )
+        return days

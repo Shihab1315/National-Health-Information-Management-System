@@ -17,6 +17,8 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.utils.decorators import method_decorator
 from django.contrib.auth import logout
 from .forms import LoginForm
+from doctors.models import Doctor
+
 class SignupView(View):
     """
     Production-ready signup view with role selection.
@@ -97,6 +99,11 @@ def dashboard_redirect(request):
     """
     Redirect users to their respective dashboards based on role.
     """
+    print("=" * 50)
+    print("Dashboard Redirect Called")
+    print("User:", request.user.username)
+    print("Role:", request.user.role)
+    
     if not request.user.is_authenticated:
         return redirect('accounts:login')
     
@@ -105,23 +112,42 @@ def dashboard_redirect(request):
     # Check role and redirect accordingly
     if user.role == 'super_admin':
         return redirect('superadmin:dashboard')
+    
     elif user.role == 'hospital_admin':
-        # Redirect to hospital admin dashboard
         return redirect('hospital_admin:dashboard')
+    
     elif user.role == 'doctor':
-        return redirect('dashboard:doctor_dashboard')
+        # ✅ ডাক্তার রোলের জন্য শুধু এই ব্লক
+        from doctors.models import Doctor
+        
+        doctor = Doctor.objects.filter(user=user).first()
+        
+        # যদি Doctor Profile না থাকে
+        if doctor is None:
+            return redirect("doctors:create_profile")
+        
+        # যদি Verify না হয়
+        if not doctor.is_verified:
+            return redirect("doctors:verification")
+        
+        # সব ঠিক থাকলে Dashboard
+        return redirect("dashboard:doctor_dashboard")
+    
     elif user.role == 'patient':
         return redirect('dashboard:patient_dashboard')
+    
     elif user.role == 'receptionist':
         return redirect('dashboard:receptionist_dashboard')
+    
     elif user.role == 'lab_technician':
         return redirect('dashboard:lab_technician_dashboard')
+    
     elif user.role == 'pharmacist':
         return redirect('dashboard:pharmacist_dashboard')
+    
     else:
         # Default fallback
         return redirect('dashboard:homepage')
-
 @login_required
 def hospital_admin_dashboard_check(request):
     """
