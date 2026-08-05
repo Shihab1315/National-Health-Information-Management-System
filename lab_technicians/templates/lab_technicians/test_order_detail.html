@@ -1,0 +1,120 @@
+{% extends "lab_technicians/base.html" %}
+{% load static %}
+
+{% block title %}Order Detail | Lab Technician{% endblock %}
+
+{% block page_title %}Order Detail{% endblock %}
+
+{% block breadcrumb %}
+    <span>Dashboard</span>
+    <span class="mx-1">/</span>
+    <a href="{% url 'lab_technicians:test_orders' %}" class="hover:text-blue-400">Test Orders</a>
+    <span class="mx-1">/</span>
+    <span class="current">{{ order.order_number }}</span>
+{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    
+    <!-- Order Header -->
+    <div class="bg-gradient-to-r from-purple-600/20 to-blue-600/20 rounded-xl border border-white/10 p-6">
+        <div class="flex flex-wrap items-center justify-between gap-4">
+            <div>
+                <h1 class="text-2xl font-bold text-white">{{ order.order_number }}</h1>
+                <p class="text-gray-400 mt-1">Ordered on {{ order.created_at|date:"M d, Y h:i A" }}</p>
+            </div>
+            <span class="status-badge {{ order.status }} text-lg px-4 py-2">
+                <span class="dot"></span>
+                {{ order.get_status_display }}
+            </span>
+        </div>
+    </div>
+    
+    <!-- Order Info -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="glass-card">
+            <h3 class="text-gray-400 text-sm font-medium mb-2">Patient</h3>
+            <p class="text-white font-medium">{{ order.patient.full_name }}</p>
+            <p class="text-gray-400 text-sm">{{ order.patient.user.email|default:"N/A" }}</p>
+        </div>
+        <div class="glass-card">
+            <h3 class="text-gray-400 text-sm font-medium mb-2">Doctor</h3>
+            <p class="text-white font-medium">Dr. {{ order.doctor.user.get_full_name|default:order.doctor.full_name }}</p>
+            <p class="text-gray-400 text-sm">{{ order.doctor.hospital.name|default:"N/A" }}</p>
+        </div>
+        <div class="glass-card">
+            <h3 class="text-gray-400 text-sm font-medium mb-2">Hospital</h3>
+            <p class="text-white font-medium">{{ order.hospital.name|default:"N/A" }}</p>
+        </div>
+    </div>
+    
+    <!-- Order Items -->
+    <div class="glass-card">
+        <h3 class="text-white font-medium mb-4">Test Items</h3>
+        <div class="space-y-2">
+            {% for item in items %}
+            <div class="flex items-center justify-between p-3 bg-white/5 rounded-lg">
+                <div>
+                    <p class="text-white font-medium">{{ item.test.name }}</p>
+                    <p class="text-gray-400 text-sm">{{ item.test.category.name|default:"General" }}</p>
+                </div>
+                <div class="text-right">
+                    <span class="status-badge {{ item.status }}">
+                        <span class="dot"></span>
+                        {{ item.get_status_display }}
+                    </span>
+                    {% if item.result %}
+                        <p class="text-gray-400 text-xs mt-1">Result: {{ item.result }}</p>
+                    {% endif %}
+                </div>
+            </div>
+            {% empty %}
+            <p class="text-gray-400 text-center py-4">No test items found</p>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <!-- Actions -->
+    <div class="flex flex-wrap gap-3">
+        <a href="{% url 'lab_technicians:test_orders' %}" class="px-4 py-2 border border-gray-600 hover:border-gray-500 text-gray-300 hover:text-white rounded-lg transition">
+            <i class="fas fa-arrow-left mr-2"></i>
+            Back to Orders
+        </a>
+        
+        {% if order.status == 'ordered' %}
+            <form method="POST" action="{% url 'lab_technicians:collect_sample' order.id %}" class="inline">
+                {% csrf_token %}
+                <button type="submit" class="px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg transition">
+                    <i class="fas fa-vial mr-2"></i>
+                    Collect Sample
+                </button>
+            </form>
+        {% endif %}
+        
+        {% if order.status == 'collected' %}
+            <form method="POST" action="{% url 'lab_technicians:start_processing' order.id %}" class="inline">
+                {% csrf_token %}
+                <button type="submit" class="px-4 py-2 bg-purple-500 hover:bg-purple-600 text-white rounded-lg transition">
+                    <i class="fas fa-microscope mr-2"></i>
+                    Start Processing
+                </button>
+            </form>
+        {% endif %}
+        
+        {% if order.status == 'processing' %}
+            <a href="{% url 'lab_technicians:lab_result_create' order.id %}" 
+               class="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition">
+                <i class="fas fa-file-medical mr-2"></i>
+                Enter Result
+            </a>
+        {% endif %}
+        
+        {% if order.status == 'completed' and result %}
+            <a href="{% url 'lab_technicians:completed_reports' %}" class="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition">
+                <i class="fas fa-file-pdf mr-2"></i>
+                View Report
+            </a>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -6,6 +6,9 @@ from django.db.models import Q, Count, Avg
 from django.http import JsonResponse
 from accounts.decorators import role_required
 from django.utils import timezone
+
+from appointments.models import Appointment
+from doctors.models import Doctor
 from .models import Hospital, HospitalDepartment, HospitalFacility, HospitalGallery, HospitalReview, HospitalOperatingHour
 from .forms import HospitalForm
 from .services import get_dashboard_stats, hospital_search_filter
@@ -159,3 +162,6 @@ def hospital_statistics(request, slug):
     hospital = get_object_or_404(Hospital, slug=slug, is_deleted=False)
     # Additional stats could be computed
     return render(request, 'hospitals/hospital_statistics.html', {'hospital': hospital})
+
+
+

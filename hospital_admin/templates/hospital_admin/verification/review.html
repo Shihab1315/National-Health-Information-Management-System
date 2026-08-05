@@ -307,7 +307,8 @@
                     <i class="fas fa-hospital icon"></i>
                     Hospital Information
                 </div>
-                <a href="/hospital-admin/verification/hospital-information/" class="edit-btn">
+                <!-- ✅ সঠিক URL ব্যবহার করুন -->
+                <a href="{% url 'hospital_admin:hospital_information' %}" class="edit-btn">
                     <i class="fas fa-edit"></i> Edit
                 </a>
             </div>
@@ -342,7 +343,8 @@
                     <i class="fas fa-phone icon"></i>
                     Contact Information
                 </div>
-                <a href="/hospital-admin/verification/contact-information/" class="edit-btn">
+                <!-- ✅ সঠিক URL ব্যবহার করুন -->
+                <a href="{% url 'hospital_admin:verification_contact_information' %}" class="edit-btn">
                     <i class="fas fa-edit"></i> Edit
                 </a>
             </div>
@@ -373,7 +375,8 @@
                     <i class="fas fa-map-marker-alt icon"></i>
                     Address Information
                 </div>
-                <a href="/hospital-admin/verification/address-information/" class="edit-btn">
+                <!-- ✅ সঠিক URL ব্যবহার করুন -->
+                <a href="{% url 'hospital_admin:verification_address_information' %}" class="edit-btn">
                     <i class="fas fa-edit"></i> Edit
                 </a>
             </div>
@@ -424,7 +427,8 @@
                     <i class="fas fa-file-alt icon"></i>
                     Uploaded Documents
                 </div>
-                <a href="/hospital-admin/verification/documents/" class="edit-btn">
+                <!-- ✅ সঠিক URL ব্যবহার করুন -->
+                <a href="{% url 'hospital_admin:verification_documents' %}" class="edit-btn">
                     <i class="fas fa-edit"></i> Edit
                 </a>
             </div>
@@ -519,7 +523,7 @@
     </div>
     
     <!-- Declaration & Submit -->
-    <div class="bg-white/5 rounded-xl border border-white/10 p-6 sticky bottom-0">
+    <div class="bg-white/5 rounded-xl border border-white/10 p-6">
         <form method="post">
             {% csrf_token %}
             
@@ -531,7 +535,8 @@
             </div>
             
             <div class="flex flex-wrap items-center justify-between gap-3">
-                <a href="/hospital-admin/verification/documents/" class="btn-secondary">
+                <!-- ✅ Previous বাটন -->
+                <a href="{% url 'hospital_admin:verification_documents' %}" class="btn-secondary">
                     <i class="fas fa-arrow-left mr-2"></i>
                     Previous
                 </a>
@@ -555,9 +560,14 @@
         const checkbox = document.getElementById('declaration');
         const submitBtn = document.getElementById('submitBtn');
         
-        checkbox.addEventListener('change', function() {
-            submitBtn.disabled = !this.checked;
-        });
+        if (checkbox && submitBtn) {
+            checkbox.addEventListener('change', function() {
+                submitBtn.disabled = !this.checked;
+            });
+            
+            // Initial state
+            submitBtn.disabled = !checkbox.checked;
+        }
     });
 </script>
 {% endblock %}

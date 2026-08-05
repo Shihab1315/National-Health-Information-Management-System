@@ -2,8 +2,8 @@
 <nav class="navbar fixed top-0 left-0 w-full z-50 px-4 md:px-8 py-3 transition-all duration-300" id="navbar">
     <div class="max-w-7xl mx-auto flex items-center justify-between">
         <!-- Brand Logo -->
-        <a href="/" class="flex items-center gap-2.5 group">
-            <div class="w-10 h-10 rounded-xl bg-gradient-to-breadcrumbs from-blue-500 to-cyan-400 flex items-center justify-center text-white font-extrabold text-lg shadow-lg shadow-blue-500/20 group-hover:scale-105 transition-transform">
+        <a href="{% url 'dashboard:homepage' %}" class="flex items-center gap-2.5 group">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center text-white font-extrabold text-lg shadow-lg shadow-blue-500/20 group-hover:scale-105 transition-transform">
                 N
             </div>
             <span class="text-white font-bold text-xl tracking-tight hidden sm:block">
@@ -14,47 +14,48 @@
         <!-- Desktop Navigation Links -->
         <div class="hidden lg:flex items-center gap-8">
             <a href="{% url 'dashboard:homepage' %}" class="nav-link active">Home</a>
-            <a href="#services" class="nav-link">Services</a>
-            <a href="#doctors" class="nav-link">Doctors</a>
-            <a href="#hospitals" class="nav-link">Hospitals</a>
-            <a href="#about" class="nav-link">About</a>
-            <a href="#contact" class="nav-link">Contact</a>
+            <a href="{% url 'dashboard:homepage' %}#services" class="nav-link">Services</a>
+            <!-- ✅ Doctors লিংক - সঠিক URL -->
+          <a href="{% url 'dashboard:homepage_doctors' %}" class="nav-link">
+    <i class="fas fa-user-md text-blue-400 mr-1"></i>Doctors
+</a>
+            <a href="{% url 'dashboard:homepage_hospitals' %}" class="nav-link">
+    <i class="fas fa-hospital text-blue-400 mr-1"></i>Hospitals
+</a>
+            <a href="{% url 'dashboard:homepage' %}#about" class="nav-link">About</a>
+            <a href="{% url 'dashboard:homepage' %}#contact" class="nav-link">Contact</a>
         </div>
 
         <!-- Desktop Authentication -->
         <div class="hidden md:flex items-center gap-3">
             {% if user.is_authenticated %}
-                <!-- User Profile Dropdown -->
                 <div class="relative group">
-                    <button class="flex items-center gap-2 text-gray-300 hover:text-white transition text-sm font-medium px-3 py-2 rounded-full hover:bg-white/5 focus:outline-none" id="userMenuButton">
+                    <button class="flex items-center gap-2 text-gray-300 hover:text-white transition text-sm font-medium px-3 py-2 rounded-full hover:bg-white/5 focus:outline-none">
                         <i class="fa-regular fa-user-circle text-xl"></i>
                         <span>{{ user.get_full_name|default:user.username }}</span>
                         <i class="fa-solid fa-chevron-down text-xs"></i>
                     </button>
-                    <!-- Dropdown -->
                     <div class="absolute right-0 mt-2 w-48 bg-[#0d2137] border border-white/10 rounded-xl shadow-xl backdrop-blur-xl py-2 hidden group-hover:block">
-                         <a href="{% url 'accounts:dashboard_redirect' %}"
-   class="text-gray-300 py-2.5 px-4 rounded-xl hover:bg-white/5">
-    <i class="fa-regular fa-gauge-high mr-2"></i>Dashboard
-</a> 
+                        <a href="{% url 'accounts:dashboard_redirect' %}" class="block px-4 py-2 text-sm text-gray-300 hover:bg-white/5 hover:text-white transition">
+                            <i class="fa-regular fa-gauge-high mr-2"></i>Dashboard
+                        </a>
                         <a href="{% url 'accounts:profile' %}" class="block px-4 py-2 text-sm text-gray-300 hover:bg-white/5 hover:text-white transition">
-                            <i class="fa-regular fa-user mr-2"></i> Profile
+                            <i class="fa-regular fa-user mr-2"></i>Profile
                         </a>
                         <hr class="border-white/5 my-1">
-                       <form method="post" action="{% url 'accounts:logout' %}" style="display:inline;">
-    {% csrf_token %}
-    <button type="submit" class="logout-btn" title="Logout"
-            style="background:none;border:none;padding:0;cursor:pointer;">
-        <i class="fas fa-sign-out-alt"></i>
-    </button>
-</form>
+                        <form method="post" action="{% url 'accounts:logout' %}" class="block px-4 py-2">
+                            {% csrf_token %}
+                            <button type="submit" class="w-full text-left text-sm text-red-400 hover:bg-white/5 hover:text-red-300 transition px-2 py-1 rounded-lg">
+                                <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                            </button>
+                        </form>
                     </div>
                 </div>
             {% else %}
                 <a href="{% url 'accounts:login' %}" class="text-gray-300 hover:text-white transition text-sm font-medium px-4 py-2 rounded-full hover:bg-white/5">
                     <i class="fa-regular fa-user mr-2"></i>Login
                 </a>
-                <a href="{% url 'accounts:signup' %}" class="bg-gradient-to-ra from-emerald-500 to-teal-400 text-white px-5 py-2 rounded-full text-sm font-semibold shadow-lg shadow-emerald-500/30 hover:scale-105 transition duration-300">
+                <a href="{% url 'accounts:signup' %}" class="bg-gradient-to-r from-emerald-500 to-teal-400 text-white px-5 py-2 rounded-full text-sm font-semibold shadow-lg shadow-emerald-500/30 hover:scale-105 transition duration-300">
                     <i class="fa-regular fa-user-plus mr-2"></i>Sign Up
                 </a>
                 <a href="{% url 'accounts:signup' %}" class="btn-primary text-sm">
@@ -72,36 +73,35 @@
     <!-- Mobile Menu -->
     <div class="lg:hidden hidden bg-[#0a1628]/95 backdrop-blur-xl border-t border-white/5 mt-3 rounded-2xl overflow-hidden" id="mobileMenu">
         <div class="flex flex-col p-4 gap-2">
-            <!-- Navigation Links -->
             <a href="{% url 'dashboard:homepage' %}" class="nav-link py-2.5 px-4 rounded-xl hover:bg-white/5 active">Home</a>
-            <a href="#services" class="nav-link py-2.5 px-4 rounded-xl hover:bg-white/5">Services</a>
-            <a href="#doctors" class="nav-link py-2.5 px-4 rounded-xl hover:bg-white/5">Doctors</a>
-            <a href="#hospitals" class="nav-link py-2.5 px-4 rounded-xl hover:bg-white/5">Hospitals</a>
-            <a href="#about" class="nav-link py-2.5 px-4 rounded-xl hover:bg-white/5">About</a>
-            <a href="#contact" class="nav-link py-2.5 px-4 rounded-xl hover:bg-white/5">Contact</a>
+            <a href="{% url 'dashboard:homepage' %}#services" class="nav-link py-2.5 px-4 rounded-xl hover:bg-white/5">Services</a>
+            <!-- ✅ Doctors লিংক - Mobile -->
+            <a href="{% url 'dashboard:homepage' %}#doctors" class="nav-link py-2.5 px-4 rounded-xl hover:bg-white/5">
+                <i class="fas fa-user-md text-blue-400 mr-2"></i>Doctors
+            </a>
+            <a href="{% url 'dashboard:homepage' %}#hospitals" class="nav-link py-2.5 px-4 rounded-xl hover:bg-white/5">Hospitals</a>
+            <a href="{% url 'dashboard:homepage' %}#about" class="nav-link py-2.5 px-4 rounded-xl hover:bg-white/5">About</a>
+            <a href="{% url 'dashboard:homepage' %}#contact" class="nav-link py-2.5 px-4 rounded-xl hover:bg-white/5">Contact</a>
             <hr class="border-white/5 my-2" />
-
-            <!-- Authentication Buttons -->
             {% if user.is_authenticated %}
                 <span class="text-sm text-gray-300 px-4 py-1">{{ user.get_full_name|default:user.username }}</span>
-                <a href="{% url 'dashboard:homepage' %}" class="text-gray-300 py-2.5 px-4 rounded-xl hover:bg-white/5">
+                <a href="{% url 'accounts:dashboard_redirect' %}" class="text-gray-300 py-2.5 px-4 rounded-xl hover:bg-white/5">
                     <i class="fa-regular fa-gauge-high mr-2"></i>Dashboard
                 </a>
                 <a href="{% url 'accounts:profile' %}" class="text-gray-300 py-2.5 px-4 rounded-xl hover:bg-white/5">
                     <i class="fa-regular fa-user mr-2"></i>Profile
                 </a>
-               <form method="post" action="{% url 'accounts:logout' %}" style="display:inline;">
-    {% csrf_token %}
-    <button type="submit" class="logout-btn" title="Logout"
-            style="background:none;border:none;padding:0;cursor:pointer;">
-        <i class="fas fa-sign-out-alt"></i>
-    </button>
-</form>
+                <form method="post" action="{% url 'accounts:logout' %}" class="block px-4">
+                    {% csrf_token %}
+                    <button type="submit" class="w-full text-left text-red-400 hover:text-red-300 py-2.5 px-4 rounded-xl hover:bg-red-500/10 transition">
+                        <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                    </button>
+                </form>
             {% else %}
                 <a href="{% url 'accounts:login' %}" class="text-gray-300 py-2.5 px-4 rounded-xl hover:bg-white/5 text-center transition">
                     <i class="fa-regular fa-user mr-2"></i>Login
                 </a>
-                <a href="{% url 'accounts:signup' %}" class="bg-gradient-to-ra from-emerald-500 to-teal-400 text-white py-2.5 px-4 rounded-xl text-center font-semibold transition hover:scale-105">
+                <a href="{% url 'accounts:signup' %}" class="bg-gradient-to-r from-emerald-500 to-teal-400 text-white py-2.5 px-4 rounded-xl text-center font-semibold transition hover:scale-105">
                     <i class="fa-regular fa-user-plus mr-2"></i>Sign Up
                 </a>
             {% endif %}
@@ -109,7 +109,9 @@
     </div>
 </nav>
 
-<!-- JavaScript for mobile toggle and scroll effect (you can also put this in a separate file) -->
+<!-- ============================================================ -->
+<!-- SCRIPTS -->
+<!-- ============================================================ -->
 <script>
     // Toggle mobile menu
     const toggle = document.getElementById('mobileToggle');
@@ -135,6 +137,33 @@
         });
     });
 
+    // ============================================================
+    // ✅ SMOOTH SCROLL FOR ANCHOR LINKS
+    // ============================================================
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            const targetId = this.getAttribute('href');
+            if (targetId === '#') return;
+            
+            const targetElement = document.querySelector(targetId);
+            if (targetElement) {
+                e.preventDefault();
+                targetElement.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+                
+                // Close mobile menu
+                const mobileMenu = document.getElementById('mobileMenu');
+                if (mobileMenu && window.innerWidth < 1024) {
+                    mobileMenu.classList.add('hidden');
+                    const toggleIcon = document.querySelector('#mobileToggle i');
+                    if (toggleIcon) toggleIcon.className = 'fa-solid fa-bars';
+                }
+            }
+        });
+    });
+
     // Navbar scroll shadow effect
     const navbar = document.getElementById('navbar');
     if (navbar) {
@@ -147,3 +176,82 @@
         });
     }
 </script>
+
+<!-- ============================================================ -->
+<!-- STYLES -->
+<!-- ============================================================ -->
+<style>
+    .navbar {
+        background: rgba(10, 15, 30, 0.8);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        transition: all 0.3s ease;
+    }
+
+    .navbar.scrolled {
+        background: rgba(10, 15, 30, 0.95);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
+    }
+
+    .nav-link {
+        color: #9ca3af;
+        transition: all 0.3s ease;
+        font-weight: 500;
+        font-size: 0.875rem;
+        position: relative;
+        padding: 0.25rem 0;
+    }
+
+    .nav-link::after {
+        content: '';
+        position: absolute;
+        bottom: -2px;
+        left: 0;
+        width: 0;
+        height: 2px;
+        background: linear-gradient(90deg, #3b82f6, #06b6d4);
+        transition: width 0.3s ease;
+    }
+
+    .nav-link:hover {
+        color: #ffffff;
+    }
+
+    .nav-link:hover::after {
+        width: 100%;
+    }
+
+    .nav-link.active {
+        color: #60a5fa;
+    }
+
+    .nav-link.active::after {
+        width: 100%;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #3b82f6, #06b6d4);
+        color: #fff;
+        padding: 0.5rem 1.25rem;
+        border-radius: 9999px;
+        font-weight: 600;
+        box-shadow: 0 4px 20px rgba(59, 130, 246, 0.35);
+        transition: all 0.3s ease;
+    }
+
+    .btn-primary:hover {
+        transform: scale(1.05);
+        box-shadow: 0 8px 30px rgba(59, 130, 246, 0.5);
+    }
+
+    /* Gradient Text */
+    .gradient-text {
+        background: linear-gradient(135deg, #60a5fa, #06b6d4);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+</style>

@@ -1,0 +1,331 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+
+{% block title %}Hospitals | NHIMS Bangladesh{% endblock %}
+
+{% block page_title %}Hospitals{% endblock %}
+
+{% block breadcrumb %}
+    <span>Home</span>
+    <span class="mx-1">/</span>
+    <span class="current">Hospitals</span>
+{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    
+    <!-- ============================================================ -->
+    <!-- HEADER -->
+    <!-- ============================================================ -->
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+            <h1 class="text-3xl font-bold text-white">Hospitals in Bangladesh</h1>
+            <p class="text-gray-400 mt-1">Find and explore hospitals across the country</p>
+        </div>
+        <div class="flex items-center gap-2 bg-blue-500/10 border border-blue-500/20 px-4 py-2 rounded-lg">
+            <span class="text-blue-400 font-bold">{{ hospitals.paginator.count }}</span>
+            <span class="text-gray-400 text-sm">Hospitals Available</span>
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- SEARCH & FILTERS -->
+    <!-- ============================================================ -->
+    <div class="glass rounded-3xl p-6 md:p-8">
+        <form method="GET" action="{% url 'dashboard:homepage_hospitals' %}" class="space-y-4">
+            <!-- Row 1 -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="relative">
+                    <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-500"></i>
+                    <input type="text" 
+                           name="search" 
+                           value="{{ search_query|default:'' }}"
+                           placeholder="Search hospitals..." 
+                           class="w-full pl-11 pr-4 py-3 bg-white/5 border border-white/10 rounded-2xl text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition">
+                </div>
+                <div class="relative">
+                    <i class="fas fa-map-marker-alt absolute left-4 top-1/2 -translate-y-1/2 text-gray-500"></i>
+                    <select name="division" class="w-full pl-11 pr-4 py-3 bg-white/5 border border-white/10 rounded-2xl text-white focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition appearance-none">
+                        <option value="">All Divisions</option>
+                        {% for division in divisions %}
+                            <option value="{{ division }}" {% if division_filter == division %}selected{% endif %}>
+                                {{ division }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                    <i class="fas fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none"></i>
+                </div>
+                <div class="relative">
+                    <i class="fas fa-city absolute left-4 top-1/2 -translate-y-1/2 text-gray-500"></i>
+                    <select name="district" class="w-full pl-11 pr-4 py-3 bg-white/5 border border-white/10 rounded-2xl text-white focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition appearance-none">
+                        <option value="">All Districts</option>
+                        {% for district in districts %}
+                            <option value="{{ district }}" {% if district_filter == district %}selected{% endif %}>
+                                {{ district }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                    <i class="fas fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none"></i>
+                </div>
+                <div>
+                    <button type="submit" class="w-full py-3 bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-semibold rounded-2xl shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 transition-all duration-300 hover:scale-105 flex items-center justify-center gap-2">
+                        <i class="fas fa-search"></i> Search
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- SORT OPTIONS -->
+    <!-- ============================================================ -->
+    <div class="flex flex-wrap items-center justify-between gap-4">
+        <div class="flex items-center gap-3">
+            <span class="text-gray-400 text-sm">Sort by:</span>
+            <select id="sortHospitals" class="bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-white text-sm focus:outline-none focus:border-blue-500 transition">
+                <option value="newest" {% if sort_by == 'newest' %}selected{% endif %}>Newest</option>
+                <option value="name" {% if sort_by == 'name' %}selected{% endif %}>Name</option>
+                <option value="doctor_count" {% if sort_by == 'doctor_count' %}selected{% endif %}>Most Doctors</option>
+                <option value="rating" {% if sort_by == 'rating' %}selected{% endif %}>Top Rated</option>
+            </select>
+        </div>
+        <div class="text-gray-400 text-sm">
+            Showing <span class="text-white font-semibold">{{ hospitals.start_index }}</span> to 
+            <span class="text-white font-semibold">{{ hospitals.end_index }}</span> of 
+            <span class="text-white font-semibold">{{ hospitals.paginator.count }}</span> hospitals
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- HOSPITAL CARDS GRID -->
+    <!-- ============================================================ -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for hospital in hospitals %}
+        <!-- Hospital Card -->
+        <div class="glass-card rounded-3xl overflow-hidden group hover:border-blue-500/30 transition-all duration-500">
+            <!-- Hospital Image / Banner -->
+            <div class="relative h-48 bg-gradient-to-br from-blue-500/20 to-cyan-500/20">
+                {% if hospital.logo %}
+                    <img src="{{ hospital.logo.url }}" alt="{{ hospital.name }}" class="w-full h-full object-cover">
+                {% else %}
+                    <div class="w-full h-full flex items-center justify-center">
+                        <i class="fas fa-hospital text-6xl text-blue-400/30"></i>
+                    </div>
+                {% endif %}
+                
+                <!-- Rating Badge -->
+                {% if hospital.rating >= 4.5 %}
+                    <div class="absolute top-3 right-3 bg-gradient-to-r from-yellow-400 to-yellow-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg shadow-yellow-500/30">
+                        ⭐ {{ hospital.rating }}
+                    </div>
+                {% endif %}
+                
+                <!-- Verified Badge -->
+                <div class="absolute bottom-3 left-3 bg-green-500/90 text-white text-xs font-medium px-3 py-1 rounded-full backdrop-blur-sm">
+                    <i class="fas fa-check-circle mr-1"></i> Verified
+                </div>
+            </div>
+            
+            <!-- Hospital Info -->
+            <div class="p-6">
+                <h3 class="text-white font-bold text-xl group-hover:text-blue-400 transition-colors">
+                    {{ hospital.name }}
+                </h3>
+                
+                <!-- Location -->
+                <div class="flex items-center gap-2 text-sm mt-1">
+                    <i class="fas fa-map-marker-alt text-gray-500"></i>
+                    <span class="text-gray-400">{{ hospital.city|default:"N/A" }}, {{ hospital.district|default:"N/A" }}</span>
+                </div>
+                
+                <!-- Type -->
+                <div class="mt-2 inline-flex items-center gap-2 px-3 py-1 bg-blue-500/10 border border-blue-500/20 rounded-full">
+                    <i class="fas fa-building text-blue-400 text-xs"></i>
+                    <span class="text-gray-300 text-xs">{{ hospital.get_hospital_type_display|default:"General" }}</span>
+                </div>
+                
+                <!-- Stats -->
+                <div class="grid grid-cols-3 gap-2 mt-4">
+                    <div class="glass rounded-xl p-2 text-center">
+                    <p class="text-cyan-400 text-sm font-bold">{{ hospital.doctor_count|default:0 }}</p>
+                    <p class="text-gray-500 text-[10px]">Doctors</p>
+                </div>
+                    <div class="glass rounded-xl p-2 text-center">
+    <p class="text-blue-400 text-sm font-bold">{{ hospital.department_count|default:0 }}</p>
+    <p class="text-gray-500 text-[10px]">Departments</p>
+</div>
+
+<!-- বেড কাউন্ট (যদি ফিল্ড থাকে) -->
+<div class="glass rounded-xl p-2 text-center">
+    <p class="text-green-400 text-sm font-bold">{{ hospital.total_beds|default:0 }}</p>
+    <p class="text-gray-500 text-[10px]">Beds</p>
+</div>
+                </div>
+                
+                <!-- Facilities -->
+                {% if hospital.facilities %}
+                <div class="mt-3 flex flex-wrap gap-1">
+                    {% for facility in hospital.facilities_list|slice:":3" %}
+                        <span class="text-xs bg-white/5 px-2 py-0.5 rounded text-gray-400">{{ facility }}</span>
+                    {% endfor %}
+                    {% if hospital.facilities_list|length > 3 %}
+                        <span class="text-xs text-gray-500">+{{ hospital.facilities_list|length|add:"-3" }}</span>
+                    {% endif %}
+                </div>
+                {% endif %}
+                
+                <!-- Description -->
+                {% if hospital.description %}
+                <p class="text-gray-400 text-sm mt-3 line-clamp-2">{{ hospital.description|truncatechars:80 }}</p>
+                {% endif %}
+                
+                <!-- Actions -->
+                <div class="mt-4 grid grid-cols-2 gap-2">
+                    <a href="{% url 'dashboard:home_hospital_details' hospital.id %}" class="px-4 py-2.5 bg-gradient-to-r from-blue-600 to-cyan-500 text-white text-sm font-semibold rounded-xl shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 transition-all duration-300 hover:scale-105 flex items-center justify-center gap-2">
+    <i class="fas fa-eye"></i> View Details
+</a>
+                    <button onclick="bookHospital({{ hospital.id }})" class="px-4 py-2.5 border border-white/10 text-gray-300 text-sm font-semibold rounded-xl hover:bg-white/5 transition-all duration-300 flex items-center justify-center gap-2">
+                        <i class="fas fa-calendar-plus"></i> Book
+                    </button>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <!-- No Hospitals -->
+        <div class="col-span-full text-center py-16">
+            <div class="glass rounded-3xl p-12 max-w-lg mx-auto">
+                <i class="fas fa-hospital text-6xl text-gray-600 mb-4"></i>
+                <h3 class="text-2xl font-bold text-white">No Hospitals Found</h3>
+                <p class="text-gray-400 mt-2">Try adjusting your search filters to find more hospitals.</p>
+                <a href="{% url 'dashboard:homepage_hospitals' %}" class="inline-block mt-4 px-6 py-2 bg-blue-500/20 text-blue-400 rounded-xl hover:bg-blue-500/30 transition">
+                    <i class="fas fa-undo mr-2"></i> Reset Filters
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- PAGINATION -->
+    <!-- ============================================================ -->
+    {% if hospitals.has_other_pages %}
+    <div class="flex flex-wrap items-center justify-between gap-4 mt-10 pt-6 border-t border-white/5">
+        <div class="text-gray-400 text-sm">
+            Showing {{ hospitals.start_index }} to {{ hospitals.end_index }} of {{ hospitals.paginator.count }} hospitals
+        </div>
+        <div class="flex gap-2">
+            {% if hospitals.has_previous %}
+                <a href="?page=1{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" 
+                   class="px-4 py-2 glass rounded-xl text-gray-300 hover:text-white hover:border-blue-500/30 transition-all duration-300">
+                    <i class="fas fa-angle-double-left"></i>
+                </a>
+                <a href="?page={{ hospitals.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" 
+                   class="px-4 py-2 glass rounded-xl text-gray-300 hover:text-white hover:border-blue-500/30 transition-all duration-300">
+                    <i class="fas fa-angle-left"></i>
+                </a>
+            {% endif %}
+
+            {% for num in hospitals.paginator.page_range %}
+                {% if hospitals.number == num %}
+                    <span class="px-4 py-2 bg-gradient-to-r from-blue-600 to-cyan-500 text-white rounded-xl shadow-lg shadow-blue-500/25">{{ num }}</span>
+                {% elif num > hospitals.number|add:'-3' and num < hospitals.number|add:'3' %}
+                    <a href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" 
+                       class="px-4 py-2 glass rounded-xl text-gray-300 hover:text-white hover:border-blue-500/30 transition-all duration-300">{{ num }}</a>
+                {% endif %}
+            {% endfor %}
+
+            {% if hospitals.has_next %}
+                <a href="?page={{ hospitals.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" 
+                   class="px-4 py-2 glass rounded-xl text-gray-300 hover:text-white hover:border-blue-500/30 transition-all duration-300">
+                    <i class="fas fa-angle-right"></i>
+                </a>
+                <a href="?page={{ hospitals.paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" 
+                   class="px-4 py-2 glass rounded-xl text-gray-300 hover:text-white hover:border-blue-500/30 transition-all duration-300">
+                    <i class="fas fa-angle-double-right"></i>
+                </a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+
+<!-- ============================================================ -->
+<!-- BOOK HOSPITAL MODAL -->
+<!-- ============================================================ -->
+<div id="hospitalModal" class="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm hidden">
+    <div class="glass rounded-3xl p-8 max-w-md w-full mx-4 transform transition-all duration-300 scale-95 opacity-0" id="modalContent">
+        <div class="text-center">
+            <div class="w-20 h-20 mx-auto rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 text-4xl mb-4">
+                <i class="fas fa-lock"></i>
+            </div>
+            <h3 class="text-2xl font-bold text-white">Login Required</h3>
+            <p class="text-gray-400 mt-2">Please login or create an account to book at this hospital.</p>
+            <div class="mt-6 space-y-3">
+                <a href="{% url 'accounts:login' %}" class="block w-full py-3 bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-semibold rounded-2xl shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 transition-all duration-300">
+                    <i class="fas fa-sign-in-alt mr-2"></i> Login
+                </a>
+                <a href="{% url 'accounts:signup' %}" class="block w-full py-3 border border-white/10 text-gray-300 font-semibold rounded-2xl hover:bg-white/5 transition-all duration-300">
+                    <i class="fas fa-user-plus mr-2"></i> Register
+                </a>
+                <button onclick="closeHospitalModal()" class="block w-full py-3 text-gray-500 hover:text-gray-300 transition-all duration-300">
+                    <i class="fas fa-times mr-2"></i> Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SCRIPTS -->
+<!-- ============================================================ -->
+<script>
+    // ===== SORT FUNCTIONALITY =====
+    document.getElementById('sortHospitals').addEventListener('change', function() {
+        const currentUrl = new URL(window.location.href);
+        currentUrl.searchParams.set('sort', this.value);
+        currentUrl.searchParams.set('page', 1);
+        window.location.href = currentUrl.toString();
+    });
+
+    // ===== BOOK HOSPITAL =====
+    function bookHospital(hospitalId) {
+        {% if user.is_authenticated %}
+            window.location.href = "{% url 'appointments:patient_book_appointment' %}?hospital=" + hospitalId;
+        {% else %}
+            const modal = document.getElementById('hospitalModal');
+            const content = document.getElementById('modalContent');
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                content.classList.remove('scale-95', 'opacity-0');
+                content.classList.add('scale-100', 'opacity-100');
+            }, 50);
+        {% endif %}
+    }
+
+    // ===== CLOSE MODAL =====
+    function closeHospitalModal() {
+        const modal = document.getElementById('hospitalModal');
+        const content = document.getElementById('modalContent');
+        content.classList.remove('scale-100', 'opacity-100');
+        content.classList.add('scale-95', 'opacity-0');
+        setTimeout(() => {
+            modal.classList.add('hidden');
+        }, 300);
+    }
+
+    // ===== CLOSE MODAL ON BACKDROP =====
+    document.getElementById('hospitalModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeHospitalModal();
+        }
+    });
+
+    // ===== CLOSE MODAL ON ESC =====
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeHospitalModal();
+        }
+    });
+</script>
+{% endblock %}

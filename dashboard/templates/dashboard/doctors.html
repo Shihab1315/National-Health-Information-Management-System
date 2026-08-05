@@ -1,0 +1,441 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+
+{% block title %}Find Doctors | NHIMS Bangladesh{% endblock %}
+
+{% block page_title %}Find Doctors{% endblock %}
+
+{% block breadcrumb %}
+    <span>Home</span>
+    <span class="mx-1">/</span>
+    <span class="current">Doctors</span>
+{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    
+    <!-- ============================================================ -->
+    <!-- HEADER -->
+    <!-- ============================================================ -->
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+            <h1 class="text-3xl font-bold text-white">Find Specialist Doctors</h1>
+            <p class="text-gray-400 mt-1">Browse and book appointments with experienced doctors across Bangladesh</p>
+        </div>
+        <div class="flex items-center gap-2 bg-blue-500/10 border border-blue-500/20 px-4 py-2 rounded-lg">
+            <span class="text-blue-400 font-bold">{{ doctors.paginator.count }}</span>
+            <span class="text-gray-400 text-sm">Doctors Available</span>
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- SEARCH & FILTERS -->
+    <!-- ============================================================ -->
+    <div class="glass rounded-3xl p-6 md:p-8">
+        <form method="GET" action="{% url 'dashboard:homepage_doctors' %}" class="space-y-4">
+            <!-- Row 1 -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="relative">
+                    <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-500"></i>
+                    <input type="text" 
+                           name="search" 
+                           value="{{ search_query|default:'' }}"
+                           placeholder="Search doctors..." 
+                           class="w-full pl-11 pr-4 py-3 bg-white/5 border border-white/10 rounded-2xl text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition">
+                </div>
+                <div class="relative">
+                    <i class="fas fa-stethoscope absolute left-4 top-1/2 -translate-y-1/2 text-gray-500"></i>
+                    <select name="specialty" class="w-full pl-11 pr-4 py-3 bg-white/5 border border-white/10 rounded-2xl text-white focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition appearance-none">
+                        <option value="">All Specialties</option>
+                        {% for specialty in specialties %}
+                            <option value="{{ specialty.id }}" {% if specialty_filter == specialty.id|stringformat:"s" %}selected{% endif %}>
+                                {{ specialty.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                    <i class="fas fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none"></i>
+                </div>
+                <div class="relative">
+                    <i class="fas fa-hospital absolute left-4 top-1/2 -translate-y-1/2 text-gray-500"></i>
+                    <select name="hospital" class="w-full pl-11 pr-4 py-3 bg-white/5 border border-white/10 rounded-2xl text-white focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition appearance-none">
+                        <option value="">All Hospitals</option>
+                        {% for hospital in hospitals %}
+                            <option value="{{ hospital.id }}" {% if hospital_filter == hospital.id|stringformat:"s" %}selected{% endif %}>
+                                {{ hospital.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                    <i class="fas fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none"></i>
+                </div>
+                <div class="relative">
+                    <i class="fas fa-map-marker-alt absolute left-4 top-1/2 -translate-y-1/2 text-gray-500"></i>
+                    <select name="district" class="w-full pl-11 pr-4 py-3 bg-white/5 border border-white/10 rounded-2xl text-white focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition appearance-none">
+                        <option value="">All Districts</option>
+                        {% for district in districts %}
+                            <option value="{{ district }}" {% if district_filter == district %}selected{% endif %}>
+                                {{ district }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                    <i class="fas fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none"></i>
+                </div>
+            </div>
+
+            <!-- Row 2 -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="relative">
+                    <i class="fas fa-venus-mars absolute left-4 top-1/2 -translate-y-1/2 text-gray-500"></i>
+                    <select name="gender" class="w-full pl-11 pr-4 py-3 bg-white/5 border border-white/10 rounded-2xl text-white focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition appearance-none">
+                        <option value="">All Genders</option>
+                        <option value="male" {% if gender_filter == 'male' %}selected{% endif %}>Male</option>
+                        <option value="female" {% if gender_filter == 'female' %}selected{% endif %}>Female</option>
+                    </select>
+                    <i class="fas fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none"></i>
+                </div>
+                <div class="relative">
+                    <i class="fas fa-clock absolute left-4 top-1/2 -translate-y-1/2 text-gray-500"></i>
+                    <select name="experience" class="w-full pl-11 pr-4 py-3 bg-white/5 border border-white/10 rounded-2xl text-white focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition appearance-none">
+                        <option value="">Any Experience</option>
+                        <option value="0-5" {% if experience_filter == '0-5' %}selected{% endif %}>0-5 Years</option>
+                        <option value="5-10" {% if experience_filter == '5-10' %}selected{% endif %}>5-10 Years</option>
+                        <option value="10-15" {% if experience_filter == '10-15' %}selected{% endif %}>10-15 Years</option>
+                        <option value="15-20" {% if experience_filter == '15-20' %}selected{% endif %}>15-20 Years</option>
+                        <option value="20+" {% if experience_filter == '20+' %}selected{% endif %}>20+ Years</option>
+                    </select>
+                    <i class="fas fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none"></i>
+                </div>
+                <div class="relative">
+                    <i class="fas fa-video absolute left-4 top-1/2 -translate-y-1/2 text-gray-500"></i>
+                    <select name="consultation" class="w-full pl-11 pr-4 py-3 bg-white/5 border border-white/10 rounded-2xl text-white focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition appearance-none">
+                        <option value="">All Types</option>
+                        <option value="online" {% if consultation_filter == 'online' %}selected{% endif %}>Online</option>
+                        <option value="offline" {% if consultation_filter == 'offline' %}selected{% endif %}>Offline</option>
+                        <option value="both" {% if consultation_filter == 'both' %}selected{% endif %}>Both</option>
+                    </select>
+                    <i class="fas fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none"></i>
+                </div>
+                <div>
+                    <button type="submit" class="w-full py-3 bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-semibold rounded-2xl shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 transition-all duration-300 hover:scale-105 flex items-center justify-center gap-2">
+                        <i class="fas fa-search"></i> Search
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- SORT OPTIONS -->
+    <!-- ============================================================ -->
+    <div class="flex flex-wrap items-center justify-between gap-4">
+        <div class="flex items-center gap-3">
+            <span class="text-gray-400 text-sm">Sort by:</span>
+            <select id="sortDoctors" class="bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-white text-sm focus:outline-none focus:border-blue-500 transition">
+                <option value="newest" {% if sort_by == 'newest' %}selected{% endif %}>Newest</option>
+                <option value="top_rated" {% if sort_by == 'top_rated' %}selected{% endif %}>Top Rated</option>
+                <option value="highest_exp" {% if sort_by == 'highest_exp' %}selected{% endif %}>Highest Experience</option>
+                <option value="lowest_fee" {% if sort_by == 'lowest_fee' %}selected{% endif %}>Lowest Fee</option>
+                <option value="highest_fee" {% if sort_by == 'highest_fee' %}selected{% endif %}>Highest Fee</option>
+                <option value="most_reviewed" {% if sort_by == 'most_reviewed' %}selected{% endif %}>Most Reviewed</option>
+                <option value="available_today" {% if sort_by == 'available_today' %}selected{% endif %}>Available Today</option>
+            </select>
+        </div>
+        <div class="text-gray-400 text-sm">
+            Showing <span class="text-white font-semibold">{{ doctors.start_index }}</span> to 
+            <span class="text-white font-semibold">{{ doctors.end_index }}</span> of 
+            <span class="text-white font-semibold">{{ doctors.paginator.count }}</span> doctors
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- DOCTOR CARDS GRID -->
+    <!-- ============================================================ -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" id="doctorGrid">
+        {% for doctor in doctors %}
+        <!-- Doctor Card -->
+        <div class="glass-card rounded-3xl p-6 group cursor-pointer hover:border-blue-500/30 transition-all duration-500">
+            <!-- Profile Image & Badges -->
+            <div class="relative">
+                <div class="w-28 h-28 mx-auto rounded-full overflow-hidden border-4 border-blue-500/20 group-hover:border-blue-500/40 transition-all duration-300">
+                    {% if doctor.profile_photo %}
+                        <img src="{{ doctor.profile_photo.url }}" alt="{{ doctor.full_name }}" class="w-full h-full object-cover">
+                    {% else %}
+                        <div class="w-full h-full bg-gradient-to-br from-blue-500/30 to-cyan-500/30 flex items-center justify-center text-4xl font-bold text-white">
+                            {{ doctor.full_name|slice:":1"|upper }}
+                        </div>
+                    {% endif %}
+                </div>
+
+                {% if doctor.rating >= 4.8 %}
+                    <div class="absolute -top-1 -right-1 bg-gradient-to-r from-yellow-400 to-yellow-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg shadow-yellow-500/30 animate-pulse">
+                        🏆 Top Rated
+                    </div>
+                {% endif %}
+
+                <button class="absolute top-2 left-2 w-9 h-9 rounded-full glass-light flex items-center justify-center text-gray-400 hover:text-red-400 transition-all duration-300 hover:scale-110" onclick="toggleFavorite(this)">
+                    <i class="far fa-heart text-lg"></i>
+                </button>
+
+                <button class="absolute top-2 right-2 w-9 h-9 rounded-full glass-light flex items-center justify-center text-gray-400 hover:text-blue-400 transition-all duration-300 hover:scale-110" onclick="toggleBookmark(this)">
+                    <i class="far fa-bookmark text-lg"></i>
+                </button>
+            </div>
+
+            <!-- Doctor Info -->
+            <div class="text-center mt-4">
+                <h3 class="text-white font-bold text-lg group-hover:text-blue-400 transition-colors">
+                    {{ doctor.full_name }}
+                </h3>
+                <p class="text-blue-400 text-sm font-medium">{{ doctor.qualification|default:"MBBS" }}</p>
+                <p class="text-gray-400 text-xs mt-1">{{ doctor.specialty|default:"General Medicine" }}</p>
+            </div>
+
+            <!-- Department -->
+            <div class="mt-3 text-center">
+                <div class="inline-flex items-center gap-2 px-3 py-1 bg-blue-500/10 border border-blue-500/20 rounded-full">
+                    <i class="fas fa-heartbeat text-blue-400 text-xs"></i>
+                    <span class="text-gray-300 text-xs">{{ doctor.department|default:"General Medicine" }}</span>
+                </div>
+            </div>
+
+            <!-- Hospital & Location -->
+            <div class="mt-3 space-y-1">
+                <div class="flex items-center gap-2 text-sm">
+                    <i class="fas fa-hospital text-gray-500 w-4"></i>
+                    <span class="text-gray-300">{{ doctor.hospital.name|default:"Hospital Name" }}</span>
+                </div>
+                <div class="flex items-center gap-2 text-sm">
+                    <i class="fas fa-map-marker-alt text-gray-500 w-4"></i>
+                    <span class="text-gray-400">{{ doctor.hospital.location|default:"Dhaka, Bangladesh" }}</span>
+                </div>
+            </div>
+
+            <!-- Experience & Fee -->
+            <div class="grid grid-cols-2 gap-2 mt-4">
+                <div class="glass rounded-xl p-2 text-center">
+                    <p class="text-cyan-400 text-sm font-bold">{{ doctor.experience|default:5 }}+</p>
+                    <p class="text-gray-500 text-[10px]">Years Experience</p>
+                </div>
+                <div class="glass rounded-xl p-2 text-center">
+                    <p class="text-green-400 text-sm font-bold">৳{{ doctor.consultation_fee|default:800 }}</p>
+                    <p class="text-gray-500 text-[10px]">Consultation Fee</p>
+                </div>
+            </div>
+
+            <!-- Availability -->
+            <div class="mt-3 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full {% if doctor.available_today %}bg-green-400 animate-pulse{% else %}bg-red-400{% endif %}"></span>
+                    <span class="text-xs {% if doctor.available_today %}text-green-400{% else %}text-red-400{% endif %}">
+                        {% if doctor.available_today %}Available Today{% else %}On Leave{% endif %}
+                    </span>
+                </div>
+                <div class="flex items-center gap-1 text-gray-400 text-xs">
+                    <i class="fas fa-clock"></i>
+                    <span>Avg Wait: {{ doctor.average_waiting|default:15 }} mins</span>
+                </div>
+            </div>
+
+            <!-- Online Consultation -->
+            {% if doctor.online_consultation %}
+                <div class="mt-2 flex items-center justify-center gap-2 text-xs text-cyan-400 bg-cyan-500/10 border border-cyan-500/20 rounded-full py-1 px-3">
+                    <i class="fas fa-video"></i> Online Available
+                </div>
+            {% else %}
+                <div class="mt-2 flex items-center justify-center gap-2 text-xs text-gray-500 bg-white/5 rounded-full py-1 px-3">
+                    <i class="fas fa-building"></i> Only Physical
+                </div>
+            {% endif %}
+
+            <!-- Rating -->
+            <div class="mt-3 flex items-center justify-between border-t border-white/5 pt-3">
+                <div class="flex items-center gap-1">
+                    <div class="flex text-yellow-400 text-sm">
+                        {% for i in "12345"|make_list %}
+                            {% if forloop.counter <= doctor.rating|floatformat:0|add:"0" %}
+                                <i class="fas fa-star"></i>
+                            {% else %}
+                                <i class="far fa-star"></i>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                    <span class="text-white text-sm font-semibold">{{ doctor.rating|default:4.8 }}</span>
+                    <span class="text-gray-500 text-xs">({{ doctor.total_reviews|default:2350 }})</span>
+                </div>
+                <div class="flex items-center gap-1 text-gray-400 text-xs">
+                    <i class="fas fa-comment"></i>
+                    <span>{{ doctor.total_reviews|default:2350 }} Reviews</span>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="mt-4 grid grid-cols-2 gap-2">
+                <!-- ✅ Book Appointment Button -->
+                <button onclick="bookAppointment({{ doctor.id }})" class="px-4 py-2.5 bg-gradient-to-r from-blue-600 to-cyan-500 text-white text-sm font-semibold rounded-xl shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 transition-all duration-300 hover:scale-105 flex items-center justify-center gap-2">
+                    <i class="fas fa-calendar-plus"></i> Book Now
+                </button>
+                {% comment %} <a href="{% url 'doctors:detail' doctor.id %}" class="px-4 py-2.5 border border-white/10 text-gray-300 text-sm font-semibold rounded-xl hover:bg-white/5 transition-all duration-300 flex items-center justify-center gap-2 group">
+                    <i class="fas fa-user-circle group-hover:text-blue-400 transition"></i> Profile
+                </a> {% endcomment %}
+            </div>
+        </div>
+        {% empty %}
+        <!-- No Doctors -->
+        <div class="col-span-full text-center py-16">
+            <div class="glass rounded-3xl p-12 max-w-lg mx-auto">
+                <i class="fas fa-user-md text-6xl text-gray-600 mb-4"></i>
+                <h3 class="text-2xl font-bold text-white">No Doctors Found</h3>
+                <p class="text-gray-400 mt-2">Try adjusting your search filters to find more doctors.</p>
+                <a href="{% url 'dashboard:homepage_doctors' %}" class="inline-block mt-4 px-6 py-2 bg-blue-500/20 text-blue-400 rounded-xl hover:bg-blue-500/30 transition">
+                    <i class="fas fa-undo mr-2"></i> Reset Filters
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- PAGINATION -->
+    <!-- ============================================================ -->
+    {% if doctors.has_other_pages %}
+    <div class="flex flex-wrap items-center justify-between gap-4 mt-10 pt-6 border-t border-white/5">
+        <div class="text-gray-400 text-sm">
+            Showing {{ doctors.start_index }} to {{ doctors.end_index }} of {{ doctors.paginator.count }} doctors
+        </div>
+        <div class="flex gap-2">
+            {% if doctors.has_previous %}
+                <a href="?page=1{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" 
+                   class="px-4 py-2 glass rounded-xl text-gray-300 hover:text-white hover:border-blue-500/30 transition-all duration-300">
+                    <i class="fas fa-angle-double-left"></i>
+                </a>
+                <a href="?page={{ doctors.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" 
+                   class="px-4 py-2 glass rounded-xl text-gray-300 hover:text-white hover:border-blue-500/30 transition-all duration-300">
+                    <i class="fas fa-angle-left"></i>
+                </a>
+            {% endif %}
+
+            {% for num in doctors.paginator.page_range %}
+                {% if doctors.number == num %}
+                    <span class="px-4 py-2 bg-linear-to-r from-blue-600 to-cyan-500 text-white rounded-xl shadow-lg shadow-blue-500/25">{{ num }}</span>
+                {% elif num > doctors.number|add:'-3' and num < doctors.number|add:'3' %}
+                    <a href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" 
+                       class="px-4 py-2 glass rounded-xl text-gray-300 hover:text-white hover:border-blue-500/30 transition-all duration-300">{{ num }}</a>
+                {% endif %}
+            {% endfor %}
+
+            {% if doctors.has_next %}
+                <a href="?page={{ doctors.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" 
+                   class="px-4 py-2 glass rounded-xl text-gray-300 hover:text-white hover:border-blue-500/30 transition-all duration-300">
+                    <i class="fas fa-angle-right"></i>
+                </a>
+                <a href="?page={{ doctors.paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" 
+                   class="px-4 py-2 glass rounded-xl text-gray-300 hover:text-white hover:border-blue-500/30 transition-all duration-300">
+                    <i class="fas fa-angle-double-right"></i>
+                </a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+
+<!-- ============================================================ -->
+<!-- BOOK APPOINTMENT MODAL -->
+<!-- ============================================================ -->
+<div id="appointmentModal" class="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm hidden">
+    <div class="glass rounded-3xl p-8 max-w-md w-full mx-4 transform transition-all duration-300 scale-95 opacity-0" id="modalContent">
+        <div class="text-center">
+            <div class="w-20 h-20 mx-auto rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 text-4xl mb-4">
+                <i class="fas fa-lock"></i>
+            </div>
+            <h3 class="text-2xl font-bold text-white">Login Required</h3>
+            <p class="text-gray-400 mt-2">Please login or create an account to book an appointment.</p>
+            <div class="mt-6 space-y-3">
+                <a href="{% url 'accounts:login' %}" class="block w-full py-3 bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-semibold rounded-2xl shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 transition-all duration-300">
+                    <i class="fas fa-sign-in-alt mr-2"></i> Login
+                </a>
+                <a href="{% url 'accounts:signup' %}" class="block w-full py-3 border border-white/10 text-gray-300 font-semibold rounded-2xl hover:bg-white/5 transition-all duration-300">
+                    <i class="fas fa-user-plus mr-2"></i> Register
+                </a>
+                <button onclick="closeModal()" class="block w-full py-3 text-gray-500 hover:text-gray-300 transition-all duration-300">
+                    <i class="fas fa-times mr-2"></i> Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SCRIPTS -->
+<!-- ============================================================ -->
+<script>
+    // ===== BOOK APPOINTMENT =====
+    function bookAppointment(doctorId) {
+        {% if user.is_authenticated %}
+            // Redirect to appointment booking page
+            window.location.href = "{% url 'appointments:patient_book_appointment' %}?doctor=" + doctorId;
+        {% else %}
+            // Show login modal
+            const modal = document.getElementById('appointmentModal');
+            const content = document.getElementById('modalContent');
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                content.classList.remove('scale-95', 'opacity-0');
+                content.classList.add('scale-100', 'opacity-100');
+            }, 50);
+        {% endif %}
+    }
+
+    // ===== CLOSE MODAL =====
+    function closeModal() {
+        const modal = document.getElementById('appointmentModal');
+        const content = document.getElementById('modalContent');
+        content.classList.remove('scale-100', 'opacity-100');
+        content.classList.add('scale-95', 'opacity-0');
+        setTimeout(() => {
+            modal.classList.add('hidden');
+        }, 300);
+    }
+
+    // ===== CLOSE MODAL ON BACKDROP =====
+    document.getElementById('appointmentModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeModal();
+        }
+    });
+
+    // ===== CLOSE MODAL ON ESC =====
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeModal();
+        }
+    });
+
+    // ===== FAVORITE TOGGLE =====
+    function toggleFavorite(btn) {
+        const icon = btn.querySelector('i');
+        icon.classList.toggle('far');
+        icon.classList.toggle('fas');
+        icon.classList.toggle('text-red-400');
+        btn.classList.toggle('scale-110');
+        setTimeout(() => btn.classList.remove('scale-110'), 300);
+    }
+
+    // ===== BOOKMARK TOGGLE =====
+    function toggleBookmark(btn) {
+        const icon = btn.querySelector('i');
+        icon.classList.toggle('far');
+        icon.classList.toggle('fas');
+        icon.classList.toggle('text-blue-400');
+        btn.classList.toggle('scale-110');
+        setTimeout(() => btn.classList.remove('scale-110'), 300);
+    }
+
+    // ===== SORT FUNCTIONALITY =====
+    document.getElementById('sortDoctors').addEventListener('change', function() {
+        const currentUrl = new URL(window.location.href);
+        currentUrl.searchParams.set('sort', this.value);
+        currentUrl.searchParams.set('page', 1);
+        window.location.href = currentUrl.toString();
+    });
+</script>
+{% endblock %}

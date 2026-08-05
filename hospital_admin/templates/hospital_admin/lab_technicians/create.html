@@ -1,0 +1,144 @@
+{% extends "hospital_admin/base.html" %}
+{% load static %}
+
+{% block title %}Create Lab Technician - {{ block.super }}{% endblock %}
+
+{% block page_title %}Create Lab Technician{% endblock %}
+
+{% block breadcrumb %}
+    <span>Dashboard</span>
+    <span class="mx-1">/</span>
+    <a href="{% url 'lab_technicians:list' %}" class="hover:text-blue-400">Lab Technicians</a>
+    <span class="mx-1">/</span>
+    <span class="current">Create</span>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid max-w-3xl">
+    
+    <div class="bg-[#0d1f3c] rounded-xl border border-white/5 p-6">
+        <h2 class="text-xl font-bold text-white mb-6">
+            <i class="fas fa-user-plus text-blue-400 mr-2"></i>
+            Add New Lab Technician
+        </h2>
+
+        <form method="POST" enctype="multipart/form-data" class="space-y-6">
+            {% csrf_token %}
+
+            <!-- User Account Info -->
+            <div class="border-b border-white/10 pb-6">
+                <h3 class="text-white font-medium mb-4">Account Information</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="{{ form.username.id_for_label }}" class="block text-sm text-gray-400 mb-1">
+                            Username <span class="text-red-400">*</span>
+                        </label>
+                        {{ form.username }}
+                        {% if form.username.errors %}
+                            <p class="text-red-400 text-xs mt-1">{{ form.username.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <label for="{{ form.email.id_for_label }}" class="block text-sm text-gray-400 mb-1">
+                            Email <span class="text-red-400">*</span>
+                        </label>
+                        {{ form.email }}
+                        {% if form.email.errors %}
+                            <p class="text-red-400 text-xs mt-1">{{ form.email.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <label for="{{ form.password.id_for_label }}" class="block text-sm text-gray-400 mb-1">
+                            Password <span class="text-red-400">*</span>
+                        </label>
+                        {{ form.password }}
+                        {% if form.password.errors %}
+                            <p class="text-red-400 text-xs mt-1">{{ form.password.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <label for="{{ form.confirm_password.id_for_label }}" class="block text-sm text-gray-400 mb-1">
+                            Confirm Password <span class="text-red-400">*</span>
+                        </label>
+                        {{ form.confirm_password }}
+                        {% if form.confirm_password.errors %}
+                            <p class="text-red-400 text-xs mt-1">{{ form.confirm_password.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Profile Info -->
+            <div class="border-b border-white/10 pb-6">
+                <h3 class="text-white font-medium mb-4">Profile Information</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="{{ form.full_name.id_for_label }}" class="block text-sm text-gray-400 mb-1">
+                            Full Name <span class="text-red-400">*</span>
+                        </label>
+                        {{ form.full_name }}
+                        {% if form.full_name.errors %}
+                            <p class="text-red-400 text-xs mt-1">{{ form.full_name.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <label for="{{ form.phone.id_for_label }}" class="block text-sm text-gray-400 mb-1">
+                            Phone
+                        </label>
+                        {{ form.phone }}
+                        {% if form.phone.errors %}
+                            <p class="text-red-400 text-xs mt-1">{{ form.phone.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <label for="{{ form.department.id_for_label }}" class="block text-sm text-gray-400 mb-1">
+                            Department <span class="text-red-400">*</span>
+                        </label>
+                        {{ form.department }}
+                        {% if form.department.errors %}
+                            <p class="text-red-400 text-xs mt-1">{{ form.department.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <label for="{{ form.profile_photo.id_for_label }}" class="block text-sm text-gray-400 mb-1">
+                            Profile Photo
+                        </label>
+                        {{ form.profile_photo }}
+                        {% if form.profile_photo.errors %}
+                            <p class="text-red-400 text-xs mt-1">{{ form.profile_photo.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Status -->
+            <div>
+                <h3 class="text-white font-medium mb-4">Status</h3>
+                <div class="flex items-center gap-3">
+                    {{ form.is_active }}
+                    <label for="{{ form.is_active.id_for_label }}" class="text-gray-300 text-sm">
+                        Active
+                    </label>
+                </div>
+                {% if form.is_active.errors %}
+                    <p class="text-red-400 text-xs mt-1">{{ form.is_active.errors.0 }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Buttons -->
+            <div class="flex items-center justify-end gap-3 pt-4 border-t border-white/10">
+                <a href="{% url 'lab_technicians:list' %}" 
+                   class="px-4 py-2 border border-gray-600 hover:border-gray-500 text-gray-300 hover:text-white rounded-lg transition">
+                    Cancel
+                </a>
+                <button type="submit" class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition">
+                    <i class="fas fa-save mr-2"></i>
+                    Create Lab Technician
+                </button>
+            </div>
+
+        </form>
+    </div>
+
+</div>
+{% endblock %}

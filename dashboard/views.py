@@ -1,11 +1,15 @@
 # dashboard/views.py
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.utils import timezone
 from django.db.models import F, Sum, Count
 from django.http import HttpResponseServerError
 import logging
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from doctors.models import Specialty
+from django.db.models import Q
+
 
 # ✅ সঠিক ডেকোরেটর ইমপোর্ট
 from accounts.decorators import role_required
@@ -402,3 +406,346 @@ def patient_dashboard(request):
     }
     
     return render(request, 'dashboard/patient_dashboard.html', context)
+
+def lab_technician_dashboard(request):
+    """Redirect to lab technician dashboard."""
+    return redirect('lab_technicians:dashboard')
+
+
+
+# def doctors_section(request):
+#     """Fetch doctors with filters for homepage."""
+    
+#     # Base queryset
+#     doctors = Doctor.objects.filter(is_active=True, is_verified=True).select_related('hospital')
+    
+#     # Search filters
+#     doctor_name = request.GET.get('doctor_name', '')
+#     if doctor_name:
+#         doctors = doctors.filter(
+#             Q(full_name__icontains=doctor_name) |
+#             Q(user__first_name__icontains=doctor_name) |
+#             Q(user__last_name__icontains=doctor_name)
+#         )
+    
+#     specialty = request.GET.get('specialty', '')
+#     if specialty:
+#         doctors = doctors.filter(specialties__id=specialty)
+    
+#     hospital = request.GET.get('hospital', '')
+#     if hospital:
+#         doctors = doctors.filter(hospital_id=hospital)
+    
+#     district = request.GET.get('district', '')
+#     if district:
+#         doctors = doctors.filter(hospital__district=district)
+    
+#     gender = request.GET.get('gender', '')
+#     if gender:
+#         doctors = doctors.filter(gender=gender)
+    
+#     experience = request.GET.get('experience', '')
+#     if experience:
+#         if experience == '0-5':
+#             doctors = doctors.filter(experience__gte=0, experience__lte=5)
+#         elif experience == '5-10':
+#             doctors = doctors.filter(experience__gte=5, experience__lte=10)
+#         elif experience == '10-15':
+#             doctors = doctors.filter(experience__gte=10, experience__lte=15)
+#         elif experience == '15-20':
+#             doctors = doctors.filter(experience__gte=15, experience__lte=20)
+#         elif experience == '20+':
+#             doctors = doctors.filter(experience__gte=20)
+    
+#     consultation_type = request.GET.get('consultation_type', '')
+#     if consultation_type == 'online':
+#         doctors = doctors.filter(online_consultation=True)
+#     elif consultation_type == 'offline':
+#         doctors = doctors.filter(online_consultation=False)
+    
+#     # Sort
+#     sort_by = request.GET.get('sort', 'newest')
+#     if sort_by == 'top_rated':
+#         doctors = doctors.order_by('-rating')
+#     elif sort_by == 'highest_exp':
+#         doctors = doctors.order_by('-experience')
+#     elif sort_by == 'lowest_fee':
+#         doctors = doctors.order_by('consultation_fee')
+#     elif sort_by == 'highest_fee':
+#         doctors = doctors.order_by('-consultation_fee')
+#     elif sort_by == 'most_reviewed':
+#         doctors = doctors.order_by('-total_reviews')
+#     elif sort_by == 'available_today':
+#         doctors = doctors.filter(available_today=True).order_by('-rating')
+#     else:  # newest
+#         doctors = doctors.order_by('-created_at')
+    
+#     # Pagination
+#     paginator = Paginator(doctors, 12)
+#     page = request.GET.get('page', 1)
+    
+#     try:
+#         doctors_page = paginator.page(page)
+#     except EmptyPage:
+#         doctors_page = paginator.page(paginator.num_pages)
+#     except PageNotAnInteger:
+#         doctors_page = paginator.page(1)
+    
+#     # Get filters data
+#     specialties = Specialty.objects.filter(is_active=True)
+#     hospitals = Hospital.objects.filter(active=True)
+#     districts = Hospital.objects.exclude(district__isnull=True).exclude(district='').values_list('district', flat=True).distinct()
+    
+#     context = {
+#         'doctors': doctors_page,
+#         'specialties': specialties,
+#         'hospitals': hospitals,
+#         'districts': districts,
+#     }
+#     return render(request, 'dashboard/partials/doctors.html', context)
+
+def homepage_doctors(request):
+    """
+    Homepage doctors section - shows all active verified doctors with filters.
+    This is separate from the main doctor list view.
+    """
+    
+    # Base queryset - only active and verified doctors
+    doctors = Doctor.objects.filter(
+        is_active=True, 
+        is_verified=True
+    ).select_related('hospital', 'user').prefetch_related('specialties')
+    
+    # ===== SEARCH =====
+    search_query = request.GET.get('search', '')
+    if search_query:
+        doctors = doctors.filter(
+            Q(full_name__icontains=search_query) |
+            Q(user__first_name__icontains=search_query) |
+            Q(user__last_name__icontains=search_query) |
+            Q(specialties__name__icontains=search_query) |
+            Q(hospital__name__icontains=search_query)
+        ).distinct()
+    
+    # ===== FILTERS =====
+    specialty_filter = request.GET.get('specialty', '')
+    if specialty_filter:
+        doctors = doctors.filter(specialties__id=specialty_filter)
+    
+    hospital_filter = request.GET.get('hospital', '')
+    if hospital_filter:
+        doctors = doctors.filter(hospital_id=hospital_filter)
+    
+    district_filter = request.GET.get('district', '')
+    if district_filter:
+        doctors = doctors.filter(hospital__district=district_filter)
+    
+    gender_filter = request.GET.get('gender', '')
+    if gender_filter:
+        doctors = doctors.filter(gender=gender_filter)
+    
+    experience_filter = request.GET.get('experience', '')
+    if experience_filter:
+        if experience_filter == '0-5':
+            doctors = doctors.filter(experience__gte=0, experience__lte=5)
+        elif experience_filter == '5-10':
+            doctors = doctors.filter(experience__gte=5, experience__lte=10)
+        elif experience_filter == '10-15':
+            doctors = doctors.filter(experience__gte=10, experience__lte=15)
+        elif experience_filter == '15-20':
+            doctors = doctors.filter(experience__gte=15, experience__lte=20)
+        elif experience_filter == '20+':
+            doctors = doctors.filter(experience__gte=20)
+    
+    consultation_filter = request.GET.get('consultation', '')
+    if consultation_filter == 'online':
+        doctors = doctors.filter(online_consultation=True)
+    elif consultation_filter == 'offline':
+        doctors = doctors.filter(online_consultation=False)
+    
+    # ===== SORT =====
+    sort_by = request.GET.get('sort', 'newest')
+    if sort_by == 'top_rated':
+        doctors = doctors.order_by('-rating')
+    elif sort_by == 'highest_exp':
+        doctors = doctors.order_by('-experience')
+    elif sort_by == 'lowest_fee':
+        doctors = doctors.order_by('consultation_fee')
+    elif sort_by == 'highest_fee':
+        doctors = doctors.order_by('-consultation_fee')
+    elif sort_by == 'most_reviewed':
+        doctors = doctors.order_by('-total_reviews')
+    elif sort_by == 'available_today':
+        doctors = doctors.filter(available_today=True).order_by('-rating')
+    else:  # newest
+        doctors = doctors.order_by('-created_at')
+    
+    # ===== PAGINATION =====
+    paginator = Paginator(doctors, 12)
+    page = request.GET.get('page', 1)
+    
+    try:
+        doctors_page = paginator.page(page)
+    except EmptyPage:
+        doctors_page = paginator.page(paginator.num_pages)
+    except PageNotAnInteger:
+        doctors_page = paginator.page(1)
+    
+    # ===== FILTER DATA =====
+    specialties = Specialty.objects.filter(is_active=True)
+    hospitals = Hospital.objects.filter(active=True)
+    districts = Hospital.objects.exclude(
+        district__isnull=True
+    ).exclude(
+        district=''
+    ).values_list('district', flat=True).distinct()
+    
+    context = {
+        'doctors': doctors_page,
+        'search_query': search_query,
+        'specialty_filter': specialty_filter,
+        'hospital_filter': hospital_filter,
+        'district_filter': district_filter,
+        'gender_filter': gender_filter,
+        'experience_filter': experience_filter,
+        'consultation_filter': consultation_filter,
+        'sort_by': sort_by,
+        'specialties': specialties,
+        'hospitals': hospitals,
+        'districts': districts,
+    }
+    return render(request, 'dashboard/doctors.html', context)
+
+def homepage_hospitals(request):
+    """
+    Homepage hospitals section - shows all hospitals with details.
+    """
+    
+    # ===== BASE QUERYSET =====
+    hospitals = Hospital.objects.filter(
+        active=True,
+        is_deleted=False
+    ).annotate(
+        # ✅ সঠিক field names ব্যবহার করুন
+        doctor_count=Count('doctors', filter=Q(doctors__is_active=True, doctors__is_verified=True)),
+        department_count=Count('departments', filter=Q(departments__active=True))
+    )
+    
+    # ===== SEARCH =====
+    search_query = request.GET.get('search', '')
+    if search_query:
+        hospitals = hospitals.filter(
+            Q(name__icontains=search_query) |
+            Q(city__icontains=search_query) |
+            Q(district__icontains=search_query) |
+            Q(division__icontains=search_query) |
+            Q(full_address__icontains=search_query)
+        )
+    
+    # ===== FILTERS =====
+    division_filter = request.GET.get('division', '')
+    if division_filter:
+        hospitals = hospitals.filter(division=division_filter)
+    
+    district_filter = request.GET.get('district', '')
+    if district_filter:
+        hospitals = hospitals.filter(district=district_filter)
+    
+    hospital_type_filter = request.GET.get('type', '')
+    if hospital_type_filter:
+        hospitals = hospitals.filter(hospital_type=hospital_type_filter)
+    
+    # ===== SORT =====
+    sort_by = request.GET.get('sort', 'newest')
+    if sort_by == 'name':
+        hospitals = hospitals.order_by('name')
+    elif sort_by == 'doctor_count':
+        hospitals = hospitals.order_by('-doctor_count')
+    elif sort_by == 'rating':
+        hospitals = hospitals.order_by('-average_rating')
+    else:  # newest
+        hospitals = hospitals.order_by('-created_at')
+    
+    # ===== PAGINATION =====
+    paginator = Paginator(hospitals, 9)
+    page = request.GET.get('page', 1)
+    
+    try:
+        hospitals_page = paginator.page(page)
+    except EmptyPage:
+        hospitals_page = paginator.page(paginator.num_pages)
+    except PageNotAnInteger:
+        hospitals_page = paginator.page(1)
+    
+    # ===== FILTER DATA =====
+    divisions = Hospital.objects.filter(active=True, is_deleted=False).exclude(division__isnull=True).exclude(division='').values_list('division', flat=True).distinct()
+    districts = Hospital.objects.filter(active=True, is_deleted=False).exclude(district__isnull=True).exclude(district='').values_list('district', flat=True).distinct()
+    
+    context = {
+        'hospitals': hospitals_page,
+        'search_query': search_query,
+        'division_filter': division_filter,
+        'district_filter': district_filter,
+        'hospital_type_filter': hospital_type_filter,
+        'sort_by': sort_by,
+        'divisions': divisions,
+        'districts': districts,
+    }
+    return render(request, 'dashboard/hospitals.html', context)
+
+def home_hospital_details(request, pk):
+    """
+    Homepage hospital detail page.
+    """
+    # ✅ শুধু হাসপাতাল খুঁজুন - কোনো রিডাইরেক্ট নয়
+    hospital = get_object_or_404(
+        Hospital.objects.filter(active=True, is_deleted=False),
+        id=pk
+    )
+    
+    # ===== STATISTICS =====
+    from doctors.models import Doctor
+    from django.utils import timezone
+    from appointments.models import Appointment
+    
+    total_doctors = Doctor.objects.filter(
+        hospital=hospital,
+        is_active=True,
+        is_verified=True
+    ).count()
+    
+    today = timezone.now().date()
+    today_appointments = Appointment.objects.filter(
+        hospital=hospital,
+        appointment_date=today,
+        status__in=['pending', 'confirmed']
+    ).count()
+    
+    # ===== FACILITIES =====
+    facilities = []
+    facility_fields = [
+        ('icu', 'ICU'), ('ccu', 'CCU'), ('nicu', 'NICU'),
+        ('emergency_department', 'Emergency Department'),
+        ('operation_theater', 'Operation Theater'),
+        ('laboratory', 'Laboratory'), ('radiology', 'Radiology'),
+        ('pharmacy', 'Pharmacy'), ('ambulance_phone', 'Ambulance Service'),
+        ('blood_bank', 'Blood Bank'), ('cafeteria', 'Cafeteria'),
+        ('parking', 'Parking'), ('wifi', 'Free WiFi'),
+        ('wheelchair_access', 'Wheelchair Access'),
+        ('ct_scan', 'CT Scan'), ('mri', 'MRI'), ('x_ray', 'X-Ray'),
+    ]
+    
+    for field, label in facility_fields:
+        if hasattr(hospital, field) and getattr(hospital, field):
+            facilities.append(label)
+    
+    # ===== CONTEXT =====
+    context = {
+        'hospital': hospital,
+        'total_doctors': total_doctors,
+        'today_appointments': today_appointments,
+        'facilities': facilities,
+        'page_title': hospital.name,
+        'current_page': 'Hospital Detail',
+    }
+    return render(request, 'dashboard/hospital_detail.html', context)

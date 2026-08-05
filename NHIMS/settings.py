@@ -53,6 +53,7 @@ INSTALLED_APPS = [
     'analytics',
     'superadmin',
     'hospital_admin',
+    'lab_technicians',
     
 ]
 
@@ -85,7 +86,8 @@ TEMPLATES = [
                 'notifications.context_processors.unread_notification_count',
                 'hospital_admin.context_processors.hospital_admin_context',
                  'doctors.context_processors.doctor_verification_status',
-
+                 'lab_technicians.context_processors.lab_technician_context',
+    
             ],
         },
     },

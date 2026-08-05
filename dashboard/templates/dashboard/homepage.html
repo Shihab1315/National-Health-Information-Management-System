@@ -4,400 +4,1241 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>NHIMS — National Health Information Management System</title>
+    <title>NHIMS — National Health Information Management System Bangladesh</title>
+    <meta name="description" content="Bangladesh's premier digital healthcare platform connecting patients, doctors, hospitals, laboratories, and pharmacies nationwide." />
+    
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+    
     <style>
-        /* ── All custom styles (same as before) ── */
+        /* ============================================================ */
+        /* ROOT VARIABLES */
+        /* ============================================================ */
         :root {
-            --primary: #0a1628;
-            --primary-light: #0d2137;
-            --primary-mid: #1a365d;
-            --primary-blue: #2a4a7f;
+            --primary-dark: #0a0f1e;
+            --primary-navy: #0d1f3c;
+            --primary-blue: #1a3a6b;
             --accent-blue: #3b82f6;
-            --accent-teal: #06b6d4;
+            --accent-cyan: #06b6d4;
+            --accent-teal: #14b8a6;
             --accent-green: #10b981;
-            --gold: #f59e0b;
+            --accent-gold: #f59e0b;
+            --accent-rose: #f43f5e;
+            --glass-bg: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.06);
         }
+
+        /* ============================================================ */
+        /* BASE */
+        /* ============================================================ */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         html { scroll-behavior: smooth; }
         body {
-            background: var(--primary);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+            background: var(--primary-dark);
             color: #e2e8f0;
-            font-family: 'Inter', system-ui, sans-serif;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
         }
-        /* ── Navbar (already in includes) ── */
-        /* ── Hero ── */
-        .hero-gradient {
-            background: linear-gradient(160deg, #0a1628 0%, #0d2137 30%, #1a365d 60%, #0a1628 100%);
+
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--primary-dark); }
+        ::-webkit-scrollbar-thumb { 
+            background: linear-gradient(180deg, var(--accent-blue), var(--accent-cyan));
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover { background: var(--accent-blue); }
+
+        /* ============================================================ */
+        /* GLASSMORPHISM */
+        /* ============================================================ */
+        .glass {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+        }
+
+        .glass-light {
+            background: rgba(255, 255, 255, 0.06);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .glass-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            border-color: rgba(59, 130, 246, 0.3);
+            box-shadow: 0 20px 60px rgba(59, 130, 246, 0.08);
+        }
+
+        /* ============================================================ */
+        /* GRADIENT TEXT */
+        /* ============================================================ */
+        .gradient-text {
+            background: linear-gradient(135deg, #60a5fa 0%, #06b6d4 50%, #14b8a6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .gradient-text-gold {
+            background: linear-gradient(135deg, #fbbf24, #f59e0b, #d97706);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* ============================================================ */
+        /* BUTTONS */
+        /* ============================================================ */
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
+            color: #fff;
+            padding: 14px 32px;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 1rem;
+            box-shadow: 0 4px 25px rgba(59, 130, 246, 0.35);
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .btn-primary:hover {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 8px 40px rgba(59, 130, 246, 0.5);
+        }
+
+        .btn-secondary {
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            color: #fff;
+            padding: 14px 32px;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: transparent;
+        }
+        .btn-secondary:hover {
+            border-color: var(--accent-blue);
+            background: rgba(59, 130, 246, 0.1);
+            transform: translateY(-3px);
+        }
+
+        .btn-gold {
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            color: #0a0f1e;
+            padding: 14px 32px;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 1rem;
+            box-shadow: 0 4px 25px rgba(245, 158, 11, 0.35);
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .btn-gold:hover {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 8px 40px rgba(245, 158, 11, 0.5);
+        }
+
+        /* ============================================================ */
+        /* HERO */
+        /* ============================================================ */
+        .hero-bg {
+            background: radial-gradient(ellipse at 20% 30%, rgba(59, 130, 246, 0.08) 0%, transparent 60%),
+                        radial-gradient(ellipse at 80% 70%, rgba(6, 182, 212, 0.08) 0%, transparent 60%),
+                        var(--primary-dark);
             position: relative;
             overflow: hidden;
         }
-        .hero-title {
-            font-size: clamp(2.8rem, 8vw, 4.8rem);
-            font-weight: 800;
-            line-height: 1.1;
-            background: linear-gradient(135deg, #ffffff 30%, var(--accent-teal) 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        .hero-badge {
-            display: inline-block;
-            background: rgba(59, 130, 246, 0.15);
-            border: 1px solid rgba(59, 130, 246, 0.25);
-            padding: 6px 20px;
-            border-radius: 40px;
-            font-size: 0.85rem;
-            color: var(--accent-blue);
-            font-weight: 500;
-        }
-        .btn-primary {
-            background: linear-gradient(135deg, var(--accent-blue), var(--accent-teal));
-            color: #fff;
-            padding: 10px 28px;
-            border-radius: 40px;
-            font-weight: 600;
-            box-shadow: 0 4px 20px rgba(59, 130, 246, 0.35);
-            transition: all 0.3s ease;
-        }
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 32px rgba(59, 130, 246, 0.5);
-        }
-        .btn-outline {
-            border: 2px solid rgba(255,255,255,0.25);
-            color: #fff;
-            padding: 10px 28px;
-            border-radius: 40px;
-            font-weight: 600;
-            transition: all 0.3s;
-        }
-        .btn-outline:hover {
-            border-color: var(--accent-blue);
-            background: rgba(59, 130, 246, 0.1);
-            transform: translateY(-2px);
-        }
-        .btn-signup {
-            background: linear-gradient(135deg, #10b981, #06b6d4);
-            color: #fff;
-            padding: 10px 28px;
-            border-radius: 40px;
-            font-weight: 600;
-            box-shadow: 0 4px 20px rgba(16, 185, 129, 0.35);
-            transition: all 0.3s;
-        }
-        .btn-signup:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 32px rgba(16, 185, 129, 0.5);
-        }
-        /* ── Floating shapes ── */
-        .float-shape {
+
+        .hero-blob {
             position: absolute;
             border-radius: 50%;
-            filter: blur(80px);
-            opacity: 0.3;
+            filter: blur(100px);
             pointer-events: none;
-            animation: floatBlob 10s ease-in-out infinite alternate;
+            animation: blobFloat 12s ease-in-out infinite alternate;
         }
-        .float-shape-1 { width: 400px; height: 400px; background: #3b82f6; top: -10%; left: -10%; }
-        .float-shape-2 { width: 300px; height: 300px; background: #06b6d4; bottom: -10%; right: -10%; animation-delay: 3s; }
-        .float-shape-3 { width: 200px; height: 200px; background: #10b981; top: 50%; left: 50%; transform: translate(-50%, -50%); animation-delay: 6s; opacity: 0.15; }
-        @keyframes floatBlob {
+
+        .hero-blob-1 {
+            width: 500px;
+            height: 500px;
+            background: rgba(59, 130, 246, 0.12);
+            top: -15%;
+            left: -10%;
+            animation-delay: 0s;
+        }
+        .hero-blob-2 {
+            width: 400px;
+            height: 400px;
+            background: rgba(6, 182, 212, 0.10);
+            bottom: -15%;
+            right: -10%;
+            animation-delay: 4s;
+        }
+        .hero-blob-3 {
+            width: 300px;
+            height: 300px;
+            background: rgba(20, 184, 166, 0.08);
+            top: 40%;
+            left: 40%;
+            animation-delay: 8s;
+        }
+
+        @keyframes blobFloat {
             0% { transform: translate(0, 0) scale(1); }
-            100% { transform: translate(40px, 40px) scale(1.3); }
+            100% { transform: translate(60px, -60px) scale(1.2); }
         }
-        /* ── Stat cards ── */
-        .stat-card {
-            background: rgba(255,255,255,0.03);
-            backdrop-filter: blur(8px);
-            border: 1px solid rgba(255,255,255,0.06);
-            border-radius: 20px;
-            padding: 32px 24px;
-            text-align: center;
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+
+        /* ============================================================ */
+        /* FLOATING ICONS */
+        /* ============================================================ */
+        .float-icon {
+            animation: floatIcon 6s ease-in-out infinite;
         }
-        .stat-card:hover {
-            transform: translateY(-8px) scale(1.02);
-            border-color: rgba(59, 130, 246, 0.3);
-            background: rgba(255,255,255,0.08);
-            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+        .float-icon:nth-child(2) { animation-delay: 1s; }
+        .float-icon:nth-child(3) { animation-delay: 2s; }
+        .float-icon:nth-child(4) { animation-delay: 3s; }
+        .float-icon:nth-child(5) { animation-delay: 4s; }
+
+        @keyframes floatIcon {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-16px) rotate(5deg); }
         }
+
+        /* ============================================================ */
+        /* STAT COUNTER */
+        /* ============================================================ */
         .stat-number {
-            font-size: 3rem;
+            font-size: 3.2rem;
             font-weight: 800;
-            background: linear-gradient(135deg, var(--accent-blue), var(--accent-teal));
+            background: linear-gradient(135deg, #60a5fa, #06b6d4);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
-        /* ── Service cards ── */
+
+        /* ============================================================ */
+        /* TIMELINE */
+        /* ============================================================ */
+        .timeline-line {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #3b82f6, #06b6d4, #14b8a6, #06b6d4, #3b82f6);
+            transform: translateY(-50%);
+            z-index: 0;
+        }
+
+        .timeline-dot {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--accent-cyan);
+            border: 4px solid var(--primary-dark);
+            box-shadow: 0 0 30px rgba(6, 182, 212, 0.3);
+            z-index: 1;
+            transition: all 0.4s ease;
+        }
+
+        .timeline-item:hover .timeline-dot {
+            transform: scale(1.4);
+            box-shadow: 0 0 50px rgba(6, 182, 212, 0.6);
+        }
+
+        /* ============================================================ */
+        /* SERVICE CARD */
+        /* ============================================================ */
         .service-card {
-            background: rgba(255,255,255,0.03);
-            backdrop-filter: blur(8px);
-            border: 1px solid rgba(255,255,255,0.06);
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
             border-radius: 24px;
             padding: 32px 28px;
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
             height: 100%;
             position: relative;
             overflow: hidden;
         }
-        .service-card:hover {
-            transform: translateY(-12px);
-            border-color: rgba(59, 130, 246, 0.25);
-            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+
+        .service-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.05), rgba(6, 182, 212, 0.05));
+            opacity: 0;
+            transition: opacity 0.5s ease;
         }
+
+        .service-card:hover::before {
+            opacity: 1;
+        }
+
+        .service-card:hover {
+            transform: translateY(-12px) scale(1.02);
+            border-color: rgba(59, 130, 246, 0.3);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+        }
+
         .service-icon {
             display: inline-flex;
             align-items: center;
             justify-content: center;
             width: 64px;
             height: 64px;
-            border-radius: 16px;
-            background: linear-gradient(135deg, rgba(59,130,246,0.15), rgba(6,182,212,0.15));
+            border-radius: 18px;
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(6, 182, 212, 0.15));
             font-size: 1.8rem;
             color: var(--accent-blue);
             margin-bottom: 20px;
-            transition: all 0.3s ease;
-        }
-        .service-card:hover .service-icon {
-            background: linear-gradient(135deg, var(--accent-blue), var(--accent-teal));
-            color: #fff;
-            transform: scale(1.05) rotate(-3deg);
-            box-shadow: 0 8px 30px rgba(59,130,246,0.3);
-        }
-        /* ── Feature cards ── */
-        .feature-card {
-            background: rgba(255,255,255,0.03);
-            backdrop-filter: blur(8px);
-            border: 1px solid rgba(255,255,255,0.06);
-            border-radius: 20px;
-            padding: 28px 24px;
-            text-align: center;
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-        .feature-card:hover {
-            transform: translateY(-8px) scale(1.03);
-            border-color: rgba(59, 130, 246, 0.25);
-            background: rgba(255,255,255,0.08);
-            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
-        }
-        .feature-icon {
-            font-size: 2.5rem;
-            color: var(--accent-blue);
-            margin-bottom: 12px;
-            transition: transform 0.3s;
-        }
-        .feature-card:hover .feature-icon {
-            transform: scale(1.2) rotate(5deg);
-        }
-        /* ── Why choose ── */
-        .why-card {
-            background: rgba(255,255,255,0.03);
-            border: 1px solid rgba(255,255,255,0.06);
-            border-radius: 20px;
-            padding: 28px 24px;
             transition: all 0.4s ease;
-            text-align: center;
+            position: relative;
+            z-index: 1;
         }
+
+        .service-card:hover .service-icon {
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
+            color: #fff;
+            transform: scale(1.1) rotate(-5deg);
+            box-shadow: 0 8px 30px rgba(59, 130, 246, 0.3);
+        }
+
+        /* ============================================================ */
+        /* WHY CARD */
+        /* ============================================================ */
+        .why-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 32px 24px;
+            text-align: center;
+            transition: all 0.4s ease;
+        }
+
         .why-card:hover {
             transform: translateY(-8px);
-            border-color: rgba(6,182,212,0.3);
-            background: rgba(255,255,255,0.06);
-            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+            border-color: rgba(6, 182, 212, 0.3);
+            background: rgba(255, 255, 255, 0.05);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
         }
+
         .why-icon {
-            font-size: 2.8rem;
-            color: var(--accent-teal);
-            margin-bottom: 12px;
-            transition: transform 0.3s;
+            font-size: 3rem;
+            margin-bottom: 16px;
+            display: block;
+            transition: transform 0.4s ease;
         }
+
         .why-card:hover .why-icon {
             transform: scale(1.2) rotate(-5deg);
         }
-        /* ── Testimonials ── */
+
+        /* ============================================================ */
+        /* TESTIMONIAL CARD */
+        /* ============================================================ */
         .testimonial-card {
-            background: rgba(255,255,255,0.03);
-            border: 1px solid rgba(255,255,255,0.06);
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
             border-radius: 20px;
-            padding: 24px;
+            padding: 28px 24px;
             transition: all 0.4s ease;
         }
+
         .testimonial-card:hover {
             transform: translateY(-8px);
-            border-color: rgba(59,130,246,0.25);
-            background: rgba(255,255,255,0.06);
-            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+            border-color: rgba(59, 130, 246, 0.25);
+            background: rgba(255, 255, 255, 0.05);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
         }
-        /* ── FAQ ── */
+
+        /* ============================================================ */
+        /* FAQ */
+        /* ============================================================ */
         .faq-item {
-            background: rgba(255,255,255,0.03);
-            border: 1px solid rgba(255,255,255,0.06);
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
             border-radius: 16px;
             padding: 20px 24px;
             transition: all 0.3s ease;
+            cursor: pointer;
         }
+
         .faq-item:hover {
-            background: rgba(255,255,255,0.06);
-            border-color: rgba(59,130,246,0.2);
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(59, 130, 246, 0.2);
             transform: translateX(4px);
         }
-        /* ── Partners ── */
-        .partner-item {
-            background: rgba(255,255,255,0.03);
-            border: 1px solid rgba(255,255,255,0.06);
+
+        .faq-answer {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .faq-answer.open {
+            max-height: 300px;
+        }
+
+        .faq-chevron {
+            transition: transform 0.3s ease;
+        }
+
+        .faq-chevron.open {
+            transform: rotate(180deg);
+        }
+
+        /* ============================================================ */
+        /* PARTNER LOGO */
+        /* ============================================================ */
+        .partner-logo {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
             border-radius: 16px;
             padding: 24px 16px;
             text-align: center;
-            transition: all 0.3s ease;
+            transition: all 0.4s ease;
         }
-        .partner-item:hover {
-            transform: translateY(-6px);
-            border-color: rgba(59,130,246,0.25);
-            background: rgba(255,255,255,0.06);
-            box-shadow: 0 12px 40px rgba(0,0,0,0.3);
+
+        .partner-logo:hover {
+            transform: translateY(-6px) scale(1.05);
+            border-color: rgba(59, 130, 246, 0.25);
+            background: rgba(255, 255, 255, 0.06);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
         }
-        /* ── Footer ── */
+
+        /* ============================================================ */
+        /* EMERGENCY BANNER */
+        /* ============================================================ */
+        .emergency-banner {
+            background: linear-gradient(135deg, #7f1d1d, #991b1b, #dc2626);
+            border-radius: 24px;
+            padding: 40px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .emergency-banner::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 300px;
+            height: 300px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 50%;
+            animation: pulseGlow 3s ease-in-out infinite;
+        }
+
+        @keyframes pulseGlow {
+            0%, 100% { transform: scale(1); opacity: 0.5; }
+            50% { transform: scale(1.5); opacity: 0.2; }
+        }
+
+        /* ============================================================ */
+        /* MOBILE APP DOWNLOAD */
+        /* ============================================================ */
+        .app-download-card {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(6, 182, 212, 0.1));
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            border-radius: 24px;
+            padding: 40px;
+            transition: all 0.4s ease;
+        }
+
+        .app-download-card:hover {
+            transform: scale(1.02);
+            border-color: rgba(59, 130, 246, 0.4);
+            box-shadow: 0 20px 60px rgba(59, 130, 246, 0.1);
+        }
+
+        /* ============================================================ */
+        /* FOOTER */
+        /* ============================================================ */
         .footer {
             background: #060e1a;
-            border-top: 1px solid rgba(255,255,255,0.04);
+            border-top: 1px solid rgba(255, 255, 255, 0.04);
         }
+
+        .footer-link {
+            color: #94a3b8;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .footer-link::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 0;
+            height: 1px;
+            background: var(--accent-cyan);
+            transition: width 0.3s ease;
+        }
+
+        .footer-link:hover {
+            color: #ffffff;
+        }
+
+        .footer-link:hover::after {
+            width: 100%;
+        }
+
         .footer-social {
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            width: 40px;
-            height: 40px;
+            width: 44px;
+            height: 44px;
             border-radius: 50%;
-            background: rgba(255,255,255,0.05);
+            background: rgba(255, 255, 255, 0.05);
             color: #94a3b8;
-            transition: all 0.3s;
-            border: 1px solid rgba(255,255,255,0.06);
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.06);
         }
+
         .footer-social:hover {
-            background: rgba(59,130,246,0.2);
+            background: rgba(59, 130, 246, 0.2);
             color: #fff;
             border-color: var(--accent-blue);
             transform: translateY(-4px) rotate(8deg);
-            box-shadow: 0 8px 20px rgba(59,130,246,0.3);
+            box-shadow: 0 8px 20px rgba(59, 130, 246, 0.3);
         }
-        /* ── Common ── */
+
+        /* ============================================================ */
+        /* ANIMATIONS */
+        /* ============================================================ */
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(40px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .animate-fade-up {
+            opacity: 0;
+            animation: fadeInUp 0.8s ease forwards;
+        }
+
+        .animate-fade-up-1 { animation-delay: 0.1s; }
+        .animate-fade-up-2 { animation-delay: 0.2s; }
+        .animate-fade-up-3 { animation-delay: 0.3s; }
+        .animate-fade-up-4 { animation-delay: 0.4s; }
+        .animate-fade-up-5 { animation-delay: 0.5s; }
+
+        /* ============================================================ */
+        /* RESPONSIVE */
+        /* ============================================================ */
+        @media (max-width: 1024px) {
+            .stat-number { font-size: 2.5rem; }
+        }
+
+        @media (max-width: 768px) {
+            .stat-number { font-size: 2rem; }
+            .hero-blob { width: 200px; height: 200px; filter: blur(60px); }
+            .timeline-line { display: none; }
+            .timeline-item { padding-left: 20px; border-left: 3px solid var(--accent-cyan); }
+            .emergency-banner { padding: 24px; }
+        }
+
+        @media (max-width: 480px) {
+            .stat-number { font-size: 1.6rem; }
+        }
+
+        /* ============================================================ */
+        /* SECTION BADGE */
+        /* ============================================================ */
         .section-badge {
             display: inline-block;
-            background: rgba(59,130,246,0.12);
-            border: 1px solid rgba(59,130,246,0.15);
-            padding: 4px 18px;
+            background: rgba(59, 130, 246, 0.12);
+            border: 1px solid rgba(59, 130, 246, 0.15);
+            padding: 6px 20px;
             border-radius: 40px;
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             color: var(--accent-blue);
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
+
         .section-title {
             font-size: clamp(2rem, 4vw, 2.8rem);
             font-weight: 800;
             color: #ffffff;
             line-height: 1.2;
         }
-        /* ── Animations ── */
-        @keyframes spin { to { transform: rotate(360deg); } }
-        .animate-spin-slow { animation: spin 20s linear infinite; }
-        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-16px); } }
-        .float-anim { animation: float 6s ease-in-out infinite; }
-        @media (max-width: 768px) {
-            .hero-title { font-size: 2.4rem; }
-            .stat-number { font-size: 2.2rem; }
-        }
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #0a1628; }
-        ::-webkit-scrollbar-thumb { background: var(--primary-blue); border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: var(--accent-blue); }
     </style>
 </head>
 <body>
 
-    <!-- ===== NAVBAR ===== -->
+    <!-- ============================================================ -->
+    <!-- NAVBAR (PARTIAL) -->
+    <!-- ============================================================ -->
     {% include "dashboard/partials/navbar.html" %}
 
-    <!-- ===== HERO ===== -->
-    {% include 'dashboard/partials/hero.html' with hero=hero %}
+    <!-- ============================================================ -->
+    <!-- HERO SECTION -->
+    <!-- ============================================================ -->
+    <section class="hero-bg min-h-screen flex items-center relative overflow-hidden pt-20">
+        <!-- Animated Blobs -->
+        <div class="hero-blob hero-blob-1"></div>
+        <div class="hero-blob hero-blob-2"></div>
+        <div class="hero-blob hero-blob-3"></div>
 
-    <!-- ===== STATISTICS ===== -->
-    {% include 'dashboard/partials/statistics.html' with stats=stats %}
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 relative z-10">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+                <!-- Left Content -->
+                <div>
+                    <!-- Government Badge -->
+                    <div class="inline-flex items-center gap-3 bg-blue-500/10 border border-blue-500/20 rounded-full px-5 py-2 mb-6 animate-fade-up animate-fade-up-1">
+                        <span class="relative flex h-2.5 w-2.5">
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-cyan-400"></span>
+                        </span>
+                        <span class="text-cyan-400 text-xs font-semibold uppercase tracking-wider">
+                            <i class="fas fa-flag mr-2"></i>Government of Bangladesh
+                        </span>
+                    </div>
 
-    <!-- ===== SERVICES ===== -->
-    {% include 'dashboard/partials/services.html' with services=services %}
+                    <!-- Hero Heading -->
+                    <h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold leading-tight animate-fade-up animate-fade-up-2">
+                        <span class="text-white">National Health</span><br>
+                        <span class="gradient-text">Information</span><br>
+                        <span class="text-white">Management System</span>
+                    </h1>
 
-    <!-- ===== FEATURES ===== -->
-    {% include 'dashboard/partials/features.html' with features=features %}
+                    <p class="text-gray-400 text-lg md:text-xl mt-6 max-w-xl leading-relaxed animate-fade-up animate-fade-up-3">
+                        Bangladesh's premier digital healthcare platform connecting patients, doctors, 
+                        hospitals, laboratories, and pharmacies for seamless, paperless medical care.
+                    </p>
 
-    <!-- ===== WHY CHOOSE US ===== -->
-   {% include "dashboard/partials/why_choose_us.html" %}
+                    <!-- CTA Buttons -->
+                    <div class="flex flex-wrap gap-4 mt-8 animate-fade-up animate-fade-up-4">
+                        <a href="#book-appointment" class="btn-primary">
+                            <i class="fas fa-calendar-check"></i> Book Appointment
+                        </a>
+                        <a href="#services" class="btn-secondary">
+                            <i class="fas fa-play-circle"></i> Explore Services
+                        </a>
+                        <a href="#register" class="btn-gold">
+                            <i class="fas fa-hospital"></i> Register Hospital
+                        </a>
+                    </div>
 
-    <!-- ===== TESTIMONIALS ===== -->
-    {% include 'dashboard/partials/testimonials.html' with testimonials=testimonials %}
+                    <!-- Quick Stats -->
+                    <div class="grid grid-cols-4 gap-3 mt-12 animate-fade-up animate-fade-up-5">
+                        <div class="glass rounded-2xl p-3 text-center float-icon">
+                            <p class="stat-number text-2xl font-bold">10M+</p>
+                            <p class="text-gray-500 text-xs">Patients</p>
+                        </div>
+                        <div class="glass rounded-2xl p-3 text-center float-icon">
+                            <p class="stat-number text-2xl font-bold">20K+</p>
+                            <p class="text-gray-500 text-xs">Doctors</p>
+                        </div>
+                        <div class="glass rounded-2xl p-3 text-center float-icon">
+                            <p class="stat-number text-2xl font-bold">1200+</p>
+                            <p class="text-gray-500 text-xs">Hospitals</p>
+                        </div>
+                        <div class="glass rounded-2xl p-3 text-center float-icon">
+                            <p class="stat-number text-2xl font-bold">99.9%</p>
+                            <p class="text-gray-500 text-xs">Uptime</p>
+                        </div>
+                    </div>
+                </div>
 
-    <!-- ===== FAQ ===== -->
-    {% include 'dashboard/partials/faq.html' with faqs=faqs %}
+                <!-- Right - Hero Illustration -->
+                <div class="relative animate-fade-up animate-fade-up-3 hidden lg:block">
+                    <div class="glass rounded-3xl p-8 relative">
+                        <!-- Floating Icons -->
+                        <div class="absolute -top-6 -right-6 glass rounded-2xl px-4 py-2 text-xs font-medium text-cyan-400 float-icon">
+                            <i class="fas fa-shield-alt mr-1"></i> 256-bit Encrypted
+                        </div>
+                        <div class="absolute -bottom-6 -left-6 glass rounded-2xl px-4 py-2 text-xs font-medium text-green-400 float-icon">
+                            <i class="fas fa-check-circle mr-1"></i> ISO Certified
+                        </div>
+                        <div class="absolute top-1/2 -left-8 glass rounded-2xl px-3 py-2 text-xs font-medium text-gold-400 float-icon">
+                            <i class="fas fa-star mr-1"></i> 4.9 Rating
+                        </div>
 
-    <!-- ===== PARTNERS ===== -->
-    {% include 'dashboard/partials/partners.html' with partners=partners %}
+                        <!-- Mock Dashboard Preview -->
+                        <div class="bg-[#0d1f3c] rounded-2xl p-6 border border-white/10">
+                            <!-- Dashboard Header -->
+                            <div class="flex items-center justify-between mb-6">
+                                <div class="flex items-center gap-2">
+                                    <div class="w-3 h-3 rounded-full bg-red-400"></div>
+                                    <div class="w-3 h-3 rounded-full bg-yellow-400"></div>
+                                    <div class="w-3 h-3 rounded-full bg-green-400"></div>
+                                </div>
+                                <span class="text-gray-500 text-xs">Live Dashboard</span>
+                            </div>
 
-    <!-- ===== CTA ===== -->
-    {% if cta %}
-        {% include 'dashboard/partials/cta.html' with cta=cta %}
-    {% endif %}
+                            <!-- Dashboard Stats -->
+                            <div class="grid grid-cols-3 gap-3 mb-4">
+                                <div class="glass rounded-xl p-3 text-center">
+                                    <p class="text-cyan-400 text-sm font-bold">1,280</p>
+                                    <p class="text-gray-500 text-[10px]">Today's Appointments</p>
+                                </div>
+                                <div class="glass rounded-xl p-3 text-center">
+                                    <p class="text-green-400 text-sm font-bold">94%</p>
+                                    <p class="text-gray-500 text-[10px]">Recovery Rate</p>
+                                </div>
+                                <div class="glass rounded-xl p-3 text-center">
+                                    <p class="text-blue-400 text-sm font-bold">3.2M</p>
+                                    <p class="text-gray-500 text-[10px]">Patients</p>
+                                </div>
+                            </div>
 
-    <!-- ===== FOOTER ===== -->
-    {% include 'dashboard/partials/footer.html' with footer=footer %}
+                            <!-- Progress Bar -->
+                            <div class="space-y-2">
+                                <div class="flex justify-between text-xs">
+                                    <span class="text-gray-400">System Capacity</span>
+                                    <span class="text-cyan-400">78%</span>
+                                </div>
+                                <div class="h-2 bg-white/5 rounded-full overflow-hidden">
+                                    <div class="h-full bg-gradient-to-r from-blue-500 to-cyan-400 rounded-full" style="width: 78%"></div>
+                                </div>
+                            </div>
 
-    <!-- ===== SCRIPTS ===== -->
+                            <!-- Activity -->
+                            <div class="mt-4 space-y-2">
+                                <div class="flex items-center gap-3 text-xs">
+                                    <span class="w-2 h-2 rounded-full bg-green-400"></span>
+                                    <span class="text-gray-400">New patient registered</span>
+                                    <span class="text-gray-600 ml-auto">2 min ago</span>
+                                </div>
+                                <div class="flex items-center gap-3 text-xs">
+                                    <span class="w-2 h-2 rounded-full bg-blue-400"></span>
+                                    <span class="text-gray-400">Lab report uploaded</span>
+                                    <span class="text-gray-600 ml-auto">15 min ago</span>
+                                </div>
+                                <div class="flex items-center gap-3 text-xs">
+                                    <span class="w-2 h-2 rounded-full bg-yellow-400"></span>
+                                    <span class="text-gray-400">Appointment confirmed</span>
+                                    <span class="text-gray-600 ml-auto">1 hour ago</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- LIVE SEARCH SECTION -->
+    <!-- ============================================================ -->
+    <section class="py-16 border-b border-white/5">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="glass rounded-3xl p-6 md:p-8">
+                <div class="relative">
+                    <i class="fas fa-search absolute left-5 top-1/2 -translate-y-1/2 text-gray-500"></i>
+                    <input type="text" 
+                           placeholder="Search Hospitals, Doctors, Departments, Laboratory Tests, Pharmacies..." 
+                           class="w-full pl-14 pr-4 py-4 bg-white/5 border border-white/10 rounded-2xl text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 text-lg transition">
+                </div>
+                <div class="flex flex-wrap gap-2 mt-4">
+                    <button class="px-4 py-2 bg-blue-500/10 border border-blue-500/20 rounded-xl text-blue-400 text-sm font-medium hover:bg-blue-500/20 transition">Hospitals</button>
+                    <button class="px-4 py-2 bg-cyan-500/10 border border-cyan-500/20 rounded-xl text-cyan-400 text-sm font-medium hover:bg-cyan-500/20 transition">Doctors</button>
+                    <button class="px-4 py-2 bg-purple-500/10 border border-purple-500/20 rounded-xl text-purple-400 text-sm font-medium hover:bg-purple-500/20 transition">Departments</button>
+                    <button class="px-4 py-2 bg-green-500/10 border border-green-500/20 rounded-xl text-green-400 text-sm font-medium hover:bg-green-500/20 transition">Lab Tests</button>
+                    <button class="px-4 py-2 bg-yellow-500/10 border border-yellow-500/20 rounded-xl text-yellow-400 text-sm font-medium hover:bg-yellow-500/20 transition">Pharmacies</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- QUICK ACCESS -->
+    <!-- ============================================================ -->
+    <section class="py-16 border-b border-white/5">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-12">
+                <span class="section-badge">Quick Access</span>
+                <h2 class="section-title mt-2">What would you like to do?</h2>
+            </div>
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+                <a href="#" class="glass-card rounded-2xl p-4 text-center group">
+                    <div class="w-12 h-12 mx-auto rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-400 text-xl group-hover:bg-blue-500/20 group-hover:scale-110 transition">
+                        <i class="fas fa-calendar-plus"></i>
+                    </div>
+                    <p class="text-gray-300 text-xs mt-2">Book Appointment</p>
+                </a>
+                <a href="#" class="glass-card rounded-2xl p-4 text-center group">
+                    <div class="w-12 h-12 mx-auto rounded-xl bg-cyan-500/10 flex items-center justify-center text-cyan-400 text-xl group-hover:bg-cyan-500/20 group-hover:scale-110 transition">
+                        <i class="fas fa-user-md"></i>
+                    </div>
+                    <p class="text-gray-300 text-xs mt-2">Find Doctor</p>
+                </a>
+                <a href="#" class="glass-card rounded-2xl p-4 text-center group">
+                    <div class="w-12 h-12 mx-auto rounded-xl bg-green-500/10 flex items-center justify-center text-green-400 text-xl group-hover:bg-green-500/20 group-hover:scale-110 transition">
+                        <i class="fas fa-hospital"></i>
+                    </div>
+                    <p class="text-gray-300 text-xs mt-2">Find Hospital</p>
+                </a>
+                <a href="#" class="glass-card rounded-2xl p-4 text-center group">
+                    <div class="w-12 h-12 mx-auto rounded-xl bg-red-500/10 flex items-center justify-center text-red-400 text-xl group-hover:bg-red-500/20 group-hover:scale-110 transition">
+                        <i class="fas fa-ambulance"></i>
+                    </div>
+                    <p class="text-gray-300 text-xs mt-2">Emergency</p>
+                </a>
+                <a href="#" class="glass-card rounded-2xl p-4 text-center group">
+                    <div class="w-12 h-12 mx-auto rounded-xl bg-purple-500/10 flex items-center justify-center text-purple-400 text-xl group-hover:bg-purple-500/20 group-hover:scale-110 transition">
+                        <i class="fas fa-flask"></i>
+                    </div>
+                    <p class="text-gray-300 text-xs mt-2">Laboratory</p>
+                </a>
+                <a href="#" class="glass-card rounded-2xl p-4 text-center group">
+                    <div class="w-12 h-12 mx-auto rounded-xl bg-yellow-500/10 flex items-center justify-center text-yellow-400 text-xl group-hover:bg-yellow-500/20 group-hover:scale-110 transition">
+                        <i class="fas fa-prescription"></i>
+                    </div>
+                    <p class="text-gray-300 text-xs mt-2">Prescription</p>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- TRUSTED BY -->
+    <!-- ============================================================ -->
+    <section class="py-16 border-b border-white/5">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <p class="text-center text-gray-500 text-sm font-medium uppercase tracking-widest mb-8">Trusted By Leading Organizations</p>
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                <div class="partner-logo"><p class="text-gray-400 font-semibold text-sm">Govt. of Bangladesh</p></div>
+                <div class="partner-logo"><p class="text-gray-400 font-semibold text-sm">Ministry of Health</p></div>
+                <div class="partner-logo"><p class="text-gray-400 font-semibold text-sm">DGHS</p></div>
+                <div class="partner-logo"><p class="text-gray-400 font-semibold text-sm">WHO Bangladesh</p></div>
+                <div class="partner-logo"><p class="text-gray-400 font-semibold text-sm">UNICEF</p></div>
+                <div class="partner-logo"><p class="text-gray-400 font-semibold text-sm">ICDDR,B</p></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- SERVICES SECTION -->
+    <!-- ============================================================ -->
+    <section id="services" class="py-24 border-b border-white/5">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <span class="section-badge">Our Services</span>
+                <h2 class="section-title mt-2">Comprehensive Healthcare Solutions</h2>
+                <p class="text-gray-400 mt-4 max-w-2xl mx-auto">Modern healthcare management tools designed for Bangladesh's digital future</p>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                <!-- Service Cards -->
+                <div class="service-card group">
+                    <div class="service-icon"><i class="fas fa-notes-medical"></i></div>
+                    <h3 class="text-white font-semibold text-lg">Electronic Health Records</h3>
+                    <p class="text-gray-400 text-sm mt-2 leading-relaxed">Secure, paperless medical records accessible from anywhere in Bangladesh.</p>
+                </div>
+
+                <div class="service-card group">
+                    <div class="service-icon" style="color: #06b6d4; background: rgba(6,182,212,0.15);"><i class="fas fa-user-md"></i></div>
+                    <h3 class="text-white font-semibold text-lg">Doctor Management</h3>
+                    <p class="text-gray-400 text-sm mt-2 leading-relaxed">Complete doctor profiles, schedules, and appointment management system.</p>
+                </div>
+
+                <div class="service-card group">
+                    <div class="service-icon" style="color: #10b981; background: rgba(16,185,129,0.15);"><i class="fas fa-users"></i></div>
+                    <h3 class="text-white font-semibold text-lg">Patient Management</h3>
+                    <p class="text-gray-400 text-sm mt-2 leading-relaxed">Comprehensive patient records with visit history and treatment plans.</p>
+                </div>
+
+                <div class="service-card group">
+                    <div class="service-icon" style="color: #8b5cf6; background: rgba(139,92,246,0.15);"><i class="fas fa-hospital"></i></div>
+                    <h3 class="text-white font-semibold text-lg">Hospital Management</h3>
+                    <p class="text-gray-400 text-sm mt-2 leading-relaxed">Full hospital administration with departments, rooms, and staff management.</p>
+                </div>
+
+                <div class="service-card group">
+                    <div class="service-icon" style="color: #f59e0b; background: rgba(245,158,11,0.15);"><i class="fas fa-flask"></i></div>
+                    <h3 class="text-white font-semibold text-lg">Laboratory Management</h3>
+                    <p class="text-gray-400 text-sm mt-2 leading-relaxed">Complete lab test ordering, tracking, and digital report delivery.</p>
+                </div>
+
+                <div class="service-card group">
+                    <div class="service-icon" style="color: #ec4899; background: rgba(236,72,153,0.15);"><i class="fas fa-prescription"></i></div>
+                    <h3 class="text-white font-semibold text-lg">Digital Prescription</h3>
+                    <p class="text-gray-400 text-sm mt-2 leading-relaxed">E-prescriptions with medicine details, dosage, and QR verification.</p>
+                </div>
+
+                <div class="service-card group">
+                    <div class="service-icon" style="color: #14b8a6; background: rgba(20,184,166,0.15);"><i class="fas fa-calendar-check"></i></div>
+                    <h3 class="text-white font-semibold text-lg">Appointment Booking</h3>
+                    <p class="text-gray-400 text-sm mt-2 leading-relaxed">Easy online appointment booking with real-time doctor availability.</p>
+                </div>
+
+                <div class="service-card group">
+                    <div class="service-icon" style="color: #f43f5e; background: rgba(244,63,94,0.15);"><i class="fas fa-id-card"></i></div>
+                    <h3 class="text-white font-semibold text-lg">Digital Health ID</h3>
+                    <p class="text-gray-400 text-sm mt-2 leading-relaxed">Unique health ID for every citizen with complete medical history.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- HOW NHIMS WORKS - TIMELINE -->
+    <!-- ============================================================ -->
+    <section class="py-24 border-b border-white/5">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <span class="section-badge">How It Works</span>
+                <h2 class="section-title mt-2">Simple Steps to Better Health</h2>
+                <p class="text-gray-400 mt-4 max-w-2xl mx-auto">From registration to treatment, we make healthcare seamless</p>
+            </div>
+
+            <div class="relative">
+                <div class="timeline-line hidden md:block"></div>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 md:gap-0 relative">
+                    <div class="timeline-item text-center relative p-4">
+                        <div class="flex flex-col items-center">
+                            <div class="timeline-dot mb-4"></div>
+                            <div class="glass-card rounded-2xl p-4 w-full max-w-[140px]">
+                                <div class="w-12 h-12 mx-auto rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-400 text-xl">
+                                    <i class="fas fa-user-plus"></i>
+                                </div>
+                                <p class="text-white text-xs font-medium mt-2">Patient Registration</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="timeline-item text-center relative p-4">
+                        <div class="flex flex-col items-center">
+                            <div class="timeline-dot mb-4"></div>
+                            <div class="glass-card rounded-2xl p-4 w-full max-w-[140px]">
+                                <div class="w-12 h-12 mx-auto rounded-xl bg-cyan-500/10 flex items-center justify-center text-cyan-400 text-xl">
+                                    <i class="fas fa-calendar-plus"></i>
+                                </div>
+                                <p class="text-white text-xs font-medium mt-2">Book Appointment</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="timeline-item text-center relative p-4">
+                        <div class="flex flex-col items-center">
+                            <div class="timeline-dot mb-4"></div>
+                            <div class="glass-card rounded-2xl p-4 w-full max-w-[140px]">
+                                <div class="w-12 h-12 mx-auto rounded-xl bg-green-500/10 flex items-center justify-center text-green-400 text-xl">
+                                    <i class="fas fa-user-md"></i>
+                                </div>
+                                <p class="text-white text-xs font-medium mt-2">Doctor Consultation</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="timeline-item text-center relative p-4">
+                        <div class="flex flex-col items-center">
+                            <div class="timeline-dot mb-4"></div>
+                            <div class="glass-card rounded-2xl p-4 w-full max-w-[140px]">
+                                <div class="w-12 h-12 mx-auto rounded-xl bg-purple-500/10 flex items-center justify-center text-purple-400 text-xl">
+                                    <i class="fas fa-prescription"></i>
+                                </div>
+                                <p class="text-white text-xs font-medium mt-2">Digital Prescription</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-0 relative mt-4">
+                    <div class="timeline-item text-center relative p-4">
+                        <div class="flex flex-col items-center">
+                            <div class="timeline-dot mb-4"></div>
+                            <div class="glass-card rounded-2xl p-4 w-full max-w-[140px]">
+                                <div class="w-12 h-12 mx-auto rounded-xl bg-yellow-500/10 flex items-center justify-center text-yellow-400 text-xl">
+                                    <i class="fas fa-flask"></i>
+                                </div>
+                                <p class="text-white text-xs font-medium mt-2">Laboratory Test</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="timeline-item text-center relative p-4">
+                        <div class="flex flex-col items-center">
+                            <div class="timeline-dot mb-4"></div>
+                            <div class="glass-card rounded-2xl p-4 w-full max-w-[140px]">
+                                <div class="w-12 h-12 mx-auto rounded-xl bg-teal-500/10 flex items-center justify-center text-teal-400 text-xl">
+                                    <i class="fas fa-file-download"></i>
+                                </div>
+                                <p class="text-white text-xs font-medium mt-2">Download Report</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="timeline-item text-center relative p-4">
+                        <div class="flex flex-col items-center">
+                            <div class="timeline-dot mb-4"></div>
+                            <div class="glass-card rounded-2xl p-4 w-full max-w-[140px]">
+                                <div class="w-12 h-12 mx-auto rounded-xl bg-rose-500/10 flex items-center justify-center text-rose-400 text-xl">
+                                    <i class="fas fa-notes-medical"></i>
+                                </div>
+                                <p class="text-white text-xs font-medium mt-2">Records Updated</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- LIVE STATISTICS -->
+    <!-- ============================================================ -->
+    <section class="py-24 border-b border-white/5">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <span class="section-badge">Live Statistics</span>
+                <h2 class="section-title mt-2">NHIMS by the Numbers</h2>
+            </div>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+                <div class="stat-card">
+                    <p class="stat-number">10M+</p>
+                    <p class="text-gray-400 text-sm mt-1">Patients</p>
+                </div>
+                <div class="stat-card">
+                    <p class="stat-number">20K+</p>
+                    <p class="text-gray-400 text-sm mt-1">Doctors</p>
+                </div>
+                <div class="stat-card">
+                    <p class="stat-number">1200+</p>
+                    <p class="text-gray-400 text-sm mt-1">Hospitals</p>
+                </div>
+                <div class="stat-card">
+                    <p class="stat-number">99.99%</p>
+                    <p class="text-gray-400 text-sm mt-1">System Uptime</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- WHY CHOOSE NHIMS -->
+    <!-- ============================================================ -->
+    <section class="py-24 border-b border-white/5">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <span class="section-badge">Why Choose NHIMS</span>
+                <h2 class="section-title mt-2">Built for Trust and Excellence</h2>
+            </div>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+                <div class="why-card">
+                    <span class="why-icon">🔒</span>
+                    <h3 class="text-white font-semibold">Secure</h3>
+                    <p class="text-gray-400 text-sm mt-1">End-to-end encryption</p>
+                </div>
+                <div class="why-card">
+                    <span class="why-icon">⚡</span>
+                    <h3 class="text-white font-semibold">Fast</h3>
+                    <p class="text-gray-400 text-sm mt-1">Lightning speed</p>
+                </div>
+                <div class="why-card">
+                    <span class="why-icon">✅</span>
+                    <h3 class="text-white font-semibold">Reliable</h3>
+                    <p class="text-gray-400 text-sm mt-1">99.9% uptime</p>
+                </div>
+                <div class="why-card">
+                    <span class="why-icon">☁️</span>
+                    <h3 class="text-white font-semibold">Cloud Based</h3>
+                    <p class="text-gray-400 text-sm mt-1">Access anywhere</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- EMERGENCY BANNER -->
+    <!-- ============================================================ -->
+    <section class="py-16">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="emergency-banner">
+                <div class="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
+                    <div>
+                        <span class="text-red-300 text-sm font-semibold uppercase tracking-wider flex items-center gap-2">
+                            <i class="fas fa-heartbeat animate-pulse"></i> Emergency
+                        </span>
+                        <h3 class="text-3xl font-bold text-white mt-2">Need Immediate Help?</h3>
+                        <p class="text-red-200 mt-1">Call 999 or visit your nearest emergency department</p>
+                    </div>
+                    <div class="flex gap-4">
+                        <a href="#" class="px-8 py-4 bg-white text-red-600 font-bold rounded-2xl hover:bg-red-50 transition shadow-xl">
+                            <i class="fas fa-phone mr-2"></i> 999
+                        </a>
+                        <a href="#" class="px-6 py-4 bg-red-600/30 border border-red-400/30 text-white font-semibold rounded-2xl hover:bg-red-600/40 transition">
+                            Find Emergency Room
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- TESTIMONIALS -->
+    <!-- ============================================================ -->
+    <section class="py-24 border-t border-white/5">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <span class="section-badge">Testimonials</span>
+                <h2 class="section-title mt-2">What People Say About NHIMS</h2>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="testimonial-card">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 text-xl font-bold">D</div>
+                        <div>
+                            <p class="text-white font-semibold">Dr. Mohammad Ali</p>
+                            <p class="text-gray-500 text-xs">Cardiologist, Dhaka</p>
+                        </div>
+                    </div>
+                    <p class="text-gray-300 text-sm leading-relaxed">"NHIMS has revolutionized how I practice medicine. Digital prescriptions and patient records have saved countless hours."</p>
+                    <div class="flex mt-3 text-yellow-400 text-sm">
+                        <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+                    </div>
+                </div>
+                <div class="testimonial-card">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-12 h-12 rounded-full bg-cyan-500/20 flex items-center justify-center text-cyan-400 text-xl font-bold">S</div>
+                        <div>
+                            <p class="text-white font-semibold">Sadia Rahman</p>
+                            <p class="text-gray-500 text-xs">Patient, Chittagong</p>
+                        </div>
+                    </div>
+                    <p class="text-gray-300 text-sm leading-relaxed">"Booking appointments and accessing my medical records has never been easier. NHIMS is a blessing for patients like me."</p>
+                    <div class="flex mt-3 text-yellow-400 text-sm">
+                        <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+                    </div>
+                </div>
+                <div class="testimonial-card">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-12 h-12 rounded-full bg-green-500/20 flex items-center justify-center text-green-400 text-xl font-bold">H</div>
+                        <div>
+                            <p class="text-white font-semibold">Dr. Hasan Mahmud</p>
+                            <p class="text-gray-500 text-xs">Hospital Admin, Rajshahi</p>
+                        </div>
+                    </div>
+                    <p class="text-gray-300 text-sm leading-relaxed">"Managing our hospital operations has become incredibly efficient. NHIMS is the future of healthcare in Bangladesh."</p>
+                    <div class="flex mt-3 text-yellow-400 text-sm">
+                        <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- FAQ SECTION -->
+    <!-- ============================================================ -->
+    <section class="py-24 border-t border-white/5">
+        <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-12">
+                <span class="section-badge">FAQ</span>
+                <h2 class="section-title mt-2">Frequently Asked Questions</h2>
+            </div>
+            <div class="space-y-4">
+                <div class="faq-item" onclick="toggleFaq(this)">
+                    <div class="flex items-center justify-between">
+                        <span class="text-white font-medium">What is NHIMS?</span>
+                        <i class="fas fa-chevron-down faq-chevron text-gray-500"></i>
+                    </div>
+                    <div class="faq-answer mt-2">
+                        <p class="text-gray-400 text-sm leading-relaxed">NHIMS (National Health Information Management System) is Bangladesh's comprehensive digital healthcare platform designed to connect patients, doctors, hospitals, laboratories, and pharmacies for seamless medical care.</p>
+                    </div>
+                </div>
+                <div class="faq-item" onclick="toggleFaq(this)">
+                    <div class="flex items-center justify-between">
+                        <span class="text-white font-medium">Is NHIMS free to use?</span>
+                        <i class="fas fa-chevron-down faq-chevron text-gray-500"></i>
+                    </div>
+                    <div class="faq-answer mt-2">
+                        <p class="text-gray-400 text-sm leading-relaxed">Yes, NHIMS is completely free for patients. Healthcare providers and hospitals may have subscription plans for premium features.</p>
+                    </div>
+                </div>
+                <div class="faq-item" onclick="toggleFaq(this)">
+                    <div class="flex items-center justify-between">
+                        <span class="text-white font-medium">How do I book an appointment?</span>
+                        <i class="fas fa-chevron-down faq-chevron text-gray-500"></i>
+                    </div>
+                    <div class="faq-answer mt-2">
+                        <p class="text-gray-400 text-sm leading-relaxed">Simply create an account, search for your preferred doctor or hospital, select a time slot, and confirm your appointment. You'll receive a confirmation notification instantly.</p>
+                    </div>
+                </div>
+                <div class="faq-item" onclick="toggleFaq(this)">
+                    <div class="flex items-center justify-between">
+                        <span class="text-white font-medium">Is my medical data secure?</span>
+                        <i class="fas fa-chevron-down faq-chevron text-gray-500"></i>
+                    </div>
+                    <div class="faq-answer mt-2">
+                        <p class="text-gray-400 text-sm leading-relaxed">Absolutely. NHIMS uses enterprise-grade encryption, secure cloud storage, and follows international healthcare data protection standards to keep your information safe.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- CTA SECTION -->
+    <!-- ============================================================ -->
+    <section class="py-24 border-t border-white/5">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="glass rounded-3xl p-8 md:p-12 text-center">
+                <span class="section-badge">Join NHIMS Today</span>
+                <h2 class="text-3xl md:text-4xl font-bold text-white mt-4">Ready to Transform Healthcare in Bangladesh?</h2>
+                <p class="text-gray-400 mt-3 max-w-2xl mx-auto">Join thousands of healthcare professionals and patients already using NHIMS</p>
+                <div class="flex flex-wrap justify-center gap-4 mt-8">
+                    <a href="#" class="btn-primary"><i class="fas fa-user-plus"></i> Register as Patient</a>
+                    <a href="#" class="btn-gold"><i class="fas fa-hospital"></i> Register Hospital</a>
+                    <a href="#" class="btn-secondary"><i class="fas fa-flask"></i> Register Laboratory</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- FOOTER (PARTIAL) -->
+    <!-- ============================================================ -->
+    {% include "dashboard/partials/footer.html" %}
+
+    <!-- ============================================================ -->
+    <!-- SCRIPTS -->
+    <!-- ============================================================ -->
     <script>
-        // Navbar scroll effect
-        const navbar = document.getElementById('navbar');
-        window.addEventListener('scroll', () => {
-            if (window.scrollY > 20) navbar.classList.add('scrolled');
-            else navbar.classList.remove('scrolled');
-        });
-
-        // Mobile toggle (adjust if needed)
-        const toggle = document.getElementById('mobileToggle');
-        const menu = document.getElementById('mobileMenu');
-        if (toggle && menu) {
-            toggle.addEventListener('click', () => {
-                menu.classList.toggle('hidden');
-                const icon = toggle.querySelector('i');
-                if (icon) icon.className = menu.classList.contains('hidden') ? 'fa-solid fa-bars' : 'fa-solid fa-xmark';
-            });
-        }
-        // Close mobile menu on link click
-        document.querySelectorAll('#mobileMenu a').forEach(link => {
-            link.addEventListener('click', () => {
-                if (menu) {
-                    menu.classList.add('hidden');
-                    const icon = toggle?.querySelector('i');
-                    if (icon) icon.className = 'fa-solid fa-bars';
+        // ===== FAQ TOGGLE =====
+        function toggleFaq(element) {
+            const answer = element.querySelector('.faq-answer');
+            const chevron = element.querySelector('.faq-chevron');
+            
+            // Close other FAQs
+            document.querySelectorAll('.faq-answer').forEach(function(a) {
+                if (a !== answer) {
+                    a.classList.remove('open');
+                    const icon = a.closest('.faq-item').querySelector('.faq-chevron');
+                    if (icon) icon.classList.remove('open');
                 }
             });
-        });
+            
+            answer.classList.toggle('open');
+            chevron.classList.toggle('open');
+        }
 
-        // Active nav link highlight on scroll
-        const sections = document.querySelectorAll('section[id]');
-        const navLinks = document.querySelectorAll('.nav-link');
-        window.addEventListener('scroll', () => {
-            let current = '';
-            sections.forEach(section => {
-                const top = section.offsetTop - 120;
-                if (window.scrollY >= top) current = section.getAttribute('id');
-            });
-            navLinks.forEach(link => {
-                link.classList.remove('active');
-                if (link.getAttribute('href') === `#${current}`) link.classList.add('active');
-            });
-        });
-
-        // Intersection Observer for cards
-        const cards = document.querySelectorAll('.service-card, .feature-card, .stat-card, .why-card, .testimonial-card, .partner-item, .faq-item');
+        // ===== SCROLL REVEAL =====
+        const cards = document.querySelectorAll('.service-card, .feature-card, .stat-card, .why-card, .testimonial-card, .partner-logo, .faq-item');
         const observer = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
@@ -406,12 +1247,25 @@
                 }
             });
         }, { threshold: 0.1 });
+        
         cards.forEach(card => {
             card.style.opacity = '0';
             card.style.transform = 'translateY(30px)';
             card.style.transition = 'all 0.6s ease';
             observer.observe(card);
         });
+
+        // ===== NAVBAR SCROLL =====
+        const navbar = document.getElementById('navbar');
+        if (navbar) {
+            window.addEventListener('scroll', () => {
+                if (window.scrollY > 20) {
+                    navbar.classList.add('bg-[#0a0f1e]/90', 'backdrop-blur-md', 'border-b', 'border-white/5');
+                } else {
+                    navbar.classList.remove('bg-[#0a0f1e]/90', 'backdrop-blur-md', 'border-b', 'border-white/5');
+                }
+            });
+        }
     </script>
 </body>
 </html>

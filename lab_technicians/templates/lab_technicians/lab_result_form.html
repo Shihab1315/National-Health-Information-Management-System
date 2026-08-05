@@ -1,0 +1,100 @@
+{% extends "lab_technicians/base.html" %}
+{% load static %}
+
+{% block title %}Enter Result | Lab Technician{% endblock %}
+
+{% block page_title %}Enter Lab Result{% endblock %}
+
+{% block breadcrumb %}
+    <span>Dashboard</span>
+    <span class="mx-1">/</span>
+    <a href="{% url 'lab_technicians:test_orders' %}" class="hover:text-blue-400">Test Orders</a>
+    <span class="mx-1">/</span>
+    <span class="current">Enter Result</span>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto">
+    
+    <div class="bg-[#0d1f3c] rounded-xl border border-white/5 p-6">
+        <h2 class="text-xl font-bold text-white mb-2">
+            <i class="fas fa-file-medical text-green-400 mr-2"></i>
+            Enter Lab Result
+        </h2>
+        <p class="text-gray-400 text-sm mb-6">Order: {{ order.order_number }} - {{ order.patient.full_name }}</p>
+        
+        <form method="POST" enctype="multipart/form-data" class="space-y-6">
+            {% csrf_token %}
+            
+            <!-- Test Items -->
+            <div class="border-b border-white/10 pb-6">
+                <h3 class="text-white font-medium mb-4">Test Items</h3>
+                <div class="space-y-2">
+                    {% for item in items %}
+                    <div class="flex items-center justify-between p-3 bg-white/5 rounded-lg">
+                        <div>
+                            <p class="text-white font-medium">{{ item.test.name }}</p>
+                            <p class="text-gray-400 text-sm">{{ item.test.category.name|default:"General" }}</p>
+                        </div>
+                        <span class="status-badge processing">
+                            <span class="dot"></span>
+                            Processing
+                        </span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <!-- Result Fields -->
+            <div class="border-b border-white/10 pb-6">
+                <h3 class="text-white font-medium mb-4">Result Details</h3>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-1">
+                            Result Value <span class="text-red-400">*</span>
+                        </label>
+                        <textarea name="result_value" rows="4" 
+                                  class="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:border-green-500 focus:outline-none transition"
+                                  placeholder="Enter test result details..." required></textarea>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-1">Interpretation</label>
+                        <textarea name="interpretation" rows="3" 
+                                  class="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:border-green-500 focus:outline-none transition"
+                                  placeholder="Enter interpretation (e.g., Normal, Abnormal)"></textarea>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-1">Remarks</label>
+                        <textarea name="remarks" rows="2" 
+                                  class="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:border-green-500 focus:outline-none transition"
+                                  placeholder="Any additional remarks..."></textarea>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-1">Report File (PDF)</label>
+                        <input type="file" name="report_file" accept=".pdf,.doc,.docx"
+                               class="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:border-green-500 focus:outline-none transition file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-green-500/20 file:text-green-400 hover:file:bg-green-500/30">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Buttons -->
+            <div class="flex items-center justify-end gap-3">
+                <a href="{% url 'lab_technicians:test_order_detail' order.id %}" 
+                   class="px-4 py-2 border border-gray-600 hover:border-gray-500 text-gray-300 hover:text-white rounded-lg transition">
+                    Cancel
+                </a>
+                <button type="submit" class="px-6 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition">
+                    <i class="fas fa-save mr-2"></i>
+                    Save Result
+                </button>
+            </div>
+            
+        </form>
+    </div>
+    
+</div>
+{% endblock %}

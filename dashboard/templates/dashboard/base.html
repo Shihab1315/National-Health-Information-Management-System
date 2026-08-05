@@ -1,0 +1,186 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{% block title %}NHIMS | National Health Information Management System{% endblock %}</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+    
+    <style>
+        /* ============================================================ */
+        /* ROOT VARIABLES */
+        /* ============================================================ */
+        :root {
+            --primary-dark: #0a0f1e;
+            --primary-navy: #0d1f3c;
+            --primary-blue: #1a3a6b;
+            --accent-blue: #3b82f6;
+            --accent-cyan: #06b6d4;
+            --accent-teal: #14b8a6;
+            --accent-green: #10b981;
+            --accent-gold: #f59e0b;
+            --accent-rose: #f43f5e;
+            --glass-bg: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.06);
+        }
+
+        /* ============================================================ */
+        /* BASE */
+        /* ============================================================ */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+            background: var(--primary-dark);
+            color: #e2e8f0;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--primary-dark); }
+        ::-webkit-scrollbar-thumb { 
+            background: linear-gradient(180deg, var(--accent-blue), var(--accent-cyan));
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover { background: var(--accent-blue); }
+
+        /* ============================================================ */
+        /* GLASSMORPHISM */
+        /* ============================================================ */
+        .glass {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+        }
+
+        .glass-light {
+            background: rgba(255, 255, 255, 0.06);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .glass-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            border-color: rgba(59, 130, 246, 0.3);
+            box-shadow: 0 20px 60px rgba(59, 130, 246, 0.08);
+        }
+
+        /* ============================================================ */
+        /* GRADIENT TEXT */
+        /* ============================================================ */
+        .gradient-text {
+            background: linear-gradient(135deg, #60a5fa 0%, #06b6d4 50%, #14b8a6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* ============================================================ */
+        /* SECTION BADGE */
+        /* ============================================================ */
+        .section-badge {
+            display: inline-block;
+            background: rgba(59, 130, 246, 0.12);
+            border: 1px solid rgba(59, 130, 246, 0.15);
+            padding: 6px 20px;
+            border-radius: 40px;
+            font-size: 0.75rem;
+            color: var(--accent-blue);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .section-title {
+            font-size: clamp(2rem, 4vw, 2.8rem);
+            font-weight: 800;
+            color: #ffffff;
+            line-height: 1.2;
+        }
+
+        /* ============================================================ */
+        /* MAIN WRAPPER */
+        /* ============================================================ */
+        .main-wrapper {
+            padding-top: 80px;
+            min-height: 100vh;
+        }
+
+        /* ============================================================ */
+        /* RESPONSIVE */
+        /* ============================================================ */
+        @media (max-width: 768px) {
+            .main-wrapper {
+                padding-top: 70px;
+            }
+        }
+    </style>
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+    <!-- ===== NAVBAR ===== -->
+    {% include "dashboard/partials/navbar.html" %}
+
+    <!-- ===== MAIN CONTENT ===== -->
+    <div class="main-wrapper">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <!-- Page Header -->
+            <div class="mb-8">
+                <h1 class="text-2xl font-bold text-white">{% block page_title %}Dashboard{% endblock %}</h1>
+                <div class="text-sm text-gray-400">
+                    {% block breadcrumb %}
+                        <span>Home</span>
+                        <span class="mx-1">/</span>
+                        <span class="text-blue-400">{% block current_page %}Overview{% endblock %}</span>
+                    {% endblock %}
+                </div>
+            </div>
+            
+            <!-- Content -->
+            {% block content %}{% endblock %}
+        </div>
+    </div>
+
+    <!-- ===== FOOTER ===== -->
+    {% include "dashboard/partials/footer.html" %}
+
+    <!-- ===== SCRIPTS ===== -->
+    <script>
+        // Navbar scroll effect
+        const navbar = document.getElementById('navbar');
+        if (navbar) {
+            window.addEventListener('scroll', () => {
+                if (window.scrollY > 20) {
+                    navbar.classList.add('bg-[#0a0f1e]/90', 'backdrop-blur-md', 'border-b', 'border-white/5');
+                } else {
+                    navbar.classList.remove('bg-[#0a0f1e]/90', 'backdrop-blur-md', 'border-b', 'border-white/5');
+                }
+            });
+        }
+    </script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

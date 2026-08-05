@@ -1,0 +1,120 @@
+{% extends "lab_technicians/base.html" %}
+{% load static %}
+
+{% block title %}Completed Reports | Lab Technician{% endblock %}
+
+{% block page_title %}Completed Reports{% endblock %}
+
+{% block breadcrumb %}
+    <span>Dashboard</span>
+    <span class="mx-1">/</span>
+    <span class="current">Completed Reports</span>
+{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    
+    <!-- Header -->
+    <div class="flex flex-wrap items-center justify-between gap-4">
+        <div>
+            <h1 class="text-2xl font-bold text-white">Completed Reports</h1>
+            <p class="text-gray-400 text-sm">View all completed lab reports</p>
+        </div>
+    </div>
+    
+    <!-- Search -->
+    <div class="bg-white/5 rounded-xl border border-white/10 p-4">
+        <form method="get" class="flex flex-wrap gap-3">
+            <div class="flex-1 min-w-[200px] relative">
+                <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm"></i>
+                <input type="text" 
+                       name="search" 
+                       value="{{ search_query|default:'' }}"
+                       placeholder="Search reports..." 
+                       class="w-full pl-9 pr-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:border-blue-500 focus:outline-none transition">
+            </div>
+            <input type="date" name="date" value="{{ date_filter|default:'' }}"
+                   class="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:border-blue-500 focus:outline-none transition">
+            <button type="submit" class="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition font-medium text-sm">
+                <i class="fas fa-search mr-1"></i> Search
+            </button>
+            <a href="{% url 'lab_technicians:completed_reports' %}" class="px-4 py-2 bg-white/5 hover:bg-white/10 text-gray-300 rounded-lg transition font-medium text-sm">
+                <i class="fas fa-times mr-1"></i> Reset
+            </a>
+        </form>
+    </div>
+    
+    <!-- Reports Table -->
+    <div class="bg-white/5 rounded-xl border border-white/10 overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="border-b border-white/10 bg-white/5">
+                        <th class="text-left py-3 px-4 text-xs font-medium text-gray-400 uppercase tracking-wider">Report #</th>
+                        <th class="text-left py-3 px-4 text-xs font-medium text-gray-400 uppercase tracking-wider">Patient</th>
+                        <th class="text-left py-3 px-4 text-xs font-medium text-gray-400 uppercase tracking-wider">Doctor</th>
+                        <th class="text-left py-3 px-4 text-xs font-medium text-gray-400 uppercase tracking-wider">Completed</th>
+                        <th class="text-center py-3 px-4 text-xs font-medium text-gray-400 uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in orders %}
+                    <tr class="border-b border-white/5 hover:bg-white/5 transition">
+                        <td class="py-3 px-4 text-white font-medium">{{ order.order_number }}</td>
+                        <td class="py-3 px-4 text-gray-300">{{ order.patient.full_name }}</td>
+                        <td class="py-3 px-4 text-gray-300">Dr. {{ order.doctor.user.get_full_name|default:order.doctor.full_name }}</td>
+                        <td class="py-3 px-4 text-gray-400 text-sm">{{ order.completed_at|date:"M d, Y h:i A" }}</td>
+                        <td class="py-3 px-4">
+                            <div class="flex items-center justify-center gap-2">
+                                <a href="{% url 'lab_technicians:test_order_detail' order.id %}" 
+                                   class="text-blue-400 hover:text-blue-300 transition" title="View">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{% url 'lab_technicians:download_report' order.id %}" 
+                                   class="text-green-400 hover:text-green-300 transition" title="Download PDF">
+                                    <i class="fas fa-file-pdf"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="py-8 text-center text-gray-400">
+                            <i class="fas fa-file-medical-alt text-4xl mb-3 block"></i>
+                            <p>No completed reports found</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <!-- Pagination -->
+    {% if orders.has_other_pages %}
+    <div class="flex items-center justify-between flex-wrap gap-3">
+        <div class="text-sm text-gray-400">
+            Showing {{ orders.start_index }} to {{ orders.end_index }} of {{ orders.paginator.count }} reports
+        </div>
+        <div class="flex gap-1">
+            {% if orders.has_previous %}
+                <a href="?page=1{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" 
+                   class="px-3 py-1 rounded border border-white/10 hover:bg-white/5 text-gray-300 transition text-sm">First</a>
+                <a href="?page={{ orders.previous_page_number }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" 
+                   class="px-3 py-1 rounded border border-white/10 hover:bg-white/5 text-gray-300 transition text-sm">Prev</a>
+            {% endif %}
+            
+            <span class="px-3 py-1 rounded bg-blue-500/20 text-blue-400 text-sm">{{ orders.number }}</span>
+            
+            {% if orders.has_next %}
+                <a href="?page={{ orders.next_page_number }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" 
+                   class="px-3 py-1 rounded border border-white/10 hover:bg-white/5 text-gray-300 transition text-sm">Next</a>
+                <a href="?page={{ orders.paginator.num_pages }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" 
+                   class="px-3 py-1 rounded border border-white/10 hover:bg-white/5 text-gray-300 transition text-sm">Last</a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+    
+</div>
+{% endblock %}

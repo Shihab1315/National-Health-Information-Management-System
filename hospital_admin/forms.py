@@ -7,6 +7,7 @@ from hospitals.models import HospitalDepartment, Hospital, Room
 from doctors.models import Doctor
 from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import PasswordChangeForm
+from lab_technicians.models import LabTechnician
 
 User = get_user_model()
 

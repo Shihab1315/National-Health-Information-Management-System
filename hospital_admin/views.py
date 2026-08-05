@@ -10,6 +10,9 @@ from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.forms import PasswordChangeForm
 from .forms import ProfileForm, CustomPasswordChangeForm, NotificationPreferencesForm
 
+from lab_technicians.models import LabTechnician
+from lab_technicians.forms import CreateLabTechnicianForm, EditLabTechnicianForm
+
 from django.http import HttpResponse, JsonResponse, HttpResponseForbidden
 from accounts.decorators import role_required
 from hospitals.models import HospitalApplication, Hospital
@@ -56,7 +59,7 @@ class HospitalAdminBaseView(View):
             messages.error(request, 'You do not have permission to access this page.')
             return redirect('accounts:login')
         
-        # Check hospital verification status
+        # ✅ Get application and verification status (একবারই)
         self.application = self.get_application(request.user)
         self.is_verified = self.check_verification(request.user)
         
@@ -77,14 +80,17 @@ class HospitalAdminBaseView(View):
     
     def check_verification(self, user):
         """Check if hospital is verified."""
-        # Check if user has a hospital assigned
-        if hasattr(user, 'hospital') and user.hospital and user.hospital.active:
-            return True
-        
-        # Check if application is approved
+        # ✅ প্রথমে application.status চেক করুন
         application = self.get_application(user)
         if application and application.status == 'approved':
             return True
+        
+        # ✅ তারপর user.hospital চেক করুন
+        try:
+            if hasattr(user, 'hospital') and user.hospital:
+                return True
+        except:
+            pass
         
         return False
 
@@ -98,8 +104,8 @@ class HospitalAdminDashboardView(HospitalAdminBaseView):
     template_name = 'hospital_admin/dashboard.html'
     
     def get(self, request):
-        application = self.get_application(request.user)
-        is_verified = self.check_verification(request.user)
+        application = self.application  # ✅ self.application ব্যবহার করুন
+        is_verified = self.is_verified  # ✅ self.is_verified ব্যবহার করুন
         
         # Get application status info
         status_info = self.get_status_info(application)
@@ -107,10 +113,10 @@ class HospitalAdminDashboardView(HospitalAdminBaseView):
         context = {
             'user': request.user,
             'application': application,
-            'is_verified': is_verified,
             'status_info': status_info,
             'page_title': 'Dashboard',
             'current_page': 'Dashboard',
+            'is_verified': is_verified,
             'breadcrumb': 'Dashboard',
         }
         return render(request, self.template_name, context)
@@ -257,6 +263,7 @@ class HospitalInformationView(HospitalAdminBaseView):
             'form': form,
             'current_step': 1,
             'total_steps': 5,
+            'is_verified': self.is_verified,
             'page_title': 'Hospital Information',
             'current_page': 'Hospital Information',
             'breadcrumb': 'Verification / Hospital Information',
@@ -300,6 +307,7 @@ class HospitalInformationView(HospitalAdminBaseView):
             'form': form,
             'current_step': 1,
             'total_steps': 5,
+            'is_verified': self.is_verified,
             'page_title': 'Hospital Information',
             'current_page': 'Hospital Information',
             'breadcrumb': 'Verification / Hospital Information',
@@ -399,6 +407,7 @@ class HospitalVerificationContactView(HospitalAdminBaseView):
             'form': form,
             'current_step': 2,
             'total_steps': 5,
+            'is_verified': self.is_verified,
             'page_title': 'Contact Information',
             'current_page': 'Contact Information',
             'breadcrumb': 'Verification / Contact Information',
@@ -449,6 +458,7 @@ class HospitalVerificationContactView(HospitalAdminBaseView):
             'form': form,
             'current_step': 2,
             'total_steps': 5,
+            'is_verified': self.is_verified,
             'page_title': 'Contact Information',
             'current_page': 'Contact Information',
             'breadcrumb': 'Verification / Contact Information',
@@ -519,6 +529,7 @@ class HospitalVerificationAddressView(HospitalAdminBaseView):
             'page_title': 'Address Information',
             'current_page': 'Address Information',
             'breadcrumb': 'Verification / Address Information',
+            'is_verified': self.is_verified,
         }
         return render(request, self.template_name, context)
     
@@ -575,6 +586,7 @@ class HospitalVerificationAddressView(HospitalAdminBaseView):
             'page_title': 'Address Information',
             'current_page': 'Address Information',
             'breadcrumb': 'Verification / Address Information',
+            'is_verified': self.is_verified,
         }
         return render(request, self.template_name, context)
     
@@ -646,6 +658,7 @@ class HospitalVerificationDocumentsView(HospitalAdminBaseView):
             'page_title': 'Documents Upload',
             'current_page': 'Documents Upload',
             'breadcrumb': 'Verification / Documents Upload',
+            'is_verified': self.is_verified,
         }
         return render(request, self.template_name, context)
     
@@ -692,6 +705,7 @@ class HospitalVerificationDocumentsView(HospitalAdminBaseView):
             'page_title': 'Documents Upload',
             'current_page': 'Documents Upload',
             'breadcrumb': 'Verification / Documents Upload',
+            'is_verified': self.is_verified,
         }
         return render(request, self.template_name, context)
     
@@ -763,6 +777,7 @@ class HospitalVerificationReviewView(HospitalAdminBaseView):
             'page_title': 'Review & Submit',
             'current_page': 'Review & Submit',
             'breadcrumb': 'Verification / Review & Submit',
+            'is_verified': self.is_verified,
         }
         return render(request, self.template_name, context)
     
@@ -873,11 +888,22 @@ class DoctorDashboardView(HospitalAdminBaseView):
     template_name = 'hospital_admin/doctors/dashboard.html'
     
     def get(self, request):
+        # ✅ self.is_verified ব্যবহার করুন
         if not self.is_verified:
             messages.warning(request, 'Please complete hospital verification first.')
             return redirect('hospital_admin:dashboard')
         
-        hospital = request.user.hospital
+        # ✅ হাসপাতাল খুঁজুন
+        hospital = None
+        try:
+            # HospitalApplication থেকে hospital খুঁজুন
+            if self.application and self.application.status == 'approved':
+                from hospital_admin.models import HospitalAdminProfile
+                profile = HospitalAdminProfile.objects.get(user=request.user)
+                hospital = profile.hospital
+        except:
+            pass
+        
         if not hospital:
             messages.error(request, 'No hospital associated with your account.')
             return redirect('hospital_admin:dashboard')
@@ -900,6 +926,7 @@ class DoctorDashboardView(HospitalAdminBaseView):
             'pending_verification': pending_verification,
             'rejected_requests': rejected_requests,
             'recent_doctors': recent_doctors,
+            'is_verified': self.is_verified,
             'page_title': 'Doctor Dashboard',
             'current_page': 'Doctor Dashboard',
             'breadcrumb': 'Doctor Management / Dashboard',
@@ -920,7 +947,15 @@ class AllDoctorsView(HospitalAdminBaseView):
             messages.warning(request, 'Please complete hospital verification first.')
             return redirect('hospital_admin:dashboard')
         
-        hospital = request.user.hospital
+        hospital = None
+        try:
+            if self.application and self.application.status == 'approved':
+                from hospital_admin.models import HospitalAdminProfile
+                profile = HospitalAdminProfile.objects.get(user=request.user)
+                hospital = profile.hospital
+        except:
+            pass
+        
         if not hospital:
             messages.error(request, 'No hospital associated with your account.')
             return redirect('hospital_admin:dashboard')
@@ -978,6 +1013,7 @@ class AllDoctorsView(HospitalAdminBaseView):
         # Get departments for filter
         departments = HospitalDepartment.objects.filter(hospital=hospital, active=True)
         
+        
         context = {
             'doctors': doctors_page,
             'total_doctors': doctors.count(),
@@ -988,6 +1024,7 @@ class AllDoctorsView(HospitalAdminBaseView):
             'sort_by': sort_by,
             'page_title': 'All Doctors',
             'current_page': 'All Doctors',
+            'is_verified': self.is_verified,
             'breadcrumb': 'Doctor Management / All Doctors',
         }
         return render(request, self.template_name, context)
@@ -1005,7 +1042,19 @@ class AddDoctorRequestView(HospitalAdminBaseView):
         if not self.is_verified:
             messages.warning(request, 'Please complete hospital verification first.')
             return redirect('hospital_admin:dashboard')
+         
+        hospital = None
+        try:
+            if self.application and self.application.status == 'approved':
+                from hospital_admin.models import HospitalAdminProfile
+                profile = HospitalAdminProfile.objects.get(user=request.user)
+                hospital = profile.hospital
+        except:
+            pass
         
+        if not hospital:
+            messages.error(request, 'No hospital associated with your account.')
+            return redirect('hospital_admin:dashboard')
         # Get submitted requests
         from doctors.models import Doctor
         hospital = request.user.hospital
@@ -1015,6 +1064,7 @@ class AddDoctorRequestView(HospitalAdminBaseView):
             'submitted_requests': submitted_requests,
             'page_title': 'Add Doctor',
             'current_page': 'Add Doctor',
+            'is_verified': self.is_verified,
             'breadcrumb': 'Doctor Management / Add Doctor',
         }
         return render(request, self.template_name, context)
@@ -1033,7 +1083,15 @@ class DoctorVerificationView(HospitalAdminBaseView):
             messages.warning(request, 'Please complete hospital verification first.')
             return redirect('hospital_admin:dashboard')
         
-        hospital = request.user.hospital
+        hospital = None
+        try:
+            if self.application and self.application.status == 'approved':
+                from hospital_admin.models import HospitalAdminProfile
+                profile = HospitalAdminProfile.objects.get(user=request.user)
+                hospital = profile.hospital
+        except:
+            pass
+        
         if not hospital:
             messages.error(request, 'No hospital associated with your account.')
             return redirect('hospital_admin:dashboard')
@@ -1131,6 +1189,7 @@ class DoctorVerificationView(HospitalAdminBaseView):
             'pending_doctors': pending_count,
             'verified_doctors': verified_count,
             'rejected_doctors': rejected_count,
+            'is_verified': self.is_verified,
         }
         return render(request, self.template_name, context)
 
@@ -1157,6 +1216,7 @@ class DoctorVerificationDetailView(HospitalAdminBaseView):
             'page_title': f'Verification: {doctor.user.get_full_name()}',
             'current_page': 'Verification Detail',
             'breadcrumb': 'Doctor Management / Verification / Detail',
+            'is_verified': self.is_verified,
         }
         return render(request, self.template_name, context)
 
@@ -1183,7 +1243,7 @@ def approve_doctor(request, doctor_id):
         doctor.is_verified = True
         doctor.is_active = True
         doctor.save()
-
+        
         messages.success(
             request,
             f"{doctor.user.get_full_name()} approved successfully."
@@ -1248,6 +1308,7 @@ class DepartmentListView(HospitalAdminBaseView):
         context = {
             'departments': departments,
             'page_title': 'Departments',
+            'is_verified': self.is_verified,
             'current_page': 'Departments',
             'breadcrumb': 'Doctor Management / Departments',
         }
@@ -1277,6 +1338,7 @@ class PendingDoctorDetailView(HospitalAdminBaseView):
             'doctor': doctor,
             'checklist': checklist,
             'page_title': 'Doctor Verification Request',
+             'is_verified': self.is_verified,
             'current_page': 'Doctor Detail',
             'breadcrumb': 'Doctor Management / Doctor Verification / Doctor Detail',
         }
@@ -1325,7 +1387,15 @@ class DepartmentDashboardView(HospitalAdminBaseView):
             messages.warning(request, 'Please complete hospital verification first.')
             return redirect('hospital_admin:dashboard')
         
-        hospital = request.user.hospital
+        hospital = None
+        try:
+            if self.application and self.application.status == 'approved':
+                from hospital_admin.models import HospitalAdminProfile
+                profile = HospitalAdminProfile.objects.get(user=request.user)
+                hospital = profile.hospital
+        except:
+            pass
+        
         if not hospital:
             messages.error(request, 'No hospital associated with your account.')
             return redirect('hospital_admin:dashboard')
@@ -1423,6 +1493,7 @@ class DepartmentDashboardView(HospitalAdminBaseView):
             'dept_distribution': dept_distribution,
             'pending_tasks': pending_tasks,
             'search_query': search_query,
+            'is_verified': self.is_verified,
             'status_filter': status_filter,
             'sort_by': sort_by,
             'page_title': 'Department Dashboard',
@@ -1444,7 +1515,15 @@ class AllDepartmentsView(HospitalAdminBaseView):
             messages.warning(request, 'Please complete hospital verification first.')
             return redirect('hospital_admin:dashboard')
         
-        hospital = request.user.hospital
+        hospital = None
+        try:
+            if self.application and self.application.status == 'approved':
+                from hospital_admin.models import HospitalAdminProfile
+                profile = HospitalAdminProfile.objects.get(user=request.user)
+                hospital = profile.hospital
+        except:
+            pass
+        
         if not hospital:
             messages.error(request, 'No hospital associated with your account.')
             return redirect('hospital_admin:dashboard')
@@ -1519,6 +1598,7 @@ class AllDepartmentsView(HospitalAdminBaseView):
             'active_departments': active_departments,
             'inactive_departments': inactive_departments,
             'total_doctors': total_doctors,
+            'is_verified': self.is_verified,
             'search_query': search_query,
             'status_filter': status_filter,
             'sort_by': sort_by,
@@ -1543,7 +1623,15 @@ class DepartmentDetailView(HospitalAdminBaseView):
             messages.warning(request, 'Please complete hospital verification first.')
             return redirect('hospital_admin:dashboard')
         
-        hospital = request.user.hospital
+        hospital = None
+        try:
+            if self.application and self.application.status == 'approved':
+                from hospital_admin.models import HospitalAdminProfile
+                profile = HospitalAdminProfile.objects.get(user=request.user)
+                hospital = profile.hospital
+        except:
+            pass
+        
         if not hospital:
             messages.error(request, 'No hospital associated with your account.')
             return redirect('hospital_admin:dashboard')
@@ -1595,6 +1683,7 @@ class DepartmentDetailView(HospitalAdminBaseView):
             'recent_activities': recent_activities,
             'page_title': department.name,
             'current_page': 'Department Detail',
+            'is_verified': self.is_verified,
             'breadcrumb': f'Department Management / {department.name}',
         }
         return render(request, self.template_name, context)
@@ -1660,7 +1749,15 @@ class AddDepartmentView(HospitalAdminBaseView):
             messages.warning(request, 'Please complete hospital verification first.')
             return redirect('hospital_admin:dashboard')
         
-        hospital = request.user.hospital
+        hospital = None
+        try:
+            if self.application and self.application.status == 'approved':
+                from hospital_admin.models import HospitalAdminProfile
+                profile = HospitalAdminProfile.objects.get(user=request.user)
+                hospital = profile.hospital
+        except:
+            pass
+        
         if not hospital:
             messages.error(request, 'No hospital associated with your account.')
             return redirect('hospital_admin:dashboard')
@@ -1672,6 +1769,7 @@ class AddDepartmentView(HospitalAdminBaseView):
             'page_title': 'Add Department',
             'current_page': 'Add Department',
             'breadcrumb': 'Department Management / Add Department',
+            'is_verified': self.is_verified,
         }
         return render(request, self.template_name, context)
     
@@ -1704,6 +1802,7 @@ class AddDepartmentView(HospitalAdminBaseView):
             'form': form,
             'page_title': 'Add Department',
             'current_page': 'Add Department',
+            'is_verified': self.is_verified,
             'breadcrumb': 'Department Management / Add Department',
         }
         return render(request, self.template_name, context)
@@ -1721,7 +1820,15 @@ class EditDepartmentView(HospitalAdminBaseView):
             messages.warning(request, 'Please complete hospital verification first.')
             return redirect('hospital_admin:dashboard')
         
-        hospital = request.user.hospital
+        hospital = None
+        try:
+            if self.application and self.application.status == 'approved':
+                from hospital_admin.models import HospitalAdminProfile
+                profile = HospitalAdminProfile.objects.get(user=request.user)
+                hospital = profile.hospital
+        except:
+            pass
+        
         if not hospital:
             messages.error(request, 'No hospital associated with your account.')
             return redirect('hospital_admin:dashboard')
@@ -1745,6 +1852,7 @@ class EditDepartmentView(HospitalAdminBaseView):
             'page_title': 'Edit Department',
             'current_page': 'Edit Department',
             'breadcrumb': f'Department Management / {department.name} / Edit',
+            'is_verified': self.is_verified,
         }
         return render(request, self.template_name, context)
     
@@ -1780,6 +1888,7 @@ class EditDepartmentView(HospitalAdminBaseView):
             'form': form,
             'page_title': 'Edit Department',
             'current_page': 'Edit Department',
+            'is_verified': self.is_verified,
             'breadcrumb': f'Department Management / {department.name} / Edit',
         }
         return render(request, self.template_name, context)
@@ -1797,7 +1906,15 @@ class DepartmentHeadsView(HospitalAdminBaseView):
             messages.warning(request, 'Please complete hospital verification first.')
             return redirect('hospital_admin:dashboard')
         
-        hospital = request.user.hospital
+        hospital = None
+        try:
+            if self.application and self.application.status == 'approved':
+                from hospital_admin.models import HospitalAdminProfile
+                profile = HospitalAdminProfile.objects.get(user=request.user)
+                hospital = profile.hospital
+        except:
+            pass
+        
         if not hospital:
             messages.error(request, 'No hospital associated with your account.')
             return redirect('hospital_admin:dashboard')
@@ -1872,6 +1989,7 @@ class DepartmentHeadsView(HospitalAdminBaseView):
             'status_filter': status_filter,
             'sort_by': sort_by,
             'page_title': 'Department Heads',
+            'is_verified': self.is_verified,
             'current_page': 'Department Heads',
             'breadcrumb': 'Department Management / Department Heads',
         }
@@ -1944,10 +2062,18 @@ def change_department_head(request, department_id):
         messages.error(request, 'Invalid request method.')
         return redirect('hospital_admin:department_heads')
     
-    hospital = request.user.hospital
-    if not hospital:
-        messages.error(request, 'No hospital associated with your account.')
-        return redirect('hospital_admin:dashboard')
+        hospital = None
+        try:
+            if self.application and self.application.status == 'approved':
+                from hospital_admin.models import HospitalAdminProfile
+                profile = HospitalAdminProfile.objects.get(user=request.user)
+                hospital = profile.hospital
+        except:
+            pass
+        
+        if not hospital:
+            messages.error(request, 'No hospital associated with your account.')
+            return redirect('hospital_admin:dashboard')
     
     from doctors.models import Doctor
     from hospitals.models import HospitalDepartment
@@ -1995,10 +2121,18 @@ def remove_department_head(request, department_id):
         messages.error(request, 'Invalid request method.')
         return redirect('hospital_admin:department_heads')
     
-    hospital = request.user.hospital
-    if not hospital:
-        messages.error(request, 'No hospital associated with your account.')
-        return redirect('hospital_admin:dashboard')
+        hospital = None
+        try:
+            if self.application and self.application.status == 'approved':
+                from hospital_admin.models import HospitalAdminProfile
+                profile = HospitalAdminProfile.objects.get(user=request.user)
+                hospital = profile.hospital
+        except:
+            pass
+        
+        if not hospital:
+            messages.error(request, 'No hospital associated with your account.')
+            return redirect('hospital_admin:dashboard')
     
     from hospitals.models import HospitalDepartment
     
@@ -2076,7 +2210,15 @@ class RoomsAndUnitsView(HospitalAdminBaseView):
             messages.warning(request, 'Please complete hospital verification first.')
             return redirect('hospital_admin:dashboard')
         
-        hospital = request.user.hospital
+        hospital = None
+        try:
+            if self.application and self.application.status == 'approved':
+                from hospital_admin.models import HospitalAdminProfile
+                profile = HospitalAdminProfile.objects.get(user=request.user)
+                hospital = profile.hospital
+        except:
+            pass
+        
         if not hospital:
             messages.error(request, 'No hospital associated with your account.')
             return redirect('hospital_admin:dashboard')
@@ -2139,6 +2281,7 @@ class RoomsAndUnitsView(HospitalAdminBaseView):
             'ot_rooms': ot_rooms,
             'wards': wards,
             'departments': departments,
+            'is_verified': self.is_verified,
             'search_query': search_query,
             'dept_filter': dept_filter,
             'type_filter': type_filter,
@@ -2161,10 +2304,18 @@ def add_room(request):
         messages.error(request, 'Invalid request method.')
         return redirect('hospital_admin:rooms')
     
-    hospital = request.user.hospital
-    if not hospital:
-        messages.error(request, 'No hospital associated with your account.')
-        return redirect('hospital_admin:dashboard')
+        hospital = None
+        try:
+            if self.application and self.application.status == 'approved':
+                from hospital_admin.models import HospitalAdminProfile
+                profile = HospitalAdminProfile.objects.get(user=request.user)
+                hospital = profile.hospital
+        except:
+            pass
+        
+        if not hospital:
+            messages.error(request, 'No hospital associated with your account.')
+            return redirect('hospital_admin:dashboard')
     
     form = RoomForm(request.POST, hospital=hospital)
     
@@ -2193,10 +2344,18 @@ def edit_room(request, room_id):
         messages.error(request, 'Invalid request method.')
         return redirect('hospital_admin:rooms')
     
-    hospital = request.user.hospital
-    if not hospital:
-        messages.error(request, 'No hospital associated with your account.')
-        return redirect('hospital_admin:dashboard')
+        hospital = None
+        try:
+            if self.application and self.application.status == 'approved':
+                from hospital_admin.models import HospitalAdminProfile
+                profile = HospitalAdminProfile.objects.get(user=request.user)
+                hospital = profile.hospital
+        except:
+            pass
+        
+        if not hospital:
+            messages.error(request, 'No hospital associated with your account.')
+            return redirect('hospital_admin:dashboard')
     
     room = get_object_or_404(Room, id=room_id, hospital=hospital)
     
@@ -2225,10 +2384,18 @@ def delete_room(request, room_id):
         messages.error(request, 'Invalid request method.')
         return redirect('hospital_admin:rooms')
     
-    hospital = request.user.hospital
-    if not hospital:
-        messages.error(request, 'No hospital associated with your account.')
-        return redirect('hospital_admin:dashboard')
+        hospital = None
+        try:
+            if self.application and self.application.status == 'approved':
+                from hospital_admin.models import HospitalAdminProfile
+                profile = HospitalAdminProfile.objects.get(user=request.user)
+                hospital = profile.hospital
+        except:
+            pass
+        
+        if not hospital:
+            messages.error(request, 'No hospital associated with your account.')
+            return redirect('hospital_admin:dashboard')
     
     room = get_object_or_404(Room, id=room_id, hospital=hospital)
     room_number = room.room_number
@@ -2256,6 +2423,7 @@ def room_detail(request, room_id):
         'room': room,
         'page_title': f'Room {room.room_number}',
         'current_page': 'Room Detail',
+        
         'breadcrumb': f'Department Management / Rooms & Units / {room.room_number}',
     }
     return render(request, 'hospital_admin/departments/room_detail.html', context)
@@ -2301,7 +2469,15 @@ class AppointmentDashboardView(HospitalAdminBaseView):
             messages.warning(request, 'Please complete hospital verification first.')
             return redirect('hospital_admin:dashboard')
         
-        hospital = request.user.hospital
+        hospital = None
+        try:
+            if self.application and self.application.status == 'approved':
+                from hospital_admin.models import HospitalAdminProfile
+                profile = HospitalAdminProfile.objects.get(user=request.user)
+                hospital = profile.hospital
+        except:
+            pass
+        
         if not hospital:
             messages.error(request, 'No hospital associated with your account.')
             return redirect('hospital_admin:dashboard')
@@ -2387,6 +2563,7 @@ class AppointmentDashboardView(HospitalAdminBaseView):
             'top_doctors': top_doctors,
             'recent_activities': recent_activities,
             'today_date': today,
+            'is_verified': self.is_verified,
             'page_title': 'Appointment Dashboard',
             'current_page': 'Appointment Dashboard',
             'breadcrumb': 'Appointment Management / Dashboard',
@@ -2407,7 +2584,15 @@ class AppointmentListView(HospitalAdminBaseView):
             messages.warning(request, 'Please complete hospital verification first.')
             return redirect('hospital_admin:dashboard')
         
-        hospital = request.user.hospital
+        hospital = None
+        try:
+            if self.application and self.application.status == 'approved':
+                from hospital_admin.models import HospitalAdminProfile
+                profile = HospitalAdminProfile.objects.get(user=request.user)
+                hospital = profile.hospital
+        except:
+            pass
+        
         if not hospital:
             messages.error(request, 'No hospital associated with your account.')
             return redirect('hospital_admin:dashboard')
@@ -2480,6 +2665,7 @@ class AppointmentListView(HospitalAdminBaseView):
             'status_counts': status_counts,
             'page_title': 'All Appointments',
             'current_page': 'All Appointments',
+            'is_verified': self.is_verified,
             'breadcrumb': 'Appointment Management / All Appointments',
         }
         return render(request, self.template_name, context)
@@ -2498,7 +2684,15 @@ class AppointmentDetailView(HospitalAdminBaseView):
             messages.warning(request, 'Please complete hospital verification first.')
             return redirect('hospital_admin:dashboard')
         
-        hospital = request.user.hospital
+        hospital = None
+        try:
+            if self.application and self.application.status == 'approved':
+                from hospital_admin.models import HospitalAdminProfile
+                profile = HospitalAdminProfile.objects.get(user=request.user)
+                hospital = profile.hospital
+        except:
+            pass
+        
         if not hospital:
             messages.error(request, 'No hospital associated with your account.')
             return redirect('hospital_admin:dashboard')
@@ -2513,7 +2707,9 @@ class AppointmentDetailView(HospitalAdminBaseView):
             'appointment': appointment,
             'page_title': f'Appointment #{appointment.id}',
             'current_page': 'Appointment Detail',
+            'is_verified': self.is_verified,
             'breadcrumb': f'Appointment Management / Appointment #{appointment.id}',
+            'is_verified': self.is_verified,
         }
         return render(request, self.template_name, context)
     
@@ -2530,7 +2726,15 @@ class AppointmentListView(HospitalAdminBaseView):
             messages.warning(request, 'Please complete hospital verification first.')
             return redirect('hospital_admin:dashboard')
         
-        hospital = request.user.hospital
+        hospital = None
+        try:
+            if self.application and self.application.status == 'approved':
+                from hospital_admin.models import HospitalAdminProfile
+                profile = HospitalAdminProfile.objects.get(user=request.user)
+                hospital = profile.hospital
+        except:
+            pass
+        
         if not hospital:
             messages.error(request, 'No hospital associated with your account.')
             return redirect('hospital_admin:dashboard')
@@ -2643,6 +2847,7 @@ class AppointmentListView(HospitalAdminBaseView):
             'cancelled_count': cancelled_count,
             'total_count': total_count,
             'doctors': doctors,
+            'is_verified': self.is_verified,
             'departments': departments,
             'search_query': search_query,
             'doctor_filter': doctor_filter,
@@ -2664,10 +2869,18 @@ def approve_appointment(request, appointment_id):
         messages.error(request, 'Invalid request method.')
         return redirect('hospital_admin:appointments')
     
-    hospital = request.user.hospital
-    if not hospital:
-        messages.error(request, 'No hospital associated with your account.')
-        return redirect('hospital_admin:dashboard')
+        hospital = None
+        try:
+            if self.application and self.application.status == 'approved':
+                from hospital_admin.models import HospitalAdminProfile
+                profile = HospitalAdminProfile.objects.get(user=request.user)
+                hospital = profile.hospital
+        except:
+            pass
+        
+        if not hospital:
+            messages.error(request, 'No hospital associated with your account.')
+            return redirect('hospital_admin:dashboard')
     
     appointment = get_object_or_404(Appointment, id=appointment_id, hospital=hospital)
     
@@ -2695,10 +2908,18 @@ def reject_appointment(request, appointment_id):
         messages.error(request, 'Invalid request method.')
         return redirect('hospital_admin:appointments')
     
-    hospital = request.user.hospital
-    if not hospital:
-        messages.error(request, 'No hospital associated with your account.')
-        return redirect('hospital_admin:dashboard')
+        hospital = None
+        try:
+            if self.application and self.application.status == 'approved':
+                from hospital_admin.models import HospitalAdminProfile
+                profile = HospitalAdminProfile.objects.get(user=request.user)
+                hospital = profile.hospital
+        except:
+            pass
+        
+        if not hospital:
+            messages.error(request, 'No hospital associated with your account.')
+            return redirect('hospital_admin:dashboard')
     
     appointment = get_object_or_404(Appointment, id=appointment_id, hospital=hospital)
     
@@ -2732,10 +2953,18 @@ def cancel_appointment(request, appointment_id):
         messages.error(request, 'Invalid request method.')
         return redirect('hospital_admin:appointments')
     
-    hospital = request.user.hospital
-    if not hospital:
-        messages.error(request, 'No hospital associated with your account.')
-        return redirect('hospital_admin:dashboard')
+        hospital = None
+        try:
+            if self.application and self.application.status == 'approved':
+                from hospital_admin.models import HospitalAdminProfile
+                profile = HospitalAdminProfile.objects.get(user=request.user)
+                hospital = profile.hospital
+        except:
+            pass
+        
+        if not hospital:
+            messages.error(request, 'No hospital associated with your account.')
+            return redirect('hospital_admin:dashboard')
     
     appointment = get_object_or_404(Appointment, id=appointment_id, hospital=hospital)
     
@@ -2767,7 +2996,15 @@ class AppointmentCalendarView(HospitalAdminBaseView):
             messages.warning(request, 'Please complete hospital verification first.')
             return redirect('hospital_admin:dashboard')
         
-        hospital = request.user.hospital
+        hospital = None
+        try:
+            if self.application and self.application.status == 'approved':
+                from hospital_admin.models import HospitalAdminProfile
+                profile = HospitalAdminProfile.objects.get(user=request.user)
+                hospital = profile.hospital
+        except:
+            pass
+        
         if not hospital:
             messages.error(request, 'No hospital associated with your account.')
             return redirect('hospital_admin:dashboard')
@@ -2853,6 +3090,7 @@ class AppointmentCalendarView(HospitalAdminBaseView):
             'cancelled_count': cancelled_count,
             'doctors': doctors,
             'departments': departments,
+            'is_verified': self.is_verified,
             'current_month': current_month,
             'current_year': current_year,
             'today': today,
@@ -2875,7 +3113,15 @@ class DoctorScheduleView(HospitalAdminBaseView):
             messages.warning(request, 'Please complete hospital verification first.')
             return redirect('hospital_admin:dashboard')
         
-        hospital = request.user.hospital
+        hospital = None
+        try:
+            if self.application and self.application.status == 'approved':
+                from hospital_admin.models import HospitalAdminProfile
+                profile = HospitalAdminProfile.objects.get(user=request.user)
+                hospital = profile.hospital
+        except:
+            pass
+        
         if not hospital:
             messages.error(request, 'No hospital associated with your account.')
             return redirect('hospital_admin:dashboard')
@@ -2969,6 +3215,7 @@ class DoctorScheduleView(HospitalAdminBaseView):
             'week_start': week_start,
             'week_end': week_end,
             'page_title': 'Doctor Schedule',
+            'is_verified': self.is_verified,
             'current_page': 'Doctor Schedule',
             'breadcrumb': 'Appointment Management / Doctor Schedule',
         }
@@ -2991,6 +3238,7 @@ class SettingsDashboardView(HospitalAdminBaseView):
             'page_title': 'Settings',
             'current_page': 'Settings',
             'breadcrumb': 'Settings',
+            'is_verified': self.is_verified,
         }
         return render(request, self.template_name, context)
 
@@ -3015,6 +3263,7 @@ class ProfileSettingsView(HospitalAdminBaseView):
             'user': request.user,
             'page_title': 'Profile Settings',
             'current_page': 'Profile Settings',
+            'is_verified': self.is_verified,
             'breadcrumb': 'Settings / Profile',
         }
         return render(request, self.template_name, context)
@@ -3037,6 +3286,7 @@ class ProfileSettingsView(HospitalAdminBaseView):
             'page_title': 'Profile Settings',
             'current_page': 'Profile Settings',
             'breadcrumb': 'Settings / Profile',
+            'is_verified': self.is_verified,
         }
         return render(request, self.template_name, context)
 
@@ -3061,6 +3311,7 @@ class ChangePasswordView(HospitalAdminBaseView):
             'page_title': 'Change Password',
             'current_page': 'Change Password',
             'breadcrumb': 'Settings / Change Password',
+            'is_verified': self.is_verified,
         }
         return render(request, self.template_name, context)
     
@@ -3082,6 +3333,7 @@ class ChangePasswordView(HospitalAdminBaseView):
             'page_title': 'Change Password',
             'current_page': 'Change Password',
             'breadcrumb': 'Settings / Change Password',
+            'is_verified': self.is_verified,
         }
         return render(request, self.template_name, context)
 
@@ -3108,6 +3360,7 @@ class NotificationSettingsView(HospitalAdminBaseView):
             'page_title': 'Notification Preferences',
             'current_page': 'Notification Preferences',
             'breadcrumb': 'Settings / Notifications',
+            'is_verified': self.is_verified,
         }
         return render(request, self.template_name, context)
     
@@ -3128,6 +3381,7 @@ class NotificationSettingsView(HospitalAdminBaseView):
             'page_title': 'Notification Preferences',
             'current_page': 'Notification Preferences',
             'breadcrumb': 'Settings / Notifications',
+            'is_verified': self.is_verified,
         }
         return render(request, self.template_name, context)
 
@@ -3150,5 +3404,6 @@ class SecuritySettingsView(HospitalAdminBaseView):
             'page_title': 'Account Security',
             'current_page': 'Account Security',
             'breadcrumb': 'Settings / Security',
+            'is_verified': self.is_verified,
         }
         return render(request, self.template_name, context)

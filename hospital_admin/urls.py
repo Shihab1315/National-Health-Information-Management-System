@@ -1,5 +1,5 @@
 # hospital_admin/urls.py
-from django.urls import path
+from django.urls import include, path
 from . import views
 
 app_name = 'hospital_admin'
@@ -86,6 +86,8 @@ urlpatterns = [
     path('settings/change-password/', views.ChangePasswordView.as_view(), name='change_password'),
     path('settings/notifications/', views.NotificationSettingsView.as_view(), name='notification_settings'),
     path('settings/security/', views.SecuritySettingsView.as_view(), name='security_settings'),
+    # ===== Lab Technician Management =====
+    path('lab-technicians/', include('lab_technicians.urls')),
     # Locked modules
     path('appointments/', views.LockedModuleView.as_view(), name='appointments'),
     path('settings/', views.LockedModuleView.as_view(), name='settings'),

@@ -1,0 +1,458 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Lab Technician | NHIMS{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    {% block extra_css %}{% endblock %}
+    
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #0a1628;
+            color: #e5e7eb;
+            min-height: 100vh;
+            display: flex;
+        }
+        
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 260px;
+            height: 100vh;
+            background: #0d1f3c;
+            border-right: 1px solid rgba(255, 255, 255, 0.06);
+            z-index: 1000;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow-y: auto;
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .sidebar::-webkit-scrollbar { width: 4px; }
+        .sidebar::-webkit-scrollbar-track { background: transparent; }
+        .sidebar::-webkit-scrollbar-thumb { background: rgba(59, 130, 246, 0.3); border-radius: 4px; }
+        
+        .sidebar-brand {
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            flex-shrink: 0;
+        }
+        
+        .sidebar-nav {
+            padding: 0.75rem 0.75rem 6rem;
+            flex: 1;
+        }
+        
+        .sidebar-nav .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.625rem 1rem;
+            border-radius: 0.5rem;
+            color: rgba(255, 255, 255, 0.6);
+            text-decoration: none;
+            transition: all 0.15s ease;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            position: relative;
+            width: 100%;
+            border: none;
+            background: none;
+            text-align: left;
+        }
+        
+        .sidebar-nav .nav-item:hover { background: rgba(255, 255, 255, 0.05); color: #ffffff; }
+        .sidebar-nav .nav-item.active { background: rgba(59, 130, 246, 0.15); color: #60a5fa; }
+        .sidebar-nav .nav-item.active::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0.25rem;
+            bottom: 0.25rem;
+            width: 3px;
+            background: #3b82f6;
+            border-radius: 0 4px 4px 0;
+        }
+        
+        .sidebar-nav .nav-item i { width: 1.25rem; text-align: center; font-size: 1rem; flex-shrink: 0; }
+        .sidebar-nav .nav-divider {
+            height: 1px;
+            background: rgba(255, 255, 255, 0.06);
+            margin: 0.5rem 1rem;
+        }
+        
+        .sidebar-nav .nav-item .badge {
+            margin-left: auto;
+            background: #ef4444;
+            color: white;
+            font-size: 0.6rem;
+            padding: 0.125rem 0.5rem;
+            border-radius: 9999px;
+            font-weight: 600;
+        }
+        
+        .sidebar-footer {
+            padding: 1rem 1.5rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
+            font-size: 0.7rem;
+            color: rgba(255, 255, 255, 0.3);
+            text-align: center;
+            flex-shrink: 0;
+        }
+        
+        .main-wrapper {
+            margin-left: 260px;
+            min-height: 100vh;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .top-navbar {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(10, 22, 40, 0.85);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            padding: 0.75rem 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            min-height: 64px;
+        }
+        
+        .top-navbar .left-section { display: flex; align-items: center; gap: 1rem; }
+        .top-navbar .left-section .sidebar-toggle {
+            display: none;
+            background: none;
+            border: none;
+            color: #9ca3af;
+            font-size: 1.25rem;
+            cursor: pointer;
+            padding: 0.25rem;
+        }
+        .top-navbar .left-section .sidebar-toggle:hover { color: #ffffff; }
+        
+        .top-navbar .page-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: #ffffff;
+        }
+        .top-navbar .page-title .breadcrumb {
+            font-size: 0.75rem;
+            font-weight: 400;
+            color: #9ca3af;
+        }
+        
+        .top-navbar .right-section { display: flex; align-items: center; gap: 0.75rem; }
+        
+        .profile-dropdown { position: relative; }
+        .profile-dropdown .profile-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: none;
+            border: none;
+            color: #e5e7eb;
+            cursor: pointer;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.5rem;
+            transition: all 0.15s ease;
+        }
+        .profile-dropdown .profile-btn:hover { background: rgba(255, 255, 255, 0.05); }
+        .profile-dropdown .profile-btn .avatar {
+            width: 2rem;
+            height: 2rem;
+            border-radius: 50%;
+            background: rgba(59, 130, 246, 0.2);
+            color: #60a5fa;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.75rem;
+        }
+        .profile-dropdown .profile-btn .name { font-size: 0.875rem; font-weight: 500; }
+        .profile-dropdown .profile-btn .chevron { font-size: 0.625rem; color: #6b7280; }
+        
+        .profile-dropdown .dropdown-menu {
+            display: none;
+            position: absolute;
+            right: 0;
+            top: calc(100% + 0.5rem);
+            min-width: 200px;
+            background: #0d1f3c;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 0.75rem;
+            padding: 0.5rem;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+        }
+        .profile-dropdown .dropdown-menu.show { display: block; }
+        .profile-dropdown .dropdown-menu .menu-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.5rem 0.75rem;
+            border-radius: 0.375rem;
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            font-size: 0.8125rem;
+            transition: all 0.15s ease;
+        }
+        .profile-dropdown .dropdown-menu .menu-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: #ffffff;
+        }
+        .profile-dropdown .dropdown-menu .menu-item i { width: 1.25rem; text-align: center; }
+        .profile-dropdown .dropdown-menu .menu-divider { height: 1px; background: rgba(255, 255, 255, 0.06); margin: 0.25rem 0; }
+        .profile-dropdown .dropdown-menu .menu-item.danger { color: #ef4444; }
+        .profile-dropdown .dropdown-menu .menu-item.danger:hover { background: rgba(239, 68, 68, 0.1); }
+        
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 0.75rem;
+            padding: 1rem;
+            transition: all 0.2s ease;
+        }
+        .glass-card:hover {
+            border-color: rgba(59, 130, 246, 0.2);
+            transform: translateY(-2px);
+        }
+        
+        .status-badge {
+            padding: 0.2rem 0.6rem;
+            border-radius: 9999px;
+            font-size: 0.6rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+        .status-badge .dot {
+            width: 0.35rem;
+            height: 0.35rem;
+            border-radius: 50%;
+            display: inline-block;
+        }
+        .status-badge.ordered { background: rgba(59, 130, 246, 0.15); color: #60a5fa; }
+        .status-badge.ordered .dot { background: #3b82f6; }
+        .status-badge.collected { background: rgba(245, 158, 11, 0.15); color: #fbbf24; }
+        .status-badge.collected .dot { background: #f59e0b; }
+        .status-badge.processing { background: rgba(139, 92, 246, 0.15); color: #a78bfa; }
+        .status-badge.processing .dot { background: #8b5cf6; }
+        .status-badge.completed { background: rgba(34, 197, 94, 0.15); color: #34d399; }
+        .status-badge.completed .dot { background: #22c55e; }
+        
+        @media (max-width: 768px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .main-wrapper { margin-left: 0; }
+            .top-navbar .left-section .sidebar-toggle { display: block; }
+            .top-navbar .page-title { font-size: 0.9375rem; }
+        }
+        
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.02); }
+        ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.2); }
+    </style>
+</head>
+<body>
+
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-brand">
+            <div class="flex items-center gap-2">
+                <span class="text-xl font-bold text-white">NHIMS</span>
+                <span class="text-xs font-medium text-purple-400 bg-purple-500/20 px-2 py-0.5 rounded">Lab Technician</span>
+            </div>
+            <p class="text-xs text-gray-500 mt-0.5">National Health Information System</p>
+        </div>
+        
+        <nav class="sidebar-nav">
+            <!-- Dashboard -->
+            <a href="{% url 'lab_technicians:dashboard' %}" class="nav-item {% if current_page == 'Dashboard' %}active{% endif %}">
+                <i class="fas fa-th-large"></i>
+                <span>Dashboard</span>
+            </a>
+            
+            <div class="nav-divider"></div>
+            
+            <!-- Test Orders -->
+            <a href="{% url 'lab_technicians:test_orders' %}" class="nav-item {% if current_page == 'Test Orders' %}active{% endif %}">
+                <i class="fas fa-flask"></i>
+                <span>Test Orders</span>
+                {% if pending_orders > 0 %}
+                    <span class="badge" style="background: #3b82f6;">{{ pending_orders }}</span>
+                {% endif %}
+            </a>
+            
+            <!-- Collected Samples -->
+            <a href="{% url 'lab_technicians:test_orders' %}?status=collected" class="nav-item">
+                <i class="fas fa-vial"></i>
+                <span>Collected Samples</span>
+            </a>
+            
+            <!-- Processing -->
+            <a href="{% url 'lab_technicians:test_orders' %}?status=processing" class="nav-item">
+                <i class="fas fa-microscope"></i>
+                <span>Processing</span>
+            </a>
+            
+            <!-- Lab Results -->
+            <a href="{% url 'lab_technicians:test_orders' %}?status=completed" class="nav-item">
+                <i class="fas fa-file-medical-alt"></i>
+                <span>Lab Results</span>
+            </a>
+            
+            <!-- Completed Reports -->
+            <a href="{% url 'lab_technicians:completed_reports' %}" class="nav-item {% if current_page == 'Completed Reports' %}active{% endif %}">
+                <i class="fas fa-check-circle"></i>
+                <span>Completed Reports</span>
+            </a>
+            
+            <div class="nav-divider"></div>
+            
+            <!-- Profile -->
+            <a href="{% url 'lab_technicians:profile' %}" class="nav-item {% if current_page == 'Profile' %}active{% endif %}">
+                <i class="fas fa-user-circle"></i>
+                <span>Profile</span>
+            </a>
+            
+            <!-- Settings -->
+            <a href="{% url 'lab_technicians:settings' %}" class="nav-item {% if current_page == 'Settings' %}active{% endif %}">
+                <i class="fas fa-cog"></i>
+                <span>Settings</span>
+            </a>
+            
+            <div class="nav-divider"></div>
+            
+            <!-- Logout -->
+            <form method="post" action="{% url 'accounts:logout' %}" class="block">
+                {% csrf_token %}
+                <button type="submit" class="nav-item" style="color: rgba(239, 68, 68, 0.7);">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Logout</span>
+                </button>
+            </form>
+        </nav>
+        
+        <div class="sidebar-footer">
+            NHIMS v2.0 &bull; Lab Technician
+        </div>
+    </aside>
+
+    <div class="main-wrapper">
+        <header class="top-navbar">
+            <div class="left-section">
+                <button class="sidebar-toggle" id="sidebarToggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <div class="page-title">
+                    {% block page_title %}Dashboard{% endblock %}
+                    <div class="breadcrumb">
+                        {% block breadcrumb %}
+                            <span>Dashboard</span>
+                            <span class="mx-1">/</span>
+                            <span>{% block current_page %}Overview{% endblock %}</span>
+                        {% endblock %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="right-section">
+                <div class="profile-dropdown" id="profileDropdown">
+                    <button class="profile-btn" id="profileBtn">
+                        <div class="avatar">{{ user.get_full_name|slice:":1"|upper|default:user.username|slice:":1"|upper }}</div>
+                        <span class="name">{{ user.get_full_name|default:user.username }}</span>
+                        <i class="fas fa-chevron-down chevron" id="chevronIcon"></i>
+                    </button>
+                    
+                    <div class="dropdown-menu" id="dropdownMenu">
+                        <a href="{% url 'lab_technicians:profile' %}" class="menu-item">
+                            <i class="fas fa-user-circle"></i>
+                            <span>My Profile</span>
+                        </a>
+                        <a href="{% url 'lab_technicians:settings' %}" class="menu-item">
+                            <i class="fas fa-cog"></i>
+                            <span>Settings</span>
+                        </a>
+                        <div class="menu-divider"></div>
+                        <form method="post" action="{% url 'accounts:logout' %}" class="block">
+                            {% csrf_token %}
+                            <button type="submit" class="menu-item danger w-full text-left">
+                                <i class="fas fa-sign-out-alt"></i>
+                                <span>Logout</span>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main class="flex-1 p-6">
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const sidebar = document.getElementById('sidebar');
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            
+            if (sidebarToggle) {
+                sidebarToggle.addEventListener('click', function() {
+                    sidebar.classList.toggle('open');
+                });
+            }
+            
+            document.addEventListener('click', function(event) {
+                const isClickInside = sidebar.contains(event.target) || 
+                                     (sidebarToggle && sidebarToggle.contains(event.target));
+                if (!isClickInside && window.innerWidth < 768) {
+                    sidebar.classList.remove('open');
+                }
+            });
+            
+            // Profile Dropdown
+            const profileBtn = document.getElementById('profileBtn');
+            const dropdownMenu = document.getElementById('dropdownMenu');
+            const chevronIcon = document.getElementById('chevronIcon');
+            
+            if (profileBtn && dropdownMenu) {
+                profileBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    dropdownMenu.classList.toggle('show');
+                    if (chevronIcon) chevronIcon.classList.toggle('open');
+                });
+            }
+            
+            document.addEventListener('click', function() {
+                if (dropdownMenu) dropdownMenu.classList.remove('show');
+                if (chevronIcon) chevronIcon.classList.remove('open');
+            });
+            
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    if (dropdownMenu) dropdownMenu.classList.remove('show');
+                    if (chevronIcon) chevronIcon.classList.remove('open');
+                    if (sidebar) sidebar.classList.remove('open');
+                }
+            });
+        });
+    </script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

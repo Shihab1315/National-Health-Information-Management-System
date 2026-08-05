@@ -1,0 +1,271 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+
+{% block title %}{{ hospital.name }} | NHIMS Bangladesh{% endblock %}
+
+{% block page_title %}{{ hospital.name }}{% endblock %}
+
+{% block breadcrumb %}
+    <span>Home</span>
+    <span class="mx-1">/</span>
+    <a href="{% url 'dashboard:homepage_hospitals' %}" class="hover:text-blue-400">Hospitals</a>
+    <span class="mx-1">/</span>
+    <span class="current">{{ hospital.name|truncatechars:30 }}</span>
+{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    
+    <!-- ============================================================ -->
+    <!-- HOSPITAL HEADER -->
+    <!-- ============================================================ -->
+    <div class="glass rounded-3xl p-6 md:p-8">
+        <div class="flex flex-col md:flex-row gap-6">
+            <!-- Logo -->
+            <div class="flex-shrink-0">
+                <div class="w-32 h-32 rounded-2xl overflow-hidden bg-gradient-to-br from-blue-500/20 to-cyan-500/20 flex items-center justify-center border-2 border-blue-500/20">
+                    {% if hospital.logo %}
+                        <img src="{{ hospital.logo.url }}" alt="{{ hospital.name }}" class="w-full h-full object-cover">
+                    {% else %}
+                        <i class="fas fa-hospital text-5xl text-blue-400/50"></i>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Info -->
+            <div class="flex-1">
+                <div class="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                        <h1 class="text-3xl font-bold text-white">{{ hospital.name }}</h1>
+                        <div class="flex flex-wrap items-center gap-3 mt-2">
+                            {% if hospital.verified %}
+                            <span class="inline-flex items-center gap-1 px-3 py-1 bg-green-500/20 text-green-400 text-xs rounded-full">
+                                <i class="fas fa-check-circle"></i> Verified
+                            </span>
+                            {% endif %}
+                            {% if hospital.hospital_type %}
+                            <span class="inline-flex items-center gap-1 px-3 py-1 bg-blue-500/20 text-blue-400 text-xs rounded-full">
+                                <i class="fas fa-building"></i> {{ hospital.get_hospital_type_display }}
+                            </span>
+                            {% endif %}
+                            {% if hospital.average_rating %}
+                            <span class="inline-flex items-center gap-1 px-3 py-1 bg-yellow-500/20 text-yellow-400 text-xs rounded-full">
+                                <i class="fas fa-star"></i> {{ hospital.average_rating|floatformat:1 }} / 5.0
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <a href="#" class="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-semibold rounded-xl shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 transition-all duration-300 hover:scale-105 flex items-center gap-2">
+                        <i class="fas fa-calendar-plus"></i> Book Appointment
+                    </a>
+                </div>
+                
+                <!-- Address -->
+                <div class="mt-3 space-y-1 text-sm text-gray-300">
+                    <div class="flex items-center gap-2">
+                        <i class="fas fa-map-marker-alt text-blue-400 w-5"></i>
+                        <span>{{ hospital.full_address|default:"Address not available" }}</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <i class="fas fa-city text-blue-400 w-5"></i>
+                        <span>{{ hospital.city|default:"N/A" }}, {{ hospital.district|default:"N/A" }}, {{ hospital.division|default:"N/A" }}</span>
+                    </div>
+                    {% if hospital.phone %}
+                    <div class="flex items-center gap-2">
+                        <i class="fas fa-phone text-blue-400 w-5"></i>
+                        <span>{{ hospital.phone }}</span>
+                    </div>
+                    {% endif %}
+                    {% if hospital.email %}
+                    <div class="flex items-center gap-2">
+                        <i class="fas fa-envelope text-blue-400 w-5"></i>
+                        <span>{{ hospital.email }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- STATISTICS -->
+    <!-- ============================================================ -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="glass rounded-2xl p-4 text-center">
+            <p class="text-2xl font-bold text-cyan-400">{{ total_doctors|default:0 }}</p>
+            <p class="text-gray-400 text-sm">Total Doctors</p>
+        </div>
+        <div class="glass rounded-2xl p-4 text-center">
+            <p class="text-2xl font-bold text-blue-400">{{ total_departments|default:0 }}</p>
+            <p class="text-gray-400 text-sm">Departments</p>
+        </div>
+        <div class="glass rounded-2xl p-4 text-center">
+            <p class="text-2xl font-bold text-green-400">{{ hospital.total_beds|default:0 }}</p>
+            <p class="text-gray-400 text-sm">Total Beds</p>
+        </div>
+        <div class="glass rounded-2xl p-4 text-center">
+            <p class="text-2xl font-bold text-yellow-400">{{ today_appointments|default:0 }}</p>
+            <p class="text-gray-400 text-sm">Today's Appointments</p>
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- TWO COLUMN LAYOUT -->
+    <!-- ============================================================ -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- ===== LEFT COLUMN (2/3) ===== -->
+        <div class="lg:col-span-2 space-y-6">
+            
+            <!-- About / Description -->
+            <div class="glass rounded-3xl p-6">
+                <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                    <i class="fas fa-info-circle text-blue-400"></i> About {{ hospital.name }}
+                </h2>
+                <div class="prose prose-invert max-w-none">
+                    {% if hospital.description %}
+                        <p class="text-gray-300 leading-relaxed">{{ hospital.description|linebreaks }}</p>
+                    {% elif hospital.short_description %}
+                        <p class="text-gray-300 leading-relaxed">{{ hospital.short_description }}</p>
+                    {% else %}
+                        <p class="text-gray-400">{{ hospital.name }} is a leading healthcare facility in Bangladesh, providing quality medical services to patients across the country.</p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Departments -->
+            {% if departments %}
+            <div class="glass rounded-3xl p-6">
+                <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                    <i class="fas fa-building text-blue-400"></i> Departments
+                </h2>
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    {% for dept in departments %}
+                        <div class="bg-white/5 rounded-xl p-3 text-center hover:bg-white/10 transition">
+                            <p class="text-gray-300 text-sm">{{ dept.name }}</p>
+                            {% if dept.doctor_count %}
+                                <p class="text-gray-500 text-xs">{{ dept.doctor_count }} Doctors</p>
+                            {% endif %}
+                        </div>
+                    {% empty %}
+                        <p class="text-gray-400 col-span-full">No departments listed</p>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Facilities -->
+            {% if facilities %}
+            <div class="glass rounded-3xl p-6">
+                <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                    <i class="fas fa-check-circle text-green-400"></i> Facilities & Services
+                </h2>
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    {% for facility in facilities %}
+                        <div class="flex items-center gap-2 text-gray-300 text-sm">
+                            <i class="fas fa-check text-green-400"></i>
+                            <span>{{ facility }}</span>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+            
+        </div>
+        
+        <!-- ===== RIGHT COLUMN (1/3) ===== -->
+        <div class="space-y-6">
+            
+            <!-- Contact Info -->
+            <div class="glass rounded-3xl p-6">
+                <h3 class="text-white font-bold mb-4 flex items-center gap-2">
+                    <i class="fas fa-address-card text-blue-400"></i> Contact Information
+                </h3>
+                <div class="space-y-3">
+                    {% if hospital.phone %}
+                    <div class="flex items-start gap-3">
+                        <i class="fas fa-phone text-blue-400 mt-1 w-5"></i>
+                        <div>
+                            <p class="text-gray-400 text-xs">Phone</p>
+                            <p class="text-white">{{ hospital.phone }}</p>
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% if hospital.email %}
+                    <div class="flex items-start gap-3">
+                        <i class="fas fa-envelope text-blue-400 mt-1 w-5"></i>
+                        <div>
+                            <p class="text-gray-400 text-xs">Email</p>
+                            <p class="text-white">{{ hospital.email }}</p>
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% if hospital.website %}
+                    <div class="flex items-start gap-3">
+                        <i class="fas fa-globe text-blue-400 mt-1 w-5"></i>
+                        <div>
+                            <p class="text-gray-400 text-xs">Website</p>
+                            <a href="{{ hospital.website }}" target="_blank" class="text-blue-400 hover:text-blue-300">{{ hospital.website }}</a>
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% if hospital.emergency_phone %}
+                    <div class="flex items-start gap-3">
+                        <i class="fas fa-ambulance text-red-400 mt-1 w-5"></i>
+                        <div>
+                            <p class="text-gray-400 text-xs">Emergency</p>
+                            <p class="text-red-400 font-bold">{{ hospital.emergency_phone }}</p>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Quick Actions -->
+            <div class="glass rounded-3xl p-6">
+                <h3 class="text-white font-bold mb-4 flex items-center gap-2">
+                    <i class="fas fa-bolt text-yellow-400"></i> Quick Actions
+                </h3>
+                <div class="space-y-3">
+                    <a href="#" class="block w-full px-4 py-3 bg-gradient-to-r from-blue-600 to-cyan-500 text-white text-center font-semibold rounded-xl hover:scale-105 transition">
+                        <i class="fas fa-calendar-plus mr-2"></i> Book Appointment
+                    </a>
+                    <a href="#" class="block w-full px-4 py-3 border border-white/10 text-gray-300 text-center font-semibold rounded-xl hover:bg-white/5 transition">
+                        <i class="fas fa-phone mr-2"></i> Call Hospital
+                    </a>
+                    <a href="#" class="block w-full px-4 py-3 border border-white/10 text-gray-300 text-center font-semibold rounded-xl hover:bg-white/5 transition">
+                        <i class="fas fa-map-marked-alt mr-2"></i> Get Directions
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Working Hours -->
+            <div class="glass rounded-3xl p-6">
+                <h3 class="text-white font-bold mb-4 flex items-center gap-2">
+                    <i class="fas fa-clock text-blue-400"></i> Working Hours
+                </h3>
+                <div class="space-y-2 text-sm">
+                    <div class="flex justify-between">
+                        <span class="text-gray-400">Open 24/7</span>
+                        <span class="text-green-400">✓</span>
+                    </div>
+                    {% if hospital.operating_hours %}
+                        <p class="text-gray-300">{{ hospital.operating_hours }}</p>
+                    {% endif %}
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- BACK BUTTON -->
+    <!-- ============================================================ -->
+    <div class="mt-6">
+        <a href="{% url 'dashboard:homepage_hospitals' %}" class="text-gray-400 hover:text-white transition inline-flex items-center gap-2">
+            <i class="fas fa-arrow-left"></i> Back to Hospitals
+        </a>
+    </div>
+
+</div>
+{% endblock %}

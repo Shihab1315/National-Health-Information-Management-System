@@ -1,0 +1,79 @@
+{% extends "lab_technicians/base.html" %}
+{% load static %}
+
+{% block title %}Profile | Lab Technician{% endblock %}
+
+{% block page_title %}Profile{% endblock %}
+
+{% block breadcrumb %}
+    <span>Dashboard</span>
+    <span class="mx-1">/</span>
+    <span class="current">Profile</span>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    
+    <div class="bg-[#0d1f3c] rounded-xl border border-white/5 p-6">
+        <div class="flex items-center gap-6 mb-6">
+            <div class="w-20 h-20 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-400 text-3xl font-bold border-2 border-purple-400/30">
+                {{ user.get_full_name|slice:":1"|upper|default:user.username|slice:":1"|upper }}
+            </div>
+            <div>
+                <h2 class="text-2xl font-bold text-white">{{ user.get_full_name|default:user.username }}</h2>
+                <p class="text-purple-400">Lab Technician</p>
+                <p class="text-gray-400 text-sm">{{ technician.hospital.name|default:"No hospital assigned" }}</p>
+            </div>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+                <h3 class="text-gray-400 text-sm font-medium mb-3">Personal Information</h3>
+                <div class="space-y-3">
+                    <div>
+                        <p class="text-gray-500 text-xs">Full Name</p>
+                        <p class="text-white">{{ technician.full_name|default:"N/A" }}</p>
+                    </div>
+                    <div>
+                        <p class="text-gray-500 text-xs">Email</p>
+                        <p class="text-white">{{ user.email|default:"N/A" }}</p>
+                    </div>
+                    <div>
+                        <p class="text-gray-500 text-xs">Phone</p>
+                        <p class="text-white">{{ technician.phone|default:"N/A" }}</p>
+                    </div>
+                </div>
+            </div>
+            <div>
+                <h3 class="text-gray-400 text-sm font-medium mb-3">Professional Information</h3>
+                <div class="space-y-3">
+                    <div>
+                        <p class="text-gray-500 text-xs">Role</p>
+                        <p class="text-white">Lab Technician</p>
+                    </div>
+                    <div>
+                        <p class="text-gray-500 text-xs">Hospital</p>
+                        <p class="text-white">{{ technician.hospital.name|default:"N/A" }}</p>
+                    </div>
+                    <div>
+                        <p class="text-gray-500 text-xs">Joined</p>
+                        <p class="text-white">{{ technician.created_at|date:"M d, Y"|default:"N/A" }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="flex gap-3 mt-6 pt-6 border-t border-white/10">
+            <a href="{% url 'lab_technicians:profile_edit' %}" class="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition">
+                <i class="fas fa-edit mr-2"></i>
+                Edit Profile
+            </a>
+            <a href="{% url 'lab_technicians:settings' %}" class="px-4 py-2 border border-gray-600 hover:border-gray-500 text-gray-300 hover:text-white rounded-lg transition">
+                <i class="fas fa-cog mr-2"></i>
+                Settings
+            </a>
+        </div>
+    </div>
+    
+</div>
+{% endblock %}

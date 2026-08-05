@@ -574,8 +574,8 @@ def doctors_by_hospital(request):
         for doc in doctors
     ]
     return JsonResponse({'doctors': data})
+
 @login_required
-@role_required(["patient"])
 def patient_book_appointment(request):
     """
     Step-by-step booking wizard for patients.
@@ -583,8 +583,26 @@ def patient_book_appointment(request):
     POST: Create the appointment.
     """
     print("===== BOOKING VIEW CALLED =====")
-    patient = request.user.patient_profile
-
+    
+    # ✅ সরাসরি role চেক
+    if request.user.role != 'patient':
+        messages.error(request, 'You do not have permission to access this page.')
+        if request.user.role == 'doctor':
+            return redirect('dashboard:doctor_dashboard')
+        elif request.user.role == 'hospital_admin':
+            return redirect('hospital_admin:dashboard')
+        elif request.user.role == 'super_admin':
+            return redirect('dashboard:superadmin_dashboard')
+        else:
+            return redirect('dashboard:homepage')
+    
+    # Patient প্রোফাইল চেক
+    try:
+        patient = request.user.patient_profile
+    except:
+        messages.error(request, 'Patient profile not found. Please complete your profile first.')
+        return redirect('dashboard:patient_dashboard')
+    
     if request.method == 'POST':
         form = PatientAppointmentForm(request.POST)
         if form.is_valid():
@@ -598,19 +616,18 @@ def patient_book_appointment(request):
                     reason=form.cleaned_data.get('reason', ''),
                     created_by=request.user,
                 )
-                messages.success(request, _("Appointment booked successfully!"))
+                messages.success(request, "Appointment booked successfully!")
                 return redirect('appointments:patient_appointment_detail', pk=appointment.pk)
             except ValidationError as e:
                 messages.error(request, str(e))
             except Exception as e:
-                messages.error(request, _("An unexpected error occurred. Please try again."))
+                messages.error(request, "An unexpected error occurred. Please try again.")
         else:
-            messages.error(request, _("Please correct the errors below."))
+            messages.error(request, "Please correct the errors below.")
     else:
         form = PatientAppointmentForm()
 
     hospitals = Hospital.objects.filter(is_deleted=False, active=True)
-    # Departments: use the Specialty model if available
     from doctors.models import Specialty
     departments = Specialty.objects.filter(is_active=True).values_list('name', flat=True)
 
@@ -621,6 +638,7 @@ def patient_book_appointment(request):
         'departments': departments,
     }
     return render(request, 'appointments/patient/book_appointment.html', context)
+
 # ---------- Patient Cancel Appointment ----------
 @login_required
 @role_required(["patient"])

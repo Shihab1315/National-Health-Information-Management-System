@@ -1,0 +1,175 @@
+{% extends "lab_technicians/base.html" %}
+{% load static %}
+
+{% block title %}Test Orders | Lab Technician{% endblock %}
+
+{% block page_title %}Test Orders{% endblock %}
+
+{% block breadcrumb %}
+    <span>Dashboard</span>
+    <span class="mx-1">/</span>
+    <span class="current">Test Orders</span>
+{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    
+    <!-- Header -->
+    <div class="flex flex-wrap items-center justify-between gap-4">
+        <div>
+            <h1 class="text-2xl font-bold text-white">Test Orders</h1>
+            <p class="text-gray-400 text-sm">Manage all laboratory test orders</p>
+        </div>
+    </div>
+    
+    <!-- Status Filter -->
+    <div class="flex flex-wrap gap-2">
+        <a href="{% url 'lab_technicians:test_orders' %}" 
+           class="px-3 py-1 rounded-full text-xs font-medium {% if not status_filter %}bg-blue-500/20 text-blue-400{% else %}bg-white/5 text-gray-400 hover:bg-white/10{% endif %} transition">
+            All ({{ status_counts.ordered|add:status_counts.collected|add:status_counts.processing|add:status_counts.completed }})
+        </a>
+        <a href="?status=ordered" 
+           class="px-3 py-1 rounded-full text-xs font-medium {% if status_filter == 'ordered' %}bg-blue-500/20 text-blue-400{% else %}bg-white/5 text-gray-400 hover:bg-white/10{% endif %} transition">
+            Ordered ({{ status_counts.ordered }})
+        </a>
+        <a href="?status=collected" 
+           class="px-3 py-1 rounded-full text-xs font-medium {% if status_filter == 'collected' %}bg-yellow-500/20 text-yellow-400{% else %}bg-white/5 text-gray-400 hover:bg-white/10{% endif %} transition">
+            Collected ({{ status_counts.collected }})
+        </a>
+        <a href="?status=processing" 
+           class="px-3 py-1 rounded-full text-xs font-medium {% if status_filter == 'processing' %}bg-purple-500/20 text-purple-400{% else %}bg-white/5 text-gray-400 hover:bg-white/10{% endif %} transition">
+            Processing ({{ status_counts.processing }})
+        </a>
+        <a href="?status=completed" 
+           class="px-3 py-1 rounded-full text-xs font-medium {% if status_filter == 'completed' %}bg-green-500/20 text-green-400{% else %}bg-white/5 text-gray-400 hover:bg-white/10{% endif %} transition">
+            Completed ({{ status_counts.completed }})
+        </a>
+    </div>
+    
+    <!-- Search -->
+    <div class="bg-white/5 rounded-xl border border-white/10 p-4">
+        <form method="get" class="flex flex-wrap gap-3">
+            <div class="flex-1 min-w-[200px] relative">
+                <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm"></i>
+                <input type="text" 
+                       name="search" 
+                       value="{{ search_query|default:'' }}"
+                       placeholder="Search orders..." 
+                       class="w-full pl-9 pr-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:border-blue-500 focus:outline-none transition">
+            </div>
+            <select name="status" class="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:border-blue-500 focus:outline-none transition">
+                <option value="">All Status</option>
+                <option value="ordered" {% if status_filter == 'ordered' %}selected{% endif %}>Ordered</option>
+                <option value="collected" {% if status_filter == 'collected' %}selected{% endif %}>Collected</option>
+                <option value="processing" {% if status_filter == 'processing' %}selected{% endif %}>Processing</option>
+                <option value="completed" {% if status_filter == 'completed' %}selected{% endif %}>Completed</option>
+            </select>
+            <button type="submit" class="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition font-medium text-sm">
+                <i class="fas fa-search mr-1"></i> Search
+            </button>
+            <a href="{% url 'lab_technicians:test_orders' %}" class="px-4 py-2 bg-white/5 hover:bg-white/10 text-gray-300 rounded-lg transition font-medium text-sm">
+                <i class="fas fa-times mr-1"></i> Reset
+            </a>
+        </form>
+    </div>
+    
+    <!-- Orders Table -->
+    <div class="bg-white/5 rounded-xl border border-white/10 overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="border-b border-white/10 bg-white/5">
+                        <th class="text-left py-3 px-4 text-xs font-medium text-gray-400 uppercase tracking-wider">Order #</th>
+                        <th class="text-left py-3 px-4 text-xs font-medium text-gray-400 uppercase tracking-wider">Patient</th>
+                        <th class="text-left py-3 px-4 text-xs font-medium text-gray-400 uppercase tracking-wider">Doctor</th>
+                        <th class="text-left py-3 px-4 text-xs font-medium text-gray-400 uppercase tracking-wider">Status</th>
+                        <th class="text-left py-3 px-4 text-xs font-medium text-gray-400 uppercase tracking-wider">Date</th>
+                        <th class="text-center py-3 px-4 text-xs font-medium text-gray-400 uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in orders %}
+                    <tr class="border-b border-white/5 hover:bg-white/5 transition">
+                        <td class="py-3 px-4 text-white font-medium">{{ order.order_number }}</td>
+                        <td class="py-3 px-4 text-gray-300">{{ order.patient.full_name }}</td>
+                        <td class="py-3 px-4 text-gray-300">Dr. {{ order.doctor.user.get_full_name|default:order.doctor.full_name }}</td>
+                        <td class="py-3 px-4">
+                            <span class="status-badge {{ order.status }}">
+                                <span class="dot"></span>
+                                {{ order.get_status_display }}
+                            </span>
+                        </td>
+                        <td class="py-3 px-4 text-gray-400 text-sm">{{ order.created_at|date:"M d, Y" }}</td>
+                        <td class="py-3 px-4">
+                            <div class="flex items-center justify-center gap-2">
+                                <a href="{% url 'lab_technicians:test_order_detail' order.id %}" 
+                                   class="text-blue-400 hover:text-blue-300 transition" title="View">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                {% if order.status == 'ordered' %}
+                                    <form method="POST" action="{% url 'lab_technicians:collect_sample' order.id %}" class="inline">
+                                        {% csrf_token %}
+                                        <button type="submit" class="text-yellow-400 hover:text-yellow-300 transition" title="Collect Sample">
+                                            <i class="fas fa-vial"></i>
+                                        </button>
+                                    </form>
+                                {% endif %}
+                                {% if order.status == 'collected' %}
+                                    <form method="POST" action="{% url 'lab_technicians:start_processing' order.id %}" class="inline">
+                                        {% csrf_token %}
+                                        <button type="submit" class="text-purple-400 hover:text-purple-300 transition" title="Start Processing">
+                                            <i class="fas fa-microscope"></i>
+                                        </button>
+                                    </form>
+                                {% endif %}
+                                {% if order.status == 'processing' %}
+                                    <a href="{% url 'lab_technicians:lab_result_create' order.id %}" 
+                                       class="text-green-400 hover:text-green-300 transition" title="Enter Result">
+                                        <i class="fas fa-file-medical"></i>
+                                    </a>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="py-8 text-center text-gray-400">
+                            <i class="fas fa-flask text-4xl mb-3 block"></i>
+                            <p>No test orders found</p>
+                            <p class="text-sm text-gray-500 mt-1">Try adjusting your search or filters</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <!-- Pagination -->
+    {% if orders.has_other_pages %}
+    <div class="flex items-center justify-between flex-wrap gap-3">
+        <div class="text-sm text-gray-400">
+            Showing {{ orders.start_index }} to {{ orders.end_index }} of {{ orders.paginator.count }} orders
+        </div>
+        <div class="flex gap-1">
+            {% if orders.has_previous %}
+                <a href="?page=1{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" 
+                   class="px-3 py-1 rounded border border-white/10 hover:bg-white/5 text-gray-300 transition text-sm">First</a>
+                <a href="?page={{ orders.previous_page_number }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" 
+                   class="px-3 py-1 rounded border border-white/10 hover:bg-white/5 text-gray-300 transition text-sm">Prev</a>
+            {% endif %}
+            
+            <span class="px-3 py-1 rounded bg-blue-500/20 text-blue-400 text-sm">{{ orders.number }}</span>
+            
+            {% if orders.has_next %}
+                <a href="?page={{ orders.next_page_number }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" 
+                   class="px-3 py-1 rounded border border-white/10 hover:bg-white/5 text-gray-300 transition text-sm">Next</a>
+                <a href="?page={{ orders.paginator.num_pages }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" 
+                   class="px-3 py-1 rounded border border-white/10 hover:bg-white/5 text-gray-300 transition text-sm">Last</a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+    
+</div>
+{% endblock %}

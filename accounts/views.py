@@ -140,7 +140,8 @@ def dashboard_redirect(request):
         return redirect('dashboard:receptionist_dashboard')
     
     elif user.role == 'lab_technician':
-        return redirect('dashboard:lab_technician_dashboard')
+        # ✅ সরাসরি URL দিন (reverse ছাড়া)
+        return redirect('/lab-technicians/dashboard/')
     
     elif user.role == 'pharmacist':
         return redirect('dashboard:pharmacist_dashboard')
