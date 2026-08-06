@@ -1,0 +1,280 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+
+{% block title %}{{ service.title }} | NHIMS Bangladesh{% endblock %}
+
+{% block page_title %}{{ service.title }}{% endblock %}
+
+{% block breadcrumb %}
+    <span>Home</span>
+    <span class="mx-1">/</span>
+    <a href="{% url 'dashboard:homepage' %}#services" class="hover:text-blue-400">Services</a>
+    <span class="mx-1">/</span>
+    <span class="current">{{ service.title }}</span>
+{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    
+    <!-- ============================================================ -->
+    <!-- SERVICE HEADER -->
+    <!-- ============================================================ -->
+    <div class="glass rounded-3xl p-8 md:p-10">
+        <div class="flex flex-col md:flex-row items-start md:items-center gap-6">
+            <div class="w-20 h-20 rounded-2xl bg-{{ service.color }}-500/20 flex items-center justify-center text-{{ service.color }}-400 text-4xl flex-shrink-0">
+                <i class="fas {{ service.icon }}"></i>
+            </div>
+            <div>
+                <h1 class="text-3xl md:text-4xl font-bold text-white">{{ service.title }}</h1>
+                <p class="text-gray-400 mt-2 text-lg max-w-2xl">{{ service.description }}</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- OVERVIEW -->
+    <!-- ============================================================ -->
+    <div class="glass rounded-3xl p-8">
+        <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-2">
+            <i class="fas fa-info-circle text-{{ service.color }}-400"></i>
+            Overview
+        </h2>
+        <p class="text-gray-300 leading-relaxed">{{ service.overview }}</p>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- KEY FEATURES & BENEFITS -->
+    <!-- ============================================================ -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Features -->
+        <div class="glass rounded-3xl p-8">
+            <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                <i class="fas fa-check-circle text-{{ service.color }}-400"></i>
+                Key Features
+            </h2>
+            <ul class="space-y-3">
+                {% for feature in service.features %}
+                <li class="flex items-start gap-3 text-gray-300">
+                    <i class="fas fa-check text-{{ service.color }}-400 mt-1"></i>
+                    <span>{{ feature }}</span>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        
+        <!-- Benefits -->
+        <div class="glass rounded-3xl p-8">
+            <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                <i class="fas fa-star text-{{ service.color }}-400"></i>
+                Benefits
+            </h2>
+            <ul class="space-y-3">
+                {% for benefit in service.benefits %}
+                <li class="flex items-start gap-3 text-gray-300">
+                    <i class="fas fa-star text-{{ service.color }}-400 mt-1"></i>
+                    <span>{{ benefit }}</span>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- WORKFLOW -->
+    <!-- ============================================================ -->
+    <div class="glass rounded-3xl p-8">
+        <h2 class="text-xl font-bold text-white mb-6 flex items-center gap-2">
+            <i class="fas fa-flowchart text-{{ service.color }}-400"></i>
+            Workflow
+        </h2>
+        <div class="flex flex-wrap items-center justify-center gap-2 md:gap-4">
+            {% for step in service.workflow %}
+            <div class="flex items-center">
+                <div class="glass px-4 py-2 rounded-full text-white text-sm">
+                    {{ step }}
+                </div>
+                {% if not forloop.last %}
+                <i class="fas fa-arrow-right text-gray-600 mx-2"></i>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- WHY CHOOSE NHIMS -->
+    <!-- ============================================================ -->
+    <div class="glass rounded-3xl p-8">
+        <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-2">
+            <i class="fas fa-shield-alt text-{{ service.color }}-400"></i>
+            Why Choose NHIMS?
+        </h2>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div class="text-center p-4 bg-white/5 rounded-xl">
+                <i class="fas fa-lock text-{{ service.color }}-400 text-2xl mb-2"></i>
+                <p class="text-white font-medium">Secure</p>
+                <p class="text-gray-400 text-xs">End-to-end encryption</p>
+            </div>
+            <div class="text-center p-4 bg-white/5 rounded-xl">
+                <i class="fas fa-bolt text-{{ service.color }}-400 text-2xl mb-2"></i>
+                <p class="text-white font-medium">Fast</p>
+                <p class="text-gray-400 text-xs">Lightning speed</p>
+            </div>
+            <div class="text-center p-4 bg-white/5 rounded-xl">
+                <i class="fas fa-cloud text-{{ service.color }}-400 text-2xl mb-2"></i>
+                <p class="text-white font-medium">Cloud Based</p>
+                <p class="text-gray-400 text-xs">Access anywhere</p>
+            </div>
+            <div class="text-center p-4 bg-white/5 rounded-xl">
+                <i class="fas fa-check-circle text-{{ service.color }}-400 text-2xl mb-2"></i>
+                <p class="text-white font-medium">Reliable</p>
+                <p class="text-gray-400 text-xs">99.9% uptime</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- templates/dashboard/service_detail.html -->
+<!-- ============================================================ -->
+<!-- SCREENSHOTS SECTION - প্রতিটি সেবার জন্য আলাদা ইমেজ -->
+<!-- ============================================================ -->
+<div class="glass rounded-3xl p-8">
+    <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-2">
+        <i class="fas fa-images text-{{ service.color }}-400"></i>
+        Screenshots
+    </h2>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        
+        <!-- Screenshot 1 -->
+        <div class="aspect-video rounded-xl overflow-hidden border border-white/5 hover:border-{{ service.color }}-500/30 transition-all duration-300 group">
+            {% if service.screenshot_1 %}
+                <img src="{{ service.screenshot_1 }}" 
+                     alt="{{ service.title }} Screenshot 1" 
+                     class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+            {% else %}
+                <div class="w-full h-full flex items-center justify-center bg-white/5">
+                    <div class="text-center">
+                        <i class="fas fa-image text-4xl text-gray-600 mb-2"></i>
+                        <p class="text-gray-500 text-sm">Screenshot 1</p>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+        
+        <!-- Screenshot 2 -->
+        <div class="aspect-video rounded-xl overflow-hidden border border-white/5 hover:border-{{ service.color }}-500/30 transition-all duration-300 group">
+            {% if service.screenshot_2 %}
+                <img src="{{ service.screenshot_2 }}" 
+                     alt="{{ service.title }} Screenshot 2" 
+                     class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+            {% else %}
+                <div class="w-full h-full flex items-center justify-center bg-white/5">
+                    <div class="text-center">
+                        <i class="fas fa-image text-4xl text-gray-600 mb-2"></i>
+                        <p class="text-gray-500 text-sm">Screenshot 2</p>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+        
+        <!-- Screenshot 3 -->
+        <div class="aspect-video rounded-xl overflow-hidden border border-white/5 hover:border-{{ service.color }}-500/30 transition-all duration-300 group">
+            {% if service.screenshot_3 %}
+                <img src="{{ service.screenshot_3 }}" 
+                     alt="{{ service.title }} Screenshot 3" 
+                     class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+            {% else %}
+                <div class="w-full h-full flex items-center justify-center bg-white/5">
+                    <div class="text-center">
+                        <i class="fas fa-image text-4xl text-gray-600 mb-2"></i>
+                        <p class="text-gray-500 text-sm">Screenshot 3</p>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+        
+    </div>
+</div>
+    <!-- ============================================================ -->
+    <!-- FAQ -->
+    <!-- ============================================================ -->
+    <div class="glass rounded-3xl p-8">
+        <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-2">
+            <i class="fas fa-question-circle text-{{ service.color }}-400"></i>
+            Frequently Asked Questions
+        </h2>
+        <div class="space-y-4">
+            {% for faq in service.faqs %}
+            <div class="faq-item" onclick="toggleFaq(this)">
+                <div class="flex items-center justify-between cursor-pointer">
+                    <span class="text-white font-medium">{{ faq.q }}</span>
+                    <i class="fas fa-chevron-down faq-chevron text-gray-500 transition-transform duration-300"></i>
+                </div>
+                <div class="faq-answer mt-2 max-h-0 overflow-hidden transition-all duration-300">
+                    <p class="text-gray-400 text-sm leading-relaxed">{{ faq.a }}</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- CALL TO ACTION -->
+    <!-- ============================================================ -->
+    <div class="glass rounded-3xl p-8 text-center bg-gradient-to-r from-{{ service.color }}-600/10 to-blue-600/10">
+        <h2 class="text-2xl font-bold text-white">Want to use this service?</h2>
+        <p class="text-gray-400 mt-2">Join NHIMS today and start benefiting from our comprehensive healthcare services.</p>
+        <div class="flex flex-wrap justify-center gap-4 mt-6">
+            {% if user.is_authenticated %}
+                <a href="{% url 'dashboard:homepage' %}" class="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-semibold rounded-xl shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 transition-all duration-300 hover:scale-105">
+                    <i class="fas fa-th-large mr-2"></i> Go to Dashboard
+                </a>
+            {% else %}
+                <a href="{% url 'accounts:login' %}" class="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-semibold rounded-xl shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 transition-all duration-300 hover:scale-105">
+                    <i class="fas fa-sign-in-alt mr-2"></i> Login
+                </a>
+                <a href="{% url 'accounts:signup' %}" class="px-6 py-2.5 border border-white/10 text-gray-300 font-semibold rounded-xl hover:bg-white/5 transition-all duration-300">
+                    <i class="fas fa-user-plus mr-2"></i> Register
+                </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- BACK TO SERVICES -->
+    <!-- ============================================================ -->
+    <div>
+        <a href="{% url 'dashboard:homepage' %}#services" class="text-gray-400 hover:text-white transition inline-flex items-center gap-2">
+            <i class="fas fa-arrow-left"></i> Back to Services
+        </a>
+    </div>
+
+</div>
+
+<!-- ============================================================ -->
+<!-- FAQ TOGGLE SCRIPT -->
+<!-- ============================================================ -->
+<script>
+    function toggleFaq(element) {
+        const answer = element.querySelector('.faq-answer');
+        const chevron = element.querySelector('.faq-chevron');
+        
+        // Close other FAQs
+        document.querySelectorAll('.faq-answer').forEach(function(a) {
+            if (a !== answer) {
+                a.style.maxHeight = '0';
+                const icon = a.closest('.faq-item').querySelector('.faq-chevron');
+                if (icon) icon.classList.remove('open');
+            }
+        });
+        
+        // Toggle this FAQ
+        if (answer.style.maxHeight === '0px' || !answer.style.maxHeight) {
+            answer.style.maxHeight = answer.scrollHeight + 'px';
+            chevron.classList.add('open');
+        } else {
+            answer.style.maxHeight = '0';
+            chevron.classList.remove('open');
+        }
+    }
+</script>
+{% endblock %}

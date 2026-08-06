@@ -839,7 +839,7 @@
     <!-- ============================================================ -->
     <!-- SERVICES SECTION -->
     <!-- ============================================================ -->
-    <section id="services" class="py-24 border-b border-white/5">
+    {% comment %} <section id="services" class="py-24 border-b border-white/5">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="text-center mb-16">
                 <span class="section-badge">Our Services</span>
@@ -898,8 +898,8 @@
                 </div>
             </div>
         </div>
-    </section>
-
+    </section> {% endcomment %}
+     {% include "dashboard/partials/services.html" %}
     <!-- ============================================================ -->
     <!-- HOW NHIMS WORKS - TIMELINE -->
     <!-- ============================================================ -->

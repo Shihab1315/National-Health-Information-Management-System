@@ -15,6 +15,8 @@ from datetime import datetime, date
 from django.contrib.auth import logout
 from django.core.exceptions import PermissionDenied
 import json
+import os
+from django.db import transaction
 from django.db import models
 import random  # <-- ADD THIS IMPORT
 from django.utils.text import slugify
@@ -529,7 +531,7 @@ class HospitalApplicationDetailView(View):
         
         return timeline_events
 
-
+import traceback
 # =============================================================================
 # APPLICATION ACTIONS
 # =============================================================================
@@ -537,113 +539,129 @@ class HospitalApplicationDetailView(View):
 @role_required(['super_admin'])
 def approve_application(request, application_id):
     """Approve a hospital application."""
-    if request.method != 'POST':
-        return JsonResponse({'error': 'Method not allowed'}, status=405)
-    
+    if request.method != "POST":
+        return JsonResponse({"error": "Method not allowed"}, status=405)
+
     application = get_object_or_404(HospitalApplication, id=application_id)
-    
-    # Update application status
-    application.status = 'approved'
-    application.approved_at = timezone.now()
-    application.reviewed_by = request.user
-    application.reviewed_at = timezone.now()
-    application.save()
-    
+
     try:
-        # Check if hospital already exists by registration number
-        existing_hospital = Hospital.objects.filter(
-            registration_number=application.registration_number
-        ).first()
-        
-        if existing_hospital:
-            messages.warning(
-                request, 
-                f'Hospital "{application.hospital_name}" already exists. Application approved.'
+        with transaction.atomic():
+
+            # -----------------------------
+            # Update application status
+            # -----------------------------
+            application.status = "approved"
+            application.approved_at = timezone.now()
+            application.reviewed_at = timezone.now()
+            application.reviewed_by = request.user
+            application.save()
+
+            # -----------------------------
+            # Check existing hospital
+            # -----------------------------
+            hospital = Hospital.objects.filter(
+                registration_number=application.registration_number
+            ).first()
+
+            # -----------------------------
+            # Create hospital if not exists
+            # -----------------------------
+            if not hospital:
+
+                base_slug = slugify(application.hospital_name)
+                slug = base_slug
+                counter = 1
+
+                while Hospital.objects.filter(slug=slug).exists():
+                    slug = f"{base_slug}-{counter}"
+                    counter += 1
+
+                hospital_code = f"HOSP-{random.randint(1000,9999)}"
+                while Hospital.objects.filter(hospital_code=hospital_code).exists():
+                    hospital_code = f"HOSP-{random.randint(1000,9999)}"
+
+                hospital = Hospital.objects.create(
+                    name=application.hospital_name,
+                    slug=slug,
+                    hospital_code=hospital_code,
+                    hospital_type=application.hospital_type or "private",
+                    registration_number=application.registration_number,
+                    license_number=application.license_number or "",
+
+                    email=application.hospital_email,
+                    phone=application.phone,
+                    emergency_phone=application.emergency_phone or "",
+                    website=application.website or "",
+
+                    full_address=application.full_address,
+                    division=application.division,
+                    district=application.district,
+                    upazila=application.upazila or "",
+                    city=application.area or "",
+                    area=application.area or "",
+                    country="Bangladesh",
+                    postal_code=application.postal_code or "",
+                    latitude=application.latitude,
+                    longitude=application.longitude,
+                    google_map_link=application.google_map_link or "",
+
+                    description=application.description or "",
+                    logo=application.logo if application.logo else None,
+
+                    emergency_available=bool(application.emergency_phone),
+
+                    active=True,
+                    verified=True,
+                    featured=False,
+                    is_deleted=False,
+                )
+
+                print("✅ Hospital created:", hospital.id)
+
+            else:
+                print("✅ Existing hospital found:", hospital.id)
+
+            # ==================================================
+            # Link User -> Hospital
+            # ==================================================
+            hospital_admin = application.hospital_admin
+            hospital_admin.hospital = hospital
+            hospital_admin.save(update_fields=["hospital"])
+
+            print("✅ User linked:", hospital_admin.username)
+
+            # ==================================================
+            # Link HospitalAdminProfile -> Hospital
+            # ==================================================
+            from hospital_admin.models import HospitalAdminProfile
+
+            profile, created = HospitalAdminProfile.objects.get_or_create(
+                user=hospital_admin,
+                defaults={
+                    "hospital": hospital,
+                    "full_name": hospital_admin.get_full_name() or hospital_admin.username,
+                    "phone": getattr(hospital_admin, "phone", ""),
+                    "is_active": True,
+                },
             )
-            return redirect('superadmin:pending_hospital_applications')
-        
-        # Generate unique slug
-        from django.utils.text import slugify
-        import random
-        
-        base_slug = slugify(application.hospital_name)
-        slug = base_slug
-        counter = 1
-        
-        # Check if slug exists and generate unique one
-        while Hospital.objects.filter(slug=slug).exists():
-            slug = f"{base_slug}-{counter}"
-            counter += 1
-        
-        # Generate hospital code
-        import random
-        hospital_code = f"HOSP-{random.randint(1000, 9999)}"
-        while Hospital.objects.filter(hospital_code=hospital_code).exists():
-            hospital_code = f"HOSP-{random.randint(1000, 9999)}"
-        
-        # Create new hospital
-        hospital = Hospital(
-            # Basic Information
-            name=application.hospital_name,
-            slug=slug,  # Set slug explicitly
-            hospital_code=hospital_code,
-            hospital_type=application.hospital_type or 'private',
-            registration_number=application.registration_number,
-            license_number=application.license_number or '',
-            
-            # Contact Information
-            email=application.hospital_email,
-            phone=application.phone,
-            emergency_phone=application.emergency_phone or '',
-            website=application.website or '',
-            
-            # Address Information
-            full_address=application.full_address,
-            division=application.division,
-            district=application.district,
-            upazila=application.upazila or '',
-            city=application.area or '',
-            area=application.area or '',
-            country='Bangladesh',
-            postal_code=application.postal_code or '',
-            latitude=application.latitude or None,
-            longitude=application.longitude or None,
-            google_map_link=application.google_map_link or '',
-            
-            # Description
-            description=application.description or '',
-            
-            # Logo
-            logo=application.logo if hasattr(application, 'logo') and application.logo else None,
-            
-            # Emergency availability
-            emergency_available=True if application.emergency_phone else False,
-            
-            # Status
-            active=True,
-            verified=False,
-            featured=False,
-            is_deleted=False,
-            
-            # Timestamp
-            created_at=application.created_at,
-        )
-        
-        # Save the hospital
-        hospital.save()
-        
-        messages.success(
-            request, 
-            f'Hospital "{application.hospital_name}" has been approved and created successfully!'
-        )
-        
-    except IntegrityError as e:
-        messages.error(request, f'Error creating hospital: {str(e)}')
-    
+
+            if not created:
+                profile.hospital = hospital
+                profile.is_active = True
+                profile.save(update_fields=["hospital", "is_active"])
+
+            print("✅ HospitalAdminProfile linked")
+
+            messages.success(
+                request,
+                f'Hospital "{hospital.name}" approved successfully.'
+            )
+
     except Exception as e:
-        messages.error(request, f'Error creating hospital: {str(e)}')
-    
-    return redirect('superadmin:pending_hospital_applications')
+        print(traceback.format_exc())
+        messages.error(request, str(e))
+
+    return redirect("superadmin:pending_hospital_applications")
 
 
 @login_required

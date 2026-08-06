@@ -4,7 +4,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.utils import timezone
 from django.db.models import F, Sum, Count
-from django.http import HttpResponseServerError
+from django.http import Http404, HttpResponseServerError
 import logging
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from doctors.models import Specialty
@@ -749,3 +749,312 @@ def home_hospital_details(request, pk):
         'current_page': 'Hospital Detail',
     }
     return render(request, 'dashboard/hospital_detail.html', context)
+
+
+# dashboard/views.py - শেষে যোগ করুন
+
+def service_detail(request, service_slug):
+    """
+    Service detail page - public page, no login required.
+    """
+    # Service data mapping
+    services = {
+        'electronic-health-records': {
+            'title': 'Electronic Health Records',
+            'icon': 'fa-notes-medical',
+            'color': 'blue',
+            'description': 'Secure digital medical records that can be accessed safely from authorized healthcare providers anywhere in Bangladesh.',
+            'overview': 'Electronic Health Records (EHR) is a digital version of a patient\'s paper chart. EHRs are real-time, patient-centered records that make information available instantly and securely to authorized users.',
+            'screenshot_1': 'https://images.unsplash.com/photo-1576091160550-2173dba999ef?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80',
+            'screenshot_2': 'https://images.unsplash.com/photo-1579154204601-01588f351e67?w=600&h=400&fit=crop',
+            'screenshot_3': 'https://images.unsplash.com/photo-1587351021759-3e566b6af7cc?w=600&h=400&fit=crop',
+            'features': [
+                'Lifetime health records',
+                'Secure cloud storage',
+                'Easy sharing with authorized providers',
+                'Complete medical history',
+                'Real-time updates',
+                'Data encryption',
+                'Access controls',
+                'Audit trails'
+            ],
+            'benefits': [
+                'Improved patient care',
+                'Reduced medical errors',
+                'Better coordination',
+                'Time savings',
+                'Cost reduction',
+                'Data accessibility'
+            ],
+            'workflow': [
+                'Patient Registration',
+                'Health Record Creation',
+                'Secure Storage',
+                'Authorized Access',
+                'Real-time Updates',
+                'Data Sharing'
+            ],
+            'faqs': [
+                {'q': 'What are Electronic Health Records?', 'a': 'Electronic Health Records are digital versions of patient medical history, maintained by healthcare providers over time.'},
+                {'q': 'Is my data secure?', 'a': 'Yes, all data is encrypted and stored securely with strict access controls.'},
+                {'q': 'Who can access my records?', 'a': 'Only authorized healthcare providers with your consent can access your records.'}
+            ]
+        },
+        'doctor-management': {
+            'title': 'Doctor Management',
+            'icon': 'fa-user-md',
+            'color': 'cyan',
+            'description': 'Manage doctor profiles, schedules, departments, appointments, and verification through a centralized system.',
+            'overview': 'A comprehensive system for managing all aspects of doctor administration including profiles, scheduling, department assignment, and verification.',
+            'screenshot_1': 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=600&h=400&fit=crop',
+            'screenshot_2': 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=600&h=400&fit=crop',
+            'screenshot_3': 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=600&h=400&fit=crop',
+            'features': [
+                'Doctor Profiles',
+                'Verification System',
+                'Schedule Management',
+                'Department Assignment',
+                'Appointment Management',
+                'Performance Analytics'
+            ],
+            'benefits': [
+                'Streamlined management',
+                'Better resource allocation',
+                'Improved efficiency',
+                'Transparent verification'
+            ],
+            'workflow': [
+                'Doctor Registration',
+                'Profile Creation',
+                'Verification Process',
+                'Schedule Setup',
+                'Department Assignment',
+                'Appointment Management'
+            ],
+            'faqs': [
+                {'q': 'How does doctor verification work?', 'a': 'Doctors are verified through a comprehensive process including document verification and background checks.'},
+                {'q': 'Can doctors manage their own schedules?', 'a': 'Yes, doctors can manage their availability through the system.'}
+            ]
+        },
+        'patient-management': {
+            'title': 'Patient Management',
+            'icon': 'fa-users',
+            'color': 'emerald',
+            'description': 'Complete patient information management including medical history, treatment plans, and healthcare records.',
+            'overview': 'A complete patient management system that maintains comprehensive patient profiles, visit history, and treatment records.',
+            'screenshot_1': 'https://images.unsplash.com/photo-1584516150909-c43483ee7932?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTV8fHBhdGllbnR8ZW58MHx8MHx8fDA%3D',
+            'screenshot_2': 'https://images.unsplash.com/photo-1758691462123-8a17ae95d203?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MzR8fHBhdGllbnQlMjBjYXJlfGVufDB8fDB8fHww',
+            'screenshot_3': 'https://images.unsplash.com/photo-1577896851905-dc99e1f8b4b9?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTAwfHxwYXRpZW50JTIwY2FyZXxlbnwwfHwwfHx8MA%3D%3D',
+            'features': [
+                'Patient Profile',
+                'Visit History',
+                'Medical Timeline',
+                'Health Tracking',
+                'Treatment Plans',
+                'Communication Log'
+            ],
+            'benefits': [
+                'Holistic patient view',
+                'Better care coordination',
+                'Improved outcomes'
+            ],
+            'workflow': [
+                'Patient Registration',
+                'Profile Creation',
+                'Visit Recording',
+                'Treatment Planning',
+                'Health Tracking'
+            ],
+            'faqs': [
+                {'q': 'What information is stored?', 'a': 'Complete medical history, treatment plans, visit records, and health metrics.'}
+            ]
+        },
+        'hospital-management': {
+            'title': 'Hospital Management',
+            'icon': 'fa-hospital',
+            'color': 'purple',
+            'description': 'Efficient hospital administration including departments, doctors, staff, rooms, and operational management.',
+            'overview': 'A comprehensive hospital administration system for managing all operational aspects including departments, staff, facilities, and resources.',
+            'screenshot_1': 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=600&h=400&fit=crop',
+            'screenshot_2': 'https://images.unsplash.com/photo-1587351021759-3e566b6af7cc?w=600&h=400&fit=crop',
+            'screenshot_3': 'https://images.unsplash.com/photo-1512678080530-7760d81faba6?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8aG9zcGl0YWx8ZW58MHx8MHx8fDA%3D',
+            'features': [
+                'Department Management',
+                'Staff Management',
+                'Room Management',
+                'Resource Allocation',
+                'Operational Analytics'
+            ],
+            'benefits': [
+                'Efficient operations',
+                'Better resource utilization',
+                'Improved patient experience'
+            ],
+            'workflow': [
+                'Department Setup',
+                'Staff Assignment',
+                'Resource Allocation',
+                'Operational Monitoring'
+            ],
+            'faqs': [
+                {'q': 'How are departments managed?', 'a': 'Each department can be configured with its own staff, facilities, and operational parameters.'}
+            ]
+        },
+        'laboratory-management': {
+            'title': 'Laboratory Management',
+            'icon': 'fa-flask',
+            'color': 'amber',
+            'description': 'Complete laboratory workflow including test requests, diagnostics, reports, and digital result management.',
+            'overview': 'A modern laboratory management system for managing test requests, sample collection, diagnostics, and digital report delivery.',
+            'screenshot_1': 'https://images.unsplash.com/photo-1579154204601-01588f351e67?w=600&h=400&fit=crop',
+            'screenshot_2': 'https://images.unsplash.com/photo-1587351021759-3e566b6af7cc?w=600&h=400&fit=crop',
+            'screenshot_3': 'https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=600&h=400&fit=crop',
+            'features': [
+                'Test Requests',
+                'Sample Tracking',
+                'Diagnostics Management',
+                'Digital Reports',
+                'Quality Control'
+            ],
+            'benefits': [
+                'Faster results',
+                'Better accuracy',
+                'Digital reporting',
+                'Improved workflow'
+            ],
+            'workflow': [
+                'Test Request',
+                'Sample Collection',
+                'Processing',
+                'Result Entry',
+                'Report Generation',
+                'Digital Delivery'
+            ],
+            'faqs': [
+                {'q': 'How are lab results delivered?', 'a': 'Results are available digitally through the system and can be downloaded as PDF.'}
+            ]
+        },
+        'digital-prescription': {
+            'title': 'Digital Prescription',
+            'icon': 'fa-prescription',
+            'color': 'rose',
+            'description': 'Generate secure electronic prescriptions with medicine history and digital authentication.',
+            'overview': 'A secure electronic prescription system that generates, tracks, and verifies prescriptions digitally.',
+             'screenshot_1': 'https://images.unsplash.com/photo-1587351021759-3e566b6af7cc?w=600&h=400&fit=crop',
+             'screenshot_2': 'https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=600&h=400&fit=crop',
+             'screenshot_3': 'https://images.unsplash.com/photo-1579154204601-01588f351e67?w=600&h=400&fit=crop',
+            'features': [
+                'E-Prescription',
+                'Medicine History',
+                'QR Verification',
+                'PDF Download',
+                'Medicine Tracking'
+            ],
+            'benefits': [
+                'Reduced errors',
+                'Better tracking',
+                'Digital records',
+                'Enhanced safety'
+            ],
+            'workflow': [
+                'Prescription Generation',
+                'QR Code Creation',
+                'Digital Signature',
+                'PDF Generation',
+                'Medicine Tracking'
+            ],
+            'faqs': [
+                {'q': 'Are digital prescriptions valid?', 'a': 'Yes, digital prescriptions are legally valid and include QR verification for authenticity.'}
+            ]
+        },
+        'appointment-booking': {
+            'title': 'Appointment Booking',
+            'icon': 'fa-calendar-check',
+            'color': 'indigo',
+            'description': 'Book appointments online with real-time doctor availability and queue management.',
+            'overview': 'An intelligent appointment booking system that provides real-time availability, queue management, and automated notifications.',
+            'screenshot_1': 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=600&h=400&fit=crop',
+            'screenshot_2': 'https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=600&h=400&fit=crop',
+            'screenshot_3': 'https://images.unsplash.com/photo-1587351021759-3e566b6af7cc?w=600&h=400&fit=crop',
+            'features': [
+                'Online Booking',
+                'Queue Tracking',
+                'Notifications',
+                'Rescheduling',
+                'Availability Check'
+            ],
+            'benefits': [
+                'Convenience',
+                'Time savings',
+                'Better planning',
+                'Reduced wait times'
+            ],
+            'workflow': [
+                'Search Doctor',
+                'Check Availability',
+                'Book Appointment',
+                'Confirmation',
+                'Reminder',
+                'Visit'
+            ],
+            'faqs': [
+                {'q': 'How do I book an appointment?', 'a': 'Simply search for your preferred doctor, select a time slot, and confirm your booking.'}
+            ]
+        },
+        'digital-health-id': {
+            'title': 'Digital Health ID',
+            'icon': 'fa-id-card',
+            'color': 'teal',
+            'description': 'A unique nationwide digital healthcare identity that securely connects patients with healthcare services.',
+            'overview': 'A nationwide digital identity system that provides every citizen with a unique healthcare ID for seamless access to healthcare services.',
+            'screenshot_1': 'https://images.unsplash.com/photo-1571266028243-e4733b0f0a52?w=600&h=400&fit=crop',
+            'screenshot_2': 'https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=600&h=400&fit=crop',
+            'screenshot_3': 'https://images.unsplash.com/photo-1587351021759-3e566b6af7cc?w=600&h=400&fit=crop',
+            'features': [
+                'Unique Health ID',
+                'Secure Identity',
+                'National Integration',
+                'Digital Access',
+                'Health Records'
+            ],
+            'benefits': [
+                'Universal access',
+                'Easy identification',
+                'Seamless integration',
+                'Better care coordination'
+            ],
+            'workflow': [
+                'Registration',
+                'ID Generation',
+                'Identity Verification',
+                'Health Record Linking',
+                'Access Management'
+            ],
+            'faqs': [
+                {'q': 'How do I get a Digital Health ID?', 'a': 'You can register online through the NHIMS portal to get your unique Digital Health ID.'}
+            ]
+        }
+    }
+    
+    # Get service data
+    service = services.get(service_slug)
+    if not service:
+        raise Http404("Service not found")
+    
+    # Get related services (exclude current)
+    related_services = [s for s in services.items() if s[0] != service_slug][:3]
+    
+    context = {
+        'service': service,
+        'service_slug': service_slug,
+        'related_services': related_services,
+        'page_title': service['title'],
+        'current_page': 'Services',
+    }
+    return render(request, 'dashboard/service_detail.html', context)
+
+def about_page(request):
+    return render(request, 'dashboard/about.html')
+
+def contact_page(request):
+    return render(request, 'dashboard/contact.html')

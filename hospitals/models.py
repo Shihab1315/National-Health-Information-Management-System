@@ -161,16 +161,15 @@ class Hospital(BaseModel):
         return self.name
 
     def save(self, *args, **kwargs):
-        if not self.slug:
-            self.slug = slugify(self.name)
-        if not self.hospital_code:
-            # Generate a unique code: HOSP-YYYY-XXXX
-            import random
-            self.hospital_code = f"HOSP-{random.randint(1000, 9999)}"
-        super().save(*args, **kwargs)
 
-    def get_absolute_url(self):
-        return reverse('hospitals:detail', kwargs={'slug': self.slug})
+     if not self.slug:
+        self.slug = slugify(self.name)
+
+     if not self.hospital_code:
+        import random
+        self.hospital_code = f"HOSP-{random.randint(1000,9999)}"
+
+     super().save(*args, **kwargs)
 
     @property
     def rating_stars(self):
@@ -605,10 +604,10 @@ class HospitalApplication(models.Model):
     def __str__(self):
         return f"{self.hospital_name} ({self.application_number})"
     
-    def save(self, *args, **kwargs):
-        if not self.application_number:
-            self.application_number = self.generate_application_number()
-        super().save(*args, **kwargs)
+    # def save(self, *args, **kwargs):
+    #     if not self.application_number:
+    #         self.application_number = self.generate_application_number()
+    #     super().save(*args, **kwargs)
     
     def generate_application_number(self) -> str:
         """Generate unique application number: HAPP-YYYYMMDD-XXXX"""

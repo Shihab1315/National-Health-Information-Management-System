@@ -155,12 +155,18 @@
                         {{ status_info.message|default:"Your hospital has not been verified yet. Complete your hospital profile and submit it for Super Admin approval." }}
                     </p>
                     
-                    {% if status_info.button_url and not is_verified %}
-                        <a href="{% url status_info.button_url %}" 
-                           class="px-6 py-2.5 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-lg transition-colors {% if status_info.button_disabled %}opacity-50 cursor-not-allowed{% endif %}">
-                            {{ status_info.button_text }}
-                        </a>
-                    {% endif %}
+                    {% if status_info.button_disabled %}
+<button
+    class="px-6 py-2.5 bg-gray-600 text-white rounded-lg opacity-50 cursor-not-allowed"
+    disabled>
+    {{ status_info.button_text }}
+</button>
+{% else %}
+<a href="{% url status_info.button_url %}"
+   class="px-6 py-2.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg">
+    {{ status_info.button_text }}
+</a>
+{% endif %}
                 </div>
             </div>
         </div>

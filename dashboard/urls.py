@@ -1,7 +1,6 @@
 
-from django import views
 from django.urls import path
-from .views import homepage, homepage_doctors, homepage_hospitals, lab_technician_dashboard, superadmin_dashboard, doctor_dashboard, patient_dashboard,home_hospital_details
+from .views import homepage, homepage_doctors, homepage_hospitals, lab_technician_dashboard, service_detail, superadmin_dashboard, doctor_dashboard, patient_dashboard, home_hospital_details, about_page, contact_page
 from hospitals.views import hospital_detail
 
 app_name = 'dashboard'
@@ -20,5 +19,11 @@ urlpatterns = [
     path('hospitals/<int:pk>/', hospital_detail, name='hospital_detail'),
      # ===== HOME HOSPITAL DETAIL =====
      path('hospital-detail/<int:pk>/', home_hospital_details, name='home_hospital_details'),
+     # ===== ✅ SERVICE DETAIL PAGES =====
+    path('services/<slug:service_slug>/', service_detail, name='service_detail'),
+    
+    path('about/', about_page, name='about'),
+    path('contact/', contact_page, name='contact'),
+
 
 ]

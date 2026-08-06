@@ -1,0 +1,832 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Contact NHIMS | National Health Information Management System</title>
+    <meta name="description" content="Contact NHIMS for healthcare support, hospital registration, doctor verification, and general inquiries." />
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+    
+    <style>
+        /* ============================================================ */
+        /* ROOT VARIABLES */
+        /* ============================================================ */
+        :root {
+            --primary-dark: #0a0f1e;
+            --primary-navy: #0d1f3c;
+            --accent-blue: #3b82f6;
+            --accent-cyan: #06b6d4;
+            --accent-teal: #14b8a6;
+            --glass-bg: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.06);
+        }
+
+        /* ============================================================ */
+        /* BASE */
+        /* ============================================================ */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+            background: var(--primary-dark);
+            color: #e2e8f0;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--primary-dark); }
+        ::-webkit-scrollbar-thumb { 
+            background: linear-gradient(180deg, var(--accent-blue), var(--accent-cyan));
+            border-radius: 10px;
+        }
+
+        /* ============================================================ */
+        /* GLASSMORPHISM */
+        /* ============================================================ */
+        .glass {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+        }
+
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .glass-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            border-color: rgba(59, 130, 246, 0.3);
+            box-shadow: 0 20px 60px rgba(59, 130, 246, 0.08);
+        }
+
+        /* ============================================================ */
+        /* GRADIENT TEXT */
+        /* ============================================================ */
+        .gradient-text {
+            background: linear-gradient(135deg, #60a5fa 0%, #06b6d4 50%, #14b8a6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* ============================================================ */
+        /* HERO */
+        /* ============================================================ */
+        .hero-bg {
+            background: radial-gradient(ellipse at 20% 30%, rgba(59, 130, 246, 0.08) 0%, transparent 60%),
+                        radial-gradient(ellipse at 80% 70%, rgba(6, 182, 212, 0.08) 0%, transparent 60%),
+                        var(--primary-dark);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-blob {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(100px);
+            pointer-events: none;
+            animation: blobFloat 12s ease-in-out infinite alternate;
+        }
+
+        .hero-blob-1 {
+            width: 400px;
+            height: 400px;
+            background: rgba(59, 130, 246, 0.1);
+            top: -15%;
+            left: -10%;
+            animation-delay: 0s;
+        }
+        .hero-blob-2 {
+            width: 300px;
+            height: 300px;
+            background: rgba(6, 182, 212, 0.08);
+            bottom: -15%;
+            right: -10%;
+            animation-delay: 4s;
+        }
+
+        @keyframes blobFloat {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(60px, -60px) scale(1.2); }
+        }
+
+        /* ============================================================ */
+        /* BUTTONS */
+        /* ============================================================ */
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
+            color: #fff;
+            padding: 14px 32px;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 1rem;
+            box-shadow: 0 4px 25px rgba(59, 130, 246, 0.35);
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .btn-primary:hover {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 8px 40px rgba(59, 130, 246, 0.5);
+        }
+
+        .btn-secondary {
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            color: #fff;
+            padding: 14px 32px;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: transparent;
+        }
+        .btn-secondary:hover {
+            border-color: var(--accent-blue);
+            background: rgba(59, 130, 246, 0.1);
+            transform: translateY(-3px);
+        }
+
+        /* ============================================================ */
+        /* SECTION BADGE */
+        /* ============================================================ */
+        .section-badge {
+            display: inline-block;
+            background: rgba(59, 130, 246, 0.12);
+            border: 1px solid rgba(59, 130, 246, 0.15);
+            padding: 6px 20px;
+            border-radius: 40px;
+            font-size: 0.75rem;
+            color: var(--accent-blue);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .section-title {
+            font-size: clamp(2rem, 4vw, 2.8rem);
+            font-weight: 800;
+            color: #ffffff;
+            line-height: 1.2;
+        }
+
+        /* ============================================================ */
+        /* FORM STYLES */
+        /* ============================================================ */
+        .form-control {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            color: #e5e7eb;
+            transition: all 0.3s ease;
+            font-size: 0.95rem;
+        }
+        .form-control:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+            background: rgba(255, 255, 255, 0.08);
+        }
+        .form-control::placeholder {
+            color: #6b7280;
+        }
+        .form-control.error {
+            border-color: #ef4444;
+            box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.1);
+        }
+        .form-label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #9ca3af;
+            margin-bottom: 0.375rem;
+        }
+        select.form-control {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 1rem center;
+            padding-right: 2.5rem;
+        }
+        select.form-control option {
+            background: #0d1f3c;
+            color: #e5e7eb;
+        }
+
+        /* ============================================================ */
+        /* FAQ */
+        /* ============================================================ */
+        .faq-item {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 20px 24px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .faq-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(59, 130, 246, 0.2);
+            transform: translateX(4px);
+        }
+
+        .faq-answer {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .faq-answer.open {
+            max-height: 300px;
+        }
+
+        .faq-chevron {
+            transition: transform 0.3s ease;
+        }
+
+        .faq-chevron.open {
+            transform: rotate(180deg);
+        }
+
+        /* ============================================================ */
+        /* RESPONSIVE */
+        /* ============================================================ */
+        @media (max-width: 768px) {
+            .hero-blob { width: 200px; height: 200px; filter: blur(60px); }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ============================================================ -->
+    <!-- NAVBAR (PARTIAL) -->
+    <!-- ============================================================ -->
+    {% include "dashboard/partials/navbar.html" %}
+
+    <!-- ============================================================ -->
+    <!-- 1. HERO SECTION -->
+    <!-- ============================================================ -->
+    <section class="hero-bg min-h-[60vh] flex items-center relative overflow-hidden pt-20">
+        <div class="hero-blob hero-blob-1"></div>
+        <div class="hero-blob hero-blob-2"></div>
+
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 relative z-10">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+                <!-- Left Content -->
+                <div>
+                    <span class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-semibold uppercase tracking-wider">
+                        <i class="fas fa-envelope"></i> Contact Us
+                    </span>
+                    <h1 class="text-4xl sm:text-5xl md:text-6xl font-extrabold text-white mt-4 leading-tight">
+                        Get in Touch <br>
+                        <span class="gradient-text">with NHIMS</span>
+                    </h1>
+                    <p class="text-gray-400 text-lg md:text-xl mt-6 max-w-xl leading-relaxed">
+                        We're here to answer your questions, assist healthcare providers, and help citizens 
+                        access better digital healthcare services across Bangladesh.
+                    </p>
+                    <div class="flex flex-wrap gap-4 mt-8">
+                        <a href="#contact-form" class="btn-primary">
+                            <i class="fas fa-headset"></i> Contact Support
+                        </a>
+                        <a href="#why-contact" class="btn-secondary">
+                            <i class="fas fa-info-circle"></i> Learn More
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Right Illustration -->
+                <div class="relative hidden lg:block">
+                    <div class="glass rounded-3xl p-8 relative">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="glass rounded-2xl p-6 text-center">
+                                <i class="fas fa-headset text-cyan-400 text-3xl mb-3"></i>
+                                <p class="text-white font-bold text-lg">24/7</p>
+                                <p class="text-gray-500 text-sm">Support</p>
+                            </div>
+                            <div class="glass rounded-2xl p-6 text-center">
+                                <i class="fas fa-clock text-blue-400 text-3xl mb-3"></i>
+                                <p class="text-white font-bold text-lg">9-6</p>
+                                <p class="text-gray-500 text-sm">Working Hours</p>
+                            </div>
+                            <div class="glass rounded-2xl p-6 text-center">
+                                <i class="fas fa-phone text-green-400 text-3xl mb-3"></i>
+                                <p class="text-white font-bold text-lg">16263</p>
+                                <p class="text-gray-500 text-sm">Helpline</p>
+                            </div>
+                            <div class="glass rounded-2xl p-6 text-center">
+                                <i class="fas fa-envelope text-purple-400 text-3xl mb-3"></i>
+                                <p class="text-white font-bold text-lg">Email</p>
+                                <p class="text-gray-500 text-sm">Support</p>
+                            </div>
+                        </div>
+                        <div class="absolute -top-4 -right-4 glass rounded-2xl px-4 py-2 text-xs font-medium text-cyan-400">
+                            <i class="fas fa-shield-alt mr-1"></i> Secure Communication
+                        </div>
+                        <div class="absolute -bottom-4 -left-4 glass rounded-2xl px-4 py-2 text-xs font-medium text-green-400">
+                            <i class="fas fa-check-circle mr-1"></i> Response within 24hrs
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- 2. CONTACT INFORMATION -->
+    <!-- ============================================================ -->
+    <section class="py-24 border-t border-white/5">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <span class="section-badge">Contact Information</span>
+                <h2 class="section-title mt-2">How to Reach Us</h2>
+                <p class="text-gray-400 mt-4 max-w-2xl mx-auto">Multiple ways to get in touch with NHIMS</p>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <!-- Office -->
+                <div class="glass-card rounded-2xl p-6 text-center group">
+                    <div class="w-14 h-14 mx-auto rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-400 text-2xl group-hover:scale-110 transition-transform">
+                        <i class="fas fa-building"></i>
+                    </div>
+                    <h4 class="text-white font-semibold mt-3">Head Office</h4>
+                    <p class="text-gray-400 text-sm mt-1 leading-relaxed">
+                        National Health Information<br>
+                        Management System (NHIMS)<br>
+                        Dhaka, Bangladesh
+                    </p>
+                </div>
+
+                <!-- Email -->
+                <div class="glass-card rounded-2xl p-6 text-center group">
+                    <div class="w-14 h-14 mx-auto rounded-xl bg-cyan-500/10 flex items-center justify-center text-cyan-400 text-2xl group-hover:scale-110 transition-transform">
+                        <i class="fas fa-envelope"></i>
+                    </div>
+                    <h4 class="text-white font-semibold mt-3">Email</h4>
+                    <p class="text-gray-400 text-sm mt-1">support@nhims.gov.bd</p>
+                    <p class="text-gray-500 text-xs mt-1">For general inquiries</p>
+                </div>
+
+                <!-- Phone -->
+                <div class="glass-card rounded-2xl p-6 text-center group">
+                    <div class="w-14 h-14 mx-auto rounded-xl bg-green-500/10 flex items-center justify-center text-green-400 text-2xl group-hover:scale-110 transition-transform">
+                        <i class="fas fa-phone"></i>
+                    </div>
+                    <h4 class="text-white font-semibold mt-3">Phone</h4>
+                    <p class="text-gray-400 text-sm mt-1">+880 1700-000000</p>
+                    <p class="text-gray-500 text-xs mt-1">9:00 AM - 6:00 PM</p>
+                </div>
+
+                <!-- Emergency -->
+                <div class="glass-card rounded-2xl p-6 text-center group">
+                    <div class="w-14 h-14 mx-auto rounded-xl bg-red-500/10 flex items-center justify-center text-red-400 text-2xl group-hover:scale-110 transition-transform">
+                        <i class="fas fa-ambulance"></i>
+                    </div>
+                    <h4 class="text-white font-semibold mt-3">Emergency Hotline</h4>
+                    <p class="text-gray-400 text-sm mt-1 font-bold text-2xl">16263</p>
+                    <p class="text-gray-500 text-xs mt-1">24/7 Available</p>
+                </div>
+            </div>
+
+            <!-- Working Hours -->
+            <div class="mt-8 glass rounded-2xl p-6 text-center max-w-md mx-auto">
+                <div class="flex items-center justify-center gap-2 text-gray-400 text-sm">
+                    <i class="fas fa-clock text-cyan-400"></i>
+                    <span>Working Hours:</span>
+                    <span class="text-white font-medium">Saturday – Thursday</span>
+                    <span class="text-gray-500">|</span>
+                    <span class="text-white font-medium">9:00 AM – 6:00 PM</span>
+                    <span class="text-gray-500">|</span>
+                    <span class="text-red-400">Friday Closed</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- 3. CONTACT FORM -->
+    <!-- ============================================================ -->
+    <section id="contact-form" class="py-24 border-t border-white/5">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <span class="section-badge">Send Message</span>
+                <h2 class="section-title mt-2">Get in Touch</h2>
+                <p class="text-gray-400 mt-4 max-w-2xl mx-auto">Fill out the form below and our team will get back to you shortly</p>
+            </div>
+
+            <div class="glass rounded-3xl p-8 md:p-10">
+                <form method="POST" class="space-y-6" id="contactForm">
+                    {% csrf_token %}
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="form-label" for="fullName">
+                                <i class="fas fa-user text-cyan-400 mr-1"></i> Full Name <span class="text-red-400">*</span>
+                            </label>
+                            <input type="text" id="fullName" name="full_name" class="form-control" placeholder="Enter your full name" required>
+                        </div>
+                        <div>
+                            <label class="form-label" for="email">
+                                <i class="fas fa-envelope text-cyan-400 mr-1"></i> Email Address <span class="text-red-400">*</span>
+                            </label>
+                            <input type="email" id="email" name="email" class="form-control" placeholder="Enter your email address" required>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="form-label" for="phone">
+                                <i class="fas fa-phone text-cyan-400 mr-1"></i> Phone Number
+                            </label>
+                            <input type="tel" id="phone" name="phone" class="form-control" placeholder="Enter your phone number">
+                        </div>
+                        <div>
+                            <label class="form-label" for="organization">
+                                <i class="fas fa-building text-cyan-400 mr-1"></i> Organization
+                            </label>
+                            <input type="text" id="organization" name="organization" class="form-control" placeholder="Enter organization name">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="form-label" for="role">
+                            <i class="fas fa-user-tag text-cyan-400 mr-1"></i> Role <span class="text-red-400">*</span>
+                        </label>
+                        <select id="role" name="role" class="form-control" required>
+                            <option value="">Select your role</option>
+                            <option value="patient">Patient</option>
+                            <option value="doctor">Doctor</option>
+                            <option value="hospital">Hospital</option>
+                            <option value="government">Government</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="form-label" for="subject">
+                            <i class="fas fa-tag text-cyan-400 mr-1"></i> Subject <span class="text-red-400">*</span>
+                        </label>
+                        <input type="text" id="subject" name="subject" class="form-control" placeholder="Enter the subject of your message" required>
+                    </div>
+
+                    <div>
+                        <label class="form-label" for="message">
+                            <i class="fas fa-comment text-cyan-400 mr-1"></i> Message <span class="text-red-400">*</span>
+                        </label>
+                        <textarea id="message" name="message" rows="5" class="form-control" placeholder="Write your message here..." required></textarea>
+                    </div>
+
+                    <div class="flex items-start gap-3">
+                        <input type="checkbox" id="privacy" name="privacy" class="mt-1 w-4 h-4 rounded border-white/20 bg-white/5 text-blue-500 focus:ring-blue-500" required>
+                        <label for="privacy" class="text-gray-400 text-sm">
+                            I agree to the <a href="#" class="text-blue-400 hover:text-blue-300 transition">Privacy Policy</a> and consent to the processing of my data.
+                        </label>
+                    </div>
+
+                    <button type="submit" class="w-full py-3 bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-semibold rounded-xl shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 transition-all duration-300 hover:scale-[1.02] flex items-center justify-center gap-2">
+                        <i class="fas fa-paper-plane"></i> Send Message
+                    </button>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- 4. WHY CONTACT US -->
+    <!-- ============================================================ -->
+    <section id="why-contact" class="py-24 border-t border-white/5">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <span class="section-badge">Why Contact Us</span>
+                <h2 class="section-title mt-2">We're Here to Help</h2>
+                <p class="text-gray-400 mt-4 max-w-2xl mx-auto">Whatever your need, our team is ready to assist you</p>
+            </div>
+
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-6">
+                <div class="glass-card rounded-2xl p-6 text-center group">
+                    <div class="w-14 h-14 mx-auto rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-400 text-2xl group-hover:scale-110 transition-transform">
+                        <i class="fas fa-life-ring"></i>
+                    </div>
+                    <h4 class="text-white font-semibold mt-3">General Support</h4>
+                    <p class="text-gray-400 text-sm mt-1">Get help anytime</p>
+                </div>
+                <div class="glass-card rounded-2xl p-6 text-center group">
+                    <div class="w-14 h-14 mx-auto rounded-xl bg-cyan-500/10 flex items-center justify-center text-cyan-400 text-2xl group-hover:scale-110 transition-transform">
+                        <i class="fas fa-hospital"></i>
+                    </div>
+                    <h4 class="text-white font-semibold mt-3">Hospital Registration</h4>
+                    <p class="text-gray-400 text-sm mt-1">Join the platform</p>
+                </div>
+                <div class="glass-card rounded-2xl p-6 text-center group">
+                    <div class="w-14 h-14 mx-auto rounded-xl bg-purple-500/10 flex items-center justify-center text-purple-400 text-2xl group-hover:scale-110 transition-transform">
+                        <i class="fas fa-user-md"></i>
+                    </div>
+                    <h4 class="text-white font-semibold mt-3">Doctor Verification</h4>
+                    <p class="text-gray-400 text-sm mt-1">Get verified quickly</p>
+                </div>
+                <div class="glass-card rounded-2xl p-6 text-center group">
+                    <div class="w-14 h-14 mx-auto rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-400 text-2xl group-hover:scale-110 transition-transform">
+                        <i class="fas fa-bug"></i>
+                    </div>
+                    <h4 class="text-white font-semibold mt-3">Technical Issues</h4>
+                    <p class="text-gray-400 text-sm mt-1">Report problems</p>
+                </div>
+                <div class="glass-card rounded-2xl p-6 text-center group">
+                    <div class="w-14 h-14 mx-auto rounded-xl bg-green-500/10 flex items-center justify-center text-green-400 text-2xl group-hover:scale-110 transition-transform">
+                        <i class="fas fa-calendar-check"></i>
+                    </div>
+                    <h4 class="text-white font-semibold mt-3">Appointment Help</h4>
+                    <p class="text-gray-400 text-sm mt-1">Booking assistance</p>
+                </div>
+                <div class="glass-card rounded-2xl p-6 text-center group">
+                    <div class="w-14 h-14 mx-auto rounded-xl bg-rose-500/10 flex items-center justify-center text-rose-400 text-2xl group-hover:scale-110 transition-transform">
+                        <i class="fas fa-handshake"></i>
+                    </div>
+                    <h4 class="text-white font-semibold mt-3">Partnership</h4>
+                    <p class="text-gray-400 text-sm mt-1">Collaborate with us</p>
+                </div>
+                <div class="glass-card rounded-2xl p-6 text-center group">
+                    <div class="w-14 h-14 mx-auto rounded-xl bg-teal-500/10 flex items-center justify-center text-teal-400 text-2xl group-hover:scale-110 transition-transform">
+                        <i class="fas fa-star"></i>
+                    </div>
+                    <h4 class="text-white font-semibold mt-3">Feedback</h4>
+                    <p class="text-gray-400 text-sm mt-1">Share your thoughts</p>
+                </div>
+                <div class="glass-card rounded-2xl p-6 text-center group">
+                    <div class="w-14 h-14 mx-auto rounded-xl bg-red-500/10 flex items-center justify-center text-red-400 text-2xl group-hover:scale-110 transition-transform">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <h4 class="text-white font-semibold mt-3">Complaints</h4>
+                    <p class="text-gray-400 text-sm mt-1">Resolve issues</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- 5. LOCATION -->
+    <!-- ============================================================ -->
+    <section class="py-24 border-t border-white/5">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <span class="section-badge">Location</span>
+                <h2 class="section-title mt-2">Find Us Here</h2>
+                <p class="text-gray-400 mt-4 max-w-2xl mx-auto">Visit our head office in Dhaka</p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- Map -->
+                <div class="glass rounded-3xl overflow-hidden h-80 lg:h-auto">
+                    <iframe 
+                        src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3652.0!2d90.4!3d23.7!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3755b8b4b1b1b1b1%3A0x0!2zMjPCsDQyJzAwLjAiTiA5MMKwMjQnMDAuMCJF!5e0!3m2!1sen!2sbd!4v1700000000000" 
+                        width="100%" 
+                        height="100%" 
+                        style="border:0; min-height: 320px;" 
+                        allowfullscreen="" 
+                        loading="lazy" 
+                        referrerpolicy="no-referrer-when-downgrade"
+                        title="NHIMS Office Location">
+                    </iframe>
+                </div>
+
+                <!-- Address -->
+                <div class="glass rounded-3xl p-8 flex flex-col justify-center">
+                    <h3 class="text-xl font-bold text-white mb-4">Our Office</h3>
+                    <div class="space-y-4">
+                        <div class="flex items-start gap-3 text-gray-300">
+                            <i class="fas fa-map-pin text-cyan-400 mt-1"></i>
+                            <div>
+                                <p class="font-medium text-white">National Health Information Management System (NHIMS)</p>
+                                <p class="text-gray-400">Dhaka, Bangladesh</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-3 text-gray-300">
+                            <i class="fas fa-phone text-cyan-400 mt-1"></i>
+                            <div>
+                                <p class="font-medium text-white">+880 1700-000000</p>
+                                <p class="text-gray-400">9:00 AM - 6:00 PM</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-3 text-gray-300">
+                            <i class="fas fa-envelope text-cyan-400 mt-1"></i>
+                            <div>
+                                <p class="font-medium text-white">support@nhims.gov.bd</p>
+                                <p class="text-gray-400">We respond within 24 hours</p>
+                            </div>
+                        </div>
+                    </div>
+                    <a href="#" class="inline-flex items-center gap-2 text-blue-400 hover:text-blue-300 mt-6 transition">
+                        <i class="fas fa-map-marked-alt"></i> View on Google Maps
+                        <i class="fas fa-arrow-right text-xs"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- 6. FAQ -->
+    <!-- ============================================================ -->
+    <section class="py-24 border-t border-white/5">
+        <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-12">
+                <span class="section-badge">FAQ</span>
+                <h2 class="section-title mt-2">Frequently Asked Questions</h2>
+                <p class="text-gray-400 mt-2">Find answers to common questions</p>
+            </div>
+
+            <div class="space-y-4">
+                <div class="faq-item" onclick="toggleFaq(this)">
+                    <div class="flex items-center justify-between">
+                        <span class="text-white font-medium">How can hospitals register on NHIMS?</span>
+                        <i class="fas fa-chevron-down faq-chevron text-gray-500"></i>
+                    </div>
+                    <div class="faq-answer mt-2">
+                        <p class="text-gray-400 text-sm leading-relaxed">Hospitals can register through the hospital admin portal. The registration process includes submitting hospital credentials, licenses, and government approvals. Once verified, hospitals gain full access to the platform.</p>
+                    </div>
+                </div>
+
+                <div class="faq-item" onclick="toggleFaq(this)">
+                    <div class="flex items-center justify-between">
+                        <span class="text-white font-medium">How can doctors get verified on NHIMS?</span>
+                        <i class="fas fa-chevron-down faq-chevron text-gray-500"></i>
+                    </div>
+                    <div class="faq-answer mt-2">
+                        <p class="text-gray-400 text-sm leading-relaxed">Doctors can register on the platform and submit their BMDC registration, qualifications, and experience details. The verification process is conducted by hospital administrators to ensure all credentials are authentic.</p>
+                    </div>
+                </div>
+
+                <div class="faq-item" onclick="toggleFaq(this)">
+                    <div class="flex items-center justify-between">
+                        <span class="text-white font-medium">How can patients book appointments?</span>
+                        <i class="fas fa-chevron-down faq-chevron text-gray-500"></i>
+                    </div>
+                    <div class="faq-answer mt-2">
+                        <p class="text-gray-400 text-sm leading-relaxed">Patients can easily book appointments by creating an account, searching for their preferred doctor or hospital, selecting a time slot, and confirming the booking online. They will receive confirmation via SMS and email.</p>
+                    </div>
+                </div>
+
+                <div class="faq-item" onclick="toggleFaq(this)">
+                    <div class="flex items-center justify-between">
+                        <span class="text-white font-medium">How long does hospital approval take?</span>
+                        <i class="fas fa-chevron-down faq-chevron text-gray-500"></i>
+                    </div>
+                    <div class="faq-answer mt-2">
+                        <p class="text-gray-400 text-sm leading-relaxed">Hospital approval typically takes 2-3 business days. The process involves verification of submitted documents and credentials. Once approved, hospitals receive confirmation and access to the platform.</p>
+                    </div>
+                </div>
+
+                <div class="faq-item" onclick="toggleFaq(this)">
+                    <div class="flex items-center justify-between">
+                        <span class="text-white font-medium">How can I report a technical issue?</span>
+                        <i class="fas fa-chevron-down faq-chevron text-gray-500"></i>
+                    </div>
+                    <div class="faq-answer mt-2">
+                        <p class="text-gray-400 text-sm leading-relaxed">You can report technical issues by contacting our support team through email (support@nhims.gov.bd) or phone (+880 1700-000000). Our team will respond within 24 hours and resolve the issue as quickly as possible.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- 7. CALL TO ACTION -->
+    <!-- ============================================================ -->
+    <section class="py-24 border-t border-white/5">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="glass rounded-3xl p-8 md:p-12 text-center">
+                <span class="section-badge">Need Help?</span>
+                <h2 class="text-3xl md:text-4xl font-bold text-white mt-4">Need Healthcare Assistance?</h2>
+                <p class="text-gray-400 mt-3 max-w-2xl mx-auto">Our support team is always ready to help you with any questions or concerns.</p>
+                <div class="flex flex-wrap justify-center gap-4 mt-8">
+                    <a href="{% url 'accounts:login' %}" class="btn-primary">
+                        <i class="fas fa-sign-in-alt"></i> Login
+                    </a>
+                    <a href="{% url 'accounts:signup' %}" class="btn-secondary">
+                        <i class="fas fa-user-plus"></i> Register
+                    </a>
+                    <a href="tel:16263" class="btn-secondary">
+                        <i class="fas fa-phone"></i> Call 16263
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- FOOTER (PARTIAL) -->
+    <!-- ============================================================ -->
+    {% include "dashboard/partials/footer.html" %}
+
+    <!-- ============================================================ -->
+    <!-- SCRIPTS -->
+    <!-- ============================================================ -->
+    <script>
+        // ===== FAQ TOGGLE =====
+        function toggleFaq(element) {
+            const answer = element.querySelector('.faq-answer');
+            const chevron = element.querySelector('.faq-chevron');
+            
+            document.querySelectorAll('.faq-answer').forEach(function(a) {
+                if (a !== answer) {
+                    a.classList.remove('open');
+                    const icon = a.closest('.faq-item').querySelector('.faq-chevron');
+                    if (icon) icon.classList.remove('open');
+                }
+            });
+            
+            answer.classList.toggle('open');
+            chevron.classList.toggle('open');
+        }
+
+        // ===== SCROLL REVEAL =====
+        const cards = document.querySelectorAll('.glass-card, .glass, .faq-item');
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, { threshold: 0.1 });
+        
+        cards.forEach(card => {
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(30px)';
+            card.style.transition = 'all 0.6s ease';
+            observer.observe(card);
+        });
+
+        // ===== NAVBAR SCROLL =====
+        const navbar = document.getElementById('navbar');
+        if (navbar) {
+            window.addEventListener('scroll', () => {
+                if (window.scrollY > 20) {
+                    navbar.classList.add('bg-[#0a0f1e]/90', 'backdrop-blur-md', 'border-b', 'border-white/5');
+                } else {
+                    navbar.classList.remove('bg-[#0a0f1e]/90', 'backdrop-blur-md', 'border-b', 'border-white/5');
+                }
+            });
+        }
+
+        // ===== FORM VALIDATION =====
+        document.getElementById('contactForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            let valid = true;
+            const required = this.querySelectorAll('[required]');
+            
+            required.forEach(field => {
+                if (!field.value.trim()) {
+                    field.classList.add('error');
+                    valid = false;
+                } else {
+                    field.classList.remove('error');
+                }
+            });
+
+            if (valid) {
+                alert('Your message has been sent successfully! Our team will respond within 24 hours.');
+                this.reset();
+            } else {
+                alert('Please fill in all required fields.');
+            }
+        });
+
+        // ===== REAL-TIME VALIDATION =====
+        document.querySelectorAll('input, textarea, select').forEach(field => {
+            field.addEventListener('input', function() {
+                if (this.value.trim()) {
+                    this.classList.remove('error');
+                }
+            });
+            field.addEventListener('change', function() {
+                if (this.value.trim()) {
+                    this.classList.remove('error');
+                }
+            });
+        });
+    </script>
+
+</body>
+</html>

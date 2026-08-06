@@ -1,0 +1,980 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>About NHIMS | National Health Information Management System</title>
+    <meta name="description" content="NHIMS is Bangladesh's unified digital healthcare platform transforming healthcare services through innovation and technology." />
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+    
+    <style>
+        /* ============================================================ */
+        /* ROOT VARIABLES */
+        /* ============================================================ */
+        :root {
+            --primary-dark: #0a0f1e;
+            --primary-navy: #0d1f3c;
+            --accent-blue: #3b82f6;
+            --accent-cyan: #06b6d4;
+            --accent-teal: #14b8a6;
+            --glass-bg: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.06);
+        }
+
+        /* ============================================================ */
+        /* BASE */
+        /* ============================================================ */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+            background: var(--primary-dark);
+            color: #e2e8f0;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--primary-dark); }
+        ::-webkit-scrollbar-thumb { 
+            background: linear-gradient(180deg, var(--accent-blue), var(--accent-cyan));
+            border-radius: 10px;
+        }
+
+        /* ============================================================ */
+        /* GLASSMORPHISM */
+        /* ============================================================ */
+        .glass {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+        }
+
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .glass-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            border-color: rgba(59, 130, 246, 0.3);
+            box-shadow: 0 20px 60px rgba(59, 130, 246, 0.08);
+        }
+
+        /* ============================================================ */
+        /* GRADIENT TEXT */
+        /* ============================================================ */
+        .gradient-text {
+            background: linear-gradient(135deg, #60a5fa 0%, #06b6d4 50%, #14b8a6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* ============================================================ */
+        /* HERO */
+        /* ============================================================ */
+        .hero-bg {
+            background: radial-gradient(ellipse at 20% 30%, rgba(59, 130, 246, 0.08) 0%, transparent 60%),
+                        radial-gradient(ellipse at 80% 70%, rgba(6, 182, 212, 0.08) 0%, transparent 60%),
+                        var(--primary-dark);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-blob {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(100px);
+            pointer-events: none;
+            animation: blobFloat 12s ease-in-out infinite alternate;
+        }
+
+        .hero-blob-1 {
+            width: 400px;
+            height: 400px;
+            background: rgba(59, 130, 246, 0.1);
+            top: -15%;
+            left: -10%;
+            animation-delay: 0s;
+        }
+        .hero-blob-2 {
+            width: 300px;
+            height: 300px;
+            background: rgba(6, 182, 212, 0.08);
+            bottom: -15%;
+            right: -10%;
+            animation-delay: 4s;
+        }
+
+        @keyframes blobFloat {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(60px, -60px) scale(1.2); }
+        }
+
+        /* ============================================================ */
+        /* BUTTONS */
+        /* ============================================================ */
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
+            color: #fff;
+            padding: 14px 32px;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 1rem;
+            box-shadow: 0 4px 25px rgba(59, 130, 246, 0.35);
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .btn-primary:hover {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 8px 40px rgba(59, 130, 246, 0.5);
+        }
+
+        .btn-secondary {
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            color: #fff;
+            padding: 14px 32px;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: transparent;
+        }
+        .btn-secondary:hover {
+            border-color: var(--accent-blue);
+            background: rgba(59, 130, 246, 0.1);
+            transform: translateY(-3px);
+        }
+
+        /* ============================================================ */
+        /* SECTION BADGE */
+        /* ============================================================ */
+        .section-badge {
+            display: inline-block;
+            background: rgba(59, 130, 246, 0.12);
+            border: 1px solid rgba(59, 130, 246, 0.15);
+            padding: 6px 20px;
+            border-radius: 40px;
+            font-size: 0.75rem;
+            color: var(--accent-blue);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .section-title {
+            font-size: clamp(2rem, 4vw, 2.8rem);
+            font-weight: 800;
+            color: #ffffff;
+            line-height: 1.2;
+        }
+
+        /* ============================================================ */
+        /* TIMELINE */
+        /* ============================================================ */
+        .timeline-line {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #3b82f6, #06b6d4, #14b8a6, #06b6d4, #3b82f6);
+            transform: translateY(-50%);
+            z-index: 0;
+        }
+
+        .timeline-dot {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--accent-cyan);
+            border: 4px solid var(--primary-dark);
+            box-shadow: 0 0 30px rgba(6, 182, 212, 0.3);
+            z-index: 1;
+            transition: all 0.4s ease;
+        }
+
+        .timeline-item:hover .timeline-dot {
+            transform: scale(1.4);
+            box-shadow: 0 0 50px rgba(6, 182, 212, 0.6);
+        }
+
+        /* ============================================================ */
+        /* FAQ */
+        /* ============================================================ */
+        .faq-item {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 20px 24px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .faq-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(59, 130, 246, 0.2);
+            transform: translateX(4px);
+        }
+
+        .faq-answer {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .faq-answer.open {
+            max-height: 300px;
+        }
+
+        .faq-chevron {
+            transition: transform 0.3s ease;
+        }
+
+        .faq-chevron.open {
+            transform: rotate(180deg);
+        }
+
+        /* ============================================================ */
+        /* STAT COUNTER */
+        /* ============================================================ */
+        .stat-number {
+            font-size: 3.2rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #60a5fa, #06b6d4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* ============================================================ */
+        /* RESPONSIVE */
+        /* ============================================================ */
+        @media (max-width: 768px) {
+            .stat-number { font-size: 2rem; }
+            .hero-blob { width: 200px; height: 200px; filter: blur(60px); }
+            .timeline-line { display: none; }
+            .timeline-item { padding-left: 20px; border-left: 3px solid var(--accent-cyan); }
+        }
+
+        @media (max-width: 480px) {
+            .stat-number { font-size: 1.6rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ============================================================ -->
+    <!-- NAVBAR (PARTIAL) -->
+    <!-- ============================================================ -->
+    {% include "dashboard/partials/navbar.html" %}
+
+    <!-- ============================================================ -->
+    <!-- 1. HERO SECTION -->
+    <!-- ============================================================ -->
+    <section class="hero-bg min-h-[70vh] flex items-center relative overflow-hidden pt-20">
+        <div class="hero-blob hero-blob-1"></div>
+        <div class="hero-blob hero-blob-2"></div>
+
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 relative z-10">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+                <!-- Left Content -->
+                <div>
+                    <span class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-semibold uppercase tracking-wider">
+                        <i class="fas fa-info-circle"></i> About NHIMS
+                    </span>
+                    <h1 class="text-4xl sm:text-5xl md:text-6xl font-extrabold text-white mt-4 leading-tight">
+                        Transforming Healthcare Through<br>
+                        <span class="gradient-text">Digital Innovation</span>
+                    </h1>
+                    <p class="text-gray-400 text-lg md:text-xl mt-6 max-w-xl leading-relaxed">
+                        National Health Information Management System (NHIMS) is a unified digital healthcare platform 
+                        designed to modernize healthcare services across Bangladesh.
+                    </p>
+                    <div class="flex flex-wrap gap-4 mt-8">
+                        <a href="#mission" class="btn-primary">
+                            <i class="fas fa-arrow-right"></i> Learn More
+                        </a>
+                        <a href="#contact" class="btn-secondary">
+                            <i class="fas fa-envelope"></i> Contact Us
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Right Illustration -->
+                <div class="relative hidden lg:block">
+                    <div class="glass rounded-3xl p-8 relative">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="glass rounded-2xl p-6 text-center">
+                                <i class="fas fa-heartbeat text-cyan-400 text-3xl mb-3"></i>
+                                <p class="text-white font-bold text-lg">10M+</p>
+                                <p class="text-gray-500 text-sm">Patients</p>
+                            </div>
+                            <div class="glass rounded-2xl p-6 text-center">
+                                <i class="fas fa-user-md text-blue-400 text-3xl mb-3"></i>
+                                <p class="text-white font-bold text-lg">20K+</p>
+                                <p class="text-gray-500 text-sm">Doctors</p>
+                            </div>
+                            <div class="glass rounded-2xl p-6 text-center">
+                                <i class="fas fa-hospital text-purple-400 text-3xl mb-3"></i>
+                                <p class="text-white font-bold text-lg">1200+</p>
+                                <p class="text-gray-500 text-sm">Hospitals</p>
+                            </div>
+                            <div class="glass rounded-2xl p-6 text-center">
+                                <i class="fas fa-shield-alt text-green-400 text-3xl mb-3"></i>
+                                <p class="text-white font-bold text-lg">99.9%</p>
+                                <p class="text-gray-500 text-sm">Uptime</p>
+                            </div>
+                        </div>
+                        <div class="absolute -top-4 -right-4 glass rounded-2xl px-4 py-2 text-xs font-medium text-cyan-400">
+                            <i class="fas fa-shield-alt mr-1"></i> ISO Certified
+                        </div>
+                        <div class="absolute -bottom-4 -left-4 glass rounded-2xl px-4 py-2 text-xs font-medium text-green-400">
+                            <i class="fas fa-check-circle mr-1"></i> Government Approved
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- 2. OUR STORY -->
+    <!-- ============================================================ -->
+    <section class="py-24 border-t border-white/5">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <span class="section-badge">Our Story</span>
+                <h2 class="section-title mt-2">The Journey of NHIMS</h2>
+                <p class="text-gray-400 mt-4 max-w-2xl mx-auto">From paper to digital — revolutionizing healthcare in Bangladesh</p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                <div>
+                    <h3 class="text-xl font-bold text-white mb-4">The Problem</h3>
+                    <div class="space-y-3">
+                        <div class="flex items-start gap-3 text-gray-300">
+                            <i class="fas fa-times text-red-400 mt-1"></i>
+                            <span>Paper-based medical records causing loss and damage</span>
+                        </div>
+                        <div class="flex items-start gap-3 text-gray-300">
+                            <i class="fas fa-times text-red-400 mt-1"></i>
+                            <span>Fragmented patient information across different hospitals</span>
+                        </div>
+                        <div class="flex items-start gap-3 text-gray-300">
+                            <i class="fas fa-times text-red-400 mt-1"></i>
+                            <span>Long waiting queues and manual appointment processes</span>
+                        </div>
+                        <div class="flex items-start gap-3 text-gray-300">
+                            <i class="fas fa-times text-red-400 mt-1"></i>
+                            <span>Difficult doctor verification and credential checking</span>
+                        </div>
+                        <div class="flex items-start gap-3 text-gray-300">
+                            <i class="fas fa-times text-red-400 mt-1"></i>
+                            <span>Poor coordination between healthcare providers</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="text-xl font-bold text-white mb-4">The Solution</h3>
+                    <div class="space-y-3">
+                        <div class="flex items-start gap-3 text-gray-300">
+                            <i class="fas fa-check text-green-400 mt-1"></i>
+                            <span>Secure digital health records accessible nationwide</span>
+                        </div>
+                        <div class="flex items-start gap-3 text-gray-300">
+                            <i class="fas fa-check text-green-400 mt-1"></i>
+                            <span>Unified patient database with complete medical history</span>
+                        </div>
+                        <div class="flex items-start gap-3 text-gray-300">
+                            <i class="fas fa-check text-green-400 mt-1"></i>
+                            <span>Online appointment booking with real-time availability</span>
+                        </div>
+                        <div class="flex items-start gap-3 text-gray-300">
+                            <i class="fas fa-check text-green-400 mt-1"></i>
+                            <span>Verified doctor profiles with BMDC registration</span>
+                        </div>
+                        <div class="flex items-start gap-3 text-gray-300">
+                            <i class="fas fa-check text-green-400 mt-1"></i>
+                            <span>Integrated healthcare ecosystem for seamless coordination</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- 3. MISSION & 4. VISION -->
+    <!-- ============================================================ -->
+    <section class="py-24 border-t border-white/5">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <!-- Mission -->
+                <div class="glass-card rounded-3xl p-8 text-center group">
+                    <div class="w-20 h-20 mx-auto rounded-2xl bg-blue-500/20 flex items-center justify-center text-blue-400 text-3xl group-hover:scale-110 transition-transform">
+                        <i class="fas fa-bullseye"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold text-white mt-4">Our Mission</h3>
+                    <p class="text-gray-400 text-lg mt-4 leading-relaxed">
+                        "To build a secure, efficient and accessible digital healthcare ecosystem for every citizen of Bangladesh."
+                    </p>
+                </div>
+
+                <!-- Vision -->
+                <div class="glass-card rounded-3xl p-8 text-center group">
+                    <div class="w-20 h-20 mx-auto rounded-2xl bg-cyan-500/20 flex items-center justify-center text-cyan-400 text-3xl group-hover:scale-110 transition-transform">
+                        <i class="fas fa-eye"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold text-white mt-4">Our Vision</h3>
+                    <p class="text-gray-400 text-lg mt-4 leading-relaxed">
+                        "To become Bangladesh's most trusted national healthcare management platform."
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- 5. CORE OBJECTIVES -->
+    <!-- ============================================================ -->
+    <section class="py-24 border-t border-white/5">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <span class="section-badge">Core Objectives</span>
+                <h2 class="section-title mt-2">What We Aim to Achieve</h2>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="glass-card rounded-2xl p-6 text-center group">
+                    <div class="w-14 h-14 mx-auto rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-400 text-2xl group-hover:scale-110 transition-transform">
+                        <i class="fas fa-notes-medical"></i>
+                    </div>
+                    <h4 class="text-white font-semibold mt-3">Digital Medical Records</h4>
+                    <p class="text-gray-400 text-sm mt-1">Secure lifelong health records</p>
+                </div>
+                <div class="glass-card rounded-2xl p-6 text-center group">
+                    <div class="w-14 h-14 mx-auto rounded-xl bg-cyan-500/10 flex items-center justify-center text-cyan-400 text-2xl group-hover:scale-110 transition-transform">
+                        <i class="fas fa-hospital"></i>
+                    </div>
+                    <h4 class="text-white font-semibold mt-3">Hospital Digitalization</h4>
+                    <p class="text-gray-400 text-sm mt-1">Modern hospital management</p>
+                </div>
+                <div class="glass-card rounded-2xl p-6 text-center group">
+                    <div class="w-14 h-14 mx-auto rounded-xl bg-purple-500/10 flex items-center justify-center text-purple-400 text-2xl group-hover:scale-110 transition-transform">
+                        <i class="fas fa-calendar-check"></i>
+                    </div>
+                    <h4 class="text-white font-semibold mt-3">Easy Appointment Booking</h4>
+                    <p class="text-gray-400 text-sm mt-1">Online appointment system</p>
+                </div>
+                <div class="glass-card rounded-2xl p-6 text-center group">
+                    <div class="w-14 h-14 mx-auto rounded-xl bg-green-500/10 flex items-center justify-center text-green-400 text-2xl group-hover:scale-110 transition-transform">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <h4 class="text-white font-semibold mt-3">Healthcare Accessibility</h4>
+                    <p class="text-gray-400 text-sm mt-1">Healthcare for all citizens</p>
+                </div>
+                <div class="glass-card rounded-2xl p-6 text-center group">
+                    <div class="w-14 h-14 mx-auto rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-400 text-2xl group-hover:scale-110 transition-transform">
+                        <i class="fas fa-lock"></i>
+                    </div>
+                    <h4 class="text-white font-semibold mt-3">Secure Patient Data</h4>
+                    <p class="text-gray-400 text-sm mt-1">Enterprise-grade security</p>
+                </div>
+                <div class="glass-card rounded-2xl p-6 text-center group">
+                    <div class="w-14 h-14 mx-auto rounded-xl bg-rose-500/10 flex items-center justify-center text-rose-400 text-2xl group-hover:scale-110 transition-transform">
+                        <i class="fas fa-government"></i>
+                    </div>
+                    <h4 class="text-white font-semibold mt-3">Government Support</h4>
+                    <p class="text-gray-400 text-sm mt-1">National healthcare policy</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- 6. WHY CHOOSE NHIMS -->
+    <!-- ============================================================ -->
+    <section class="py-24 border-t border-white/5">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <span class="section-badge">Why Choose NHIMS</span>
+                <h2 class="section-title mt-2">Built for Trust and Excellence</h2>
+            </div>
+
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-6">
+                <div class="glass-card rounded-2xl p-6 text-center group">
+                    <div class="text-4xl mb-3 group-hover:scale-110 transition-transform">🔒</div>
+                    <h4 class="text-white font-semibold">Secure Data</h4>
+                    <p class="text-gray-400 text-sm mt-1">End-to-end encryption</p>
+                </div>
+                <div class="glass-card rounded-2xl p-6 text-center group">
+                    <div class="text-4xl mb-3 group-hover:scale-110 transition-transform">☁️</div>
+                    <h4 class="text-white font-semibold">Cloud Based</h4>
+                    <p class="text-gray-400 text-sm mt-1">Access anywhere</p>
+                </div>
+                <div class="glass-card rounded-2xl p-6 text-center group">
+                    <div class="text-4xl mb-3 group-hover:scale-110 transition-transform">⚡</div>
+                    <h4 class="text-white font-semibold">Fast Access</h4>
+                    <p class="text-gray-400 text-sm mt-1">Lightning speed</p>
+                </div>
+                <div class="glass-card rounded-2xl p-6 text-center group">
+                    <div class="text-4xl mb-3 group-hover:scale-110 transition-transform">✅</div>
+                    <h4 class="text-white font-semibold">Verified Doctors</h4>
+                    <p class="text-gray-400 text-sm mt-1">BMDC registered</p>
+                </div>
+                <div class="glass-card rounded-2xl p-6 text-center group">
+                    <div class="text-4xl mb-3 group-hover:scale-110 transition-transform">🏥</div>
+                    <h4 class="text-white font-semibold">Trusted Hospitals</h4>
+                    <p class="text-gray-400 text-sm mt-1">Nationwide network</p>
+                </div>
+                <div class="glass-card rounded-2xl p-6 text-center group">
+                    <div class="text-4xl mb-3 group-hover:scale-110 transition-transform">🇧🇩</div>
+                    <h4 class="text-white font-semibold">Nationwide Coverage</h4>
+                    <p class="text-gray-400 text-sm mt-1">All 64 districts</p>
+                </div>
+                <div class="glass-card rounded-2xl p-6 text-center group">
+                    <div class="text-4xl mb-3 group-hover:scale-110 transition-transform">🔄</div>
+                    <h4 class="text-white font-semibold">Real-time Updates</h4>
+                    <p class="text-gray-400 text-sm mt-1">Live data sync</p>
+                </div>
+                <div class="glass-card rounded-2xl p-6 text-center group">
+                    <div class="text-4xl mb-3 group-hover:scale-110 transition-transform">👤</div>
+                    <h4 class="text-white font-semibold">Role Based Access</h4>
+                    <p class="text-gray-400 text-sm mt-1">Secure permissions</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- 7. OUR SERVICES (Preview) -->
+    <!-- ============================================================ -->
+    <section class="py-24 border-t border-white/5">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <span class="section-badge">Our Services</span>
+                <h2 class="section-title mt-2">Comprehensive Healthcare Solutions</h2>
+                <p class="text-gray-400 mt-4 max-w-2xl mx-auto">Explore our complete suite of healthcare management services</p>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div class="glass-card rounded-2xl p-6 group">
+                    <div class="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-400 text-xl group-hover:scale-110 transition-transform">
+                        <i class="fas fa-notes-medical"></i>
+                    </div>
+                    <h4 class="text-white font-semibold mt-3">Electronic Health Records</h4>
+                    <p class="text-gray-400 text-sm mt-1">Secure digital medical records</p>
+                    <a href="{% url 'dashboard:service_detail' 'electronic-health-records' %}" class="inline-flex items-center gap-2 text-blue-400 text-sm mt-3 hover:text-blue-300 transition">
+                        View Details <i class="fas fa-arrow-right text-xs"></i>
+                    </a>
+                </div>
+                <div class="glass-card rounded-2xl p-6 group">
+                    <div class="w-12 h-12 rounded-xl bg-cyan-500/10 flex items-center justify-center text-cyan-400 text-xl group-hover:scale-110 transition-transform">
+                        <i class="fas fa-user-md"></i>
+                    </div>
+                    <h4 class="text-white font-semibold mt-3">Doctor Management</h4>
+                    <p class="text-gray-400 text-sm mt-1">Profiles &amp; scheduling</p>
+                    <a href="{% url 'dashboard:service_detail' 'doctor-management' %}" class="inline-flex items-center gap-2 text-cyan-400 text-sm mt-3 hover:text-cyan-300 transition">
+                        View Details <i class="fas fa-arrow-right text-xs"></i>
+                    </a>
+                </div>
+                <div class="glass-card rounded-2xl p-6 group">
+                    <div class="w-12 h-12 rounded-xl bg-purple-500/10 flex items-center justify-center text-purple-400 text-xl group-hover:scale-110 transition-transform">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <h4 class="text-white font-semibold mt-3">Patient Management</h4>
+                    <p class="text-gray-400 text-sm mt-1">Complete patient records</p>
+                    <a href="{% url 'dashboard:service_detail' 'patient-management' %}" class="inline-flex items-center gap-2 text-purple-400 text-sm mt-3 hover:text-purple-300 transition">
+                        View Details <i class="fas fa-arrow-right text-xs"></i>
+                    </a>
+                </div>
+                <div class="glass-card rounded-2xl p-6 group">
+                    <div class="w-12 h-12 rounded-xl bg-green-500/10 flex items-center justify-center text-green-400 text-xl group-hover:scale-110 transition-transform">
+                        <i class="fas fa-hospital"></i>
+                    </div>
+                    <h4 class="text-white font-semibold mt-3">Hospital Management</h4>
+                    <p class="text-gray-400 text-sm mt-1">Full hospital administration</p>
+                    <a href="{% url 'dashboard:service_detail' 'hospital-management' %}" class="inline-flex items-center gap-2 text-green-400 text-sm mt-3 hover:text-green-300 transition">
+                        View Details <i class="fas fa-arrow-right text-xs"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- 8. PLATFORM USERS -->
+    <!-- ============================================================ -->
+    <section class="py-24 border-t border-white/5">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <span class="section-badge">Platform Users</span>
+                <h2 class="section-title mt-2">Who Uses NHIMS</h2>
+            </div>
+
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
+                <div class="glass-card rounded-2xl p-6 text-center group">
+                    <div class="w-16 h-16 mx-auto rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 text-2xl group-hover:scale-110 transition-transform">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <p class="text-white font-medium mt-3">Patients</p>
+                </div>
+                <div class="glass-card rounded-2xl p-6 text-center group">
+                    <div class="w-16 h-16 mx-auto rounded-full bg-cyan-500/20 flex items-center justify-center text-cyan-400 text-2xl group-hover:scale-110 transition-transform">
+                        <i class="fas fa-user-md"></i>
+                    </div>
+                    <p class="text-white font-medium mt-3">Doctors</p>
+                </div>
+                <div class="glass-card rounded-2xl p-6 text-center group">
+                    <div class="w-16 h-16 mx-auto rounded-full bg-purple-500/20 flex items-center justify-center text-purple-400 text-2xl group-hover:scale-110 transition-transform">
+                        <i class="fas fa-user-tie"></i>
+                    </div>
+                    <p class="text-white font-medium mt-3">Hospital Admins</p>
+                </div>
+                <div class="glass-card rounded-2xl p-6 text-center group">
+                    <div class="w-16 h-16 mx-auto rounded-full bg-amber-500/20 flex items-center justify-center text-amber-400 text-2xl group-hover:scale-110 transition-transform">
+                        <i class="fas fa-user-clock"></i>
+                    </div>
+                    <p class="text-white font-medium mt-3">Receptionists</p>
+                </div>
+                <div class="glass-card rounded-2xl p-6 text-center group">
+                    <div class="w-16 h-16 mx-auto rounded-full bg-green-500/20 flex items-center justify-center text-green-400 text-2xl group-hover:scale-110 transition-transform">
+                        <i class="fas fa-flask"></i>
+                    </div>
+                    <p class="text-white font-medium mt-3">Lab Staff</p>
+                </div>
+                <div class="glass-card rounded-2xl p-6 text-center group">
+                    <div class="w-16 h-16 mx-auto rounded-full bg-rose-500/20 flex items-center justify-center text-rose-400 text-2xl group-hover:scale-110 transition-transform">
+                        <i class="fas fa-prescription"></i>
+                    </div>
+                    <p class="text-white font-medium mt-3">Pharmacists</p>
+                </div>
+                <div class="glass-card rounded-2xl p-6 text-center group">
+                    <div class="w-16 h-16 mx-auto rounded-full bg-teal-500/20 flex items-center justify-center text-teal-400 text-2xl group-hover:scale-110 transition-transform">
+                        <i class="fas fa-government"></i>
+                    </div>
+                    <p class="text-white font-medium mt-3">Government</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- 9. KEY STATISTICS -->
+    <!-- ============================================================ -->
+    <section class="py-24 border-t border-white/5">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <span class="section-badge">Live Statistics</span>
+                <h2 class="section-title mt-2">NHIMS by the Numbers</h2>
+            </div>
+
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+                <div class="glass-card rounded-2xl p-8 text-center">
+                    <p class="stat-number">100+</p>
+                    <p class="text-gray-400 text-sm mt-1">Hospitals</p>
+                </div>
+                <div class="glass-card rounded-2xl p-8 text-center">
+                    <p class="stat-number">500+</p>
+                    <p class="text-gray-400 text-sm mt-1">Doctors</p>
+                </div>
+                <div class="glass-card rounded-2xl p-8 text-center">
+                    <p class="stat-number">10K+</p>
+                    <p class="text-gray-400 text-sm mt-1">Patients</p>
+                </div>
+                <div class="glass-card rounded-2xl p-8 text-center">
+                    <p class="stat-number">1M+</p>
+                    <p class="text-gray-400 text-sm mt-1">Health Records</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- 10. OUR VALUES -->
+    <!-- ============================================================ -->
+    <section class="py-24 border-t border-white/5">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <span class="section-badge">Our Values</span>
+                <h2 class="section-title mt-2">The Principles That Guide Us</h2>
+            </div>
+
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-6">
+                <div class="glass-card rounded-2xl p-6 text-center group">
+                    <div class="text-4xl mb-3 group-hover:scale-110 transition-transform">💡</div>
+                    <h4 class="text-white font-semibold">Innovation</h4>
+                    <p class="text-gray-400 text-sm mt-1">Embracing new technology</p>
+                </div>
+                <div class="glass-card rounded-2xl p-6 text-center group">
+                    <div class="text-4xl mb-3 group-hover:scale-110 transition-transform">🔒</div>
+                    <h4 class="text-white font-semibold">Security</h4>
+                    <p class="text-gray-400 text-sm mt-1">Protecting patient data</p>
+                </div>
+                <div class="glass-card rounded-2xl p-6 text-center group">
+                    <div class="text-4xl mb-3 group-hover:scale-110 transition-transform">👁️</div>
+                    <h4 class="text-white font-semibold">Transparency</h4>
+                    <p class="text-gray-400 text-sm mt-1">Open and honest</p>
+                </div>
+                <div class="glass-card rounded-2xl p-6 text-center group">
+                    <div class="text-4xl mb-3 group-hover:scale-110 transition-transform">🌍</div>
+                    <h4 class="text-white font-semibold">Accessibility</h4>
+                    <p class="text-gray-400 text-sm mt-1">Healthcare for all</p>
+                </div>
+                <div class="glass-card rounded-2xl p-6 text-center group">
+                    <div class="text-4xl mb-3 group-hover:scale-110 transition-transform">🤝</div>
+                    <h4 class="text-white font-semibold">Trust</h4>
+                    <p class="text-gray-400 text-sm mt-1">Building confidence</p>
+                </div>
+                <div class="glass-card rounded-2xl p-6 text-center group">
+                    <div class="text-4xl mb-3 group-hover:scale-110 transition-transform">❤️</div>
+                    <h4 class="text-white font-semibold">Quality Healthcare</h4>
+                    <p class="text-gray-400 text-sm mt-1">Excellence in care</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- 11. FUTURE ROADMAP -->
+    <!-- ============================================================ -->
+    <section class="py-24 border-t border-white/5">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <span class="section-badge">Future Roadmap</span>
+                <h2 class="section-title mt-2">Our Journey Forward</h2>
+            </div>
+
+            <div class="relative">
+                <div class="timeline-line hidden md:block"></div>
+                <div class="grid grid-cols-1 md:grid-cols-5 gap-6 md:gap-0 relative">
+                    <div class="timeline-item text-center relative p-4">
+                        <div class="flex flex-col items-center">
+                            <div class="timeline-dot mb-4"></div>
+                            <div class="glass-card rounded-2xl p-6 w-full max-w-[140px]">
+                                <div class="w-12 h-12 mx-auto rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-400 text-xl">
+                                    <i class="fas fa-hospital"></i>
+                                </div>
+                                <p class="text-white text-sm font-medium mt-2">Phase 1</p>
+                                <p class="text-gray-400 text-xs">Hospital Registration</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="timeline-item text-center relative p-4">
+                        <div class="flex flex-col items-center">
+                            <div class="timeline-dot mb-4"></div>
+                            <div class="glass-card rounded-2xl p-6 w-full max-w-[140px]">
+                                <div class="w-12 h-12 mx-auto rounded-xl bg-cyan-500/10 flex items-center justify-center text-cyan-400 text-xl">
+                                    <i class="fas fa-user-md"></i>
+                                </div>
+                                <p class="text-white text-sm font-medium mt-2">Phase 2</p>
+                                <p class="text-gray-400 text-xs">Doctor Verification</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="timeline-item text-center relative p-4">
+                        <div class="flex flex-col items-center">
+                            <div class="timeline-dot mb-4"></div>
+                            <div class="glass-card rounded-2xl p-6 w-full max-w-[140px]">
+                                <div class="w-12 h-12 mx-auto rounded-xl bg-purple-500/10 flex items-center justify-center text-purple-400 text-xl">
+                                    <i class="fas fa-id-card"></i>
+                                </div>
+                                <p class="text-white text-sm font-medium mt-2">Phase 3</p>
+                                <p class="text-gray-400 text-xs">Digital Health ID</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="timeline-item text-center relative p-4">
+                        <div class="flex flex-col items-center">
+                            <div class="timeline-dot mb-4"></div>
+                            <div class="glass-card rounded-2xl p-6 w-full max-w-[140px]">
+                                <div class="w-12 h-12 mx-auto rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-400 text-xl">
+                                    <i class="fas fa-robot"></i>
+                                </div>
+                                <p class="text-white text-sm font-medium mt-2">Phase 4</p>
+                                <p class="text-gray-400 text-xs">AI Healthcare</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="timeline-item text-center relative p-4">
+                        <div class="flex flex-col items-center">
+                            <div class="timeline-dot mb-4"></div>
+                            <div class="glass-card rounded-2xl p-6 w-full max-w-[140px]">
+                                <div class="w-12 h-12 mx-auto rounded-xl bg-green-500/10 flex items-center justify-center text-green-400 text-xl">
+                                    <i class="fas fa-globe-asia"></i>
+                                </div>
+                                <p class="text-white text-sm font-medium mt-2">Phase 5</p>
+                                <p class="text-gray-400 text-xs">Nationwide Integration</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- 12. FAQ -->
+    <!-- ============================================================ -->
+    <section class="py-24 border-t border-white/5">
+        <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-12">
+                <span class="section-badge">FAQ</span>
+                <h2 class="section-title mt-2">Frequently Asked Questions</h2>
+            </div>
+
+            <div class="space-y-4">
+                <div class="faq-item" onclick="toggleFaq(this)">
+                    <div class="flex items-center justify-between">
+                        <span class="text-white font-medium">What is NHIMS?</span>
+                        <i class="fas fa-chevron-down faq-chevron text-gray-500"></i>
+                    </div>
+                    <div class="faq-answer mt-2">
+                        <p class="text-gray-400 text-sm leading-relaxed">NHIMS (National Health Information Management System) is Bangladesh's comprehensive digital healthcare platform designed to connect patients, doctors, hospitals, laboratories, and pharmacies for seamless medical care.</p>
+                    </div>
+                </div>
+
+                <div class="faq-item" onclick="toggleFaq(this)">
+                    <div class="flex items-center justify-between">
+                        <span class="text-white font-medium">Is NHIMS secure?</span>
+                        <i class="fas fa-chevron-down faq-chevron text-gray-500"></i>
+                    </div>
+                    <div class="faq-answer mt-2">
+                        <p class="text-gray-400 text-sm leading-relaxed">Absolutely. NHIMS uses enterprise-grade encryption, secure cloud storage, and follows international healthcare data protection standards to keep your information safe.</p>
+                    </div>
+                </div>
+
+                <div class="faq-item" onclick="toggleFaq(this)">
+                    <div class="flex items-center justify-between">
+                        <span class="text-white font-medium">Who can use NHIMS?</span>
+                        <i class="fas fa-chevron-down faq-chevron text-gray-500"></i>
+                    </div>
+                    <div class="faq-answer mt-2">
+                        <p class="text-gray-400 text-sm leading-relaxed">NHIMS is designed for everyone - patients, doctors, hospital administrators, laboratory staff, pharmacists, and government health authorities.</p>
+                    </div>
+                </div>
+
+                <div class="faq-item" onclick="toggleFaq(this)">
+                    <div class="flex items-center justify-between">
+                        <span class="text-white font-medium">How can hospitals register?</span>
+                        <i class="fas fa-chevron-down faq-chevron text-gray-500"></i>
+                    </div>
+                    <div class="faq-answer mt-2">
+                        <p class="text-gray-400 text-sm leading-relaxed">Hospitals can register through the hospital admin portal. The registration process includes verification of hospital credentials and government approvals.</p>
+                    </div>
+                </div>
+
+                <div class="faq-item" onclick="toggleFaq(this)">
+                    <div class="flex items-center justify-between">
+                        <span class="text-white font-medium">How can patients book appointments?</span>
+                        <i class="fas fa-chevron-down faq-chevron text-gray-500"></i>
+                    </div>
+                    <div class="faq-answer mt-2">
+                        <p class="text-gray-400 text-sm leading-relaxed">Patients can easily book appointments by creating an account, searching for their preferred doctor or hospital, selecting a time slot, and confirming the booking online.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- 13. CTA SECTION -->
+    <!-- ============================================================ -->
+    <section class="py-24 border-t border-white/5">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="glass rounded-3xl p-8 md:p-12 text-center">
+                <span class="section-badge">Join NHIMS Today</span>
+                <h2 class="text-3xl md:text-4xl font-bold text-white mt-4">Join Bangladesh's Digital Healthcare Revolution</h2>
+                <p class="text-gray-400 mt-3 max-w-2xl mx-auto">Be part of the transformation. Register now and help build a healthier Bangladesh.</p>
+                <div class="flex flex-wrap justify-center gap-4 mt-8">
+                    <a href="{% url 'accounts:signup' %}" class="btn-primary">
+                        <i class="fas fa-user-plus"></i> Register Hospital
+                    </a>
+                    <a href="{% url 'accounts:login' %}" class="btn-secondary">
+                        <i class="fas fa-sign-in-alt"></i> Login
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- 14. FOOTER (PARTIAL) -->
+    <!-- ============================================================ -->
+    {% include "dashboard/partials/footer.html" %}
+
+    <!-- ============================================================ -->
+    <!-- SCRIPTS -->
+    <!-- ============================================================ -->
+    <script>
+        // ===== FAQ TOGGLE =====
+        function toggleFaq(element) {
+            const answer = element.querySelector('.faq-answer');
+            const chevron = element.querySelector('.faq-chevron');
+            
+            // Close other FAQs
+            document.querySelectorAll('.faq-answer').forEach(function(a) {
+                if (a !== answer) {
+                    a.classList.remove('open');
+                    const icon = a.closest('.faq-item').querySelector('.faq-chevron');
+                    if (icon) icon.classList.remove('open');
+                }
+            });
+            
+            answer.classList.toggle('open');
+            chevron.classList.toggle('open');
+        }
+
+        // ===== SCROLL REVEAL =====
+        const cards = document.querySelectorAll('.glass-card, .glass, .timeline-item');
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, { threshold: 0.1 });
+        
+        cards.forEach(card => {
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(30px)';
+            card.style.transition = 'all 0.6s ease';
+            observer.observe(card);
+        });
+
+        // ===== NAVBAR SCROLL =====
+        const navbar = document.getElementById('navbar');
+        if (navbar) {
+            window.addEventListener('scroll', () => {
+                if (window.scrollY > 20) {
+                    navbar.classList.add('bg-[#0a0f1e]/90', 'backdrop-blur-md', 'border-b', 'border-white/5');
+                } else {
+                    navbar.classList.remove('bg-[#0a0f1e]/90', 'backdrop-blur-md', 'border-b', 'border-white/5');
+                }
+            });
+        }
+    </script>
+
+</body>
+</html>

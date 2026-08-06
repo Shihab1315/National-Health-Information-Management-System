@@ -7,6 +7,7 @@ import re
 User = get_user_model()
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth import authenticate
+from patients.models import Patient
 
 class SignupForm(forms.ModelForm):
     """

@@ -307,7 +307,6 @@
                     <i class="fas fa-hospital icon"></i>
                     Hospital Information
                 </div>
-                <!-- ✅ সঠিক URL ব্যবহার করুন -->
                 <a href="{% url 'hospital_admin:hospital_information' %}" class="edit-btn">
                     <i class="fas fa-edit"></i> Edit
                 </a>
@@ -343,7 +342,6 @@
                     <i class="fas fa-phone icon"></i>
                     Contact Information
                 </div>
-                <!-- ✅ সঠিক URL ব্যবহার করুন -->
                 <a href="{% url 'hospital_admin:verification_contact_information' %}" class="edit-btn">
                     <i class="fas fa-edit"></i> Edit
                 </a>
@@ -375,7 +373,6 @@
                     <i class="fas fa-map-marker-alt icon"></i>
                     Address Information
                 </div>
-                <!-- ✅ সঠিক URL ব্যবহার করুন -->
                 <a href="{% url 'hospital_admin:verification_address_information' %}" class="edit-btn">
                     <i class="fas fa-edit"></i> Edit
                 </a>
@@ -427,7 +424,6 @@
                     <i class="fas fa-file-alt icon"></i>
                     Uploaded Documents
                 </div>
-                <!-- ✅ সঠিক URL ব্যবহার করুন -->
                 <a href="{% url 'hospital_admin:verification_documents' %}" class="edit-btn">
                     <i class="fas fa-edit"></i> Edit
                 </a>
@@ -535,12 +531,17 @@
             </div>
             
             <div class="flex flex-wrap items-center justify-between gap-3">
-                <!-- ✅ Previous বাটন -->
+                <!-- ✅ Previous বাটন - সঠিক URL -->
                 <a href="{% url 'hospital_admin:verification_documents' %}" class="btn-secondary">
                     <i class="fas fa-arrow-left mr-2"></i>
                     Previous
                 </a>
                 <div class="flex flex-wrap items-center gap-3">
+                    <!-- ✅ Cancel বাটন - # ব্যবহার করুন, url ট্যাগ ছাড়া -->
+                    <a href="#" class="btn-secondary">
+                        <i class="fas fa-times mr-2"></i>
+                        Cancel
+                    </a>
                     <button type="submit" 
                             class="btn-success" 
                             id="submitBtn"
