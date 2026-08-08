@@ -1,6 +1,8 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
+
+from patients.models import Patient
 from .forms import SignupForm, UserEditForm
 from .models import User
 from django.contrib import messages
@@ -37,6 +39,19 @@ class SignupView(View):
         
         if form.is_valid():
             user = form.save()
+            
+            
+            if user.role == 'patient':
+                try:
+                    Patient.objects.create(
+                        user=user,
+                        full_name=user.get_full_name() or user.username,
+                        email=user.email,
+                        phone=user.phone or '',
+                    )
+                    print(f"✅ Patient profile created for {user.username}")
+                except Exception as e:
+                    print(f"❌ Error creating patient profile: {e}")
             
             # Success message
             messages.success(
